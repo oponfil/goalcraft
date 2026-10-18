@@ -1,19 +1,19 @@
 // The pricing page: "Get Pro" opens the Polar checkout. Signed in, the person's plan is marked
 // "Your plan": on Pro the button shows the plan and opens the subscription settings (or nothing to
 // manage for Pro granted without paying), and "Start free" goes; on Free, Pro stays the upgrade.
-import { supabase } from './auth.js?v=60e3ae59';
-import { account, openBilling } from './billing.js?v=60e3ae59';
-import { t, lang } from './i18n.js?v=60e3ae59';
+import { supabase } from './auth.js?v=9abe641e';
+import { account, openBilling } from './billing.js?v=9abe641e';
+import { t, lang } from './i18n.js?v=9abe641e';
 
 const button = document.getElementById('get-pro');
 const note = document.getElementById('billing-note');
-const fail = () => { button.disabled = false; note.textContent = t('billing.failed'); note.hidden = false; };
+const fail = () => { note.textContent = t('billing.failed'); note.hidden = false; };
 
 button.addEventListener('click', async e => {
   e.preventDefault();
-  if (button.disabled) return;
-  button.disabled = true; note.hidden = true;
-  try { await openBilling(button.dataset.kind || 'checkout'); } catch { fail(); }
+  if (button.classList.contains('busy')) return;
+  note.hidden = true;
+  try { await openBilling(button.dataset.kind || 'checkout', button); } catch { fail(); }
 });
 
 // A "Your plan" label on a plan's card.
@@ -59,10 +59,9 @@ if (session) {
     free.addEventListener('click', async e => {
       e.preventDefault();
       if (free.classList.contains('busy')) return;
-      if (me.paying) return openBilling('portal').catch(fail);
+      if (me.paying) return openBilling('portal', free).catch(fail);
       if (!confirm(t('pricing.downgradeConfirm'))) return;
-      free.classList.add('busy');
-      try { await openBilling('downgrade'); } catch { free.classList.remove('busy'); fail(); }
+      try { await openBilling('downgrade', free); } catch { fail(); }
     });
   }
 }

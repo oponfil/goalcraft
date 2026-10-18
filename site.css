@@ -132,3 +132,9 @@ html:lang(ja) body { font-family: "Rubik", "Noto Sans JP", system-ui, sans-serif
 
 /* The GitHub icon at the end of the footer links, level with the text. */
 footer a.gh { display: inline-flex; vertical-align: -3px; }
+
+/* Waiting for Polar's link: a small spinner before the text, no more clicks. */
+.busy { cursor: progress !important; opacity: 0.85; }
+.spin { display: inline-block; width: 0.9em; height: 0.9em; margin-right: 0.5em; vertical-align: -0.12em;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

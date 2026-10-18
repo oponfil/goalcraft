@@ -105,6 +105,8 @@ export default {
   'pricing.downgrade': 'Bajar a Free',
   'pricing.downgradeConfirm': '¿Bajar a Free ahora? Pro termina de inmediato. Tus embudos se quedan; los nuevos siguen los límites de Free.',
   'billing.failed': 'No se pudo abrir la página de pago. Inténtalo de nuevo en un minuto.',
+  'billing.opening': 'Abriendo Polar…',
+  'billing.switching': 'Cambiando a Free…',
   'billing.pending': 'Pago recibido. Activando Pro…',
   'billing.done': (d) => `Pro activado${d ? ` hasta el ${d}` : ''}. ¡Gracias!`,
   'billing.late': 'Pro aún no se ha activado. Si no aparece en unos minutos, escribe a support@goalcraft.ai y lo resolvemos.',

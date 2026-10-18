@@ -106,6 +106,8 @@ export default {
   'pricing.downgrade': 'Hạ xuống Free',
   'pricing.downgradeConfirm': 'Hạ xuống Free ngay? Pro kết thúc ngay lập tức. Các phễu hiện có vẫn giữ nguyên; phễu mới theo giới hạn của Free.',
   'billing.failed': 'Không mở được trang thanh toán. Vui lòng thử lại sau một phút.',
+  'billing.opening': 'Đang mở Polar…',
+  'billing.switching': 'Đang chuyển sang Free…',
   'billing.pending': 'Đã nhận thanh toán. Đang kích hoạt Pro…',
   'billing.done': (d) => `Đã kích hoạt Pro${d ? ` đến ${d}` : ''}. Cảm ơn bạn!`,
   'billing.late': 'Pro vẫn chưa được kích hoạt. Nếu vài phút nữa vẫn chưa có, hãy viết tới support@goalcraft.ai để chúng tôi xử lý.',

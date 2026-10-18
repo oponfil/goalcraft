@@ -1,8 +1,9 @@
 // Paying for Pro: the site asks supabase/functions/billing for a Polar link and goes there, either
 // to pay (checkout) or to manage or cancel the subscription (portal). account() reads the person's
 // plan as the limits see it.
-import { supabase, siteUrl } from './auth.js?v=60e3ae59';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=60e3ae59';
+import { supabase, siteUrl } from './auth.js?v=9abe641e';
+import { t } from './i18n.js?v=9abe641e';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=9abe641e';
 
 export async function account() {
   const { data } = await supabase.from('accounts').select('plan, pro_until, customer_id, subscription_status').maybeSingle();
@@ -15,7 +16,19 @@ export async function account() {
 // Opens Polar: 'checkout' to pay for Pro, 'portal' to manage the subscription; 'downgrade' moves
 // Pro given without paying back to Free here. Signed out, the
 // person signs in first and comes back to the pricing page.
-export async function openBilling(kind) {
+// While the link is fetched (a few seconds), the clicked button or link says so with a spinner and
+// takes no more clicks; it comes back as it was if anything fails.
+export async function openBilling(kind, el) {
+  const restore = el ? wait(el, t(kind === 'downgrade' ? 'billing.switching' : 'billing.opening')) : () => {};
+  try { await go(kind); } catch (e) { restore(); throw e; }
+}
+function wait(el, text) {
+  const html = el.innerHTML, disabled = el.disabled;
+  el.classList.add('busy'); el.disabled = true; el.setAttribute('aria-busy', 'true');
+  el.innerHTML = `<span class="spin" aria-hidden="true"></span>${text}`;
+  return () => { el.classList.remove('busy'); el.disabled = disabled; el.removeAttribute('aria-busy'); el.innerHTML = html; };
+}
+async function go(kind) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { location.href = siteUrl('login/?next=' + encodeURIComponent(siteUrl('pricing/'))); return; }
   const res = await fetch(`${SUPABASE_URL}/functions/v1/billing/${kind}`, {

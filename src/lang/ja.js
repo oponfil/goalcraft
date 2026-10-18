@@ -106,6 +106,8 @@ export default {
   'pricing.downgrade': 'Freeにダウングレード',
   'pricing.downgradeConfirm': '今すぐFreeにダウングレードしますか？Proはすぐに終了します。既存のファネルは残り、新しいものはFreeの上限に従います。',
   'billing.failed': '支払いページを開けませんでした。少し待ってからもう一度お試しください。',
+  'billing.opening': 'Polarを開いています…',
+  'billing.switching': 'Freeに切り替えています…',
   'billing.pending': 'お支払いを受け付けました。Proを有効にしています…',
   'billing.done': (d) => `Proが有効になりました${d ? `（${d}まで）` : ''}。ありがとうございます！`,
   'billing.late': 'Proがまだ有効になっていません。数分経っても変わらない場合は support@goalcraft.ai までご連絡ください。',
