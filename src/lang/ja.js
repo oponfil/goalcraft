@@ -178,6 +178,7 @@ export default {
   'login.failed': 'このリンクではログインできませんでした。下で新しいリンクを請求するか、Google で続けてください。',
   'login.badEmail': 'メールアドレスが正しくないようです。確認してもう一度お試しください。',
   'login.withPassword': 'パスワードでログイン',
+  'login.withLink': 'メールのリンクでログイン',
   'login.password': 'パスワード',
   'login.signIn': 'ログイン',
   'login.wrongPassword': 'メールアドレスまたはパスワードが違います。',

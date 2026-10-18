@@ -178,6 +178,7 @@ export default {
   'login.failed': 'Không đăng nhập được bằng liên kết đó. Hãy yêu cầu liên kết mới bên dưới hoặc tiếp tục với Google.',
   'login.badEmail': 'Địa chỉ email này có vẻ không đúng. Hãy kiểm tra và thử lại.',
   'login.withPassword': 'Đăng nhập bằng mật khẩu',
+  'login.withLink': 'Đăng nhập bằng liên kết qua email',
   'login.password': 'Mật khẩu',
   'login.signIn': 'Đăng nhập',
   'login.wrongPassword': 'Email hoặc mật khẩu không đúng.',

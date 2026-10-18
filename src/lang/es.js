@@ -177,6 +177,7 @@ export default {
   'login.failed': 'No se pudo entrar con ese enlace. Pide uno nuevo abajo o continúa con Google.',
   'login.badEmail': 'Esa dirección de correo no parece correcta. Revísala e inténtalo de nuevo.',
   'login.withPassword': 'Iniciar sesión con contraseña',
+  'login.withLink': 'Iniciar sesión con un enlace por correo',
   'login.password': 'Contraseña',
   'login.signIn': 'Iniciar sesión',
   'login.wrongPassword': 'Correo o contraseña incorrectos.',
