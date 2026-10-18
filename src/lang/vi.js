@@ -101,6 +101,8 @@ export default {
   'board.next': (eta) => `tiếp theo ${eta}`,
 
   'pricing.current': 'Gói của bạn',
+  'pricing.downgrade': 'Hạ xuống Free',
+  'pricing.downgradeConfirm': 'Hạ xuống Free ngay? Pro kết thúc ngay lập tức. Các phễu hiện có vẫn giữ nguyên; phễu mới theo giới hạn của Free.',
   'billing.failed': 'Không mở được trang thanh toán. Vui lòng thử lại sau một phút.',
   'pricing.h1': 'Bảng giá',
   'pricing.lead': 'Giá giai đoạn đầu: Pro chỉ $9/tháng thay vì $15, và giữ nguyên $9 chừng nào bạn còn dùng.',

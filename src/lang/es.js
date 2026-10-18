@@ -100,6 +100,8 @@ export default {
   'board.next': (eta) => `próximo ${eta}`,
 
   'pricing.current': 'Tu plan',
+  'pricing.downgrade': 'Bajar a Free',
+  'pricing.downgradeConfirm': '¿Bajar a Free ahora? Pro termina de inmediato. Tus embudos se quedan; los nuevos siguen los límites de Free.',
   'billing.failed': 'No se pudo abrir la página de pago. Inténtalo de nuevo en un minuto.',
   'pricing.h1': 'Precios',
   'pricing.lead': 'Precio de lanzamiento: Pro cuesta $9 al mes en lugar de $15, y se queda en $9 mientras lo mantengas.',

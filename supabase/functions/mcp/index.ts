@@ -164,7 +164,13 @@ function server(db: Db, caller: Caller) {
     const keys = a.stages.map(st => st.key)
     if (new Set(keys).size !== keys.length) fail('Stage keys must be unique')
     const p = await plan(db)
-    if (a.stages.length > p.max_stages) fail(`The ${p.plan} plan has up to ${p.max_stages} stages per funnel. Merge some stages, or the person can upgrade to Pro for up to 5.`)
+    // Over the plan's stage limit (say, after a downgrade to Free) a funnel keeps the stages it has;
+    // only adding one is refused.
+    if (a.stages.length > p.max_stages) {
+      const { data: have } = await db.from('funnels').select('stages(key)').eq('key', a.id).maybeSingle()
+      const known = new Set(((have as any)?.stages ?? []).map((s: { key: string }) => s.key))
+      if (keys.some(k => !known.has(k))) fail(`The ${p.plan} plan has up to ${p.max_stages} stages per funnel. Merge some stages, or the person can upgrade to Pro for up to 5.`)
+    }
     const f = check(await db.from('funnels').upsert({
       key: a.id, title: a.title, result: a.result, theme: a.theme ?? 'mine',
       goal_total: a.goal_total, goal_every_days: a.goal_every_days,

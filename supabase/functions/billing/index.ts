@@ -2,6 +2,7 @@
 // taxes and sends the receipts). Three routes:
 //   POST /billing/checkout  a signed-in person starts paying: a Polar checkout link
 //   POST /billing/portal    a paying person manages or cancels their subscription: a portal link
+//   POST /billing/downgrade Pro given without paying (early access) goes back to Free now
 //   POST /billing/webhook   Polar tells us what happened; this moves accounts.pro_until
 // Function secrets: POLAR_ACCESS_TOKEN (an organization access token), POLAR_WEBHOOK_SECRET (from
 // the webhook endpoint), POLAR_PRODUCT_ID, and POLAR_API (https://api.polar.sh/v1 by default,
@@ -63,6 +64,18 @@ async function portal(req: Request) {
   return json({ url: res.customer_portal_url })
 }
 
+// Back to Free for Pro that nobody pays for. A paid subscription is cancelled in the portal
+// instead, so the month already paid for is kept.
+async function downgrade(req: Request) {
+  const user = await person(req)
+  if (!user) return json({ error: 'sign_in' }, 401)
+  const { data } = await admin.from('accounts').select('subscription_status').eq('user_id', user.id).maybeSingle()
+  if (data?.subscription_status === 'active') return json({ error: 'cancel_in_portal' }, 409)
+  const { error } = await admin.from('accounts').update({ plan: 'free', pro_until: null }).eq('user_id', user.id)
+  if (error) return json({ error: error.message }, 500)
+  return json({ done: true })
+}
+
 // Standard Webhooks, as Polar sends them: webhook-signature holds "v1,<base64>" entries, each an
 // HMAC-SHA256 of "<webhook-id>.<webhook-timestamp>.<body>" keyed with the secret's own bytes.
 // Older than five minutes is refused, so a recorded request can't be played back later.
@@ -118,6 +131,7 @@ Deno.serve(async req => {
   try {
     if (req.method === 'POST' && path === '/checkout') return await checkout(req)
     if (req.method === 'POST' && path === '/portal') return await portal(req)
+    if (req.method === 'POST' && path === '/downgrade') return await downgrade(req)
     if (req.method === 'POST' && path === '/webhook') return await webhook(req)
     return json({ error: 'not_found' }, 404)
   } catch (e) {

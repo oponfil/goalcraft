@@ -101,6 +101,8 @@ export default {
   'board.next': (eta) => `次 ${eta}`,
 
   'pricing.current': '現在のプラン',
+  'pricing.downgrade': 'Freeにダウングレード',
+  'pricing.downgradeConfirm': '今すぐFreeにダウングレードしますか？Proはすぐに終了します。既存のファネルは残り、新しいものはFreeの上限に従います。',
   'billing.failed': '支払いページを開けませんでした。少し待ってからもう一度お試しください。',
   'pricing.h1': '料金',
   'pricing.lead': 'アーリーアクセス価格：Pro は $15 のところ月額 $9。続けている限り $9 のままです。',

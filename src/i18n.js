@@ -6,9 +6,9 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=5f83323d';
-import vi from './lang/vi.js?v=5f83323d';
-import ja from './lang/ja.js?v=5f83323d';
+import es from './lang/es.js?v=4b3cabf9';
+import vi from './lang/vi.js?v=4b3cabf9';
+import ja from './lang/ja.js?v=4b3cabf9';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', zh: '中文', ja: '日本語', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', zh: '中文', ja: 'JA', th: 'ไทย', vi: 'VI' };
@@ -210,6 +210,8 @@ const STRINGS = {
   'board.next': L((eta) => `next ${eta}`, (eta) => `следующий ${eta}`, (eta) => `下一个 ${eta}`, (eta) => `ถัดไป ${eta}`),
 
   // Pricing
+  'pricing.downgrade': L('Downgrade to Free', 'Перейти на Free', '降级到 Free', 'ลดเป็น Free'),
+  'pricing.downgradeConfirm': L('Downgrade to Free now? Pro ends at once. Your funnels stay; new ones follow the Free limits.', 'Перейти на Free сейчас? Pro закончится сразу. Ваши воронки останутся, новые — в пределах Free.', '现在降级到 Free？Pro 将立即结束。你的漏斗会保留，新建的按 Free 限制。', 'ลดเป็น Free ตอนนี้? Pro จะสิ้นสุดทันที กรวยที่มีอยู่ยังอยู่ ส่วนกรวยใหม่จะเป็นไปตามขีดจำกัดของ Free'),
   'pricing.current': L('Your plan', 'Ваш тариф', '当前套餐', 'แพ็กเกจของคุณ'),
   'billing.failed': L('Could not open the payment page. Try again in a minute.', 'Не удалось открыть страницу оплаты. Попробуйте через минуту.', '无法打开付款页面，请稍后再试。', 'เปิดหน้าชำระเงินไม่ได้ ลองใหม่อีกครั้งในอีกสักครู่'),
   'pricing.h1': L('Pricing', 'Тарифы', '价格', 'ราคา'),
