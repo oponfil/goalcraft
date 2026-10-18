@@ -291,3 +291,11 @@ body.ready .loader { display: none; }
 
 /* The GitHub icon at the end of the footer links, level with the text. */
 footer a.gh { display: inline-flex; vertical-align: -3px; }
+
+/* The note on top after paying for Pro: waiting, done (green edge) or late (amber edge). */
+.paid-note { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 30; max-width: min(560px, calc(100% - 32px));
+  background: #241F1B; border: 2px solid var(--border); color: #F4EDE1; padding: 12px 40px 12px 16px; font-size: 15px; line-height: 1.4; }
+.paid-note.ok { border-color: #3CF27A; }
+.paid-note.warn { border-color: #F2A33C; }
+.paid-note .close { position: absolute; top: 6px; right: 8px; background: none; border: none; color: #B8AE9F; font-size: 20px; cursor: pointer; }
+.paid-note .close:hover { color: #F4EDE1; }

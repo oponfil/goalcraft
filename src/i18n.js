@@ -6,9 +6,9 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=2a9885de';
-import vi from './lang/vi.js?v=2a9885de';
-import ja from './lang/ja.js?v=2a9885de';
+import es from './lang/es.js?v=91d74824';
+import vi from './lang/vi.js?v=91d74824';
+import ja from './lang/ja.js?v=91d74824';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', zh: '中文', ja: '日本語', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', zh: '中文', ja: 'JA', th: 'ไทย', vi: 'VI' };
@@ -213,6 +213,9 @@ const STRINGS = {
   'pricing.downgrade': L('Downgrade to Free', 'Перейти на Free', '降级到 Free', 'ลดเป็น Free'),
   'pricing.downgradeConfirm': L('Downgrade to Free now? Pro ends at once. Your funnels stay; new ones follow the Free limits.', 'Перейти на Free сейчас? Pro закончится сразу. Ваши воронки останутся, новые — в пределах Free.', '现在降级到 Free？Pro 将立即结束。你的漏斗会保留，新建的按 Free 限制。', 'ลดเป็น Free ตอนนี้? Pro จะสิ้นสุดทันที กรวยที่มีอยู่ยังอยู่ ส่วนกรวยใหม่จะเป็นไปตามขีดจำกัดของ Free'),
   'pricing.current': L('Your plan', 'Ваш тариф', '当前套餐', 'แพ็กเกจของคุณ'),
+  'billing.pending': L('Payment received. Turning Pro on…', 'Оплата получена. Включаем Pro…', '已收到付款，正在开通 Pro…', 'ได้รับการชำระเงินแล้ว กำลังเปิดใช้ Pro…'),
+  'billing.done': L((d) => `Pro is on${d ? ` until ${d}` : ''}. Thank you!`, (d) => `Pro подключён${d ? ` до ${d}` : ''}. Спасибо!`, (d) => `Pro 已开通${d ? `，有效期至 ${d}` : ''}。谢谢！`, (d) => `เปิดใช้ Pro แล้ว${d ? ` ถึง ${d}` : ''} ขอบคุณ!`),
+  'billing.late': L("Pro hasn't turned on yet. If it doesn't in a few minutes, write to support@goalcraft.ai and we'll sort it out.", 'Pro ещё не включился. Если через несколько минут не появится, напишите на support@goalcraft.ai — разберёмся.', 'Pro 尚未开通。如果几分钟后仍未开通，请写信至 support@goalcraft.ai，我们会处理。', 'Pro ยังไม่เปิดใช้ หากไม่กี่นาทียังไม่ขึ้น เขียนมาที่ support@goalcraft.ai แล้วเราจะจัดการให้'),
   'billing.failed': L('Could not open the payment page. Try again in a minute.', 'Не удалось открыть страницу оплаты. Попробуйте через минуту.', '无法打开付款页面，请稍后再试。', 'เปิดหน้าชำระเงินไม่ได้ ลองใหม่อีกครั้งในอีกสักครู่'),
   'pricing.h1': L('Pricing', 'Тарифы', '价格', 'ราคา'),
   'pricing.lead': L('Early-access price: Pro is $9 a month instead of $15, and stays $9 while you keep it.', 'Цена раннего доступа: Pro за $9 в месяц вместо $15, и цена не вырастет, пока вы не отмените подписку.', '早期价格：Pro 每月 $9，原价 $15；只要不取消订阅，价格就一直是 $9。', 'ราคาช่วงเปิดตัว: Pro เดือนละ $9 แทน $15 และคงราคา $9 ตราบที่คุณยังสมัครอยู่'),

@@ -77,22 +77,30 @@ async function downgrade(req: Request) {
 }
 
 // Standard Webhooks, as Polar sends them: webhook-signature holds "v1,<base64>" entries, each an
-// HMAC-SHA256 of "<webhook-id>.<webhook-timestamp>.<body>" keyed with the secret's own bytes.
-// Older than five minutes is refused, so a recorded request can't be played back later.
+// HMAC-SHA256 of "<webhook-id>.<webhook-timestamp>.<body>". Polar's own SDK keys it with the secret's
+// bytes; the Standard Webhooks libraries base64-decode the secret (after a "whsec_" prefix) instead.
+// Either is accepted. Older than five minutes is refused, so a recorded request can't be played back.
+const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes))
+function keys(secret: string): Uint8Array[] {
+  const out = [new TextEncoder().encode(secret)]
+  try { out.push(Uint8Array.from(atob(secret.replace(/^whsec_/, '')), c => c.charCodeAt(0))) } catch { /* not base64 */ }
+  return out
+}
 async function signed(req: Request, body: string) {
   const id = req.headers.get('webhook-id'), ts = req.headers.get('webhook-timestamp'), sig = req.headers.get('webhook-signature')
   if (!id || !ts || !sig || Math.abs(Date.now() / 1000 - Number(ts)) > 300) return false
-  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(Deno.env.get('POLAR_WEBHOOK_SECRET')!),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-  const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${id}.${ts}.${body}`)))
-  const expected = btoa(String.fromCharCode(...mac))
-  return sig.split(' ').some(part => {
-    const value = part.split(',')[1] ?? ''
-    if (value.length !== expected.length) return false
-    let diff = 0
-    for (let i = 0; i < value.length; i++) diff |= value.charCodeAt(i) ^ expected.charCodeAt(i)
-    return diff === 0
-  })
+  const given = sig.split(' ').map(part => part.split(',')[1] ?? '')
+  for (const raw of keys((Deno.env.get('POLAR_WEBHOOK_SECRET') ?? '').trim())) {
+    const key = await crypto.subtle.importKey('raw', raw, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+    const expected = b64(new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${id}.${ts}.${body}`))))
+    if (given.some(value => {
+      if (value.length !== expected.length) return false
+      let diff = 0
+      for (let i = 0; i < value.length; i++) diff |= value.charCodeAt(i) ^ expected.charCodeAt(i)
+      return diff === 0
+    })) return true
+  }
+  return false
 }
 
 async function webhook(req: Request) {
