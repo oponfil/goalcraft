@@ -93,6 +93,8 @@
       let board = null, pending = false;
       const show = funnels => {
         const empty = !funnels.length;
+        // No funnels yet: the Connect page says what to do. Right after paying, stay for the payment note.
+        if (empty && !new URLSearchParams(location.search).has('pro')) { location.replace('../connect/'); return; }
         connect.hidden = !empty;
         canvas.hidden = empty;
         document.getElementById('titles').hidden = empty;
