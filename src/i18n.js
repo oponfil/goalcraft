@@ -6,9 +6,9 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=91d74824';
-import vi from './lang/vi.js?v=91d74824';
-import ja from './lang/ja.js?v=91d74824';
+import es from './lang/es.js?v=60e3ae59';
+import vi from './lang/vi.js?v=60e3ae59';
+import ja from './lang/ja.js?v=60e3ae59';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', zh: '中文', ja: '日本語', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', zh: '中文', ja: 'JA', th: 'ไทย', vi: 'VI' };
@@ -91,6 +91,7 @@ const STRINGS = {
   'nav.plan': L('Plan', 'Тариф', '套餐', 'แพ็กเกจ'),
   'nav.planFree': L('Free', 'Бесплатный', '免费版', 'ฟรี'),
   'nav.upgrade': L('Upgrade to Pro', 'Перейти на Pro', '升级到 Pro', 'อัปเกรดเป็น Pro'),
+  'nav.canceled': L('subscription cancelled', 'подписка отменена', '订阅已取消', 'ยกเลิกการสมัครแล้ว'),
   'nav.manage': L('Manage subscription', 'Управлять подпиской', '管理订阅', 'จัดการการสมัคร'),
   'nav.proUntil': L((d) => `Pro until ${d}`, (d) => `Pro до ${d}`, (d) => `Pro 到 ${d}`, (d) => `Pro ถึง ${d}`),
   'nav.lang': L('Language', 'Язык', '语言', 'ภาษา'),
@@ -210,6 +211,7 @@ const STRINGS = {
   'board.next': L((eta) => `next ${eta}`, (eta) => `следующий ${eta}`, (eta) => `下一个 ${eta}`, (eta) => `ถัดไป ${eta}`),
 
   // Pricing
+  'pricing.canceled': L((d) => `Subscription cancelled. Pro until ${d}, then Free.`, (d) => `Подписка отменена. Pro до ${d}, потом Free.`, (d) => `订阅已取消。Pro 有效至 ${d}，之后转为 Free。`, (d) => `ยกเลิกการสมัครแล้ว ใช้ Pro ได้ถึง ${d} จากนั้นเป็น Free`),
   'pricing.downgrade': L('Downgrade to Free', 'Перейти на Free', '降级到 Free', 'ลดเป็น Free'),
   'pricing.downgradeConfirm': L('Downgrade to Free now? Pro ends at once. Your funnels stay; new ones follow the Free limits.', 'Перейти на Free сейчас? Pro закончится сразу. Ваши воронки останутся, новые — в пределах Free.', '现在降级到 Free？Pro 将立即结束。你的漏斗会保留，新建的按 Free 限制。', 'ลดเป็น Free ตอนนี้? Pro จะสิ้นสุดทันที กรวยที่มีอยู่ยังอยู่ ส่วนกรวยใหม่จะเป็นไปตามขีดจำกัดของ Free'),
   'pricing.current': L('Your plan', 'Ваш тариф', '当前套餐', 'แพ็กเกจของคุณ'),

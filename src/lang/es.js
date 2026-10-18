@@ -17,6 +17,7 @@ export default {
   'nav.plan': 'Plan',
   'nav.planFree': 'Gratis',
   'nav.upgrade': 'Pasar a Pro',
+  'nav.canceled': 'suscripción cancelada',
   'nav.manage': 'Gestionar suscripción',
   'nav.proUntil': (d) => `Pro hasta ${d}`,
   'nav.lang': 'Idioma',
@@ -100,6 +101,7 @@ export default {
   'board.next': (eta) => `próximo ${eta}`,
 
   'pricing.current': 'Tu plan',
+  'pricing.canceled': (d) => `Suscripción cancelada. Pro hasta el ${d}, luego Free.`,
   'pricing.downgrade': 'Bajar a Free',
   'pricing.downgradeConfirm': '¿Bajar a Free ahora? Pro termina de inmediato. Tus embudos se quedan; los nuevos siguen los límites de Free.',
   'billing.failed': 'No se pudo abrir la página de pago. Inténtalo de nuevo en un minuto.',

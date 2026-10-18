@@ -2,9 +2,9 @@
 // profile button (the Google photo, or a plain silhouette) whose menu holds the rarely used
 // settings: the language, email when an agent asks, and signing out. A signed-in person's language
 // is kept in their account too.
-import { account, openBilling } from './billing.js?v=91d74824';
-import { supabase, siteUrl } from './auth.js?v=91d74824';
-import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved } from './i18n.js?v=91d74824';
+import { account, openBilling } from './billing.js?v=60e3ae59';
+import { supabase, siteUrl } from './auth.js?v=60e3ae59';
+import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved } from './i18n.js?v=60e3ae59';
 
 // The profile button's picture for people without a Google photo.
 const SILHOUETTE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5z"/></svg>';
@@ -116,6 +116,8 @@ if (signin && session) {
     if (!me) { planRow.remove(); return; }
     const date = me.until ? me.until.toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     planName.textContent = `${t('nav.plan')}: ${me.pro ? (date ? t('nav.proUntil', date) : 'Pro') : t('nav.planFree')}`;
+    // Cancelled but still running to the end of the paid month: say so next to the date.
+    if (me.pro && me.paying && me.status === 'canceled') planName.textContent += `, ${t('nav.canceled')}`;
     if (me.paying) {
       planAction.textContent = t('nav.manage');
       planAction.addEventListener('click', e => { e.preventDefault(); openBilling('portal').catch(() => { planAction.textContent = t('billing.failed'); }); });

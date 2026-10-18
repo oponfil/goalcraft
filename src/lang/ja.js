@@ -18,6 +18,7 @@ export default {
   'nav.plan': 'プラン',
   'nav.planFree': '無料',
   'nav.upgrade': 'Pro にアップグレード',
+  'nav.canceled': '解約済み',
   'nav.manage': 'サブスクリプションを管理',
   'nav.proUntil': (d) => `Pro（${d}まで）`,
   'nav.lang': '言語',
@@ -101,6 +102,7 @@ export default {
   'board.next': (eta) => `次 ${eta}`,
 
   'pricing.current': '現在のプラン',
+  'pricing.canceled': (d) => `サブスクリプションは解約済みです。${d}までPro、その後はFreeになります。`,
   'pricing.downgrade': 'Freeにダウングレード',
   'pricing.downgradeConfirm': '今すぐFreeにダウングレードしますか？Proはすぐに終了します。既存のファネルは残り、新しいものはFreeの上限に従います。',
   'billing.failed': '支払いページを開けませんでした。少し待ってからもう一度お試しください。',

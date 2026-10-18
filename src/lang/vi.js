@@ -18,6 +18,7 @@ export default {
   'nav.plan': 'Gói',
   'nav.planFree': 'Miễn phí',
   'nav.upgrade': 'Nâng cấp lên Pro',
+  'nav.canceled': 'đã hủy gói đăng ký',
   'nav.manage': 'Quản lý gói',
   'nav.proUntil': (d) => `Pro đến ${d}`,
   'nav.lang': 'Ngôn ngữ',
@@ -101,6 +102,7 @@ export default {
   'board.next': (eta) => `tiếp theo ${eta}`,
 
   'pricing.current': 'Gói của bạn',
+  'pricing.canceled': (d) => `Đã hủy gói đăng ký. Pro đến ${d}, sau đó là Free.`,
   'pricing.downgrade': 'Hạ xuống Free',
   'pricing.downgradeConfirm': 'Hạ xuống Free ngay? Pro kết thúc ngay lập tức. Các phễu hiện có vẫn giữ nguyên; phễu mới theo giới hạn của Free.',
   'billing.failed': 'Không mở được trang thanh toán. Vui lòng thử lại sau một phút.',

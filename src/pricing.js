@@ -1,9 +1,9 @@
 // The pricing page: "Get Pro" opens the Polar checkout. Signed in, the person's plan is marked
 // "Your plan": on Pro the button shows the plan and opens the subscription settings (or nothing to
 // manage for Pro granted without paying), and "Start free" goes; on Free, Pro stays the upgrade.
-import { supabase } from './auth.js?v=91d74824';
-import { account, openBilling } from './billing.js?v=91d74824';
-import { t, lang } from './i18n.js?v=91d74824';
+import { supabase } from './auth.js?v=60e3ae59';
+import { account, openBilling } from './billing.js?v=60e3ae59';
+import { t, lang } from './i18n.js?v=60e3ae59';
 
 const button = document.getElementById('get-pro');
 const note = document.getElementById('billing-note');
@@ -39,11 +39,21 @@ if (session) {
     const date = me.until ? me.until.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
     button.removeAttribute('data-i18n');
     // Paid Pro: its subscription settings. Pro given without paying: just until when.
-    if (me.paying) { button.textContent = t('nav.manage'); button.dataset.kind = 'portal'; }
+    if (me.paying) {
+      button.textContent = t('nav.manage'); button.dataset.kind = 'portal';
+      // Cancelled: still Pro until the end of the paid month, then Free; the portal can resume it.
+      if (me.status === 'canceled') {
+        const p = document.createElement('p');
+        p.className = 'plan-status'; p.textContent = t('pricing.canceled', date);
+        button.before(p);
+      }
+    }
     else status(button, date ? t('nav.proUntil', date) : t('pricing.current'));
     // Back to Free: a paid subscription is cancelled in the portal (Pro lasts to the end of the
     // paid month); Pro given without paying ends at once, after a confirmation.
     const free = document.getElementById('start-free');
+    // Already cancelled: Free comes on its own at the end of the paid month.
+    if (me.paying && me.status === 'canceled') free.remove();
     free.removeAttribute('data-i18n'); free.removeAttribute('href');
     free.textContent = t('pricing.downgrade');
     free.addEventListener('click', async e => {

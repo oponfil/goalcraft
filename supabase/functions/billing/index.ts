@@ -121,10 +121,13 @@ async function webhook(req: Request) {
     subscription_id: o.id,
   }
   if (o.status === 'active') {
-    // Paid: Pro through the paid period plus two days of slack for the next charge, never less
-    // than what the person already had (an early-access year, say).
-    const paidTo = periodEnd ? periodEnd + 2 * DAY : Date.now() + 33 * DAY
-    Object.assign(change, { plan: 'pro', pro_until: new Date(Math.max(until, paidTo)).toISOString() })
+    // Paid: Pro through the paid period plus two days of slack for the next charge; cancelled (it
+    // still runs to the end of the period), exactly to that end, the date the person is shown.
+    // Time granted beyond this subscription (an early-access year, say) is kept as it is.
+    const ending = !!o.cancel_at_period_end
+    const paidTo = periodEnd ? periodEnd + (ending ? 0 : 2 * DAY) : Date.now() + 33 * DAY
+    const granted = until > (periodEnd || Date.now()) + 3 * DAY
+    Object.assign(change, { plan: 'pro', pro_until: new Date(granted ? until : paidTo).toISOString() })
   }
   // Cancelled, ended or unpaid: only the status changes. pro_until already ends with the last paid
   // month (plus the slack), so Pro lapses on its own, and time granted otherwise is kept.
