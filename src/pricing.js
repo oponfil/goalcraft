@@ -1,9 +1,9 @@
 // The pricing page: "Get Pro" opens the Polar checkout. Signed in, the person's plan is marked
 // "Your plan": on Pro the button shows the plan and opens the subscription settings (or nothing to
 // manage for Pro granted without paying), and "Start free" goes; on Free, Pro stays the upgrade.
-import { supabase } from './auth.js?v=9abe641e';
-import { account, openBilling } from './billing.js?v=9abe641e';
-import { t, lang } from './i18n.js?v=9abe641e';
+import { supabase } from './auth.js?v=54fc15eb';
+import { account, openBilling } from './billing.js?v=54fc15eb';
+import { t, lang } from './i18n.js?v=54fc15eb';
 
 const button = document.getElementById('get-pro');
 const note = document.getElementById('billing-note');
@@ -44,7 +44,7 @@ if (session) {
       // Cancelled: still Pro until the end of the paid month, then Free; the portal can resume it.
       if (me.status === 'canceled') {
         const p = document.createElement('p');
-        p.className = 'plan-status'; p.textContent = t('pricing.canceled', date);
+        p.className = 'plan-status ended'; p.textContent = t('pricing.canceled', date);
         button.before(p);
       }
     }

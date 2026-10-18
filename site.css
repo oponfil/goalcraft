@@ -101,6 +101,7 @@ footer { border-top: 2px solid var(--border); padding: 20px 0 32px; color: var(-
 .plan.current { border-color: #F4EDE1; }
 .plan .plan-status { margin: 0; padding: 12px 0; text-align: center; font-weight: 700; color: var(--accent); }
 .plan .btn.busy { opacity: 0.6; cursor: default; }
+.plan .plan-status.ended { color: var(--text); }
 .fineprint { text-align: center; color: var(--muted); font-size: 14px; margin: 24px auto 40px; max-width: 560px; }
 .logo { display: inline-flex; align-items: center; }
 .logo .mark { image-rendering: pixelated; margin-right: 8px; }
