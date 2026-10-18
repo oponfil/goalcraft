@@ -128,7 +128,7 @@ export default {
   'pricing.early': 'Truy cập sớm',
   'pricing.perMonth': 'mỗi tháng, giá giai đoạn đầu',
   'pricing.getPro': 'Nâng cấp Pro',
-  'pricing.fine2': 'Thanh toán qua Polar, đơn vị bán hàng của chúng tôi. Có thể hủy bất cứ lúc nào trong menu hồ sơ: Pro vẫn dùng được đến hết tháng đã trả. Sau giai đoạn đầu, gói Pro mới sẽ là $15/tháng.',
+  'pricing.fine2': 'Thanh toán qua Polar, đơn vị bán hàng của chúng tôi. Có thể hủy bất cứ lúc nào trong menu hồ sơ: Pro vẫn dùng được đến hết tháng đã trả.',
 
   'privacy.h1': 'Quyền riêng tư',
   'privacy.updated': 'Cập nhật lần cuối: 18 tháng 10 năm 2026',

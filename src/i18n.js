@@ -6,9 +6,9 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=19aea020';
-import vi from './lang/vi.js?v=19aea020';
-import ja from './lang/ja.js?v=19aea020';
+import es from './lang/es.js?v=a65313fa';
+import vi from './lang/vi.js?v=a65313fa';
+import ja from './lang/ja.js?v=a65313fa';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', zh: '中文', ja: '日本語', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', zh: '中文', ja: 'JA', th: 'ไทย', vi: 'VI' };
@@ -238,7 +238,7 @@ const STRINGS = {
   'pricing.early': L('Early access', 'Ранний доступ', '抢先体验', 'ทดลองใช้ก่อนใคร'),
   'pricing.perMonth': L('per month, early-access price', 'в месяц, цена раннего доступа', '每月，早期价格', 'ต่อเดือน ราคาช่วงเปิดตัว'),
   'pricing.getPro': L('Get Pro', 'Подключить Pro', '开通 Pro', 'สมัคร Pro'),
-  'pricing.fine2': L('Payments go through Polar, our merchant of record. Cancel any time in the profile menu: Pro stays until the end of the month you paid for. When early access ends, Pro will cost $15 a month for new subscribers.', 'Оплата проходит через Polar, нашего платёжного партнёра. Отменить можно в любой момент в меню профиля: Pro остаётся до конца оплаченного месяца. После раннего доступа новые подписчики будут платить $15 в месяц.', '付款通过我们的销售方 Polar 完成。可随时在个人菜单中取消：Pro 保留到已付费月份结束。早期阶段结束后，新订阅为每月 $15。', 'ชำระเงินผ่าน Polar ผู้ขายของเรา ยกเลิกได้ทุกเมื่อในเมนูโปรไฟล์: Pro ใช้ได้จนจบเดือนที่จ่ายแล้ว เมื่อช่วงเปิดตัวจบ สมาชิกใหม่จะจ่ายเดือนละ $15'),
+  'pricing.fine2': L('Payments go through Polar, our merchant of record. Cancel any time in the profile menu: Pro stays until the end of the month you paid for.', 'Оплата проходит через Polar, нашего платёжного партнёра. Отменить можно в любой момент в меню профиля: Pro остаётся до конца оплаченного месяца.', '付款通过我们的销售方 Polar 完成。可随时在个人菜单中取消：Pro 保留到已付费月份结束。', 'ชำระเงินผ่าน Polar ผู้ขายของเรา ยกเลิกได้ทุกเมื่อในเมนูโปรไฟล์: Pro ใช้ได้จนจบเดือนที่จ่ายแล้ว'),
 
   // Privacy
   'privacy.h1': L('Privacy', 'Конфиденциальность', '隐私', 'ความเป็นส่วนตัว'),

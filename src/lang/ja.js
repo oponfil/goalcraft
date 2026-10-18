@@ -128,7 +128,7 @@ export default {
   'pricing.early': 'アーリーアクセス',
   'pricing.perMonth': '月額、アーリーアクセス価格',
   'pricing.getPro': 'Pro にする',
-  'pricing.fine2': '支払いは販売事業者の Polar を通じて行われます。プロフィールメニューからいつでも解約でき、Pro は支払い済みの月末まで使えます。アーリーアクセス終了後、新規の Pro は月額 $15 になります。',
+  'pricing.fine2': '支払いは販売事業者の Polar を通じて行われます。プロフィールメニューからいつでも解約でき、Pro は支払い済みの月末まで使えます。',
 
   'privacy.h1': 'プライバシー',
   'privacy.updated': '最終更新：2026年10月18日',

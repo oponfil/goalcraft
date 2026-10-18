@@ -127,7 +127,7 @@ export default {
   'pricing.early': 'Acceso anticipado',
   'pricing.perMonth': 'al mes, precio de lanzamiento',
   'pricing.getPro': 'Obtener Pro',
-  'pricing.fine2': 'Los pagos pasan por Polar, nuestro comerciante registrado. Cancela cuando quieras desde el menú del perfil: Pro sigue hasta el final del mes pagado. Al terminar el lanzamiento, Pro costará $15 al mes para nuevas suscripciones.',
+  'pricing.fine2': 'Los pagos pasan por Polar, nuestro comerciante registrado. Cancela cuando quieras desde el menú del perfil: Pro sigue hasta el final del mes pagado.',
 
   'privacy.h1': 'Privacidad',
   'privacy.updated': 'Última actualización: 18 de octubre de 2026',
