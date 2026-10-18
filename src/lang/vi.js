@@ -58,7 +58,7 @@ export default {
   'connect.h1': 'Kết nối một tác tử',
   'connect.empty.h1': 'Kết nối tác tử của bạn',
   'connect.intro': 'Dán đoạn này vào tác tử của bạn: Claude, ChatGPT, Cursor hoặc bất kỳ tác tử nào hỗ trợ MCP. Nó sẽ kết nối Goalcraft hoặc chỉ cho bạn cách làm.',
-  'connect.after': 'Khi tác tử kết nối, một trang Goalcraft sẽ yêu cầu bạn đăng nhập và cho phép. Sau đó hãy nói với tác tử mục tiêu cần làm, và phễu của nó sẽ xuất hiện trong <a href="../app/">Mục tiêu</a>. Kết nối bao nhiêu tác tử cũng được, từng cái một.',
+  'connect.after': 'Khi tác tử kết nối, một trang Goalcraft sẽ yêu cầu bạn đăng nhập và cho phép. Sau đó hãy nói với tác tử mục tiêu cần làm, và phễu của nó sẽ xuất hiện trong Mục tiêu. Kết nối bao nhiêu tác tử cũng được, từng cái một. Muốn xem trước trông thế nào? <a href="../demo/">Xem bản demo</a>.',
   'connect.empty.after': 'Sau đó hãy nói với nó mục tiêu cần làm, và các phễu của bạn sẽ xuất hiện ở đây. Muốn xem trước trông thế nào? <a href="../demo/">Xem bản demo</a>.',
   'connect.prompt': (url) => `Hãy kết nối máy chủ MCP này cho tôi: ${url} (Goalcraft, từ xa, đăng nhập bằng OAuth). Nếu bạn không tự kết nối được, hãy chỉ chính xác cho tôi cách làm trong ứng dụng này.`,
   'copy': 'Sao chép',

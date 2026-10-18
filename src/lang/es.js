@@ -57,7 +57,7 @@ export default {
   'connect.h1': 'Conecta un agente',
   'connect.empty.h1': 'Conecta tus agentes',
   'connect.intro': 'Pega esto en tu agente: Claude, ChatGPT, Cursor o cualquier otro compatible con MCP. Conectará Goalcraft o te dirá cómo hacerlo.',
-  'connect.after': 'Cuando el agente se conecte, una página de Goalcraft te pedirá iniciar sesión y darle permiso. Luego dile en qué meta trabajar y su embudo aparecerá en <a href="../app/">Metas</a>. Conecta tantos agentes como quieras, uno por uno.',
+  'connect.after': 'Cuando el agente se conecte, una página de Goalcraft te pedirá iniciar sesión y darle permiso. Luego dile en qué meta trabajar y su embudo aparecerá en Metas. Conecta tantos agentes como quieras, uno por uno. ¿Quieres ver cómo se verá? <a href="../demo/">Mira la demo</a>.',
   'connect.empty.after': 'Luego dile en qué meta trabajar y tus embudos aparecerán aquí. ¿Quieres ver cómo se verá? <a href="../demo/">Mira la demo</a>.',
   'connect.prompt': (url) => `Conéctame este servidor MCP: ${url} (Goalcraft, remoto, inicio de sesión con OAuth). Si no puedes conectarlo tú mismo, dime exactamente cómo hacerlo en esta aplicación.`,
   'copy': 'Copiar',

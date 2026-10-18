@@ -6,9 +6,9 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=415127e7';
-import vi from './lang/vi.js?v=415127e7';
-import ja from './lang/ja.js?v=415127e7';
+import es from './lang/es.js?v=87cadd6a';
+import vi from './lang/vi.js?v=87cadd6a';
+import ja from './lang/ja.js?v=87cadd6a';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', zh: '中文', ja: '日本語', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', zh: '中文', ja: 'JA', th: 'ไทย', vi: 'VI' };
@@ -143,10 +143,10 @@ const STRINGS = {
     '把这段话粘贴给你的智能体：Claude、ChatGPT、Cursor 或任何支持 MCP 的智能体。它会连接 Goalcraft，或告诉你怎么做。',
     'วางข้อความนี้ในเอเจนต์ของคุณ: Claude, ChatGPT, Cursor หรือเอเจนต์อื่นที่รองรับ MCP มันจะเชื่อมต่อ Goalcraft หรือบอกวิธีให้คุณ'),
   'connect.after': L(
-    'When the agent connects, a Goalcraft page asks you to sign in and allow it. Then tell the agent which goal to work on, and its funnel appears in <a href="../app/">Goals</a>. Connect as many agents as you like, one by one.',
-    'Когда агент подключается, страница Goalcraft попросит войти и разрешить доступ. Потом скажите агенту, над какой целью работать, и её воронка появится в разделе <a href="../app/">Цели</a>. Подключайте сколько угодно агентов, по одному.',
-    '智能体连接时，Goalcraft 页面会请你登录并授权。然后告诉它要推进哪个目标，它的漏斗就会出现在<a href="../app/">目标</a>里。可以逐个连接任意多个智能体。',
-    'เมื่อเอเจนต์เชื่อมต่อ หน้า Goalcraft จะขอให้คุณเข้าสู่ระบบและอนุญาต จากนั้นบอกเอเจนต์ว่าจะทำเป้าหมายไหน แล้วกรวยของมันจะปรากฏใน<a href="../app/">เป้าหมาย</a> เชื่อมต่อเอเจนต์ได้มากเท่าที่ต้องการ ทีละตัว'),
+    'When the agent connects, a Goalcraft page asks you to sign in and allow it. Then tell the agent which goal to work on, and its funnel appears in Goals. Connect as many agents as you like, one by one. Not sure what it will look like? <a href="../demo/">See the demo</a>.',
+    'Когда агент подключается, страница Goalcraft попросит войти и разрешить доступ. Потом скажите агенту, над какой целью работать, и её воронка появится в разделе Цели. Подключайте сколько угодно агентов, по одному. Хотите посмотреть, как это выглядит? <a href="../demo/">Откройте демо</a>.',
+    '智能体连接时，Goalcraft 页面会请你登录并授权。然后告诉它要推进哪个目标，它的漏斗就会出现在目标里。可以逐个连接任意多个智能体。想先看看效果？<a href="../demo/">查看演示</a>。',
+    'เมื่อเอเจนต์เชื่อมต่อ หน้า Goalcraft จะขอให้คุณเข้าสู่ระบบและอนุญาต จากนั้นบอกเอเจนต์ว่าจะทำเป้าหมายไหน แล้วกรวยของมันจะปรากฏในเป้าหมาย เชื่อมต่อเอเจนต์ได้มากเท่าที่ต้องการ ทีละตัว อยากเห็นหน้าตาก่อน? <a href="../demo/">ดูเดโม</a>'),
   'connect.empty.after': L(
     'Then tell it which goal to work on, and your funnels appear here. Not sure what it will look like? <a href="../demo/">See the demo</a>.',
     'Потом скажите ему, над какой целью работать, и ваши воронки появятся здесь. Хотите посмотреть, как это выглядит? <a href="../demo/">Откройте демо</a>.',
