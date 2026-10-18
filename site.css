@@ -96,10 +96,10 @@ footer { border-top: 2px solid var(--border); padding: 20px 0 32px; color: var(-
 .plan .btn:disabled, .plan .btn.disabled { cursor: default; opacity: 0.8; }
 .billing-note { color: #F2A33C; font-size: 14px; margin: 10px 0 0; text-align: center; }
 .plan .tag { position: absolute; top: -13px; right: 18px; background: var(--accent); color: #1B1714; font-size: 13px; font-weight: 700; padding: 2px 10px; }
-/* The signed-in person's plan: a yellow label on the left of its card. */
-.plan .mine { position: absolute; top: -13px; left: 18px; background: var(--accent); color: #1B1714; font-size: 13px; font-weight: 700; padding: 2px 10px; }
-.plan.current { border-color: var(--accent); }
-.plan .plan-status { margin: 0; padding: 12px 0; text-align: center; font-weight: 700; color: var(--text); }
+/* The signed-in person's plan: a light label on the left of its card. */
+.plan .mine { position: absolute; top: -13px; left: 18px; background: #F4EDE1; color: #1B1714; font-size: 13px; font-weight: 700; padding: 2px 10px; }
+.plan.current { border-color: #F4EDE1; }
+.plan .plan-status { margin: 0; padding: 12px 0; text-align: center; font-weight: 700; color: var(--accent); }
 .plan .btn.busy { opacity: 0.6; cursor: default; }
 .fineprint { text-align: center; color: var(--muted); font-size: 14px; margin: 24px auto 40px; max-width: 560px; }
 .logo { display: inline-flex; align-items: center; }
