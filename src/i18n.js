@@ -6,9 +6,9 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=a65313fa';
-import vi from './lang/vi.js?v=a65313fa';
-import ja from './lang/ja.js?v=a65313fa';
+import es from './lang/es.js?v=e30d9c95';
+import vi from './lang/vi.js?v=e30d9c95';
+import ja from './lang/ja.js?v=e30d9c95';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', zh: '中文', ja: '日本語', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', zh: '中文', ja: 'JA', th: 'ไทย', vi: 'VI' };
@@ -317,10 +317,10 @@ const STRINGS = {
     'Free 套餐免费。早期阶段 Pro 每月 $9；早期阶段结束后，新订阅为每月 $15，而只要你的订阅保持有效，你的价格不变。付款由我们的销售方（merchant of record）Polar 处理，Polar 同时负责税费和收据；购买本身适用 Polar 的条款。我们永远看不到你的银行卡信息。',
     'แพ็กเกจ Free ไม่มีค่าใช้จ่าย Pro ราคาเดือนละ $9 ในช่วงเปิดตัว เมื่อช่วงเปิดตัวจบ สมาชิกใหม่จะจ่ายเดือนละ $15 ส่วนราคาของคุณจะคงเดิมตราบที่การสมัครยังใช้งานอยู่ การชำระเงินดำเนินการโดย Polar ผู้ขายของเรา (merchant of record) ซึ่งดูแลภาษีและใบเสร็จด้วย ข้อกำหนดของ Polar ใช้กับการซื้อนั้น เราไม่เคยเห็นข้อมูลบัตรของคุณ'),
   'terms.plans2': L(
-    'Pro renews every month until you cancel. You can cancel any time in the profile menu (Manage subscription); Pro then stays on until the end of the month you have paid for, and no further payments are taken. We do not refund partial months, but if something went wrong, write to us within 14 days of a payment and we will make it right. None of this limits the rights you have under consumer law.',
-    'Pro продлевается каждый месяц, пока вы его не отмените. Отменить можно в любой момент в меню профиля («Управлять подпиской»); Pro останется до конца оплаченного месяца, и новых списаний не будет. За неполные месяцы деньги не возвращаются, но если что-то пошло не так, напишите нам в течение 14 дней после платежа, и мы всё исправим. Это не ограничивает ваши права по закону о защите прав потребителей.',
-    'Pro 每月自动续订，直到你取消。你可以随时在个人菜单（管理订阅）中取消；之后 Pro 会保留到已付费月份结束，不会再扣款。我们不退还不足一个月的费用，但如果出了问题，请在付款后 14 天内联系我们，我们会妥善解决。以上内容不限制你依据消费者保护法享有的权利。',
-    'Pro ต่ออายุทุกเดือนจนกว่าคุณจะยกเลิก คุณยกเลิกได้ทุกเมื่อในเมนูโปรไฟล์ (จัดการการสมัคร) จากนั้น Pro จะใช้ได้จนจบเดือนที่จ่ายแล้ว และจะไม่มีการเรียกเก็บเงินอีก เราไม่คืนเงินสำหรับเดือนที่ใช้ไม่ครบ แต่หากมีปัญหา เขียนถึงเราภายใน 14 วันหลังการชำระเงิน แล้วเราจะแก้ไขให้ ทั้งหมดนี้ไม่จำกัดสิทธิ์ของคุณตามกฎหมายคุ้มครองผู้บริโภค'),
+    'One month of Pro can also be bought once: it does not renew. Pro renews every month until you cancel. You can cancel any time in the profile menu (Manage subscription); Pro then stays on until the end of the month you have paid for, and no further payments are taken. We do not refund partial months, but if something went wrong, write to us within 14 days of a payment and we will make it right. None of this limits the rights you have under consumer law.',
+    'Можно также разово купить один месяц Pro: он не продлевается. Pro продлевается каждый месяц, пока вы его не отмените. Отменить можно в любой момент в меню профиля («Управлять подпиской»); Pro останется до конца оплаченного месяца, и новых списаний не будет. За неполные месяцы деньги не возвращаются, но если что-то пошло не так, напишите нам в течение 14 дней после платежа, и мы всё исправим. Это не ограничивает ваши права по закону о защите прав потребителей.',
+    '也可以一次性购买一个月的 Pro：不会自动续订。Pro 每月自动续订，直到你取消。你可以随时在个人菜单（管理订阅）中取消；之后 Pro 会保留到已付费月份结束，不会再扣款。我们不退还不足一个月的费用，但如果出了问题，请在付款后 14 天内联系我们，我们会妥善解决。以上内容不限制你依据消费者保护法享有的权利。',
+    'สามารถซื้อ Pro หนึ่งเดือนแบบครั้งเดียวได้ด้วย ซึ่งจะไม่ต่ออายุ Pro ต่ออายุทุกเดือนจนกว่าคุณจะยกเลิก คุณยกเลิกได้ทุกเมื่อในเมนูโปรไฟล์ (จัดการการสมัคร) จากนั้น Pro จะใช้ได้จนจบเดือนที่จ่ายแล้ว และจะไม่มีการเรียกเก็บเงินอีก เราไม่คืนเงินสำหรับเดือนที่ใช้ไม่ครบ แต่หากมีปัญหา เขียนถึงเราภายใน 14 วันหลังการชำระเงิน แล้วเราจะแก้ไขให้ ทั้งหมดนี้ไม่จำกัดสิทธิ์ของคุณตามกฎหมายคุ้มครองผู้บริโภค'),
   'terms.h.fair': L(
     'Fair use',
     'Добросовестное использование',

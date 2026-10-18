@@ -5,7 +5,8 @@
 //   POST /billing/downgrade Pro given without paying (early access) goes back to Free now
 //   POST /billing/webhook   Polar tells us what happened; this moves accounts.pro_until
 // Function secrets: POLAR_ACCESS_TOKEN (an organization access token), POLAR_WEBHOOK_SECRET (from
-// the webhook endpoint), POLAR_PRODUCT_ID, and POLAR_API (https://api.polar.sh/v1 by default,
+// the webhook endpoint), POLAR_PRODUCT_ID (the monthly subscription), POLAR_MONTH_PRODUCT_ID (one
+// month bought once, no renewal), and POLAR_API (https://api.polar.sh/v1 by default,
 // https://sandbox-api.polar.sh/v1 for the sandbox).
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2'
 
@@ -46,7 +47,9 @@ async function checkout(req: Request) {
   const user = await person(req)
   if (!user) return json({ error: 'sign_in' }, 401)
   const session = await polar('/checkouts/', {
-    products: [Deno.env.get('POLAR_PRODUCT_ID')],
+    // The subscription first (chosen by default); one month bought once is the other choice on
+    // Polar's page.
+    products: [Deno.env.get('POLAR_PRODUCT_ID'), Deno.env.get('POLAR_MONTH_PRODUCT_ID')].filter(Boolean),
     external_customer_id: user.id,
     customer_email: user.email,
     success_url: `${SITE}/app/?pro=1`,
@@ -107,7 +110,8 @@ async function webhook(req: Request) {
   const body = await req.text()
   if (!(await signed(req, body))) return json({ error: 'bad_signature' }, 401)
   const event = JSON.parse(body), type: string = event.type, o = event.data ?? {}
-  // Only subscriptions move Pro: each of their events carries the whole subscription.
+  if (type === 'order.paid' && !o.subscription_id) return oneTime(o)
+  // Otherwise only subscriptions move Pro: each of their events carries the whole subscription.
   if (!type.startsWith('subscription.')) return json({ ignored: type })
   const userId: string | undefined = o.customer?.external_id ?? o.metadata?.user_id
   if (!userId) return json({ ignored: type })
@@ -134,6 +138,22 @@ async function webhook(req: Request) {
   const { error } = await admin.from('accounts').update(change).eq('user_id', userId)
   if (error) return json({ error: error.message }, 500)
   return json({ ok: type })
+}
+
+// One month bought once: 30 more days of Pro, counted from today or from the end of the Pro the
+// person already has. Each order counts once, however many times Polar delivers it.
+async function oneTime(o: any) {
+  const userId: string | undefined = o.customer?.external_id ?? o.metadata?.user_id
+  if (!userId || o.product_id !== Deno.env.get('POLAR_MONTH_PRODUCT_ID')) return json({ ignored: 'order.paid' })
+  const days = 30
+  const { error: taken } = await admin.from('pro_orders').insert({ order_id: o.id, user_id: userId, days })
+  if (taken) return json(taken.code === '23505' ? { ok: 'already counted' } : { error: taken.message }, taken.code === '23505' ? 200 : 500)
+  const { data: account } = await admin.from('accounts').select('plan, pro_until').eq('user_id', userId).maybeSingle()
+  if (account?.plan === 'pro' && !account.pro_until) return json({ ok: 'pro without an end already' })
+  const from = Math.max(Date.now(), account?.pro_until ? Date.parse(account.pro_until) : 0)
+  const { error } = await admin.from('accounts').update({ plan: 'pro', pro_until: new Date(from + days * DAY).toISOString() }).eq('user_id', userId)
+  if (error) return json({ error: error.message }, 500)
+  return json({ ok: 'order.paid' })
 }
 
 Deno.serve(async req => {
