@@ -1,9 +1,9 @@
 // Paying for Pro: the site asks supabase/functions/billing for a Polar link and goes there, either
 // to pay (checkout) or to manage or cancel the subscription (portal). account() reads the person's
 // plan as the limits see it.
-import { supabase, siteUrl } from './auth.js?v=87cadd6a';
-import { t } from './i18n.js?v=87cadd6a';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=87cadd6a';
+import { supabase, siteUrl } from './auth.js?v=c4411395';
+import { t } from './i18n.js?v=c4411395';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=c4411395';
 
 export async function account() {
   const { data } = await supabase.from('accounts').select('plan, pro_until, customer_id, subscription_status').maybeSingle();
@@ -18,9 +18,12 @@ export async function account() {
 // person signs in first and comes back to the pricing page.
 // While the link is fetched (a few seconds), the clicked button or link says so with a spinner and
 // takes no more clicks; it comes back as it was if anything fails.
+// The portal opens in a new tab so Goalcraft stays open (Polar won't show it inside our page). The tab
+// is opened at the click, before the link arrives, or the browser would block it as a pop-up.
 export async function openBilling(kind, el) {
+  const tab = kind === 'portal' ? window.open('', '_blank') : null;
   const restore = el ? wait(el, t(kind === 'downgrade' ? 'billing.switching' : 'billing.opening')) : () => {};
-  try { if (await go(kind) === 'closed') restore(); } catch (e) { restore(); throw e; }
+  try { if (await go(kind, tab) === 'closed') restore(); } catch (e) { tab?.close(); restore(); throw e; }
 }
 function wait(el, text) {
   const html = el.innerHTML, disabled = el.disabled;
@@ -28,9 +31,9 @@ function wait(el, text) {
   el.innerHTML = `<span class="spin" aria-hidden="true"></span>${text}`;
   return () => { el.classList.remove('busy'); el.disabled = disabled; el.removeAttribute('aria-busy'); el.innerHTML = html; };
 }
-async function go(kind) {
+async function go(kind, tab) {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { location.href = siteUrl('login/?next=' + encodeURIComponent(siteUrl('pricing/'))); return; }
+  if (!session) { tab?.close(); location.href = siteUrl('login/?next=' + encodeURIComponent(siteUrl('pricing/'))); return; }
   const res = await fetch(`${SUPABASE_URL}/functions/v1/billing/${kind}`, {
     method: 'POST',
     headers: { authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_KEY, 'content-type': 'application/json' },
@@ -40,6 +43,7 @@ async function go(kind) {
   if (body.done) return location.reload(); // changed here, nothing to open
   if (!body.url) throw new Error(body.error || 'failed');
   if (kind === 'checkout' && await embed(body.url)) return 'closed'; // shown over the page and closed again
+  if (tab) { tab.opener = null; tab.location.href = body.url; return 'closed'; }
   location.href = body.url;
 }
 
