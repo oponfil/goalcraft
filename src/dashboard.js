@@ -1,12 +1,13 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c4411395';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c4411395';
-import { t, lang } from './i18n.js?v=c4411395';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=42ac6881';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=42ac6881';
+import { t, lang } from './i18n.js?v=42ac6881';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
 // empty tab and remember the web chat to fall back to.
+const webOf = (url, info) => (/^https?:/.test(url || '') ? url : info.chat);
 const opens = (url, web) => (/^https?:/.test(url) ? 'target="_blank" rel="noopener"' : `data-web="${esc(web)}"`);
 
 // No app on this computer: the app link does nothing and the page keeps the focus, so after a
@@ -219,7 +220,9 @@ export function mountDashboard(funnels, opts = {}) {
 
   function content(h) {
     const a = h.a, info = agentInfo(a.agent), f = a.f;
-    const web = a.chat || info.chat, chat = chatLink(info, web), paint = agentButton(info);
+    // own: the agent's own chat, an app link (claude://, codex://) or a web one; web: where to go
+    // when the app isn't on this computer.
+    const own = a.chat || info.chat, web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);
     const who = esc(info.name);
     // The step it works on, with what this run added (the last run's while it sleeps) to the items
     // it works into: "Job Search: jobs found → +4 applied".
@@ -237,7 +240,7 @@ export function mountDashboard(funnels, opts = {}) {
       // agent's chat instead.
       const openBtn = url => {
         const link = chatLink(info, url);
-        return link ? `<a class="btn" href="${esc(link)}" ${opens(link, url)}>${esc(t('board.open', info.product || info.name))}</a>` : '';
+        return link ? `<a class="btn" href="${esc(link)}" ${opens(link, webOf(url, info))}>${esc(t('board.open', info.product || info.name))}</a>` : '';
       };
       const asks = a.questions.map(q => `<div class="ask" data-qid="${esc(q.id)}"><p>${esc(q.question)}</p>${opts.onAnswer
         ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>

@@ -10,8 +10,9 @@ import { z } from 'npm:zod@4.6.5'
 import { emailQuestion } from './notify.ts'
 
 type Db = any // the Supabase client scoped to the caller
-// Who is calling, and an admin client to read their current settings (for question emails).
-type Caller = { id: string, admin: Db }
+// Who is calling, and an admin client to read their current settings (for question emails). chat:
+// the link to the conversation the call came from, when the agent's app says which one it is.
+type Caller = { id: string, admin: Db, chat?: string }
 
 const THEMES = ['mine', 'lab', 'garden', 'love', 'code', 'money', 'forge', 'bakery', 'blocks'] as const
 const forms = z.array(z.string().min(1).max(40)).min(1).max(3)
@@ -23,7 +24,8 @@ const INSTRUCTIONS = `Goalcraft shows the person their goals as funnels and the 
 A funnel is one goal (e.g. "Job Search") with 2-5 stages top to bottom (jobs found → applied → interview → final round) and a result at the bottom (offer).
 Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage k, zone n (below the last stage) turns the last stage into results. At most two agents per zone on Pro, one on the free plan.
 Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when you wake up and again every 5 minutes while you work. The dashboard waits twice that, 10 minutes of silence, then warns the person that you did not wake up (10 minutes past your next_run_at) or that it lost contact with you (10 minutes after your last signal).
-On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question, chat_url of this conversation when you know it) and poll get_answer: while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next); if you need more from the person, ask a new question instead. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
+Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not.
+On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer: while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next); if you need more from the person, ask a new question instead. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
 Report only counts, dates and links: the items themselves stay in the person's own sources.
@@ -250,7 +252,7 @@ function server(db: Db, caller: Caller) {
       state: z.enum(['work', 'sleep', 'ask']),
       next_run_at: z.string().datetime({ offset: true }).optional().describe('For sleep: ISO time of your next run'),
       question: z.string().min(1).max(1000).optional().describe('For ask: what you need from the person'),
-      chat_url: z.string().url().regex(/^https?:\/\//).optional().describe('Link to this conversation (e.g. https://chatgpt.com/c/…, https://claude.ai/chat/…) when you know it. With ask it is kept with the question, so the person\'s "Open" under it leads to this very chat'),
+      chat_url: z.string().url().regex(CHAT_LINK).optional().describe('Link to this conversation, so the person\'s "Open" leads to this very chat: https://claude.ai/chat/…, https://chatgpt.com/c/…, or in the Claude app claude://claude.ai/epitaxy/<your session id> (see the instructions). Codex links itself. With ask it is kept with the question'),
       added: z.number().int().min(0).max(1e9).optional().describe('How many items you added this run, when you know it better than the counts show (e.g. when items also left your stage). Leave it out and the dashboard counts it from report_counts'),
     }),
     annotations: { title: 'Set your state', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -259,13 +261,14 @@ function server(db: Db, caller: Caller) {
     const n = (check(await db.from('stages').select('key').eq('funnel_id', f.id)) as unknown[]).length
     if (a.zone > n) fail(`This funnel has ${n} stages, so zones are 0-${n}`)
     if (a.state === 'ask' && !a.question) fail('state "ask" needs a question')
+    const chat_url = a.chat_url ?? caller.chat
     let question_id: string | null = null
     if (a.state === 'ask') {
       // The same question asked again while still unanswered (say, on the agent's next run) is not
       // news: no second email for it.
       const again = check(await db.from('questions').select('id').eq('funnel_id', f.id).eq('agent', a.agent)
         .eq('question', a.question).is('answered_at', null).limit(1)) as unknown[]
-      const q = check(await db.from('questions').insert({ funnel_id: f.id, agent: a.agent, question: a.question, chat_url: a.chat_url ?? null })
+      const q = check(await db.from('questions').insert({ funnel_id: f.id, agent: a.agent, question: a.question, chat_url: chat_url ?? null })
         .select('id').single()) as { id: string }
       question_id = q.id
       if (!again.length) notify(caller, f.id, a.agent, a.question!)
@@ -284,7 +287,7 @@ function server(db: Db, caller: Caller) {
     check(await db.from('presence').upsert({
       funnel_id: f.id, agent: a.agent, zone: a.zone, state: a.state,
       next_run_at: a.state === 'sleep' ? a.next_run_at ?? null : null,
-      question_id, ...(a.chat_url !== undefined && { chat_url: a.chat_url }),
+      question_id, ...(chat_url !== undefined && { chat_url }),
       ...run,
       ...(a.added != null && { run_added: a.added, run_manual: true }),
     }, { onConflict: 'funnel_id,agent' }))
@@ -371,6 +374,22 @@ function server(db: Db, caller: Caller) {
   return s
 }
 
+// Links a chat_url may hold: web chats, and the Claude and ChatGPT (Codex) apps' own links.
+const CHAT_LINK = /^(https?|claude|codex):\/\//
+
+// The conversation a call came from, when the agent's app names it: Codex sends its thread id with
+// every tool call, and the ChatGPT app opens that thread from codex://threads/<id>.
+function chatOf(raw: string): string | undefined {
+  try {
+    const body = JSON.parse(raw)
+    for (const m of Array.isArray(body) ? body : [body]) {
+      const meta = m?.params?._meta
+      const thread = meta?.threadId ?? meta?.['x-codex-turn-metadata']?.thread_id
+      if (typeof thread === 'string' && /^[0-9a-f-]{36}$/i.test(thread)) return `codex://threads/${thread}`
+    }
+  } catch { /* not JSON */ }
+}
+
 Deno.serve(
   pipeline(
     [
@@ -378,7 +397,11 @@ Deno.serve(
       withOAuthProtectedResource({ authorizationServer: Deno.env.get('MCP_AUTH_ISSUER') }),
       withSupabase({ auth: 'user' }),
     ],
-    (req: Request, { supabase, supabaseAdmin, userClaims }: { supabase: Db, supabaseAdmin: Db, userClaims: { id: string } }) =>
-      createMcpHandler(() => server(supabase, { id: userClaims.id, admin: supabaseAdmin })).fetch(req),
+    async (req: Request, { supabase, supabaseAdmin, userClaims }: { supabase: Db, supabaseAdmin: Db, userClaims: { id: string } }) => {
+      // Read the body once and hand the server a fresh copy of the request.
+      const raw = req.method === 'POST' ? await req.text() : ''
+      const fresh = raw ? new Request(req.url, { method: req.method, headers: req.headers, body: raw }) : req
+      return createMcpHandler(() => server(supabase, { id: userClaims.id, admin: supabaseAdmin, chat: chatOf(raw) })).fetch(fresh)
+    },
   ),
 )

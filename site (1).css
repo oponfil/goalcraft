@@ -1,0 +1,121 @@
+/* Shared styles for the landing, sign-in and account pages. */
+:root {
+  --bg: #1B1714;
+  --panel: #241F1B;
+  --text: #F4EDE1;
+  --muted: #B8AE9F;
+  --border: #4A3F35;
+  --accent: #F2C14E;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 "Rubik", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif; }
+a { color: inherit; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.logo { font-weight: 700; font-size: 20px; text-decoration: none; }
+.logo span { color: var(--accent); }
+.links { display: flex; align-items: center; gap: 20px; font-size: 15px; }
+.links a { color: var(--muted); text-decoration: none; white-space: nowrap; }
+.links a:hover { color: var(--text); }
+.links a.signin { white-space: nowrap; background: var(--accent); color: #1B1714; font-weight: 600; padding: 6px 16px; line-height: 22px; border: 2px solid var(--accent); }
+.links a.signin:hover { background: #FFD866; border-color: #FFD866; color: #1B1714; }
+@media (max-width: 560px) { .links { gap: 14px; } .links .wide { display: none; } .links a.signin { padding: 6px 14px; } }
+.hero { padding: 48px 0 32px; text-align: center; }
+h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.12; margin: 0 auto 18px; max-width: 760px; font-weight: 700; }
+.lead { color: var(--muted); font-size: 19px; max-width: 640px; margin: 0 auto 28px; }
+.cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-block; padding: 12px 22px; border: 2px solid var(--border); text-decoration: none; font-weight: 600; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #1B1714; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary:hover { background: #FFD866; border-color: #FFD866; }
+.btn:disabled { opacity: 0.5; cursor: wait; }
+.shot { display: block; margin: 40px auto 0; width: 100%; border: 2px solid var(--border); image-rendering: pixelated; }
+/* The landing page's funnel with labels: the picture on the right, each label on the left at its
+   part's height with a straight arrow to it. On a phone the labels follow the picture as a list. */
+.guide { --img: 460px; position: relative; margin: 40px auto 0; max-width: 820px; }
+.guide img { display: block; width: var(--img); height: auto; margin-left: auto; border: 2px solid var(--border); }
+.guide .note { position: absolute; top: calc(var(--y) * 100%); right: calc(var(--img) + 28px); width: calc(100% - var(--img) - 40px); transform: translateY(-13px); text-align: right; font-size: 15px; line-height: 1.35; color: var(--muted); }
+.guide .note b { display: block; color: var(--accent); font-size: 19px; line-height: 1.35; }
+.guide .note::after { content: ""; position: absolute; top: 13px; left: calc(100% + 6px); width: calc(var(--x) * var(--img) + 20px); height: 3px; margin-top: -1px; background: var(--accent); }
+.guide .note::before { content: ""; position: absolute; top: calc(13px - 7px); left: calc(100% + 18px + var(--x) * var(--img)); border: 7px solid transparent; border-left: 12px solid var(--accent); border-right: 0; z-index: 1; }
+@media (max-width: 720px) {
+  .guide { --img: 100%; }
+  .guide img { margin: 0 auto 16px; max-width: 360px; }
+  .guide .note { position: static; width: auto; transform: none; text-align: left; margin: 0 0 12px; }
+  .guide .note::before, .guide .note::after { display: none; }
+}
+.points { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; padding: 40px 0; }
+.point { background: var(--panel); border: 2px solid var(--border); padding: 18px 20px; }
+.point h3 { margin: 0 0 6px; font-size: 18px; }
+.point p { margin: 0; color: var(--muted); font-size: 15px; }
+footer { border-top: 2px solid var(--border); padding: 20px 0 32px; color: var(--muted); font-size: 14px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* Sign-in and account pages */
+.card { max-width: 420px; margin: 48px auto; background: var(--panel); border: 2px solid var(--border); padding: 28px; }
+.card h1 { font-size: 28px; margin: 0 0 6px; text-align: left; }
+.card .sub { color: var(--muted); margin: 0 0 22px; font-size: 15px; }
+.card .btn { width: 100%; text-align: center; cursor: pointer; font: inherit; font-weight: 600; background: none; color: var(--text); }
+.card .btn.primary { background: var(--accent); color: #1B1714; }
+.or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; margin: 18px 0; }
+.or::before, .or::after { content: ""; flex: 1; border-top: 2px solid var(--border); }
+.field { width: 100%; padding: 12px 14px; margin-bottom: 10px; background: var(--bg); border: 2px solid var(--border); color: var(--text); font: inherit; }
+.field:focus { outline: none; border-color: var(--accent); }
+.msg { min-height: 22px; margin-top: 14px; font-size: 14px; color: var(--muted); }
+.msg.error { color: #FF6B5E; }
+.msg.ok { color: #7BD88F; }
+.empty { border: 2px dashed var(--border); padding: 28px; text-align: center; color: var(--muted); margin: 24px 0; }
+.empty h2 { color: var(--text); font-size: 22px; margin: 0 0 8px; }
+.code { display: block; background: var(--bg); border: 2px solid var(--border); padding: 10px 12px; font: 14px ui-monospace, monospace; color: var(--text); margin: 12px auto; max-width: 520px; overflow-x: auto; }
+
+/* Text pages (privacy) */
+.doc { max-width: 680px; margin: 40px auto 56px; }
+.doc h1 { font-size: 36px; margin: 0 0 6px; }
+.doc h2 { font-size: 20px; margin: 28px 0 8px; }
+.doc p, .doc li { color: var(--muted); line-height: 1.6; }
+.doc a { color: var(--accent); }
+.gbtn { min-height: 44px; display: flex; justify-content: center; }
+.perm { margin: 0 0 14px; padding-left: 20px; color: var(--text); font-size: 15px; }
+.perm li { margin: 4px 0; }
+.note { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+.card .btn:disabled { opacity: 0.5; cursor: default; }
+
+/* Pricing */
+.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 760px; margin: 0 auto; }
+.plan { position: relative; background: var(--panel); border: 2px solid var(--border); padding: 26px 24px; display: flex; flex-direction: column; }
+.plan.pro { border-color: var(--accent); }
+.plan h2 { margin: 0 0 8px; font-size: 22px; }
+.plan .price { font-size: 44px; font-weight: 700; line-height: 1.1; }
+.plan .price s { color: var(--muted); font-size: 28px; font-weight: 500; margin-right: 6px; }
+.plan .per { color: var(--muted); margin: 4px 0 18px; font-size: 15px; }
+.plan ul { list-style: none; padding: 0; margin: 0 0 24px; flex: 1; }
+.plan li { padding: 7px 0; border-top: 1px solid var(--border); font-size: 15px; }
+.plan li b { color: var(--accent); }
+.plan .btn { text-align: center; }
+.plan .tag { position: absolute; top: -13px; right: 18px; background: var(--accent); color: #1B1714; font-size: 13px; font-weight: 700; padding: 2px 10px; }
+.fineprint { text-align: center; color: var(--muted); font-size: 14px; margin: 24px auto 40px; max-width: 560px; }
+.links a.gh { display: flex; }
+.logo { display: inline-flex; align-items: center; }
+.logo .mark { image-rendering: pixelated; margin-right: 8px; }
+
+/* Language picker in the nav. */
+.links select.lang { width: 3.9em; background: transparent; color: inherit; border: 1px solid var(--border); font: inherit; font-size: 14px; padding: 3px 2px; cursor: pointer; }
+.links select.lang option { background: #241F1B; color: #F4EDE1; }
+@media (max-width: 560px) { .links a.gh { display: none; } }
+/* The signed-in profile: a round photo (or silhouette) and its menu of rare settings. */
+.links .profile { position: relative; display: flex; }
+.links .avatar { width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 2px solid var(--border); background: #241F1B; color: #B8AE9F; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.links .avatar:hover, .links .avatar[aria-expanded="true"] { border-color: #F2C14E; color: #F4EDE1; }
+.links .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; min-width: 260px; background: #241F1B; border: 2px solid var(--border); padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; color: #F4EDE1; text-align: left; }
+.profile-menu[hidden] { display: none; }
+.profile-menu .email { color: #B8AE9F; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-menu .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.profile-menu .row.check { justify-content: flex-start; line-height: 1.35; }
+.profile-menu .row.check input { margin: 0; accent-color: #F2C14E; cursor: pointer; flex: none; }
+.links .profile-menu select.lang { width: auto; font-size: 14px; padding: 3px 4px; }
+.links .profile-menu a.signout { color: #B8AE9F; text-decoration: none; border-top: 1px solid var(--border); padding-top: 10px; }
+.links .profile-menu a.signout:hover { color: #F4EDE1; }
+/* Rubik has no Vietnamese letters: Vietnamese pages use Be Vietnam Pro, a font of the same shape. */
+html:lang(vi) body { font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+/* Japanese: Noto Sans JP before the Chinese font, so kanji take their Japanese shapes. */
+html:lang(ja) body { font-family: "Rubik", "Noto Sans JP", system-ui, sans-serif; }
