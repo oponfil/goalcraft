@@ -43,10 +43,16 @@ async function person(req: Request) {
 
 // The Polar customer is tied to our user id (external_customer_id), so the webhook and the portal
 // find the person without anything stored first.
+// Sites the checkout may open inside (Polar → Settings → Embedding lists the same hosts).
+const EMBED_ORIGINS = [SITE, 'http://localhost:5173']
+
 async function checkout(req: Request) {
   const user = await person(req)
   if (!user) return json({ error: 'sign_in' }, 401)
+  const { embed_origin } = await req.json().catch(() => ({}))
   const session = await polar('/checkouts/', {
+    // Opened over our page rather than on Polar's site, when the page asks for it.
+    ...(EMBED_ORIGINS.includes(embed_origin) && { embed_origin }),
     // The subscription first (chosen by default); one month bought once is the other choice on
     // Polar's page.
     products: [Deno.env.get('POLAR_PRODUCT_ID'), Deno.env.get('POLAR_MONTH_PRODUCT_ID')].filter(Boolean),

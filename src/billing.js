@@ -1,9 +1,9 @@
 // Paying for Pro: the site asks supabase/functions/billing for a Polar link and goes there, either
 // to pay (checkout) or to manage or cancel the subscription (portal). account() reads the person's
 // plan as the limits see it.
-import { supabase, siteUrl } from './auth.js?v=e30d9c95';
-import { t } from './i18n.js?v=e30d9c95';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=e30d9c95';
+import { supabase, siteUrl } from './auth.js?v=33ef65d6';
+import { t } from './i18n.js?v=33ef65d6';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=33ef65d6';
 
 export async function account() {
   const { data } = await supabase.from('accounts').select('plan, pro_until, customer_id, subscription_status').maybeSingle();
@@ -20,7 +20,7 @@ export async function account() {
 // takes no more clicks; it comes back as it was if anything fails.
 export async function openBilling(kind, el) {
   const restore = el ? wait(el, t(kind === 'downgrade' ? 'billing.switching' : 'billing.opening')) : () => {};
-  try { await go(kind); } catch (e) { restore(); throw e; }
+  try { if (await go(kind) === 'closed') restore(); } catch (e) { restore(); throw e; }
 }
 function wait(el, text) {
   const html = el.innerHTML, disabled = el.disabled;
@@ -33,10 +33,36 @@ async function go(kind) {
   if (!session) { location.href = siteUrl('login/?next=' + encodeURIComponent(siteUrl('pricing/'))); return; }
   const res = await fetch(`${SUPABASE_URL}/functions/v1/billing/${kind}`, {
     method: 'POST',
-    headers: { authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_KEY },
+    headers: { authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_KEY, 'content-type': 'application/json' },
+    body: JSON.stringify(kind === 'checkout' ? { embed_origin: location.origin } : {}),
   });
   const body = await res.json().catch(() => ({}));
   if (body.done) return location.reload(); // changed here, nothing to open
   if (!body.url) throw new Error(body.error || 'failed');
+  if (kind === 'checkout' && await embed(body.url)) return 'closed'; // shown over the page and closed again
   location.href = body.url;
+}
+
+// The checkout opens over our page (Polar's embedded checkout) so the person stays on Goalcraft;
+// paid, it goes to Goals, where a note says Pro is on. Resolves false if it can't be shown, and
+// the caller goes to Polar's page instead. The promise waits until the checkout is closed.
+const EMBED_SCRIPT = 'https://cdn.jsdelivr.net/npm/@polar-sh/checkout@0.4.2/dist/embed.global.js';
+async function embed(url) {
+  try {
+    if (!window.Polar?.EmbedCheckout) await new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = EMBED_SCRIPT; s.onload = ok; s.onerror = fail;
+      document.head.append(s);
+    });
+    const checkout = await window.Polar.EmbedCheckout.create(url, { theme: 'dark' });
+    return await new Promise(done => {
+      checkout.addEventListener('success', e => {
+        e.preventDefault();
+        location.href = siteUrl('app/?pro=1');
+      });
+      checkout.addEventListener('close', () => done(true));
+    });
+  } catch {
+    return false;
+  }
 }
