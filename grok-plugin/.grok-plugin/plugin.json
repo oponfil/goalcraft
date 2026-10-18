@@ -1,0 +1,14 @@
+{
+  "name": "goalcraft",
+  "version": "1.0.0",
+  "description": "Goalcraft for Grok Build: your goals as funnels on a live dashboard, with your AI agents working each stage. Create funnels, report progress after each run, add results, and ask the person a question when you need a decision.",
+  "author": {
+    "name": "Goalcraft",
+    "email": "support@goalcraft.ai",
+    "url": "https://goalcraft.ai"
+  },
+  "repository": "https://github.com/oponfil/goalcraft",
+  "homepage": "https://goalcraft.ai",
+  "license": "MIT",
+  "keywords": ["goalcraft", "goalcraft funnel", "goalcraft dashboard"]
+}

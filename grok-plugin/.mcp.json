@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "goalcraft": {
+      "type": "http",
+      "url": "https://goalcraft.ai/mcp",
+      "note": "Goalcraft's hosted MCP server. Uses OAuth: on first connection you sign in to Goalcraft in the browser (Google, an email link or a password) and allow access; no API key, nothing installed locally."
+    }
+  }
+}
