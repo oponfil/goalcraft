@@ -139,3 +139,16 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 .spin { display: inline-block; width: 0.9em; height: 0.9em; margin-right: 0.5em; vertical-align: -0.12em;
   border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Pricing while the person's plan is being read: the cards wait, hidden but keeping their place,
+   and the pickaxe from the dashboards works over them. */
+.plans { position: relative; }
+.plans .loader { display: none; }
+.plans.checking .plan { visibility: hidden; }
+.plans.checking .loader { display: flex; position: absolute; inset: 0; align-items: center; justify-content: center; pointer-events: none; }
+.plans .loader svg { image-rendering: pixelated; }
+.plans .loader .pick { transform-origin: 13.5px 13.5px; animation: pick-swing 0.6s steps(1) infinite; }
+.plans .loader .spark { opacity: 0; animation: pick-spark 0.6s steps(1) infinite; }
+@keyframes pick-swing { 0% { transform: rotate(-90deg); } 50% { transform: none; } }
+@keyframes pick-spark { 50% { opacity: 1; } 80% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .plans .loader .pick, .plans .loader .spark { animation: none; } }
