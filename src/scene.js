@@ -1,16 +1,18 @@
-import { agentInfo, plural } from './data.js?v=fb27b397';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=fb27b397';
-import { themeOf } from './themes.js?v=fb27b397';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=fb27b397';
+import { agentInfo, plural } from './data.js?v=f143d60b';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=f143d60b';
+import { themeOf } from './themes.js?v=f143d60b';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=f143d60b';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
 // The scene is tall enough for 5 tanks; shorter funnels end higher up. Titles live in the page header.
 export const CW = 200;
-const ZW = 164, TOP = 48, ZH = 40, LH = 46, MAX_STAGES = 5;
+// ZH: the height of a work zone between two tanks, the same as from the supervisor's platform down to
+// the first tank.
+const ZW = 164, TOP = 48, ZH = 45, LH = 46, MAX_STAGES = 5;
 // The supervisor's platform: a small deck on top of the pipe; the supervisor walks from one end to
 // the other and looks down from each.
-const DECK_HALF = 28, DECK_Y = TOP - 9;
+const DECK_HALF = 28, DECK_Y = TOP;
 // The funnel's notes (left) and its list (right) hang in the air beside the platform's ends, DOC_W
 // wide each, their bottoms a little above its floor.
 const DOC_W = 18, GUIDE_X = -DECK_HALF - 5 - DOC_W, SHEET_X = DECK_HALF + 6, DOC_Y = DECK_Y - 25;
