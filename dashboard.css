@@ -224,14 +224,14 @@ body {
 /* A plain scrolling page inside the dashboard layout (connect). */
 .page { flex: 1; overflow: auto; display: flex; flex-direction: column; }
 .page .connect { width: 100%; box-sizing: border-box; }
-/* Site footer, the same as on the landing page: at the end of a page, under the board in the demo. */
+/* Site footer, the same as on the landing page, at the end of the Connect page. The boards (demo,
+   Goals) have none: the board fills the window. */
 .sitefoot {
   flex: none; margin: auto max(20px, calc((100% - 1000px) / 2)) 0; padding: 14px 0 18px;
   border-top: 2px solid var(--border); color: var(--muted); font-size: 14px;
   display: flex; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap;
 }
 .sitefoot a { color: inherit; }
-body > .sitefoot { padding: 10px 0 12px; font-size: 13px; }
 .sitebar .refresh {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
   background: none; border: 2px solid var(--border); color: var(--text); font: 500 13px var(--font); text-decoration: none; cursor: pointer;
