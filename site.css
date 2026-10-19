@@ -42,10 +42,16 @@ h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.12; margin: 0 auto 18px; 
 .guide .note b { display: block; color: var(--accent); font-size: 19px; line-height: 1.35; }
 .guide .note::after { content: ""; position: absolute; top: 13px; left: calc(100% + 6px); width: calc(var(--x) * var(--img) + 20px); height: 3px; margin-top: -1px; background: var(--accent); }
 .guide .note::before { content: ""; position: absolute; top: calc(13px - 7px); left: calc(100% + 18px + var(--x) * var(--img)); border: 7px solid transparent; border-left: 12px solid var(--accent); border-right: 0; z-index: 1; }
+/* The top label (the supervisor) grows upwards, its text over its heading: on a narrow page its text
+   wraps to more lines and would run into the label under it. The heading stays on the arrow. */
+.guide .note.up { display: flex; flex-direction: column-reverse; transform: translateY(calc(-100% + 13px)); }
+.guide .note.up::after { top: auto; bottom: 12px; }
+.guide .note.up::before { top: auto; bottom: 6px; }
 @media (max-width: 720px) {
   .guide { --img: 100%; }
   .guide img, .guide canvas.live { margin: 0 auto 16px; max-width: 360px; }
   .guide .note { position: static; width: auto; transform: none; text-align: left; margin: 0 0 12px; }
+  .guide .note.up { display: block; transform: none; }
   .guide .note::before, .guide .note::after { display: none; }
 }
 .points { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; padding: 40px 0; }

@@ -1,8 +1,8 @@
 // The landing page's funnel, live: the picture is swapped for the same funnel drawn by the board's
 // own code, so the agents work, the timer counts down and pieces drop in, in the page's language.
 // It only runs while on screen; with reduced motion the still picture stays.
-import { guideScene, guideHeight, drawGuide, TH } from './guide.js?v=ec3eb81b';
-import { CW } from './scene.js?v=ec3eb81b';
+import { guideScene, guideHeight, drawGuide, TH } from './guide.js?v=4c4ca36c';
+import { CW } from './scene.js?v=4c4ca36c';
 
 const img = document.querySelector('.guide img');
 if (img && !matchMedia('(prefers-reduced-motion: reduce)').matches) {

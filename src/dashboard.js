@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=ec3eb81b';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=ec3eb81b';
-import { t, lang } from './i18n.js?v=ec3eb81b';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=4c4ca36c';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=4c4ca36c';
+import { t, lang } from './i18n.js?v=4c4ca36c';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -241,7 +241,8 @@ export function mountDashboard(funnels, opts = {}) {
     let where;
     if (a.sup) where = a.status ? `${supStatus(a.status)}${a.summary ? `: ${esc(a.summary)}` : ''}` : esc(t('board.supervisorNoRun'));
     else {
-      const st = f.stages, n = a.added || 0, from = a.zone < 0 ? '' : `${esc(plural(5, st[a.zone].forms))} → `;
+      // The card's number is kept for its runs list, so its running row says the same.
+      const st = f.stages, n = a.shownAdded = a.added || 0, from = a.zone < 0 ? '' : `${esc(plural(5, st[a.zone].forms))} → `;
       const into = a.zone === st.length - 1 ? f.result : st[a.zone + 1].forms;
       where = `${from}<b class="run">+${fmtCount(n)}</b> ${esc(plural(n, into))}`;
     }
@@ -368,7 +369,9 @@ export function mountDashboard(funnels, opts = {}) {
   document.addEventListener('pointerdown', e => {
     if (!pop.hidden && !pop.contains(e.target) && e.target !== canvas) hidePop();
   });
-  scroller.addEventListener('scroll', hidePop);
+  // Scrolling moves the funnels under the pointer: a card or a tank's name over them would now point
+  // at the wrong one.
+  scroller.addEventListener('scroll', () => { hidePop(); tip.hidden = true; });
 
   return {
     // New data from the agents: rebuild the scene, keep the viewer's order and scroll.

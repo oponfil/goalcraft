@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=ec3eb81b';
-import { mountDashboard } from './dashboard.js?v=ec3eb81b';
-import { t } from './i18n.js?v=ec3eb81b';
+import { FUNNELS, SUP_RUNS } from './data.js?v=4c4ca36c';
+import { mountDashboard } from './dashboard.js?v=4c4ca36c';
+import { t } from './i18n.js?v=4c4ca36c';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -39,7 +39,7 @@ function demoRuns(a) {
     const going = i === 0 && a.state !== 'sleep', gap = 6 + r() * 6;
     const ended = going ? null : start + (10 + r() * 30) * 60e3;
     const share = perDay * (gap / 24) / crew * (0.5 + r());
-    const added = Math.max(0, Math.min(left, going ? a.added || 0 : Math.floor(share) + (r() < share % 1 ? 1 : 0)));
+    const added = Math.max(0, Math.min(left, going ? a.shownAdded ?? a.added ?? 0 : Math.floor(share) + (r() < share % 1 ? 1 : 0)));
     left -= added;
     rows.push({ zone: z, started_at: new Date(start).toISOString(), ended_at: ended && new Date(ended).toISOString(), added });
     start -= gap * 3600e3;
