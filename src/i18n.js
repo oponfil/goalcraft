@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=029dcdd9';
-import vi from './lang/vi.js?v=029dcdd9';
-import ja from './lang/ja.js?v=029dcdd9';
-import pt from './lang/pt.js?v=029dcdd9';
-import tr from './lang/tr.js?v=029dcdd9';
-import ko from './lang/ko.js?v=029dcdd9';
+import es from './lang/es.js?v=2f9a56fb';
+import vi from './lang/vi.js?v=2f9a56fb';
+import ja from './lang/ja.js?v=2f9a56fb';
+import pt from './lang/pt.js?v=2f9a56fb';
+import tr from './lang/tr.js?v=2f9a56fb';
+import ko from './lang/ko.js?v=2f9a56fb';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -152,6 +152,16 @@ const STRINGS = {
     'Потом скажите ему, над какой целью работать, и ваши воронки появятся здесь. Хотите посмотреть, как это выглядит? <a href="../demo/">Откройте демо</a>.',
     '然后告诉它要推进哪个目标，你的漏斗就会出现在这里。想先看看效果？<a href="../demo/">查看演示</a>。',
     'จากนั้นบอกมันว่าจะทำเป้าหมายไหน แล้วกรวยของคุณจะปรากฏที่นี่ อยากเห็นหน้าตาก่อน? <a href="../demo/">ดูเดโม</a>'),
+  'board.message': L((who) => `Write to ${who}…`, (who) => `Написать: ${who}…`, (who) => `给 ${who} 留言…`, (who) => `เขียนถึง ${who}…`),
+  'board.sendMessage': L('Send', 'Отправить', '发送', 'ส่ง'),
+  'board.messageSent': L((who) => `Sent. ${who} reads it as soon as it checks in.`, (who) => `Отправлено. ${who} прочитает, как только выйдет на связь.`, (who) => `已发送。${who} 一上线就会读到。`, (who) => `ส่งแล้ว ${who} จะอ่านทันทีที่กลับมาออนไลน์`),
+  'connect.wake.h2': L('Instant replies from agents on your computer', 'Мгновенные ответы агентов на вашем компьютере', '让你电脑上的智能体即时响应', 'ให้เอเจนต์บนคอมพิวเตอร์ของคุณตอบทันที'),
+  'connect.wake.intro': L('Agents in the Claude app (Claude Code) or Codex on your computer can wake up within seconds when you write to them, answer their question, or when they miss a run. A small script does it: it checks Goalcraft every 10 seconds and wakes the agent in its own chat. Optional; macOS for now.', 'Агенты в приложении Claude (Claude Code) или в Codex на вашем компьютере могут просыпаться за секунды: когда вы им пишете, отвечаете на вопрос или когда они пропустили запуск. Это делает маленький скрипт: каждые 10 секунд он проверяет Goalcraft и будит агента в его же чате. Необязательно; пока только для macOS.', '你电脑上 Claude 应用（Claude Code）或 Codex 里的智能体，可以在几秒内被唤醒：当你给它留言、回答它的问题，或它错过了运行时。由一个小脚本完成：每 10 秒检查一次 Goalcraft，并在智能体自己的对话里唤醒它。可选；目前仅支持 macOS。', 'เอเจนต์ในแอป Claude (Claude Code) หรือ Codex บนคอมพิวเตอร์ของคุณตื่นได้ในไม่กี่วินาที เมื่อคุณเขียนถึงมัน ตอบคำถามของมัน หรือเมื่อมันพลาดรอบทำงาน สคริปต์เล็กๆ ทำหน้าที่นี้: ตรวจ Goalcraft ทุก 10 วินาทีและปลุกเอเจนต์ในแชตของมันเอง ไม่บังคับ; ตอนนี้รองรับเฉพาะ macOS'),
+  'connect.wake.create': L('Create a key', 'Создать ключ', '创建密钥', 'สร้างคีย์'),
+  'connect.wake.signin': L('<a href="../login/?next=../connect/%23wake">Sign in</a> to create a key.', '<a href="../login/?next=../connect/%23wake">Войдите</a>, чтобы создать ключ.', '<a href="../login/?next=../connect/%23wake">登录</a>后创建密钥。', '<a href="../login/?next=../connect/%23wake">เข้าสู่ระบบ</a>เพื่อสร้างคีย์'),
+  'connect.wake.run': L('Run this in Terminal on your Mac. It installs the script with your key and keeps it running; the key is shown only once, and a new one replaces it.', 'Выполните это в Терминале на вашем Mac. Команда установит скрипт с вашим ключом и будет держать его запущенным. Ключ показывается один раз; новый заменяет старый.', '在 Mac 的终端里运行这条命令。它会用你的密钥安装脚本并保持运行；密钥只显示一次，新建的会替换旧的。', 'รันคำสั่งนี้ใน Terminal บน Mac ของคุณ มันจะติดตั้งสคริปต์พร้อมคีย์ของคุณและให้ทำงานต่อเนื่อง คีย์แสดงเพียงครั้งเดียว และคีย์ใหม่จะแทนที่คีย์เดิม'),
+  'connect.wake.more': L('How it works and how to remove it: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">the script and its instructions</a>.', 'Как это работает и как удалить: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">скрипт и инструкция</a>.', '工作原理和卸载方法：<a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">脚本和说明</a>。', 'วิธีทำงานและวิธีถอนการติดตั้ง: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">สคริปต์และคำแนะนำ</a>'),
+  'connect.wake.failed': L('Could not create the key. Try again.', 'Не удалось создать ключ. Попробуйте ещё раз.', '无法创建密钥，请重试。', 'สร้างคีย์ไม่สำเร็จ ลองอีกครั้ง'),
   'connect.supervisor.intro': L(
     'Paste this prompt into a new chat with your AI agent. The agent connects Goalcraft, asks you about the goal and sets up its funnel. Then it becomes its supervisor: checks it regularly, answers your questions about it and helps you add worker agents.',
     'Вставьте этот промпт в новый чат с вашим ИИ-агентом. Агент подключит Goalcraft, расспросит вас о цели и настроит её воронку. Дальше он становится её супервайзером: регулярно проверяет воронку, отвечает на ваши вопросы о ней и помогает добавить рабочих агентов.',

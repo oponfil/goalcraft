@@ -1,12 +1,13 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=029dcdd9';
-import { mountDashboard } from './dashboard.js?v=029dcdd9';
-import { t } from './i18n.js?v=029dcdd9';
+import { FUNNELS, SUP_RUNS } from './data.js?v=2f9a56fb';
+import { mountDashboard } from './dashboard.js?v=2f9a56fb';
+import { t } from './i18n.js?v=2f9a56fb';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
   // Answers work as on your own dashboard; in the demo they go nowhere, the agent just carries on.
   onAnswer: async () => null,
+  onMessage: async () => null,
   runs: demoRuns,
 });
 

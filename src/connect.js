@@ -1,6 +1,6 @@
 // The prompt that connects Goalcraft to any agent, with a copy icon on its block.
-import { MCP_URL } from './config.js?v=029dcdd9';
-import { t } from './i18n.js?v=029dcdd9';
+import { MCP_URL } from './config.js?v=2f9a56fb';
+import { t } from './i18n.js?v=2f9a56fb';
 
 export const CONNECT_PROMPT = t('connect.prompt', MCP_URL);
 // The Connect page's prompt: the agent connects Goalcraft and becomes the supervisor of one goal's funnel.
@@ -13,15 +13,47 @@ const DONE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke
 export function setUpConnect(root = document) {
   root.querySelectorAll('pre[data-connect-prompt]').forEach(pre => { pre.textContent = CONNECT_PROMPT; });
   root.querySelectorAll('pre[data-supervisor-prompt]').forEach(pre => { pre.textContent = SUPERVISOR_PROMPT; });
-  root.querySelectorAll('pre').forEach(pre => {
-    const box = document.createElement('div'), btn = document.createElement('button');
-    box.className = 'copybox'; btn.className = 'copy'; btn.innerHTML = COPY;
-    btn.title = t('copy'); btn.setAttribute('aria-label', t('copy'));
-    pre.replaceWith(box); box.append(pre, btn);
-    btn.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(pre.textContent.trim()); btn.innerHTML = DONE; btn.title = t('copied'); }
-      catch { btn.title = t('copy.manual'); }
-      setTimeout(() => { btn.innerHTML = COPY; btn.title = t('copy'); }, 1500);
-    });
+  root.querySelectorAll('pre').forEach(copyable);
+}
+
+// A copy icon on a <pre> block.
+function copyable(pre) {
+  const box = document.createElement('div'), btn = document.createElement('button');
+  box.className = 'copybox'; btn.className = 'copy'; btn.innerHTML = COPY;
+  btn.title = t('copy'); btn.setAttribute('aria-label', t('copy'));
+  pre.replaceWith(box); box.append(pre, btn);
+  btn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(pre.textContent.trim()); btn.innerHTML = DONE; btn.title = t('copied'); }
+    catch { btn.title = t('copy.manual'); }
+    setTimeout(() => { btn.innerHTML = COPY; btn.title = t('copy'); }, 1500);
+  });
+}
+
+// The wake script (wake/ in the repository): signed in, a button creates the person's wake key and
+// shows the one command that installs the script with it. Only the key's hash is stored, so the key
+// is shown once; a new one replaces the old.
+const WAKE_INSTALL = key => 'mkdir -p ~/.goalcraft && curl -fsSL https://goalcraft.ai/wake/goalcraft-wake.py -o ~/.goalcraft/goalcraft-wake.py && python3 ~/.goalcraft/goalcraft-wake.py install ' + key;
+export async function setUpWake(root = document) {
+  const box = root.querySelector('[data-wake]');
+  if (!box) return;
+  const { supabase } = await import('./auth.js?v=2f9a56fb');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { box.innerHTML = `<p>${t('connect.wake.signin')}</p>`; return; }
+  box.innerHTML = `<button class="btn" type="button">${t('connect.wake.create')}</button><p class="wake-msg"></p>`;
+  const button = box.querySelector('button'), msg = box.querySelector('.wake-msg');
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    const bytes = crypto.getRandomValues(new Uint8Array(24));
+    const key = 'gck_' + [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key)))]
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+    const { error } = await supabase.from('wake_keys').upsert({ user_id: session.user.id, key_hash: hash, created_at: new Date().toISOString() });
+    button.disabled = false;
+    if (error) { msg.textContent = t('connect.wake.failed'); return; }
+    msg.textContent = t('connect.wake.run');
+    box.querySelector('.copybox')?.remove();
+    const pre = document.createElement('pre');
+    pre.textContent = WAKE_INSTALL(key);
+    msg.after(pre); copyable(pre);
   });
 }

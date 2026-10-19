@@ -88,6 +88,16 @@ export default {
 6. Çalışan ajanlarla ilgili yardım et. Bir aşamada ajan yoksa ya da ajanı yetişemiyorsa, bir tane eklemeyi öner ve onun için hazır bir istemi kendin yaz: aşamada ne yapacağı, öğeleri nereden alıp nereye kaydedeceği, Goalcraft’a nasıl rapor vereceği (bölgesi, ajan adı, report_counts, add_result). Ben onu yeni bir sohbete yapıştırırım.
 
 7. Huniyle ilgili sorularımı burada, bu sohbette cevapla: darboğaz nerede, bu hızla hedefe ne zaman ulaşırız, neyi iyileştirmeli. Goalcraft’ın sayılarına ve benim listeme dayan; bir şey uydurma.`,
+  'board.message': (who) => `${who} için mesaj yaz…`,
+  'board.sendMessage': 'Gönder',
+  'board.messageSent': (who) => `Gönderildi. ${who} bağlanır bağlanmaz okuyacak.`,
+  'connect.wake.h2': 'Bilgisayarınızdaki ajanlardan anında yanıt',
+  'connect.wake.intro': 'Bilgisayarınızdaki Claude uygulamasında (Claude Code) ya da Codex’te çalışan ajanlar, onlara yazdığınızda, sorularını cevapladığınızda ya da bir çalışmayı kaçırdıklarında saniyeler içinde uyanabilir. Bunu küçük bir betik yapar: Goalcraft’ı 10 saniyede bir kontrol eder ve ajanı kendi sohbetinde uyandırır. İsteğe bağlı; şimdilik yalnızca macOS.',
+  'connect.wake.create': 'Anahtar oluştur',
+  'connect.wake.signin': 'Anahtar oluşturmak için <a href="../login/?next=../connect/%23wake">giriş yapın</a>.',
+  'connect.wake.run': 'Bunu Mac’inizdeki Terminal’de çalıştırın. Betiği anahtarınızla kurar ve çalışır durumda tutar; anahtar yalnızca bir kez gösterilir, yenisi eskisinin yerini alır.',
+  'connect.wake.more': 'Nasıl çalışır ve nasıl kaldırılır: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">betik ve talimatlar</a>.',
+  'connect.wake.failed': 'Anahtar oluşturulamadı. Tekrar deneyin.',
   'copy': 'Kopyala',
   'copied': 'Kopyalandı',
   'copy.manual': 'Metni seçip kopyalayın',

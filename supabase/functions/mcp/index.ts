@@ -27,6 +27,7 @@ Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when 
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not.
 On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer: while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next); if you need more from the person, ask a new question instead. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation, question) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
+Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions. On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above.
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
 Report only counts, dates and links: the items themselves stay in the person's own sources.
@@ -83,7 +84,8 @@ async function funnels(db: Db, key?: string) {
     .select(`key, title, theme, source_url, result, goal_total, goal_every_days, results, output_flow_per_day, updated_at,
       stages (key, position, label, count, fill_percent, flow_per_day),
       presence (agent, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, updated_at),
-      questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at)`)
+      questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
+      agent_messages (id, agent, text, sent_at, read_at)`)
     .order('created_at')
   if (key) q = q.eq('key', key)
   const rows = check(await q) as any[]
@@ -103,6 +105,8 @@ async function funnels(db: Db, key?: string) {
     supervisor: f.presence.filter((p: any) => p.zone == null).map(({ zone, run_added, ...p }: any) => p)[0] ?? null,
     open_questions: f.questions.filter((q: any) => !q.answered_at),
     // Answered but not replied to yet: the agent owes the person a short reply.
+    // What the person wrote to agents and they have not read yet (get_messages reads them).
+    unread_messages: f.agent_messages.filter((m: any) => !m.read_at).map(({ id, agent, text, sent_at }: any) => ({ id, agent, text, sent_at })),
     answers_to_reply: f.questions.filter((q: any) => q.answered_at && !q.replied_at).map(({ id, agent, question, answer, answered_at }: any) => ({ id, agent, question, answer, answered_at })),
   }))
 }
@@ -305,7 +309,9 @@ function server(db: Db, caller: Caller) {
       ...run,
       ...(a.added != null && { run_added: a.added, run_manual: true }),
     }, { onConflict: 'funnel_id,agent' }))
-    return text({ question_id, funnel: await one(db, a.funnel_id) })
+    // What waits for this agent: messages from the person it has not read yet.
+    const unread = check(await db.from('agent_messages').select('id').eq('funnel_id', f.id).eq('agent', a.agent).is('read_at', null)) as unknown[]
+    return text({ question_id, new_messages: unread.length, funnel: await one(db, a.funnel_id) })
   })
 
   s.registerTool('get_answer', {
@@ -326,15 +332,39 @@ function server(db: Db, caller: Caller) {
     }
   })
 
+  s.registerTool('get_messages', {
+    title: 'Get your messages',
+    description: 'What the person wrote to you from the dashboard and you have not read yet, oldest first; reading marks them read. Reply to each in one short line with reply(message_id).',
+    inputSchema: req({
+      agent,
+      funnel_id: funnelId.optional().describe('Only this funnel; leave out for all your funnels'),
+    }),
+    annotations: { title: 'Get your messages', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  }, async (a) => {
+    let q = db.from('agent_messages').select('id, text, sent_at, funnels (key)').eq('agent', a.agent).is('read_at', null).order('sent_at')
+    if (a.funnel_id) q = q.eq('funnel_id', (await funnelRow(db, a.funnel_id)).id)
+    const rows = check(await q) as any[]
+    if (rows.length) check(await db.from('agent_messages').update({ read_at: new Date().toISOString() }).in('id', rows.map(r => r.id)))
+    return text({ messages: rows.map(r => ({ message_id: r.id, funnel_id: r.funnels?.key, text: r.text, sent_at: r.sent_at })) })
+  })
+
   s.registerTool('reply', {
     title: 'Reply to the answer',
-    description: 'A one-line note back to the person about their answer, as in a chat ("Thanks, sending the application now", "Got it, skipping this one"). The dashboard shows it over the agent until the person closes it.',
+    description: 'A one-line note back to the person about their answer or their message, as in a chat ("Thanks, sending the application now", "Got it, skipping this one"). The dashboard shows it over the agent until the person closes it. Give question_id for an answer, message_id for a message.',
     inputSchema: req({
-      question_id: z.string().uuid().describe('The question the person answered'),
+      question_id: z.string().uuid().optional().describe('The question the person answered'),
+      message_id: z.string().uuid().optional().describe('The message the person wrote to you (from get_messages)'),
       text: z.string().min(1).max(300).describe('One short line, in the person\'s language'),
     }),
     annotations: { title: 'Reply to the answer', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async ({ question_id, text: reply }) => {
+  }, async ({ question_id, message_id, text: reply }) => {
+    if (!question_id === !message_id) fail('Give question_id (an answer) or message_id (a message), one of them')
+    if (message_id) {
+      const m = check(await db.from('agent_messages').update({ reply, replied_at: new Date().toISOString(), reply_seen_at: null, read_at: new Date().toISOString() })
+        .eq('id', message_id).select('id').maybeSingle())
+      if (!m) fail('No message with this id: call get_messages')
+      return text({ replied: message_id })
+    }
     const q = check(await db.from('questions').update({ reply, replied_at: new Date().toISOString(), reply_seen_at: null })
       .eq('id', question_id).not('answered_at', 'is', null).select('id').maybeSingle())
     if (!q) fail('No answered question with this id: call get_answer first')

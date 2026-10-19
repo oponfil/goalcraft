@@ -89,6 +89,16 @@ export default {
 6. Giúp về các tác tử làm việc. Nếu một giai đoạn không có tác tử hoặc tác tử của nó không theo kịp, hãy đề xuất thêm một tác tử và tự viết sẵn prompt cho nó: làm gì ở giai đoạn đó, lấy các mục từ đâu và ghi vào đâu, báo cáo cho Goalcraft thế nào (vùng của nó, tên tác tử, report_counts, add_result). Tôi sẽ dán nó vào một cuộc trò chuyện mới.
 
 7. Trả lời câu hỏi của tôi về phễu ngay tại đây, trong cuộc trò chuyện này: điểm nghẽn ở đâu, với nhịp độ hiện tại khi nào đạt mục tiêu, nên cải thiện gì. Dựa vào số liệu của Goalcraft và danh sách của tôi; đừng bịa ra.`,
+  'board.message': (who) => `Nhắn cho ${who}…`,
+  'board.sendMessage': 'Gửi',
+  'board.messageSent': (who) => `Đã gửi. ${who} sẽ đọc ngay khi kết nối lại.`,
+  'connect.wake.h2': 'Tác tử trên máy tính của bạn phản hồi ngay',
+  'connect.wake.intro': 'Tác tử trong ứng dụng Claude (Claude Code) hoặc Codex trên máy tính của bạn có thể thức dậy trong vài giây khi bạn nhắn cho nó, trả lời câu hỏi của nó, hoặc khi nó bỏ lỡ lần chạy. Một script nhỏ làm việc này: cứ 10 giây kiểm tra Goalcraft một lần và đánh thức tác tử ngay trong cuộc trò chuyện của nó. Tùy chọn; hiện chỉ cho macOS.',
+  'connect.wake.create': 'Tạo khóa',
+  'connect.wake.signin': '<a href="../login/?next=../connect/%23wake">Đăng nhập</a> để tạo khóa.',
+  'connect.wake.run': 'Chạy lệnh này trong Terminal trên Mac. Lệnh sẽ cài script với khóa của bạn và giữ nó chạy liên tục; khóa chỉ hiện một lần, khóa mới sẽ thay khóa cũ.',
+  'connect.wake.more': 'Cách hoạt động và cách gỡ: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">script và hướng dẫn</a>.',
+  'connect.wake.failed': 'Không tạo được khóa. Hãy thử lại.',
   'copy': 'Sao chép',
   'copied': 'Đã sao chép',
   'copy.manual': 'Hãy chọn văn bản và sao chép',

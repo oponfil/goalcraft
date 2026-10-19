@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=029dcdd9';
+import { supabase } from './auth.js?v=2f9a56fb';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -58,9 +58,13 @@ function agentOf(f, p, now) {
         seenAgo: (now - Date.parse(p.updated_at)) / 1000,
         questions: qs.map(q => ({ id: q.id, question: q.question, chat: q.chat_url })),
         // The agent's short replies to answers, not closed yet, oldest first.
-        replies: f.questions.filter(q => q.agent === p.agent && q.reply && !q.reply_seen_at)
-          .sort((a, b) => Date.parse(a.replied_at) - Date.parse(b.replied_at))
-          .map(q => ({ id: q.id, question: q.question, answer: q.answer, reply: q.reply })),
+        // Its short replies to answers and to messages ("m:" ids), not closed yet, oldest first.
+        replies: [
+          ...f.questions.filter(q => q.agent === p.agent && q.reply && !q.reply_seen_at)
+            .map(q => ({ id: q.id, question: q.question, answer: q.answer, reply: q.reply, at: q.replied_at })),
+          ...f.agent_messages.filter(m => m.agent === p.agent && m.reply && !m.reply_seen_at)
+            .map(m => ({ id: 'm:' + m.id, question: null, answer: m.text, reply: m.reply, at: m.replied_at })),
+        ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)),
         chat: p.chat_url,
         // What this run added (the last run's, while the agent sleeps); null = not known.
         added: p.run_added,
@@ -74,7 +78,8 @@ export async function loadFunnels() {
       .select(`id, title, theme, source_url, result, goal_total, goal_every_days, results, output_flow_per_day,
         stages (key, position, label, count, fill_percent, flow_per_day),
         presence (agent, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, updated_at),
-        questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at)`)
+        questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
+        agent_messages (id, agent, text, reply, replied_at, reply_seen_at)`)
       .order('created_at'),
     supabase.from('count_reports')
       .select('funnel_id, stage_key, value, at')
@@ -103,10 +108,21 @@ export async function runs(a, limit = 10) {
   return data;
 }
 
-// The person closed the agent's replies: they stop showing.
-export async function closeReplies(ids) {
-  const { error } = await supabase.from('questions').update({ reply_seen_at: new Date().toISOString() }).in('id', ids);
+// The person wrote to an agent from its card; the agent reads it through MCP (get_messages).
+export async function sendMessage(a, text) {
+  const { error } = await supabase.from('agent_messages').insert({ funnel_id: a.f.id, agent: a.agent, text });
   return error?.message;
+}
+
+// The person closed the agent's replies: they stop showing. Replies to messages have "m:" ids.
+export async function closeReplies(ids) {
+  const now = new Date().toISOString();
+  const msgs = ids.filter(id => id.startsWith('m:')).map(id => id.slice(2)), qs = ids.filter(id => !id.startsWith('m:'));
+  const done = await Promise.all([
+    qs.length && supabase.from('questions').update({ reply_seen_at: now }).in('id', qs),
+    msgs.length && supabase.from('agent_messages').update({ reply_seen_at: now }).in('id', msgs),
+  ]);
+  return done.find(r => r?.error)?.error.message;
 }
 
 // Calls onChange (debounced) whenever an agent writes to this person's funnels.
@@ -114,7 +130,7 @@ export function watch(onChange) {
   let timer;
   const kick = () => { clearTimeout(timer); timer = setTimeout(onChange, 400); };
   const channel = supabase.channel('my-funnels');
-  for (const table of ['funnels', 'stages', 'presence', 'questions']) {
+  for (const table of ['funnels', 'stages', 'presence', 'questions', 'agent_messages']) {
     channel.on('postgres_changes', { event: '*', schema: 'public', table }, kick);
   }
   channel.subscribe();

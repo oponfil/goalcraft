@@ -88,6 +88,16 @@ export default {
 6. Ajude com os agentes de trabalho. Se uma etapa não tiver agente ou o agente dela não estiver dando conta, proponha adicionar um e escreva você mesmo um prompt pronto para ele: o que fazer na etapa, de onde pegar os itens e onde registrá-los, como reportar ao Goalcraft (a zona dele, nome do agente, report_counts, add_result). Eu vou colar em um chat novo.
 
 7. Responda aqui, nesta conversa, às minhas perguntas sobre o funil: onde está o gargalo, quando chegaremos à meta no ritmo atual, o que melhorar. Baseie-se nos números do Goalcraft e na minha lista; não invente nada.`,
+  'board.message': (who) => `Escreva para ${who}…`,
+  'board.sendMessage': 'Enviar',
+  'board.messageSent': (who) => `Enviado. ${who} vai ler assim que se conectar.`,
+  'connect.wake.h2': 'Respostas na hora dos agentes no seu computador',
+  'connect.wake.intro': 'Agentes no app do Claude (Claude Code) ou no Codex no seu computador podem acordar em segundos quando você escreve para eles, responde à pergunta deles ou quando perdem uma execução. Um pequeno script faz isso: confere o Goalcraft a cada 10 segundos e acorda o agente no próprio chat dele. Opcional; por enquanto só no macOS.',
+  'connect.wake.create': 'Criar uma chave',
+  'connect.wake.signin': '<a href="../login/?next=../connect/%23wake">Entre</a> para criar uma chave.',
+  'connect.wake.run': 'Rode isto no Terminal do seu Mac. O comando instala o script com a sua chave e o mantém rodando; a chave aparece só uma vez, e uma nova substitui a anterior.',
+  'connect.wake.more': 'Como funciona e como remover: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">o script e as instruções</a>.',
+  'connect.wake.failed': 'Não foi possível criar a chave. Tente de novo.',
   'copy': 'Copiar',
   'copied': 'Copiado',
   'copy.manual': 'Selecione o texto e copie',

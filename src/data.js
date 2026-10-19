@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=029dcdd9';
+import { lang } from './i18n.js?v=2f9a56fb';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -181,19 +181,19 @@ export const FUNNELS = [
     ],
   },
   {
-    title: 'Wedding',
+    title: 'Dating',
     theme: 'love',
-    result: ['vendor booked', 'vendors booked'],
+    result: ['relationship', 'relationships'],
     stages: [
-      { count: 120, forms: ['vendor found', 'vendors found'] },
-      { count: 46, forms: ['request sent', 'requests sent'] },
-      { count: 17, forms: ['quote', 'quotes'] },
-      { count: 6, forms: ['visit', 'visits'] },
-      { count: 3, forms: ['finalist', 'finalists'] },
+      { count: 180, forms: ['match', 'matches'] },
+      { count: 64, forms: ['conversation', 'conversations'] },
+      { count: 9, forms: ['first date', 'first dates'] },
+      { count: 3, forms: ['second date', 'second dates'] },
+      { count: 1, forms: ['sleepover', 'sleepovers'] },
     ],
-    flows: [6, 2.5, 1, 0.4, 0.2, 0.12],
-    cubes: 2,
-    goal: { total: 8, every: 7 },
+    flows: [8, 3, 0.5, 0.2, 0.08, 1 / 60],
+    cubes: 0,
+    goal: { total: 1, every: 30 },
     // The supervisor on the platform: what its last run found.
     supervisor: { agent: 'chatgpt', state: 'work', status: 'ok', summary: 'on pace for the goal' },
     workers: [
@@ -202,7 +202,7 @@ export const FUNNELS = [
       { agent: 'qwen', zone: 0, state: 'sleep', wakeIn: 15 },
       {
         agent: 'grok', zone: 1, state: 'ask',
-        question: 'The florist can do peonies for $1,200 on June 14. Book them?',
+        question: 'Alex suggested Saturday at 7pm at the rooftop bar. Confirm the date?',
       },
       { agent: 'chatgpt', zone: 2, state: 'sleep', wakeIn: 9 * 3600 },
       { agent: 'gemini', zone: 2, state: 'work' },
@@ -344,7 +344,7 @@ const DEMO = {
   'Creator': ['Автор', '创作者', 'ครีเอเตอร์', 'Creador', 'Nhà sáng tạo', 'クリエイター', 'Criador', 'İçerik üreticisi', '크리에이터'],
   'Bug Bounty': ['Баг-баунти', '漏洞赏金', 'บั๊กบาวน์ตี้', 'Bug bounty', 'Săn lỗi', 'バグバウンティ', 'Bug bounty', 'Hata ödülü', '버그 바운티'],
   'Fundraising': ['Привлечение инвестиций', '融资', 'ระดมทุน', 'Inversión', 'Gọi vốn', '資金調達', 'Captação', 'Yatırım turu', '투자 유치'],
-  'Wedding': ['Свадьба', '婚礼', 'งานแต่งงาน', 'Boda', 'Đám cưới', '結婚式', 'Casamento', 'Düğün', '결혼식'],
+  'Dating': ['Знакомства', '约会', 'หาคู่', 'Citas', 'Hẹn hò', '婚活', 'Encontros', 'Flört', '데이팅'],
   'Research': ['Исследования', '科研', 'งานวิจัย', 'Investigación', 'Nghiên cứu', '研究', 'Pesquisa', 'Araştırma', '연구'],
   'offer': [['оффер', 'оффера', 'офферов'], '录用通知', 'ข้อเสนองาน', ['oferta', 'ofertas'], 'lời mời làm việc', '内定', ['oferta', 'ofertas'], 'iş teklifi', '채용 제안'],
   'job found': [['найденная вакансия', 'найденные вакансии', 'найденных вакансий'], '找到的职位', 'งานที่พบ', ['vacante encontrada', 'vacantes encontradas'], 'việc tìm thấy', '見つけた求人', ['vaga encontrada', 'vagas encontradas'], 'bulunan ilan', '찾은 공고'],
@@ -370,12 +370,12 @@ const DEMO = {
   'meeting': [['встреча', 'встречи', 'встреч'], '会议', 'การประชุม', ['reunión', 'reuniones'], 'cuộc gặp', '面談', ['reunião', 'reuniões'], 'toplantı', '미팅'],
   'partner meeting': [['встреча с партнёром', 'встречи с партнёрами', 'встреч с партнёрами'], '合伙人会议', 'ประชุมกับพาร์ทเนอร์', ['reunión con socios', 'reuniones con socios'], 'cuộc gặp đối tác', 'パートナー面談', ['reunião com sócios', 'reuniões com sócios'], 'ortak toplantısı', '파트너 미팅'],
   'in due diligence': [['на проверке', 'на проверке', 'на проверке'], '尽职调查中', 'อยู่ระหว่างตรวจสอบ', ['en due diligence', 'en due diligence'], 'đang thẩm định', 'デューデリジェンス中', ['em due diligence', 'em due diligence'], 'due diligence aşamasında', '실사 중'],
-  'vendor booked': [['забронированный подрядчик', 'забронированных подрядчика', 'забронированных подрядчиков'], '已预订的供应商', 'ผู้ให้บริการที่จองแล้ว', ['proveedor reservado', 'proveedores reservados'], 'nhà cung cấp đã đặt', '予約済みの業者', ['fornecedor contratado', 'fornecedores contratados'], 'ayarlanan tedarikçi', '예약된 업체'],
-  'vendor found': [['найденный подрядчик', 'найденных подрядчика', 'найденных подрядчиков'], '找到的供应商', 'ผู้ให้บริการที่พบ', ['proveedor encontrado', 'proveedores encontrados'], 'nhà cung cấp tìm thấy', '見つけた業者', ['fornecedor encontrado', 'fornecedores encontrados'], 'bulunan tedarikçi', '찾은 업체'],
-  'request sent': [['отправленный запрос', 'отправленных запроса', 'отправленных запросов'], '已发询价', 'คำขอที่ส่งแล้ว', ['solicitud enviada', 'solicitudes enviadas'], 'yêu cầu đã gửi', '送った問い合わせ', ['pedido enviado', 'pedidos enviados'], 'gönderilen talep', '보낸 문의'],
-  'quote': [['смета', 'сметы', 'смет'], '报价', 'ใบเสนอราคา', ['presupuesto', 'presupuestos'], 'báo giá', '見積もり', ['orçamento', 'orçamentos'], 'fiyat teklifi', '견적'],
-  'visit': [['встреча', 'встречи', 'встреч'], '见面', 'นัดพบ', ['visita', 'visitas'], 'buổi gặp', '打ち合わせ', ['visita', 'visitas'], 'görüşme', '방문'],
-  'finalist': [['финалист', 'финалиста', 'финалистов'], '入围者', 'ตัวเลือกสุดท้าย', ['finalista', 'finalistas'], 'ứng viên cuối', '最終候補', ['finalista', 'finalistas'], 'finalist', '최종 후보'],
+  'relationship': [['отношения', 'отношений', 'отношений'], '恋爱关系', 'ความสัมพันธ์', ['relación', 'relaciones'], 'mối quan hệ', '交際', ['relacionamento', 'relacionamentos'], 'ilişki', '연애'],
+  'match': [['мэтч', 'мэтча', 'мэтчей'], '配对', 'แมตช์', ['match', 'matches'], 'lượt ghép đôi', 'マッチ', ['match', 'matches'], 'eşleşme', '매치'],
+  'conversation': [['переписка', 'переписки', 'переписок'], '聊天', 'บทสนทนา', ['conversación', 'conversaciones'], 'cuộc trò chuyện', 'やり取り', ['conversa', 'conversas'], 'sohbet', '대화'],
+  'first date': [['первое свидание', 'первых свидания', 'первых свиданий'], '第一次约会', 'เดทแรก', ['primera cita', 'primeras citas'], 'buổi hẹn đầu', '初デート', ['primeiro encontro', 'primeiros encontros'], 'ilk buluşma', '첫 데이트'],
+  'second date': [['второе свидание', 'вторых свидания', 'вторых свиданий'], '第二次约会', 'เดทที่สอง', ['segunda cita', 'segundas citas'], 'buổi hẹn thứ hai', '2回目のデート', ['segundo encontro', 'segundos encontros'], 'ikinci buluşma', '두 번째 데이트'],
+  'sleepover': [['ночёвка', 'ночёвки', 'ночёвок'], '过夜', 'ค้างคืน', ['noche juntos', 'noches juntos'], 'ngủ lại', 'お泊まり', ['noite juntos', 'noites juntos'], 'birlikte geçen gece', '함께 보낸 밤'],
   'published paper': [['опубликованная статья', 'опубликованные статьи', 'опубликованных статей'], '已发表论文', 'บทความที่ตีพิมพ์', ['artículo publicado', 'artículos publicados'], 'bài báo đã đăng', '掲載論文', ['artigo publicado', 'artigos publicados'], 'yayımlanan makale', '게재된 논문'],
   'idea': [['идея', 'идеи', 'идей'], '想法', 'ไอเดีย', ['idea', 'ideas'], 'ý tưởng', 'アイデア', ['ideia', 'ideias'], 'fikir', '아이디어'],
   'draft': [['черновик', 'черновика', 'черновиков'], '草稿', 'ฉบับร่าง', ['borrador', 'borradores'], 'bản nháp', '草稿', ['rascunho', 'rascunhos'], 'taslak', '초안'],
@@ -407,7 +407,7 @@ const DEMO = {
   'The backend candidate asks to start in January instead of December. Agree?': ['Кандидат на бэкенд просит выйти в январе, а не в декабре. Согласиться?', '后端候选人希望一月而不是十二月入职。同意吗？', 'ผู้สมัครตำแหน่งแบ็กเอนด์ขอเริ่มงานเดือนมกราคมแทนธันวาคม ตกลงไหม?', 'El candidato de backend pide empezar en enero en vez de diciembre. ¿Acepto?', 'Ứng viên backend xin bắt đầu vào tháng Một thay vì tháng Mười Hai. Đồng ý chứ?', 'バックエンドの候補者が12月ではなく1月からの入社を希望しています。了承しますか？', 'O candidato de backend pede para começar em janeiro em vez de dezembro. Aceito?', 'Backend adayı aralık yerine ocakta başlamak istiyor. Kabul edeyim mi?', '백엔드 후보가 12월 대신 1월에 입사하고 싶어 합니다. 동의할까요?'],
   'The client wants a fixed price for the landing page. Quote $2,500?': ['Клиент хочет фиксированную цену за лендинг. Назвать $2 500?', '客户想要落地页的固定报价。报 2500 美元吗？', 'ลูกค้าต้องการราคาเหมาสำหรับหน้าแลนดิ้ง เสนอ $2,500 ไหม?', 'El cliente quiere un precio cerrado por la landing. ¿Ofrezco 2.500 $?', 'Khách muốn giá trọn gói cho trang landing. Báo giá $2.500 nhé?', 'クライアントがランディングページの固定価格を求めています。2,500ドルで見積もりますか？', 'O cliente quer um preço fechado pela landing page. Cobro $2.500?', 'Müşteri açılış sayfası için sabit fiyat istiyor. $2.500 teklif edeyim mi?', '고객이 랜딩 페이지를 고정 가격으로 원합니다. $2,500로 견적을 낼까요?'],
   'Northwind Ventures asks for the cap table before Thursday. Share it from the data room?': ['Northwind Ventures просит таблицу капитализации до четверга. Дать доступ из data room?', 'Northwind Ventures 要求周四前提供股权结构表。从数据室共享吗？', 'Northwind Ventures ขอตารางผู้ถือหุ้นก่อนวันพฤหัสบดี แชร์จากดาต้ารูมไหม?', 'Northwind Ventures pide la tabla de capitalización antes del jueves. ¿La comparto desde el data room?', 'Northwind Ventures cần bảng cơ cấu vốn trước thứ Năm. Chia sẻ từ data room nhé?', 'Northwind Ventures が木曜までに資本政策表を求めています。データルームから共有しますか？', 'A Northwind Ventures pede o cap table antes de quinta. Compartilho pelo data room?', 'Northwind Ventures perşembeden önce hisse tablosunu istiyor. Veri odasından paylaşayım mı?', 'Northwind Ventures가 목요일 전까지 지분 구조표를 요청합니다. 데이터룸에서 공유할까요?'],
-  'The florist can do peonies for $1,200 on June 14. Book them?': ['Флорист сделает пионы за $1 200 к 14 июня. Бронируем?', '花艺师可以在6月14日用牡丹布置，价格 $1,200。要预订吗？', 'ร้านดอกไม้จัดดอกโบตั๋นให้ได้ในราคา $1,200 วันที่ 14 มิถุนายน จองเลยไหม?', 'La florista puede hacer peonías por $1.200 para el 14 de junio. ¿La reservo?', 'Tiệm hoa làm được hoa mẫu đơn giá $1.200 cho ngày 14/6. Đặt luôn nhé?', 'フローリストが6月14日に芍薬を$1,200で用意できます。予約しますか？', 'A florista faz peônias por $1.200 para 14 de junho. Reservo?', 'Çiçekçi 14 Haziran için şakayıkları $1.200’e yapabiliyor. Ayırtayım mı?', '플로리스트가 6월 14일에 작약을 $1,200에 해 줄 수 있습니다. 예약할까요?'],
+  'Alex suggested Saturday at 7pm at the rooftop bar. Confirm the date?': ['Алекс предложил субботу в 19:00 в баре на крыше. Подтвердить свидание?', 'Alex 提议周六晚上 7 点在屋顶酒吧见面。确认约会吗？', 'Alex ชวนวันเสาร์ 1 ทุ่มที่รูฟท็อปบาร์ ยืนยันเดทไหม?', 'Alex propuso el sábado a las 19:00 en el bar de la azotea. ¿Confirmo la cita?', 'Alex hẹn thứ Bảy lúc 19:00 ở quán bar sân thượng. Xác nhận buổi hẹn nhé?', 'Alex から土曜19時に屋上バーでと提案がありました。デートを確定しますか？', 'Alex sugeriu sábado às 19h no bar do rooftop. Confirmo o encontro?', 'Alex cumartesi saat 19:00’da çatı barını önerdi. Buluşmayı onaylayayım mı?', 'Alex가 토요일 저녁 7시에 루프톱 바에서 만나자고 했어요. 데이트를 확정할까요?'],
 };
 const COL = { ru: 0, zh: 1, th: 2, es: 3, vi: 4, ja: 5, pt: 6, tr: 7, ko: 8 }[lang];
 const tr = text => (COL == null ? text : DEMO[text]?.[COL] ?? text);

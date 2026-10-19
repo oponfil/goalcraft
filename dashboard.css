@@ -165,6 +165,9 @@ body {
 #pop .run-row { display: grid; grid-template-columns: auto auto 1fr; gap: 10px; padding: 3px 0; }
 #pop .run-row .at, #pop .run-row .took { color: var(--muted); white-space: nowrap; }
 .pop-msg { color: var(--alert); margin-top: 6px; }
+.pop-msg.ok { color: var(--muted); }
+/* Writing to an agent from its card. */
+#pop .write { margin-top: 10px; }
 #clock .who { margin-left: 4px; }
 #clock button { background: none; border: 0; color: var(--muted); font: inherit; cursor: pointer; padding: 0 0 0 10px; text-decoration: underline; }
 #clock button:hover { color: var(--text); }

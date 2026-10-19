@@ -88,6 +88,16 @@ export default {
 6. 작업 에이전트를 도와. 어떤 단계에 에이전트가 없거나 에이전트가 감당하지 못하면 하나 추가하자고 제안하고, 그 에이전트를 위한 프롬프트를 직접 써 줘: 그 단계에서 할 일, 항목을 어디서 가져와 어디에 기록할지, Goalcraft에 어떻게 보고할지(구역, 에이전트 이름, report_counts, add_result). 내가 새 채팅에 붙여 넣을게.
 
 7. 퍼널에 관한 내 질문에는 여기, 이 대화에서 답해: 병목이 어디인지, 지금 속도로 언제 목표에 닿는지, 무엇을 개선할지. Goalcraft의 숫자와 내 목록을 근거로 하고, 지어내지 마.`,
+  'board.message': (who) => `${who}에게 메시지…`,
+  'board.sendMessage': '보내기',
+  'board.messageSent': (who) => `보냈습니다. ${who}이(가) 연결되는 대로 읽습니다.`,
+  'connect.wake.h2': '내 컴퓨터의 에이전트가 바로 응답하게 하기',
+  'connect.wake.intro': '내 컴퓨터의 Claude 앱(Claude Code)이나 Codex에서 일하는 에이전트는 메시지를 보내거나, 질문에 답하거나, 실행을 놓쳤을 때 몇 초 안에 깨어날 수 있습니다. 작은 스크립트가 10초마다 Goalcraft를 확인하고 에이전트를 자기 채팅에서 깨웁니다. 선택 사항이며, 지금은 macOS만 지원합니다.',
+  'connect.wake.create': '키 만들기',
+  'connect.wake.signin': '키를 만들려면 <a href="../login/?next=../connect/%23wake">로그인</a>하세요.',
+  'connect.wake.run': 'Mac의 터미널에서 이 명령을 실행하세요. 키와 함께 스크립트를 설치하고 계속 실행합니다. 키는 한 번만 표시되며, 새로 만들면 이전 키를 대신합니다.',
+  'connect.wake.more': '작동 방식과 삭제 방법: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">스크립트와 안내</a>.',
+  'connect.wake.failed': '키를 만들지 못했습니다. 다시 시도하세요.',
   'copy': '복사',
   'copied': '복사됨',
   'copy.manual': '텍스트를 선택해 복사하세요',

@@ -89,6 +89,16 @@ export default {
 6. 作業エージェントを手伝う。エージェントがいない段階や、エージェントが追いついていない段階があれば、追加を提案し、そのためのプロンプトを自分で書いてください：その段階で何をするか、項目をどこから取りどこに記録するか、Goalcraft への報告方法（そのゾーン、エージェント名、report_counts、add_result）。私が新しいチャットに貼り付けます。
 
 7. ファネルについての私の質問に、ここ、この会話で答えてください：ボトルネックはどこか、今のペースでいつ目標に届くか、何を改善するか。Goalcraft の数字と私のリストに基づき、作り話はしないでください。`,
+  'board.message': (who) => `${who} にメッセージ…`,
+  'board.sendMessage': '送信',
+  'board.messageSent': (who) => `送信しました。${who} が次に接続したときに読みます。`,
+  'connect.wake.h2': 'あなたのパソコンのエージェントを即座に動かす',
+  'connect.wake.intro': 'パソコンの Claude アプリ（Claude Code）や Codex のエージェントは、メッセージを送ったとき、質問に答えたとき、実行を逃したときに数秒で起きられます。小さなスクリプトが 10 秒ごとに Goalcraft を確認し、エージェント自身のチャットで起こします。任意。現在は macOS のみ。',
+  'connect.wake.create': 'キーを作成',
+  'connect.wake.signin': 'キーを作成するには<a href="../login/?next=../connect/%23wake">ログイン</a>してください。',
+  'connect.wake.run': 'Mac のターミナルでこれを実行してください。あなたのキーでスクリプトをインストールし、動かし続けます。キーは一度だけ表示され、新しいキーを作ると置き換わります。',
+  'connect.wake.more': '仕組みと削除方法：<a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">スクリプトと説明</a>。',
+  'connect.wake.failed': 'キーを作成できませんでした。もう一度お試しください。',
   'copy': 'コピー',
   'copied': 'コピーしました',
   'copy.manual': 'テキストを選択してコピーしてください',
