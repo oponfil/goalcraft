@@ -1,12 +1,12 @@
 // Renders the README pictures (agents sheet, theme samples, the board) and the link preview card from the same drawing code as
 // the dashboard and saves them through serve.py: open http://localhost:5173/tools/render-docs.html
 // (always in English: the page adds ?lang=en to itself).
-import { AGENTS, FUNNELS } from '../src/data.js?v=29a896f6';
-import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=29a896f6';
-import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=29a896f6';
+import { AGENTS, FUNNELS } from '../src/data.js?v=bf36b5ef';
+import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=bf36b5ef';
+import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=bf36b5ef';
 import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
-import { THEMES } from '../src/themes.js?v=29a896f6';
-import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=29a896f6';
+import { THEMES } from '../src/themes.js?v=bf36b5ef';
+import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=bf36b5ef';
 
 const FONT = 'Rubik, system-ui, sans-serif';
 
@@ -224,7 +224,7 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   const sup = scene.spot(scene.agents.find(a => a.sup), 'ask');
   const notes = [
     [P(sup.x + 2, sup.y + 2), 'Supervisor', 'Your agent watching the whole funnel.'],
-    [P(doc0.x + 3, doc0.y + 18), 'Guide and sheet', 'The funnel guide on the left, its table on the right: what the agents work by and where they keep track.'],
+    [P(doc0.x + 3, doc0.y + 18), 'Notes and list', 'Notes on the left: everything the agents need to know about the funnel. The list on the right: where they keep track.'],
     [P(cx - tankMid + 2, s0.y + s0.h / 2), 'Tank', 'Items at this stage so far, and +N a day.'],
     // The bubble bobs; the arrow points where it rests, so the label stays still.
     [P(ask.bubble.x, scene.spot(ask, 'ask').y - 2 + 11), 'Question', 'An agent waits for your answer. Click it to reply.'],

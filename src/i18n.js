@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=29a896f6';
-import vi from './lang/vi.js?v=29a896f6';
-import ja from './lang/ja.js?v=29a896f6';
-import pt from './lang/pt.js?v=29a896f6';
-import tr from './lang/tr.js?v=29a896f6';
-import ko from './lang/ko.js?v=29a896f6';
+import es from './lang/es.js?v=bf36b5ef';
+import vi from './lang/vi.js?v=bf36b5ef';
+import ja from './lang/ja.js?v=bf36b5ef';
+import pt from './lang/pt.js?v=bf36b5ef';
+import tr from './lang/tr.js?v=bf36b5ef';
+import ko from './lang/ko.js?v=bf36b5ef';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -124,8 +124,8 @@ const STRINGS = {
   // The landing page's funnel: what each part is
   'guide.supervisor.h': L('Supervisor', 'Супервайзер', '主管', 'ผู้ดูแล'),
   'guide.supervisor': L('Your agent watching the whole funnel.', 'Ваш агент, следящий за всей воронкой.', '你的智能体，盯着整个漏斗。', 'เอเจนต์ของคุณที่คอยดูทั้งกรวย'),
-  'guide.doc.h': L('Guide and sheet', 'Инструкция и таблица', '说明和表格', 'คู่มือและตาราง'),
-  'guide.doc': L('The funnel guide on the left, its table on the right: what the agents work by and where they keep track.', 'Слева инструкция воронки, справа таблица: по чему работают агенты и где они ведут учёт.', '左边是漏斗说明，右边是表格：智能体按什么工作、在哪里记录。', 'ซ้ายคือคู่มือกรวย ขวาคือตาราง: เอเจนต์ทำงานตามอะไรและบันทึกไว้ที่ไหน'),
+  'guide.doc.h': L('Notes and list', 'Заметки и список', '笔记和清单', 'โน้ตและรายการ'),
+  'guide.doc': L('Notes on the left: everything the agents need to know about the funnel. The list on the right: where they keep track.', 'Слева заметки: всё, что агентам нужно знать о воронке. Справа список: где они ведут учёт.', '左边是笔记：智能体需要知道的关于漏斗的一切。右边是清单：它们在哪里记录。', 'ซ้ายคือโน้ต: ทุกอย่างที่เอเจนต์ต้องรู้เกี่ยวกับกรวย ขวาคือรายการ: ที่ที่พวกมันบันทึก'),
   'guide.sheet.h': L('Sheet', 'Таблица', '表格', 'ตาราง'),
   'guide.sheet': L('The table where the agents keep track of everything.', 'Таблица, где агенты ведут учёт всего.', '智能体记录一切的表格。', 'ตารางที่เอเจนต์ใช้ติดตามทุกอย่าง'),
   'guide.tank.h': L('Tank', 'Бак', '储罐', 'ถัง'),
@@ -341,8 +341,8 @@ const STRINGS = {
   'board.replyIn': L((who) => `Reply in ${who}`, (who) => `Ответить в ${who}`, (who) => `在 ${who} 中回复`, (who) => `ตอบใน ${who}`),
   'board.answer': L('Your answer', 'Ваш ответ', '你的回复', 'คำตอบของคุณ'),
   'board.send': L('Send answer', 'Отправить ответ', '发送回复', 'ส่งคำตอบ'),
-  'board.sheet': L((where) => `Open the list in ${where}`, (where) => `Открыть список в ${where}`, (where) => `在 ${where} 中打开列表`, (where) => `เปิดรายการใน ${where}`),
-  'board.guide': L((where) => `Open the funnel guide in ${where}`, (where) => `Открыть инструкцию воронки в ${where}`, (where) => `在 ${where} 中打开漏斗说明`, (where) => `เปิดคู่มือกรวยใน ${where}`),
+  'board.sheet': L('Open the list', 'Открыть список', '打开清单', 'เปิดรายการ'),
+  'board.guide': L('Open the notes', 'Открыть заметки', '打开笔记', 'เปิดโน้ต'),
   'board.close': L('Close', 'Закрыть', '关闭', 'ปิด'),
   'board.goalReached': L('goal reached ✓', 'цель достигнута ✓', '目标已达成 ✓', 'ถึงเป้าหมายแล้ว ✓'),
   'board.goal': L((total, time) => `goal: +${total} in ${time}`, (total, time) => `цель: +${total} за ${time}`, (total, time) => `目标：${time} 内 +${total}`, (total, time) => `เป้าหมาย: +${total} ใน ${time}`),
