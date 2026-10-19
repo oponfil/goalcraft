@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=c4e348b4';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=c4e348b4';
-import { themeOf } from './themes.js?v=c4e348b4';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=c4e348b4';
+import { agentInfo, plural } from './data.js?v=029dcdd9';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=029dcdd9';
+import { themeOf } from './themes.js?v=029dcdd9';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=029dcdd9';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -43,9 +43,10 @@ const OUT_LIFT = 5;
 export const DAY_SECONDS = 2;
 const PER_ROW = 10;  // result items per row under a funnel, the same for every theme
 // As on the page: Vietnamese needs Be Vietnam Pro (Rubik has no Vietnamese letters), Japanese takes
-// Noto Sans JP before the Chinese font.
+// Noto Sans JP before the Chinese font, Korean Noto Sans KR.
 const FONT = lang === 'vi' ? '"Be Vietnam Pro", system-ui, sans-serif'
   : lang === 'ja' ? '"Rubik", "Noto Sans JP", system-ui, sans-serif'
+  : lang === 'ko' ? '"Rubik", "Noto Sans KR", system-ui, sans-serif'
     : '"Rubik", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif';
 
 

@@ -61,6 +61,24 @@ const WORDS: Record<string, Words> = {
     answer: 'ตอบบนแดชบอร์ด',
     why: 'คุณได้รับอีเมลนี้เพราะติ๊ก “แจ้งทางอีเมล” ไว้ในเมนูของ goalcraft.ai เอาติ๊กออกเพื่อหยุดรับอีเมลเหล่านี้',
   },
+  pt: {
+    subject: (who, q) => `${who} pergunta: ${q}`,
+    body: (who, funnel) => `${who} em “${funnel}” está esperando sua resposta:`,
+    answer: 'Responder no painel',
+    why: 'Você recebe este e-mail porque “Avisos” está marcado no menu do goalcraft.ai. Desmarque para parar de receber.',
+  },
+  tr: {
+    subject: (who, q) => `${who} soruyor: ${q}`,
+    body: (who, funnel) => `“${funnel}” hunisindeki ${who} cevabınızı bekliyor:`,
+    answer: 'Panelde cevapla',
+    why: 'Bu e-postayı goalcraft.ai menüsünde “E-posta” işaretli olduğu için alıyorsunuz. Bu e-postaları durdurmak için işareti kaldırın.',
+  },
+  ko: {
+    subject: (who, q) => `${who}의 질문: ${q}`,
+    body: (who, funnel) => `“${funnel}”의 ${who}이(가) 답을 기다리고 있습니다:`,
+    answer: '대시보드에서 답하기',
+    why: 'goalcraft.ai 메뉴에서 “이메일 알림”이 켜져 있어 이 이메일을 받았습니다. 끄면 더 이상 받지 않습니다.',
+  },
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`)

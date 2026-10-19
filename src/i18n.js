@@ -1,17 +1,20 @@
 // Interface languages. The language comes from the person's choice (kept in this browser, and in
 // their account once signed in), else from the browser, else English. Every text of the interface
 // lives in STRINGS, one entry per key with a version per language. English, Russian, Chinese and
-// Thai are columns here; Spanish, Vietnamese and Japanese are kept in src/lang/ and merged in below. A new
+// Thai are columns here; Spanish, Vietnamese, Japanese, Portuguese (Brazil), Turkish and Korean are kept in src/lang/ and merged in below. A new
 // language is a file there and a line in LANGS.
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=c4e348b4';
-import vi from './lang/vi.js?v=c4e348b4';
-import ja from './lang/ja.js?v=c4e348b4';
+import es from './lang/es.js?v=029dcdd9';
+import vi from './lang/vi.js?v=029dcdd9';
+import ja from './lang/ja.js?v=029dcdd9';
+import pt from './lang/pt.js?v=029dcdd9';
+import tr from './lang/tr.js?v=029dcdd9';
+import ko from './lang/ko.js?v=029dcdd9';
 
-export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', zh: '中文', ja: '日本語', th: 'ไทย', vi: 'Tiếng Việt' };
-export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', zh: '中文', ja: 'JA', th: 'ไทย', vi: 'VI' };
+export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
+export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
 const KEY = 'goalcraft-lang';
 
 // Whether the person picked a language in this browser (rather than it coming from the browser).
@@ -538,7 +541,7 @@ const STRINGS = {
   'consent.deny': L('Deny', 'Отклонить', '拒绝', 'ปฏิเสธ'),
 };
 
-for (const [code, table] of Object.entries({ es, vi, ja })) {
+for (const [code, table] of Object.entries({ es, vi, ja, pt, tr, ko })) {
   for (const [key, text] of Object.entries(table)) if (STRINGS[key]) STRINGS[key][code] = text;
 }
 
@@ -575,5 +578,5 @@ export function applyI18n(root = document) {
   });
 }
 
-document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
+document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang === 'pt' ? 'pt-BR' : lang;
 applyI18n();

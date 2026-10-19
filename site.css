@@ -135,6 +135,8 @@ footer { border-top: 2px solid var(--border); padding: 20px 0 32px; color: var(-
 html:lang(vi) body { font-family: "Be Vietnam Pro", system-ui, sans-serif; }
 /* Japanese: Noto Sans JP before the Chinese font, so kanji take their Japanese shapes. */
 html:lang(ja) body { font-family: "Rubik", "Noto Sans JP", system-ui, sans-serif; }
+/* Korean: Noto Sans KR for Hangul after Rubik, which has none. */
+html:lang(ko) body { font-family: "Rubik", "Noto Sans KR", system-ui, sans-serif; }
 
 /* The GitHub icon at the end of the footer links, level with the text. */
 footer a.gh { display: inline-flex; vertical-align: -3px; }

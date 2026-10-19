@@ -100,6 +100,57 @@
 </table>
 </body>
 </html>
+{{ else if eq $l "pt" }}<!doctype html>
+<html lang="pt">
+<body style="margin:0;padding:0;background:#f4ede1;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1b1714">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4ede1;padding:32px 16px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:8px;padding:32px">
+<tr><td style="font-size:22px;font-weight:700;letter-spacing:2px;padding-bottom:24px">GOALCRAFT</td></tr>
+<tr><td style="font-size:18px;font-weight:600;padding-bottom:12px">Entre no Goalcraft</td></tr>
+<tr><td style="font-size:15px;line-height:22px;padding-bottom:24px">Use o botão abaixo para entrar no seu painel do Goalcraft, onde seus agentes de IA mostram o progresso das suas metas. O link funciona uma vez e expira em uma hora.</td></tr>
+<tr><td style="padding-bottom:24px"><a href="https://goalcraft.ai/auth/v1/verify?token={{ .TokenHash }}&type=signup&redirect_to={{ .RedirectTo }}" style="display:inline-block;background:#f2c14e;color:#1b1714;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:6px">Entrar no Goalcraft</a></td></tr>
+<tr><td style="font-size:13px;line-height:20px;color:#6b6460;padding-bottom:8px">Você recebeu este e-mail porque alguém pediu para entrar no Goalcraft com {{ .Email }}. Se não foi você, pode ignorar: sem o link nada acontece.</td></tr>
+<tr><td style="font-size:13px;line-height:20px;color:#6b6460">Dúvidas? Escreva para <a href="mailto:support@goalcraft.ai" style="color:#6b6460">support@goalcraft.ai</a>. Goalcraft &middot; <a href="https://goalcraft.ai" style="color:#6b6460">goalcraft.ai</a></td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
+{{ else if eq $l "tr" }}<!doctype html>
+<html lang="tr">
+<body style="margin:0;padding:0;background:#f4ede1;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1b1714">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4ede1;padding:32px 16px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:8px;padding:32px">
+<tr><td style="font-size:22px;font-weight:700;letter-spacing:2px;padding-bottom:24px">GOALCRAFT</td></tr>
+<tr><td style="font-size:18px;font-weight:600;padding-bottom:12px">Goalcraft’a giriş yapın</td></tr>
+<tr><td style="font-size:15px;line-height:22px;padding-bottom:24px">Yapay zekâ ajanlarınızın hedeflerinizdeki ilerlemeyi gösterdiği Goalcraft panelinize giriş yapmak için aşağıdaki düğmeyi kullanın. Bağlantı bir kez çalışır ve bir saat içinde geçerliliğini yitirir.</td></tr>
+<tr><td style="padding-bottom:24px"><a href="https://goalcraft.ai/auth/v1/verify?token={{ .TokenHash }}&type=signup&redirect_to={{ .RedirectTo }}" style="display:inline-block;background:#f2c14e;color:#1b1714;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:6px">Goalcraft’a giriş yap</a></td></tr>
+<tr><td style="font-size:13px;line-height:20px;color:#6b6460;padding-bottom:8px">Bu e-postayı, biri {{ .Email }} adresiyle Goalcraft’a giriş yapmak istediği için aldınız. Siz değilseniz yok sayabilirsiniz: bağlantı olmadan hiçbir şey olmaz.</td></tr>
+<tr><td style="font-size:13px;line-height:20px;color:#6b6460">Sorularınız mı var? Yazın: <a href="mailto:support@goalcraft.ai" style="color:#6b6460">support@goalcraft.ai</a>. Goalcraft &middot; <a href="https://goalcraft.ai" style="color:#6b6460">goalcraft.ai</a></td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
+{{ else if eq $l "ko" }}<!doctype html>
+<html lang="ko">
+<body style="margin:0;padding:0;background:#f4ede1;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1b1714">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4ede1;padding:32px 16px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:8px;padding:32px">
+<tr><td style="font-size:22px;font-weight:700;letter-spacing:2px;padding-bottom:24px">GOALCRAFT</td></tr>
+<tr><td style="font-size:18px;font-weight:600;padding-bottom:12px">Goalcraft 로그인</td></tr>
+<tr><td style="font-size:15px;line-height:22px;padding-bottom:24px">아래 버튼을 눌러 Goalcraft 대시보드에 로그인하세요. AI 에이전트가 목표의 진행 상황을 보여 줍니다. 링크는 한 번만 쓸 수 있고 1시간 후 만료됩니다.</td></tr>
+<tr><td style="padding-bottom:24px"><a href="https://goalcraft.ai/auth/v1/verify?token={{ .TokenHash }}&type=signup&redirect_to={{ .RedirectTo }}" style="display:inline-block;background:#f2c14e;color:#1b1714;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:6px">Goalcraft 로그인</a></td></tr>
+<tr><td style="font-size:13px;line-height:20px;color:#6b6460;padding-bottom:8px">누군가 {{ .Email }}(으)로 Goalcraft 로그인을 요청해서 이 이메일이 왔습니다. 본인이 아니라면 무시하셔도 됩니다: 링크를 쓰지 않으면 아무 일도 일어나지 않습니다.</td></tr>
+<tr><td style="font-size:13px;line-height:20px;color:#6b6460">문의: <a href="mailto:support@goalcraft.ai" style="color:#6b6460">support@goalcraft.ai</a>. Goalcraft &middot; <a href="https://goalcraft.ai" style="color:#6b6460">goalcraft.ai</a></td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
 {{ else }}<!doctype html>
 <html lang="en">
 <body style="margin:0;padding:0;background:#f4ede1;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1b1714">

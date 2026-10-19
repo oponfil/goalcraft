@@ -45,6 +45,21 @@ TEXT = {
            'Goalcraft にログイン',
            'このメールは、誰かが {email} で Goalcraft へのログインを求めたため届きました。心当たりがなければ無視してください。リンクを使わなければ何も起きません。',
            'ご質問は'),
+    'pt': ('Seu link para entrar no Goalcraft', 'Entre no Goalcraft',
+           'Use o botão abaixo para entrar no seu painel do Goalcraft, onde seus agentes de IA mostram o progresso das suas metas. O link funciona uma vez e expira em uma hora.',
+           'Entrar no Goalcraft',
+           'Você recebeu este e-mail porque alguém pediu para entrar no Goalcraft com {email}. Se não foi você, pode ignorar: sem o link nada acontece.',
+           'Dúvidas? Escreva para'),
+    'tr': ('Goalcraft giriş bağlantınız', 'Goalcraft’a giriş yapın',
+           'Yapay zekâ ajanlarınızın hedeflerinizdeki ilerlemeyi gösterdiği Goalcraft panelinize giriş yapmak için aşağıdaki düğmeyi kullanın. Bağlantı bir kez çalışır ve bir saat içinde geçerliliğini yitirir.',
+           'Goalcraft’a giriş yap',
+           'Bu e-postayı, biri {email} adresiyle Goalcraft’a giriş yapmak istediği için aldınız. Siz değilseniz yok sayabilirsiniz: bağlantı olmadan hiçbir şey olmaz.',
+           'Sorularınız mı var? Yazın:'),
+    'ko': ('Goalcraft 로그인 링크', 'Goalcraft 로그인',
+           '아래 버튼을 눌러 Goalcraft 대시보드에 로그인하세요. AI 에이전트가 목표의 진행 상황을 보여 줍니다. 링크는 한 번만 쓸 수 있고 1시간 후 만료됩니다.',
+           'Goalcraft 로그인',
+           '누군가 {email}(으)로 Goalcraft 로그인을 요청해서 이 이메일이 왔습니다. 본인이 아니라면 무시하셔도 됩니다: 링크를 쓰지 않으면 아무 일도 일어나지 않습니다.',
+           '문의:'),
 }
 # Japanese puts the verb after the address.
 AFTER = {'ja': ' までどうぞ。'}

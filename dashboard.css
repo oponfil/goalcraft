@@ -269,6 +269,8 @@ body > .sitefoot { padding: 10px 0 12px; font-size: 13px; }
 html:lang(vi) { --font: "Be Vietnam Pro", system-ui, sans-serif; }
 /* Japanese: Noto Sans JP before the Chinese font, so kanji take their Japanese shapes. */
 html:lang(ja) { --font: "Rubik", "Noto Sans JP", system-ui, sans-serif; }
+/* Korean: Noto Sans KR for Hangul after Rubik, which has none. */
+html:lang(ko) { --font: "Rubik", "Noto Sans KR", system-ui, sans-serif; }
 /* An agent's short reply to the person's answer: a note over its head in the board's own style
    (the popups' dark panel and border, square corners), the text and a ×. */
 .agent-note { position: fixed; z-index: 5; transform: translateY(calc(-100% - 6px)); max-width: 210px; background: var(--panel); color: var(--text); border: 2px solid var(--border); font: 500 13px/1.35 var(--font); padding: 6px 24px 7px 10px; pointer-events: auto; }
