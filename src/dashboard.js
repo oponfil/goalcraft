@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=bf36b5ef';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=bf36b5ef';
-import { t, lang } from './i18n.js?v=bf36b5ef';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=dc3a4cdb';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=dc3a4cdb';
+import { t, lang } from './i18n.js?v=dc3a4cdb';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -182,8 +182,8 @@ export function mountDashboard(funnels, opts = {}) {
   });
   let tipTimer;
   function showTip(e, h) {
-    if (h.type === 'source') tip.textContent = t('board.sheet');
-    else if (h.type === 'guide') tip.textContent = t('board.guide');
+    if (h.type === 'source') tip.textContent = t('board.sheet', sheetPlace(h.url));
+    else if (h.type === 'guide') tip.textContent = t('board.guide', sheetPlace(h.url));
     else {
       const s = scene.funnels[h.fi].stages[h.j], label = plural(s.count, s.forms);
       tip.textContent = label.charAt(0).toUpperCase() + label.slice(1);
@@ -193,6 +193,16 @@ export function mountDashboard(funnels, opts = {}) {
     tip.style.top = e.clientY + 18 + 'px';
   }
   canvas.addEventListener('pointerleave', () => { tip.hidden = true; });
+  // The service a list or notes link leads to, by its address; any other site by its own name.
+  function sheetPlace(url) {
+    let host;
+    try { host = new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
+    if (host === 'docs.google.com') return /\/document\//.test(url + '/') ? 'Google Docs' : /\/presentation\//.test(url + '/') ? 'Google Slides' : 'Google Sheets';
+    const known = [['docs.google.com', 'Google Sheets'], ['notion.so', 'Notion'], ['notion.site', 'Notion'], ['airtable.com', 'Airtable'],
+      ['github.com', 'GitHub'], ['gitlab.com', 'GitLab'], ['trello.com', 'Trello'], ['coda.io', 'Coda'], ['clickup.com', 'ClickUp'],
+      ['onedrive.live.com', 'Excel'], ['sharepoint.com', 'Excel'], ['dropbox.com', 'Dropbox']];
+    return known.find(([d]) => host === d || host.endsWith('.' + d))?.[1] ?? host;
+  }
 
   canvas.addEventListener('click', e => {
     const h = scene.hitTest(...toLogical(e));

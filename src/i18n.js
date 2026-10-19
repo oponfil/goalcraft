@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=bf36b5ef';
-import vi from './lang/vi.js?v=bf36b5ef';
-import ja from './lang/ja.js?v=bf36b5ef';
-import pt from './lang/pt.js?v=bf36b5ef';
-import tr from './lang/tr.js?v=bf36b5ef';
-import ko from './lang/ko.js?v=bf36b5ef';
+import es from './lang/es.js?v=dc3a4cdb';
+import vi from './lang/vi.js?v=dc3a4cdb';
+import ja from './lang/ja.js?v=dc3a4cdb';
+import pt from './lang/pt.js?v=dc3a4cdb';
+import tr from './lang/tr.js?v=dc3a4cdb';
+import ko from './lang/ko.js?v=dc3a4cdb';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -341,8 +341,8 @@ const STRINGS = {
   'board.replyIn': L((who) => `Reply in ${who}`, (who) => `Ответить в ${who}`, (who) => `在 ${who} 中回复`, (who) => `ตอบใน ${who}`),
   'board.answer': L('Your answer', 'Ваш ответ', '你的回复', 'คำตอบของคุณ'),
   'board.send': L('Send answer', 'Отправить ответ', '发送回复', 'ส่งคำตอบ'),
-  'board.sheet': L('Open the list', 'Открыть список', '打开清单', 'เปิดรายการ'),
-  'board.guide': L('Open the notes', 'Открыть заметки', '打开笔记', 'เปิดโน้ต'),
+  'board.sheet': L((where) => `Open the list in ${where}`, (where) => `Открыть список в ${where}`, (where) => `在 ${where} 中打开列表`, (where) => `เปิดรายการใน ${where}`),
+  'board.guide': L((where) => `Open the notes in ${where}`, (where) => `Открыть заметки в ${where}`, (where) => `在 ${where} 中打开笔记`, (where) => `เปิดโน้ตใน ${where}`),
   'board.close': L('Close', 'Закрыть', '关闭', 'ปิด'),
   'board.goalReached': L('goal reached ✓', 'цель достигнута ✓', '目标已达成 ✓', 'ถึงเป้าหมายแล้ว ✓'),
   'board.goal': L((total, time) => `goal: +${total} in ${time}`, (total, time) => `цель: +${total} за ${time}`, (total, time) => `目标：${time} 内 +${total}`, (total, time) => `เป้าหมาย: +${total} ใน ${time}`),
