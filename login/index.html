@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tiny5&family=Rubik:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../site.css?v=06e43b9f">
+  <link rel="stylesheet" href="../site.css?v=239dd68f">
 </head>
 <body>
   <div class="wrap">
@@ -51,9 +51,9 @@
   </div>
 
   <script type="module">
-    import { supabase, afterSignIn } from '../src/auth.js?v=06e43b9f';
-    import { GOOGLE_CLIENT_ID } from '../src/config.js?v=06e43b9f';
-    import { t, lang } from '../src/i18n.js?v=06e43b9f';
+    import { supabase, afterSignIn } from '../src/auth.js?v=239dd68f';
+    import { GOOGLE_CLIENT_ID } from '../src/config.js?v=239dd68f';
+    import { t, lang } from '../src/i18n.js?v=239dd68f';
 
     const msg = document.getElementById('msg');
     const say = (text, kind = '') => { msg.textContent = text; msg.className = 'msg ' + kind; };
@@ -142,7 +142,8 @@
       if (!/^[^\s@]+@[^\s@]+\.[a-z][a-z0-9-]*[a-z0-9]$/i.test(email)) return say(t('login.badEmail'), 'error');
       button.disabled = true;
       say(t('login.sending'));
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: afterSignIn() } });
+      // lang: a new account starts in the language of this page, and its sign-up email comes in it.
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: afterSignIn(), data: { lang } } });
       if (!error) { say(t('login.check', email), 'ok'); return cooldown(button); }
       button.disabled = false;
       if (error.code === 'email_address_invalid' || error.code === 'validation_failed') say(t('login.badEmail'), 'error');
@@ -150,6 +151,6 @@
       else say(t('login.sendFailed'), 'error');
     });
   </script>
-  <script type="module" src="../src/nav.js?v=06e43b9f"></script>
+  <script type="module" src="../src/nav.js?v=239dd68f"></script>
 </body>
 </html>

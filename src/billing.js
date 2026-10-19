@@ -1,9 +1,9 @@
 // Paying for Pro: the site asks supabase/functions/billing for a Polar link and goes there, either
 // to pay (checkout) or to manage or cancel the subscription (portal). account() reads the person's
 // plan as the limits see it.
-import { supabase, siteUrl } from './auth.js?v=06e43b9f';
-import { t } from './i18n.js?v=06e43b9f';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=06e43b9f';
+import { supabase, siteUrl } from './auth.js?v=239dd68f';
+import { t } from './i18n.js?v=239dd68f';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=239dd68f';
 
 export async function account() {
   const { data } = await supabase.from('accounts').select('plan, pro_until, customer_id, subscription_status').maybeSingle();
@@ -34,7 +34,8 @@ async function go(kind) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/billing/${kind}`, {
     method: 'POST',
     headers: { authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_KEY, 'content-type': 'application/json' },
-    body: JSON.stringify(kind === 'checkout' ? { embed_origin: location.origin } : {}),
+    body: JSON.stringify(kind === 'checkout' ? { embed_origin: location.origin }
+      : kind === 'portal' ? { return_path: location.pathname + location.search } : {}),
   });
   const body = await res.json().catch(() => ({}));
   if (body.done) return location.reload(); // changed here, nothing to open

@@ -69,7 +69,10 @@ async function portal(req: Request) {
   if (!user) return json({ error: 'sign_in' }, 401)
   const { data } = await admin.from('accounts').select('customer_id').eq('user_id', user.id).maybeSingle()
   if (!data?.customer_id) return json({ error: 'no_subscription' }, 404)
-  const res = await polar('/customer-sessions/', { customer_id: data.customer_id, return_url: `${SITE}/app/` })
+  // "Back to Goalcraft" in the portal returns to the page it was opened from (a path on our site).
+  const from = (await req.json().catch(() => ({})))?.return_path
+  const back = typeof from === 'string' && /^\/(?!\/)[\w\-./?=&%#]*$/.test(from) ? from : '/app/'
+  const res = await polar('/customer-sessions/', { customer_id: data.customer_id, return_url: `${SITE}${back}` })
   return json({ url: res.customer_portal_url })
 }
 
