@@ -2,7 +2,7 @@
 
 Watch AI agents craft your goals — [goalcraft.ai](https://goalcraft.ai) · [live demo](https://goalcraft.ai/demo/).
 
-Every goal is a vertical column of tanks, one per stage (jobs found → applied → interviews → offer). Between the tanks are work zones where agents — Claude, ChatGPT, Gemini and others — move items to the next stage. Results drop out at the bottom. You see the whole picture at once: how much is at each stage, how fast it flows, which agent is working, who is waiting for you, and when the next result is due.
+Every goal is a vertical column of tanks, one per stage (jobs found → applied → interviews → offer). Between the tanks are work zones where agents — Claude, ChatGPT, Gemini and others — move items to the next stage. Results drop out at the bottom. On a platform at the top of the funnel stands its supervisor: your own agent that watches the whole funnel, finds the bottleneck, answers your questions about it and helps you add worker agents. You see the whole picture at once: how much is at each stage, how fast it flows, which agent is working, who is waiting for you, and when the next result is due.
 
 The dashboard is read-only. Agents create and update everything through an MCP server; you only watch, click for details, and jump into an agent's chat when it needs you. Protocol, data model and how the readings are estimated: [docs/MCP.md](docs/MCP.md).
 
@@ -10,13 +10,7 @@ Live at [goalcraft.ai](https://goalcraft.ai): your own board under Goals, writte
 
 ## Connect an agent
 
-Paste this into your agent (Claude, ChatGPT, Cursor or any other that supports MCP), or copy it from [goalcraft.ai/connect](https://goalcraft.ai/connect/):
-
-```
-Connect this MCP server for me: https://goalcraft.ai/mcp (Goalcraft, remote, sign-in with OAuth). If you can't connect it yourself, tell me exactly how to do it in this app.
-```
-
-The agent adds the server or tells you how (Claude: Connectors → Add custom connector; Claude Code: `claude mcp add --transport http goalcraft https://goalcraft.ai/mcp`; ChatGPT: Developer mode → Create). You sign in on goalcraft.ai and allow it; then tell it which goal to work on, and its funnel appears under Goals. Connect as many agents as you like, one at a time. Details: [docs/MCP.md](docs/MCP.md).
+Copy the prompt from [goalcraft.ai/connect](https://goalcraft.ai/connect/) into a new chat with your AI agent (Claude, ChatGPT, Cursor or any other that supports MCP). The agent connects the MCP server `https://goalcraft.ai/mcp` (or tells you how: Claude: Connectors → Add custom connector; Claude Code: `claude mcp add --transport http goalcraft https://goalcraft.ai/mcp`; ChatGPT: Developer mode → Create), you sign in on goalcraft.ai and allow it. Then it asks you about the goal, sets up its funnel and becomes the funnel's supervisor: it checks the funnel on a schedule, writes what it found by itself on the dashboard (all good, a bottleneck, a recommendation or a question for you) and, when a stage needs one, writes a ready prompt for a worker agent that you paste into another chat. One chat per goal. Details: [docs/MCP.md](docs/MCP.md).
 
 ## How to read it
 
@@ -24,6 +18,8 @@ The agent adds the server or tells you how (Claude: Connectors → Add custom co
 
 | On screen | Meaning |
 |---|---|
+| Supervisor on the platform at the top | Your agent over the whole funnel: it walks the platform and looks down with a spyglass. Click it for what its last check found, a coloured status (all good, bottleneck, recommendation, question) with one line, its previous checks and its chat. Lying: asleep until its next check; a red `!`: it asks you something, as a worker does |
+| Empty platform | The funnel has no supervisor yet; click it for how to appoint one |
 | Sheet on top | The funnel's list (Google Sheets, Notion, Airtable…), if its agents keep one; hover it to see where, click to open it |
 | Tank, its number and the small `+N` by it | How many items have reached this stage (cumulative) and how many it gains per day (average over the last 7 days; an agent can set it; `+0` until there are two reports to compare). Per hour, day or week, the same on every funnel: pick it under Flows in the profile menu (per day until then); the unit is not written. The tanks make one funnel: their sides lie on two straight lines, cut by the gaps between them. What a tank holds piles up from the bottom, piece by piece (each new one drops in from the pipe), up to the share of what this stage needs for the whole goal; that need comes from the conversion between the tanks' counts (next ÷ this), 30% while a count is still 0. Hover a tank for its name |
 | Agent with a tool | Working on that step |
@@ -74,7 +70,7 @@ Any other agent name gets a plain grey shirt. Logos are simplified pixel drawing
 
 ## Sign-in
 
-There are no passwords. Sign in with Google, or with your email: the site sends a one-time sign-in link (a new one can be asked for after a minute). The first sign-in creates the account. Google and an email link with the same address lead to the same account. You stay signed in on that browser until you sign out; then you sign in again the same way. Tick "Email me" in the menu to get an email whenever an agent asks you a question (the same question asked again is not sent twice); untick it to stop. Signing out on the site does not disconnect your agents: they have their own access through MCP, which you allowed when you connected them.
+There are no passwords. Sign in with Google, or with your email: the site sends a one-time sign-in link (a new one can be asked for after a minute), in the language of the site (the one picked on the sign-in page for a new account, the account's own after that; English when none is known). The first sign-in creates the account. Google and an email link with the same address lead to the same account. You stay signed in on that browser until you sign out; then you sign in again the same way. Tick "Email me" in the menu to get an email whenever an agent asks you a question (the same question asked again is not sent twice); untick it to stop. Signing out on the site does not disconnect your agents: they have their own access through MCP, which you allowed when you connected them.
 
 ## Languages
 
@@ -96,6 +92,8 @@ The MCP server deploys with the Supabase CLI: `supabase db push` for the tables,
 
 To refresh the README pictures, open http://localhost:5173/tools/render-docs.html; it redraws `docs/img/agents.png`, the animated `themes.gif` and `funnel.gif` (with `funnel.png` for the deck and `funnel-plain.png`, the landing page's still), and the link preview card `og.png` with the dashboard's own drawing code. `?only=themes`, `?only=funnel` or `?only=og` redraws just one. The landing page runs the same funnel live (`src/guide.js`).
 
+The sign-in emails are built in every site language by `python3 tools/email-templates.py` into `supabase/templates/` (`magic_link.html`, `confirmation.html` and `subject.txt`); they take effect once applied to the project's Auth settings (Management API `PATCH /v1/projects/{ref}/config/auth`: the magic link and confirmation content, and `subject.txt` as both subjects). Supabase keeps the old email text for up to about ten minutes after that.
+
 ## Code
 
 Scripts and stylesheets are loaded with a version in the address (`i18n.js?v=3f2a1c9e`), so a browser that still holds yesterday's files never runs a new page with an old script. Before committing a change to `src/`, a page or the CSS, run `python3 tools/stamp.py`: it sets the version, a hash of all the scripts and styles, in every reference.
@@ -104,13 +102,13 @@ Scripts and stylesheets are loaded with a version in the address (`i18n.js?v=3f2
 - `src/data.js` — demo funnels (with their translations) and the agent list
 - `src/scene.js` — Canvas 2D scene: layout, simulation, heaps, hit areas
 - `src/themes.js` — themes: column backdrop, work piece, tank filling, result item
-- `src/sprites.js` — agents (outfits, tools, logos) drawn from shapes on a half-unit grid
+- `src/sprites.js` — agents (outfits, tools, logos) and supervisors (a manager's outfit per theme, spyglass) drawn from shapes on a half-unit grid
 - `src/dashboard.js` — page wiring: scaling, sticky titles, drag to reorder, popups, answers to agents
 - `src/main.js` — the demo; `src/live.js` — the person's funnels from the database, flows from the count history, live updates
 - `src/guide.js` — the explained funnel: run live on the landing page (`src/guide-live.js`), recorded for the README
 - `src/nav.js` — the nav: language picker, Goals and Sign out once signed in
 - `index.html` — landing page; `demo/` — the demo dashboard; `app/` — your own dashboard; `dashboard.css` — their styles
-- `login/` — sign-in with Google or an email link (Supabase Auth); `oauth/consent/` — where you allow an agent to connect; `connect/` — the prompt that connects an agent; `pricing/` — Free and Pro plans ($9 a month during early access, through Polar); `privacy/`, `contact/`
+- `login/` — sign-in with Google or an email link (Supabase Auth); `oauth/consent/` — where you allow an agent to connect; `connect/` — the prompt that connects Goalcraft and makes an agent the goal's supervisor; `pricing/` — Free and Pro plans ($9 a month during early access, through Polar); `privacy/`, `contact/`
 - `src/billing.js`, `src/pricing.js` — paying for Pro: the Get Pro button and the plan in the profile menu; `supabase/functions/billing/` — Polar checkout, the customer portal and the webhook that moves `accounts.pro_until`; `terms/` — terms of service
 - `src/config.js` — Supabase project address, publishable key, Google client ID and the MCP address (all public)
 - `supabase/migrations/` — tables and row-level security; `supabase/functions/mcp/` — the MCP server; `cloudflare/worker.js` — serves it and its sign-in at goalcraft.ai (routes `/mcp*`, `/auth/*`, `/.well-known/*`)
