@@ -207,6 +207,8 @@ body {
 .sitebar .links a.signin { white-space: nowrap; background: #F2C14E; color: #1B1714; font-weight: 600; padding: 6px 16px; line-height: 22px; border: 2px solid #F2C14E; }
 .sitebar .links a.signin:hover { background: #FFD866; border-color: #FFD866; }
 @media (max-width: 560px) { .sitebar .links { gap: 14px; } .sitebar .links .wide { display: none; } .sitebar .links a.signin { padding: 4px 12px; } }
+/* Phones: the logo is just its mark, as on the site's pages. */
+@media (max-width: 420px) { .sitebar .links { gap: 10px; } .sitebar .logo { font-size: 0; } .sitebar .logo .mark { margin-right: 0; } }
 .sitebar .sitebar .logo { display: inline-flex; align-items: center; }
 .sitebar .logo .mark { image-rendering: pixelated; margin-right: 8px; }
 .copybox { position: relative; margin: 0 0 8px; }

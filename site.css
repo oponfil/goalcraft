@@ -21,6 +21,9 @@ nav { display: flex; align-items: center; justify-content: space-between; gap: 1
 .links a.signin { white-space: nowrap; background: var(--accent); color: #1B1714; font-weight: 600; padding: 6px 16px; line-height: 22px; border: 2px solid var(--accent); }
 .links a.signin:hover { background: #FFD866; border-color: #FFD866; color: #1B1714; }
 @media (max-width: 560px) { .links { gap: 14px; } .links .wide { display: none; } .links a.signin { padding: 6px 14px; } }
+/* Phones: the logo is just its mark and the spacing tighter, so the language picker and Sign in stay
+   on screen in every language. */
+@media (max-width: 420px) { nav { gap: 10px; } .links { gap: 12px; } .logo { font-size: 0; } .logo .mark { margin-right: 0; } .links a.signin { padding: 6px 12px; } }
 .hero { padding: 48px 0 32px; text-align: center; }
 h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.12; margin: 0 auto 18px; max-width: 760px; font-weight: 700; }
 .lead { color: var(--muted); font-size: 19px; max-width: 640px; margin: 0 auto 28px; }
@@ -72,6 +75,8 @@ footer { border-top: 2px solid var(--border); padding: 20px 0 32px; color: var(-
 /* Text pages (privacy) */
 .doc { max-width: 680px; margin: 40px auto 56px; }
 .doc h1 { font-size: 36px; margin: 0 0 6px; }
+/* A long single word ("Конфиденциальность") is hyphenated rather than run off a phone's screen. */
+@media (max-width: 480px) { .doc h1 { font-size: 30px; hyphens: auto; overflow-wrap: break-word; } }
 .doc h2 { font-size: 20px; margin: 28px 0 8px; }
 .doc p, .doc li { color: var(--muted); line-height: 1.6; }
 .doc a { color: var(--accent); }
