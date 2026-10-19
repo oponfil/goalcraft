@@ -1,12 +1,12 @@
 // Renders the README pictures (agents sheet, theme samples, the board) and the link preview card from the same drawing code as
 // the dashboard and saves them through serve.py: open http://localhost:5173/tools/render-docs.html
 // (always in English: the page adds ?lang=en to itself).
-import { AGENTS, FUNNELS } from '../src/data.js?v=5bc84543';
-import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=5bc84543';
-import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=5bc84543';
+import { AGENTS, FUNNELS } from '../src/data.js?v=29a896f6';
+import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=29a896f6';
+import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=29a896f6';
 import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
-import { THEMES } from '../src/themes.js?v=5bc84543';
-import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=5bc84543';
+import { THEMES } from '../src/themes.js?v=29a896f6';
+import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=29a896f6';
 
 const FONT = 'Rubik, system-ui, sans-serif';
 
@@ -215,7 +215,7 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   const agent = (id, state) => scene.agents.find(a => a.agent === id && a.state === state);
   const s0 = stage(0), last = stage(n - 1);
   const ask = agent('claude', 'ask'), sleep = scene.spot(agent('grok', 'sleep'), 'rest'), work = scene.spot(agent('chatgpt', 'work'), 'work');
-  const src0 = scene.hits.find(h => h.type === 'source');
+  const src0 = scene.hits.find(h => h.type === 'source'), doc0 = scene.hits.find(h => h.type === 'guide');
   const resultsY = last.y + last.h + 40 + 9;
   // The tank's left side halfway down: the sides run straight from this tank's top to the next one's.
   const s1 = stage(1), tankMid = s0.w / 2 - (s0.w - s1.w) / 2 * (s0.h / 2) / (s1.y - s0.y);
@@ -224,7 +224,7 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   const sup = scene.spot(scene.agents.find(a => a.sup), 'ask');
   const notes = [
     [P(sup.x + 2, sup.y + 2), 'Supervisor', 'Your agent watching the whole funnel.'],
-    [P(src0.x + 3, src0.y + 19), 'Sheet', 'The table where the agents keep track of everything.'],
+    [P(doc0.x + 3, doc0.y + 18), 'Guide and sheet', 'The funnel guide on the left, its table on the right: what the agents work by and where they keep track.'],
     [P(cx - tankMid + 2, s0.y + s0.h / 2), 'Tank', 'Items at this stage so far, and +N a day.'],
     // The bubble bobs; the arrow points where it rests, so the label stays still.
     [P(ask.bubble.x, scene.spot(ask, 'ask').y - 2 + 11), 'Question', 'An agent waits for your answer. Click it to reply.'],

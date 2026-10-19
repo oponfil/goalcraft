@@ -41,6 +41,8 @@ export default {
 
   'guide.supervisor.h': 'Süpervizör',
   'guide.supervisor': 'Tüm huniyi izleyen ajanınız.',
+  'guide.doc.h': 'Kılavuz ve tablo',
+  'guide.doc': 'Solda huni kılavuzu, sağda tablo: ajanların neye göre çalıştığı ve kayıtları nerede tuttuğu.',
   'guide.sheet.h': 'Tablo',
   'guide.sheet': 'Ajanların her şeyi kaydettiği tablo.',
   'guide.tank.h': 'Tank',
@@ -74,7 +76,7 @@ export default {
 - huniden geçen öğelerin listesi nerede duruyor (bir Google tablosu, Notion, e-posta, bir dosya). Yoksa bir tablo öner ve yapabiliyorsan oluştur;
 - huniyi ne sıklıkla kontrol etmelisin (varsayılan olarak günde bir kez).
 
-3. Huniyi oluştur ya da güncelle. list_funnels’ta bu hedef için zaten bir huni varsa onunla çalış, hiçbir şeyi kopyalama. Yoksa upsert_funnel ile oluştur: başlık, aşamalar, sonuç, hedef (kaç sonuç ve hangi hızla), tema ve listenin bağlantısı (source_url). Bu huninin süpervizör yerini al (zone "supervisor" ile set_agent_state) ve kendine huniye göre benim dilimde kısa bir ad ver (name, örneğin "İş arama süpervizörü"); istersem adını değiştir. Sonra sonucu bana tek bir mesajda göster.
+3. Huniyi oluştur ya da güncelle. list_funnels’ta bu hedef için zaten bir huni varsa onunla çalış, hiçbir şeyi kopyalama. Yoksa upsert_funnel ile oluştur: başlık, aşamalar, sonuç, hedef (kaç sonuç ve hangi hızla), tema ve listenin bağlantısı (source_url). Bu huninin süpervizör yerini al (zone "supervisor" ile set_agent_state) ve kendine huniye göre benim dilimde kısa bir ad ver (name, örneğin "İş arama süpervizörü"); istersem adını değiştir. Huninin kılavuzunu listesinin yanında oluştur (Google E-Tablo’nun yanında bir Google Doküman, Notion veritabanının yanında bir Notion sayfası): senin ve çalışan ajanların bu huni hakkında bilmesi gereken her şeyi içeren tek bir belge: hedef, aşamalar, listenin yeri, her aşamada nasıl çalışılacağı ve nasıl rapor verileceği. Bağlantısını guide_url olarak gönder ve güncel tut; çalışan ajanlar için yazdığın istemler her çalışmanın başında onu okumalarını söylesin. Sonra sonucu bana tek bir mesajda göster.
 
 4. Kendini düzenli hâle getir. Bu uygulamada, kararlaştırdığımız sıklıkta bu sohbeti ya da bu talimatlarla seni çalıştıran zamanlanmış bir görev oluştur. Uygulama zamanlamayı desteklemiyorsa bana söyle, seni ne zaman çalıştıracağımı kararlaştıralım.
 
@@ -142,6 +144,7 @@ export default {
   'board.answer': 'Cevabınız',
   'board.send': 'Cevabı gönder',
   'board.sheet': (where) => `Listeyi ${where} içinde aç`,
+  'board.guide': (where) => `Huni kılavuzunu ${where} içinde aç`,
   'board.close': 'Kapat',
   'board.goalReached': 'hedefe ulaşıldı ✓',
   'board.goal': (total, time) => `hedef: ${time} içinde +${total}`,

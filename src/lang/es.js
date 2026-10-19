@@ -41,6 +41,8 @@ export default {
 
   'guide.supervisor.h': 'Supervisor',
   'guide.supervisor': 'Tu agente que vigila todo el embudo.',
+  'guide.doc.h': 'Guía y hoja',
+  'guide.doc': 'A la izquierda la guía del embudo, a la derecha su tabla: con qué trabajan los agentes y dónde llevan la cuenta.',
   'guide.sheet.h': 'Hoja',
   'guide.sheet': 'La tabla donde los agentes llevan la cuenta de todo.',
   'guide.tank.h': 'Tanque',
@@ -74,7 +76,7 @@ export default {
 - dónde está la lista de elementos que avanzan por el embudo (una hoja de Google, Notion, el correo, un archivo). Si no hay ninguna, propón una hoja y créala si puedes;
 - cada cuánto debes revisar el embudo (una vez al día por defecto).
 
-3. Crea o actualiza el embudo. Si list_funnels ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Si no, créalo con upsert_funnel: título, etapas, resultado, meta (cuántos resultados y a qué ritmo), tema y el enlace a la lista (source_url). Ocupa el puesto de supervisor de este embudo (set_agent_state con zone "supervisor") y ponte un nombre corto en mi idioma según el embudo (name, por ejemplo «Supervisor de búsqueda de empleo»); si te lo pido, cámbiatelo. Después muéstrame el resultado en un solo mensaje.
+3. Crea o actualiza el embudo. Si list_funnels ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Si no, créalo con upsert_funnel: título, etapas, resultado, meta (cuántos resultados y a qué ritmo), tema y el enlace a la lista (source_url). Ocupa el puesto de supervisor de este embudo (set_agent_state con zone "supervisor") y ponte un nombre corto en mi idioma según el embudo (name, por ejemplo «Supervisor de búsqueda de empleo»); si te lo pido, cámbiatelo. Crea la guía del embudo junto a su lista (un documento de Google junto a la hoja de Google, una página de Notion junto a la base de Notion): un documento con todo lo que tú y los agentes de trabajo necesitáis saber del embudo: la meta, las etapas, dónde está la lista, cómo trabajar cada etapa y cómo informar. Envía su enlace como guide_url y mantenlo al día; los prompts que escribas para los agentes de trabajo les dicen que la lean al empezar cada ejecución. Después muéstrame el resultado en un solo mensaje.
 
 4. Hazte regular. Crea en esta aplicación una tarea programada con la frecuencia acordada, que ejecute esta conversación o a ti con estas instrucciones. Si la aplicación no permite programar, dímelo y acordaremos cuándo te ejecuto yo.
 
@@ -142,6 +144,7 @@ export default {
   'board.answer': 'Tu respuesta',
   'board.send': 'Enviar respuesta',
   'board.sheet': (where) => `Abrir la lista en ${where}`,
+  'board.guide': (where) => `Abrir la guía del embudo en ${where}`,
   'board.close': 'Cerrar',
   'board.goalReached': 'meta alcanzada ✓',
   'board.goal': (total, time) => `meta: +${total} en ${time}`,

@@ -1,17 +1,19 @@
-import { agentInfo, plural } from './data.js?v=5bc84543';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=5bc84543';
-import { themeOf } from './themes.js?v=5bc84543';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=5bc84543';
+import { agentInfo, plural } from './data.js?v=29a896f6';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=29a896f6';
+import { themeOf } from './themes.js?v=29a896f6';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=29a896f6';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
 // The scene is tall enough for 5 tanks; shorter funnels end higher up. Titles live in the page header.
 export const CW = 200;
 const ZW = 164, TOP = 48, ZH = 40, LH = 46, MAX_STAGES = 5;
-// The supervisor's platform: a small deck around the top of the hopper, braced to the pipe; the
-// supervisor walks from one end to the other and looks down from each. Its top is level with the top
-// rim of the hopper; its braces end on the pipe's first band.
-const DECK_HALF = 36, DECK_Y = TOP - 9, BRACE_END = TOP + 12;
+// The supervisor's platform: a small deck on top of the pipe; the supervisor walks from one end to
+// the other and looks down from each.
+const DECK_HALF = 48, DECK_Y = TOP - 9;
+// On the platform's ends stand the funnel's guide (left) and its list (right), DOC_W wide each; the
+// supervisor walks between them.
+const DOC_W = 18;
 // The pixel layer is drawn at RES× the logical grid: scenery stays blocky, small pieces get finer pixels.
 const RES = 2;
 const tankTop = j => TOP + ZH + j * (LH + ZH);
@@ -144,8 +146,8 @@ export class Scene {
   cx(fi) { return fi * CW + CW / 2; }
   spot(a, kind) {
     if (a.sup) {
-      const cx = this.cx(this.fi(a.f)), left = cx - DECK_HALF, right = cx + DECK_HALF - 20;
-      if (kind === 'rest') return { x: left - 2, y: DECK_Y - 10 * P };
+      const cx = this.cx(this.fi(a.f)), left = cx - DECK_HALF + DOC_W + 2, right = cx + DECK_HALF - DOC_W - 22;
+      if (kind === 'rest') return { x: left, y: DECK_Y - 10 * P };
       return { x: kind === 'ask' ? left : left + (right - left) * this.deckWalk(a).k, y: DECK_Y - MINER_H };
     }
         // Agents stand level with the bottom of the plate, also in the output zone where it is lifted.
@@ -185,7 +187,7 @@ export class Scene {
     this.drawBackground();
   }
 
-  // Static layer: backdrop, pipes, the hopper, tanks' outlines.
+  // Static layer: backdrop, pipes, the platform on top, tanks' outlines.
   drawBackground() {
     const c = this.bg.getContext('2d'), r = rng(42);
     const w = this.funnels.length * CW;
@@ -197,14 +199,14 @@ export class Scene {
       for (let k = -1; k < n; k++) {
         // No room around a zone: agents work in the open, on top of the tank below.
         const y = zoneTop(k);
-        // The pipe runs from the tank above (or the hopper on top) down to the tank below.
+        // The pipe runs from the tank above (or the platform on top) down to the tank below.
         this.pipe(c, cx, k < 0 ? y + 4 : y, y + ZH, theme);
-        // On top: a small funnel at the very top of the column and a short pipe down from it.
+        // On top: the pipe goes on up to the supervisor's platform, with the funnel's documents on it.
         if (k < 0) {
-          this.pipe(c, cx, y + 1, y + 4, theme);
-          if (f.source_url) this.sheets(c, cx, y - 26);
+          this.pipe(c, cx, DECK_Y + 3, y + 4, theme);
           this.deck(c, fi * CW, theme);
-          this.hopper(c, cx, y - 8, y + 1, theme);
+          if (f.guide_url) this.guideDoc(c, cx - DECK_HALF + 1, DECK_Y - 22);
+          if (f.source_url) this.sheets(c, cx + DECK_HALF - DOC_W + 1, DECK_Y - 22);
         }
       }
       f.stages.forEach((s, j) => {
@@ -239,38 +241,18 @@ export class Scene {
     return strip;
   }
 
-  // The supervisor's platform around the top of the hopper, in the theme's frame colour: a floor with
-  // a darker underside and a diagonal brace on each side down to the pipe.
+  // The supervisor's platform on top of the pipe, in the theme's frame colour: a floor with a darker
+  // underside.
   deck(c, x0, theme) {
     const R = (col, ...r) => { c.fillStyle = col; c.fillRect(...r); };
     const cx = x0 + CW / 2, y = DECK_Y, under = shade(theme.frame, 0.55);
     R(under, cx - DECK_HALF, y + 1, DECK_HALF * 2 + 1, 2.5); R(theme.frame, cx - DECK_HALF, y, DECK_HALF * 2 + 1, 1.5);
-    // A brace from near each end of the platform's underside down to the pipe's edge.
-    const x1 = DECK_HALF - 1.5, x2 = 5, y1 = y + 3.5, steps = 40;
-    for (let i = 0; i <= steps; i++) {
-      const q = i / steps, dx = x1 + (x2 - x1) * q, yy = y1 + (BRACE_END - y1) * q;
-      R(under, cx - dx - 0.75, yy, 1.5, 1.5); R(under, cx + dx - 0.25, yy, 1.5, 1.5);
-    }
   }
 
-  // A small funnel on top of the first pipe, where new items pour in.
-  // The small funnel on top, in the same material as the theme's pipe.
-  hopper(c, cx, y0, y1, theme) {
-    const [edge, body, shine] = theme?.pipe || ['#5E626B', '#8E939D', '#B9BEC7'];
-    for (let y = y0; y < y1; y++) {
-      const t = (y - y0) / (y1 - y0 - 1), half = Math.round(9 - t * 4.5);
-      c.fillStyle = edge; c.fillRect(cx - half, y, half * 2 + 1, 1);
-      c.fillStyle = body; c.fillRect(cx - half + 1, y, half * 2 - 1, 1);
-      c.fillStyle = shine; c.fillRect(cx - half + 1, y, 2, 1);
-    }
-    c.fillStyle = shine; c.fillRect(cx - 10, y0 - 1, 21, 1);
-    c.fillStyle = edge; c.fillRect(cx - 10, y0, 21, 1);
-  }
-
-  // A funnel whose agent keeps its list behind a link: a spreadsheet file (folded corner, white
-  // table) stands in the hopper. Clicking it opens the list.
-  sheets(c, cx, y) {
-    const x = cx - 8, R = (col, ...r) => { c.fillStyle = col; c.fillRect(...r); };
+  // A funnel whose agents keep its list behind a link: a spreadsheet file (folded corner, white
+  // table) stands on the right end of the platform. Clicking it opens the list.
+  sheets(c, x, y) {
+    const R = (col, ...r) => { c.fillStyle = col; c.fillRect(...r); };
     R('#0F5130', x - 1, y - 1, 13, 23); R('#0F5130', x - 1, y + 4, 18, 18);
     R('#1E9E58', x, y, 11, 21); R('#1E9E58', x, y + 5, 16, 16);
     // The folded corner: a light triangle with its diagonal edge.
@@ -280,8 +262,21 @@ export class Scene {
     R('#1E9E58', x + 7, y + 7, 1, 8);
   }
   sourceHit(fi) {
-    const cx = this.cx(fi), y = TOP - 26;
-    return { x: cx - 12, y, w: 26, h: 34, type: 'source', url: this.funnels[fi].source_url };
+    const x = this.cx(fi) + DECK_HALF - DOC_W - 1;
+    return { x, y: DECK_Y - 26, w: DOC_W + 4, h: 30, type: 'source', url: this.funnels[fi].source_url };
+  }
+  // The funnel's guide, the one document with everything about it for its supervisor and workers: a
+  // text file (folded corner, lines of text) on the left end of the platform. Clicking it opens it.
+  guideDoc(c, x, y) {
+    const R = (col, ...r) => { c.fillStyle = col; c.fillRect(...r); };
+    R('#1A3F8F', x - 1, y - 1, 13, 23); R('#1A3F8F', x - 1, y + 4, 18, 18);
+    R('#4A86E8', x, y, 11, 21); R('#4A86E8', x, y + 5, 16, 16);
+    for (let i = 0; i < 5; i++) { R('#A9C6F5', x + 11, y + i, i + 1, 1); R('#1A3F8F', x + 12 + i, y + i, 1, 1); }
+    for (const [dy, w] of [[7, 10], [10, 10], [13, 10], [16, 6]]) R('#FFFFFF', x + 3, y + dy, w, 1.5);
+  }
+  guideHit(fi) {
+    const x = this.cx(fi) - DECK_HALF - 1;
+    return { x, y: DECK_Y - 26, w: DOC_W + 4, h: 30, type: 'guide', url: this.funnels[fi].guide_url };
   }
 
   // The pipe in the theme's own material (iron, glass, hose, cable…), with its joints or lights.
@@ -360,6 +355,7 @@ export class Scene {
     this.hits = [];
     this.funnels.forEach((f, fi) => {
       if (f.source_url) this.hits.push(this.sourceHit(fi));
+      if (f.guide_url) this.hits.push(this.guideHit(fi));
       const cx = this.cx(fi), n = f.stages.length, theme = themeOf(f);
       for (let k = -1; k < n; k++) {
         const y = zoneTop(k), fl = f.flows[k + 1];
@@ -394,8 +390,8 @@ export class Scene {
     });
     for (const a of this.agents) this.drawAgent(c, a);
     if (this.live) this.funnels.forEach((f, fi) => {
-      // An empty platform: a click on either wing (the sheet keeps the middle) tells how to appoint one.
-      if (!f.supervisor) for (const x of [this.cx(fi) - DECK_HALF, this.cx(fi) + 14]) this.hits.push({ x, y: DECK_Y - 22, w: DECK_HALF - 14, h: 28, type: 'nosup', f });
+      // An empty platform: a click on either side of the pipe, between the documents, tells how to appoint one.
+      if (!f.supervisor) for (const x of [this.cx(fi) - DECK_HALF + DOC_W + 2, this.cx(fi) + 12]) this.hits.push({ x, y: DECK_Y - 22, w: DECK_HALF - DOC_W - 14, h: 28, type: 'nosup', f });
     });
     for (const s of this.sparks) { c.fillStyle = s.col; c.fillRect(s.x, s.y, 2, 2); }
     if (this.dropAt !== null) {

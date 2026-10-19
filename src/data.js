@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=5bc84543';
+import { lang } from './i18n.js?v=29a896f6';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -59,6 +59,7 @@ export const FUNNELS = [
   {
     title: 'Job Search',
     source_url: 'https://docs.google.com/spreadsheets',
+    guide_url: 'https://docs.google.com/document',
     theme: 'mine',
     result: ['offer', 'offers'],
     stages: [
@@ -152,6 +153,7 @@ export const FUNNELS = [
   {
     title: 'Fundraising',
     source_url: 'https://airtable.com',
+    guide_url: 'https://www.notion.so',
     theme: 'money',
     result: ['term sheet', 'term sheets'],
     stages: [
@@ -213,6 +215,7 @@ export const FUNNELS = [
   {
     title: 'Research',
     source_url: 'https://www.notion.so',
+    guide_url: 'https://www.notion.so',
     theme: 'lab',
     result: ['published paper', 'published papers'],
     stages: [

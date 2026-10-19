@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=5bc84543';
-import vi from './lang/vi.js?v=5bc84543';
-import ja from './lang/ja.js?v=5bc84543';
-import pt from './lang/pt.js?v=5bc84543';
-import tr from './lang/tr.js?v=5bc84543';
-import ko from './lang/ko.js?v=5bc84543';
+import es from './lang/es.js?v=29a896f6';
+import vi from './lang/vi.js?v=29a896f6';
+import ja from './lang/ja.js?v=29a896f6';
+import pt from './lang/pt.js?v=29a896f6';
+import tr from './lang/tr.js?v=29a896f6';
+import ko from './lang/ko.js?v=29a896f6';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -124,6 +124,8 @@ const STRINGS = {
   // The landing page's funnel: what each part is
   'guide.supervisor.h': L('Supervisor', 'Супервайзер', '主管', 'ผู้ดูแล'),
   'guide.supervisor': L('Your agent watching the whole funnel.', 'Ваш агент, следящий за всей воронкой.', '你的智能体，盯着整个漏斗。', 'เอเจนต์ของคุณที่คอยดูทั้งกรวย'),
+  'guide.doc.h': L('Guide and sheet', 'Инструкция и таблица', '说明和表格', 'คู่มือและตาราง'),
+  'guide.doc': L('The funnel guide on the left, its table on the right: what the agents work by and where they keep track.', 'Слева инструкция воронки, справа таблица: по чему работают агенты и где они ведут учёт.', '左边是漏斗说明，右边是表格：智能体按什么工作、在哪里记录。', 'ซ้ายคือคู่มือกรวย ขวาคือตาราง: เอเจนต์ทำงานตามอะไรและบันทึกไว้ที่ไหน'),
   'guide.sheet.h': L('Sheet', 'Таблица', '表格', 'ตาราง'),
   'guide.sheet': L('The table where the agents keep track of everything.', 'Таблица, где агенты ведут учёт всего.', '智能体记录一切的表格。', 'ตารางที่เอเจนต์ใช้ติดตามทุกอย่าง'),
   'guide.tank.h': L('Tank', 'Бак', '储罐', 'ถัง'),
@@ -184,7 +186,7 @@ const STRINGS = {
 - where the list of items moving through the funnel lives (a Google Sheet, Notion, email, a file). If there is none, suggest a sheet and create it if you can;
 - how often you should check the funnel (once a day by default).
 
-3. Create or update the funnel. If list_funnels already has a funnel for this goal, work with it and duplicate nothing. Otherwise create it with upsert_funnel: title, stages, result, goal (how many results and the pace), theme, and the link to the list (source_url). Take the supervisor's place of this funnel (set_agent_state with zone "supervisor") and give yourself a short name in my language after the funnel (name, for example "Job Search supervisor"); if I ask, rename yourself. Then show me the result in one message.
+3. Create or update the funnel. If list_funnels already has a funnel for this goal, work with it and duplicate nothing. Otherwise create it with upsert_funnel: title, stages, result, goal (how many results and the pace), theme, and the link to the list (source_url). Take the supervisor's place of this funnel (set_agent_state with zone "supervisor") and give yourself a short name in my language after the funnel (name, for example "Job Search supervisor"); if I ask, rename yourself. Create the funnel's guide next to its list (a Google Doc beside the Google Sheet, a Notion page beside the Notion database): one document with everything about this funnel for you and the worker agents: the goal, the stages, where the list is, how to work each stage and how to report. Give its link as guide_url and keep it up to date; the prompts you write for worker agents tell them to read it at the start of every run. Then show me the result in one message.
 
 4. Make yourself regular. Create a scheduled task in this app with the frequency we agreed on, running this conversation or you with these instructions. If the app has no scheduling, tell me and we'll agree when I'll run you.
 
@@ -209,7 +211,7 @@ const STRINGS = {
 - где лежит список того, что движется по воронке (Google Таблица, Notion, почта, файл). Если списка нет — предложи таблицу и создай её, если можешь;
 - как часто тебе проверять воронку (по умолчанию — раз в день).
 
-3. Создай или обнови воронку. Если в list_funnels уже есть воронка этой цели — работай с ней, ничего не дублируй. Иначе создай её через upsert_funnel: название, этапы, результат, цель (сколько результатов и темп), тема, ссылка на список (source_url). Займи место супервайзера этой воронки (set_agent_state, zone "supervisor") и дай себе короткое имя на моём языке по воронке (name, например «Супервайзер поиска работы»); если я попрошу — переименуйся. Затем покажи мне итог одним сообщением.
+3. Создай или обнови воронку. Если в list_funnels уже есть воронка этой цели — работай с ней, ничего не дублируй. Иначе создай её через upsert_funnel: название, этапы, результат, цель (сколько результатов и темп), тема, ссылка на список (source_url). Займи место супервайзера этой воронки (set_agent_state, zone "supervisor") и дай себе короткое имя на моём языке по воронке (name, например «Супервайзер поиска работы»); если я попрошу — переименуйся. Создай инструкцию воронки рядом с её списком (Google Документ рядом с Google Таблицей, страница Notion рядом с базой Notion): один документ со всем, что нужно знать о воронке тебе и рабочим агентам: цель, этапы, где список, как работать на каждом этапе и как отчитываться. Пришли её ссылку как guide_url и держи её актуальной; в промптах для рабочих агентов пиши, чтобы они читали её в начале каждого запуска. Затем покажи мне итог одним сообщением.
 
 4. Сделай себя регулярным. Создай в этом приложении задачу по расписанию с частотой, о которой мы договорились: она запускает этот разговор или тебя с этой инструкцией. Если приложение не умеет расписание — скажи мне, и договоримся, когда я буду тебя запускать.
 
@@ -234,7 +236,7 @@ const STRINGS = {
 - 在漏斗里流动的条目清单放在哪里（Google 表格、Notion、邮件、文件）。如果没有，建议建一个表格，能建的话就建好；
 - 你应该多久检查一次漏斗（默认每天一次）。
 
-3. 创建或更新漏斗。如果 list_funnels 里已经有这个目标的漏斗，就用它，不要重复创建。否则用 upsert_funnel 创建：标题、阶段、结果、目标（需要多少个结果和节奏）、主题，以及清单链接（source_url）。占据这个漏斗的主管位置（set_agent_state，zone 为 "supervisor"），并用我的语言按漏斗给自己起一个简短的名字（name，例如“求职主管”）；如果我要求，就改名。然后用一条消息告诉我结果。
+3. 创建或更新漏斗。如果 list_funnels 里已经有这个目标的漏斗，就用它，不要重复创建。否则用 upsert_funnel 创建：标题、阶段、结果、目标（需要多少个结果和节奏）、主题，以及清单链接（source_url）。占据这个漏斗的主管位置（set_agent_state，zone 为 "supervisor"），并用我的语言按漏斗给自己起一个简短的名字（name，例如“求职主管”）；如果我要求，就改名。在清单旁边创建漏斗说明（Google 表格旁放 Google 文档，Notion 数据库旁放 Notion 页面）：一份文档，写清你和工作智能体需要知道的关于这个漏斗的一切：目标、阶段、清单在哪里、每个阶段怎么做、如何汇报。把它的链接作为 guide_url 提交，并保持更新；你给工作智能体写的提示词里要让它们在每次运行开始时先读它。然后用一条消息告诉我结果。
 
 4. 让自己定期运行。在这个应用里按我们商定的频率创建一个定时任务，运行这个对话或带着这份说明的你。如果应用不支持定时，就告诉我，我们约定我什么时候运行你。
 
@@ -259,7 +261,7 @@ const STRINGS = {
 - รายการที่เคลื่อนผ่านกรวยเก็บไว้ที่ไหน (Google Sheet, Notion, อีเมล, ไฟล์) ถ้ายังไม่มี ให้เสนอทำตารางและสร้างให้ถ้าทำได้;
 - ควรตรวจกรวยบ่อยแค่ไหน (ค่าเริ่มต้นวันละครั้ง)
 
-3. สร้างหรืออัปเดตกรวย ถ้าใน list_funnels มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ไม่เช่นนั้นให้สร้างด้วย upsert_funnel: ชื่อ ขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการและจังหวะ) ธีม และลิงก์ไปยังรายการ (source_url) เข้ารับตำแหน่งผู้ดูแลของกรวยนี้ (set_agent_state โดยใช้ zone "supervisor") และตั้งชื่อสั้นๆ ให้ตัวเองเป็นภาษาของฉันตามกรวย (name เช่น "ผู้ดูแลหางาน") ถ้าฉันขอ ให้เปลี่ยนชื่อ แล้วสรุปผลให้ฉันในข้อความเดียว
+3. สร้างหรืออัปเดตกรวย ถ้าใน list_funnels มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ไม่เช่นนั้นให้สร้างด้วย upsert_funnel: ชื่อ ขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการและจังหวะ) ธีม และลิงก์ไปยังรายการ (source_url) เข้ารับตำแหน่งผู้ดูแลของกรวยนี้ (set_agent_state โดยใช้ zone "supervisor") และตั้งชื่อสั้นๆ ให้ตัวเองเป็นภาษาของฉันตามกรวย (name เช่น "ผู้ดูแลหางาน") ถ้าฉันขอ ให้เปลี่ยนชื่อ สร้างคู่มือกรวยไว้ข้างรายการ (Google Docs ข้าง Google Sheet, หน้า Notion ข้างฐานข้อมูล Notion): เอกสารเดียวที่มีทุกอย่างเกี่ยวกับกรวยนี้สำหรับคุณและเอเจนต์ทำงาน: เป้าหมาย ขั้นตอน รายการอยู่ที่ไหน ทำงานแต่ละขั้นอย่างไร และรายงานอย่างไร ส่งลิงก์เป็น guide_url และอัปเดตให้ทันสมัยเสมอ พรอมต์ที่คุณเขียนให้เอเจนต์ทำงานต้องบอกให้อ่านคู่มือนี้ตอนเริ่มทุกรอบ แล้วสรุปผลให้ฉันในข้อความเดียว
 
 4. ทำให้ตัวเองทำงานเป็นประจำ สร้างงานตามกำหนดเวลาในแอปนี้ด้วยความถี่ที่เราตกลงกัน ให้เรียกบทสนทนานี้หรือเรียกคุณพร้อมคำสั่งนี้ ถ้าแอปตั้งเวลาไม่ได้ ให้บอกฉัน แล้วเราจะตกลงกันว่าฉันจะเรียกคุณเมื่อไร
 
@@ -340,6 +342,7 @@ const STRINGS = {
   'board.answer': L('Your answer', 'Ваш ответ', '你的回复', 'คำตอบของคุณ'),
   'board.send': L('Send answer', 'Отправить ответ', '发送回复', 'ส่งคำตอบ'),
   'board.sheet': L((where) => `Open the list in ${where}`, (where) => `Открыть список в ${where}`, (where) => `在 ${where} 中打开列表`, (where) => `เปิดรายการใน ${where}`),
+  'board.guide': L((where) => `Open the funnel guide in ${where}`, (where) => `Открыть инструкцию воронки в ${where}`, (where) => `在 ${where} 中打开漏斗说明`, (where) => `เปิดคู่มือกรวยใน ${where}`),
   'board.close': L('Close', 'Закрыть', '关闭', 'ปิด'),
   'board.goalReached': L('goal reached ✓', 'цель достигнута ✓', '目标已达成 ✓', 'ถึงเป้าหมายแล้ว ✓'),
   'board.goal': L((total, time) => `goal: +${total} in ${time}`, (total, time) => `цель: +${total} за ${time}`, (total, time) => `目标：${time} 内 +${total}`, (total, time) => `เป้าหมาย: +${total} ใน ${time}`),

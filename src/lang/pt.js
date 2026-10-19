@@ -41,6 +41,8 @@ export default {
 
   'guide.supervisor.h': 'Supervisor',
   'guide.supervisor': 'Seu agente que acompanha o funil inteiro.',
+  'guide.doc.h': 'Guia e planilha',
+  'guide.doc': 'À esquerda o guia do funil, à direita a planilha: o que guia os agentes e onde eles registram tudo.',
   'guide.sheet.h': 'Planilha',
   'guide.sheet': 'A tabela onde os agentes registram tudo.',
   'guide.tank.h': 'Tanque',
@@ -74,7 +76,7 @@ export default {
 - onde fica a lista de itens que passam pelo funil (uma planilha do Google, Notion, e-mail, um arquivo). Se não houver, proponha uma planilha e crie se puder;
 - com que frequência você deve verificar o funil (uma vez por dia por padrão).
 
-3. Crie ou atualize o funil. Se list_funnels já tiver um funil para esta meta, trabalhe com ele e não duplique nada. Senão, crie com upsert_funnel: título, etapas, resultado, meta (quantos resultados e em que ritmo), tema e o link para a lista (source_url). Ocupe o lugar de supervisor deste funil (set_agent_state com zone "supervisor") e dê a si mesmo um nome curto no meu idioma, de acordo com o funil (name, por exemplo "Supervisor da busca de emprego"); se eu pedir, mude de nome. Depois me mostre o resultado em uma única mensagem.
+3. Crie ou atualize o funil. Se list_funnels já tiver um funil para esta meta, trabalhe com ele e não duplique nada. Senão, crie com upsert_funnel: título, etapas, resultado, meta (quantos resultados e em que ritmo), tema e o link para a lista (source_url). Ocupe o lugar de supervisor deste funil (set_agent_state com zone "supervisor") e dê a si mesmo um nome curto no meu idioma, de acordo com o funil (name, por exemplo "Supervisor da busca de emprego"); se eu pedir, mude de nome. Crie o guia do funil ao lado da lista (um Google Docs ao lado da planilha do Google, uma página do Notion ao lado do banco do Notion): um documento com tudo o que você e os agentes de trabalho precisam saber sobre o funil: a meta, as etapas, onde fica a lista, como trabalhar cada etapa e como reportar. Envie o link como guide_url e mantenha-o atualizado; os prompts que você escrever para os agentes de trabalho devem pedir que o leiam no início de cada execução. Depois me mostre o resultado em uma única mensagem.
 
 4. Torne-se regular. Crie neste aplicativo uma tarefa agendada com a frequência combinada, que execute esta conversa ou você com estas instruções. Se o aplicativo não permitir agendar, me diga e combinamos quando eu vou executar você.
 
@@ -142,6 +144,7 @@ export default {
   'board.answer': 'Sua resposta',
   'board.send': 'Enviar resposta',
   'board.sheet': (where) => `Abrir a lista em ${where}`,
+  'board.guide': (where) => `Abrir o guia do funil em ${where}`,
   'board.close': 'Fechar',
   'board.goalReached': 'meta alcançada ✓',
   'board.goal': (total, time) => `meta: +${total} em ${time}`,

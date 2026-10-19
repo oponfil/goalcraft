@@ -42,6 +42,8 @@ export default {
 
   'guide.supervisor.h': 'Giám sát',
   'guide.supervisor': 'Tác tử của bạn theo dõi toàn bộ phễu.',
+  'guide.doc.h': 'Hướng dẫn và bảng',
+  'guide.doc': 'Bên trái là hướng dẫn phễu, bên phải là bảng: tác tử làm việc theo gì và ghi chép ở đâu.',
   'guide.sheet.h': 'Bảng tính',
   'guide.sheet': 'Bảng nơi các tác tử ghi lại mọi thứ.',
   'guide.tank.h': 'Bể',
@@ -75,7 +77,7 @@ export default {
 - danh sách các mục đi qua phễu nằm ở đâu (Google Sheet, Notion, email, một tệp). Nếu chưa có, hãy đề xuất một bảng tính và tạo nó nếu bạn làm được;
 - bạn nên kiểm tra phễu bao lâu một lần (mặc định mỗi ngày một lần).
 
-3. Tạo hoặc cập nhật phễu. Nếu list_funnels đã có phễu cho mục tiêu này, hãy làm việc với nó và đừng tạo trùng. Nếu chưa, hãy tạo bằng upsert_funnel: tiêu đề, các giai đoạn, kết quả, mục tiêu (cần bao nhiêu kết quả và nhịp độ), chủ đề, và liên kết đến danh sách (source_url). Nhận vị trí giám sát của phễu này (set_agent_state với zone "supervisor") và tự đặt cho mình một tên ngắn bằng ngôn ngữ của tôi theo phễu (name, ví dụ "Giám sát tìm việc"); nếu tôi yêu cầu, hãy đổi tên. Rồi cho tôi xem kết quả trong một tin nhắn.
+3. Tạo hoặc cập nhật phễu. Nếu list_funnels đã có phễu cho mục tiêu này, hãy làm việc với nó và đừng tạo trùng. Nếu chưa, hãy tạo bằng upsert_funnel: tiêu đề, các giai đoạn, kết quả, mục tiêu (cần bao nhiêu kết quả và nhịp độ), chủ đề, và liên kết đến danh sách (source_url). Nhận vị trí giám sát của phễu này (set_agent_state với zone "supervisor") và tự đặt cho mình một tên ngắn bằng ngôn ngữ của tôi theo phễu (name, ví dụ "Giám sát tìm việc"); nếu tôi yêu cầu, hãy đổi tên. Tạo hướng dẫn phễu cạnh danh sách của nó (Google Docs cạnh Google Sheet, trang Notion cạnh cơ sở dữ liệu Notion): một tài liệu chứa mọi điều bạn và các tác tử làm việc cần biết về phễu này: mục tiêu, các giai đoạn, danh sách ở đâu, làm từng giai đoạn thế nào và báo cáo ra sao. Gửi liên kết của nó dưới dạng guide_url và luôn cập nhật; các prompt bạn viết cho tác tử làm việc phải bảo chúng đọc nó khi bắt đầu mỗi lần chạy. Rồi cho tôi xem kết quả trong một tin nhắn.
 
 4. Làm cho mình chạy đều đặn. Tạo một tác vụ theo lịch trong ứng dụng này với tần suất chúng ta đã thống nhất, chạy cuộc trò chuyện này hoặc chạy bạn với hướng dẫn này. Nếu ứng dụng không hỗ trợ lịch, hãy nói với tôi và chúng ta sẽ thống nhất khi nào tôi chạy bạn.
 
@@ -143,6 +145,7 @@ export default {
   'board.answer': 'Câu trả lời của bạn',
   'board.send': 'Gửi câu trả lời',
   'board.sheet': (where) => `Mở danh sách trong ${where}`,
+  'board.guide': (where) => `Mở hướng dẫn phễu trong ${where}`,
   'board.close': 'Đóng',
   'board.goalReached': 'đã đạt mục tiêu ✓',
   'board.goal': (total, time) => `mục tiêu: +${total} trong ${time}`,
