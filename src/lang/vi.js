@@ -75,7 +75,7 @@ export default {
 - danh sách các mục đi qua phễu nằm ở đâu (Google Sheet, Notion, email, một tệp). Nếu chưa có, hãy đề xuất một bảng tính và tạo nó nếu bạn làm được;
 - bạn nên kiểm tra phễu bao lâu một lần (mặc định mỗi ngày một lần).
 
-3. Tạo hoặc cập nhật phễu. Nếu list_funnels đã có phễu cho mục tiêu này, hãy làm việc với nó và đừng tạo trùng. Nếu chưa, hãy tạo bằng upsert_funnel: tiêu đề, các giai đoạn, kết quả, mục tiêu (cần bao nhiêu kết quả và nhịp độ), chủ đề, và liên kết đến danh sách (source_url). Nhận vị trí giám sát của phễu này (set_agent_state với zone "supervisor"). Rồi cho tôi xem kết quả trong một tin nhắn.
+3. Tạo hoặc cập nhật phễu. Nếu list_funnels đã có phễu cho mục tiêu này, hãy làm việc với nó và đừng tạo trùng. Nếu chưa, hãy tạo bằng upsert_funnel: tiêu đề, các giai đoạn, kết quả, mục tiêu (cần bao nhiêu kết quả và nhịp độ), chủ đề, và liên kết đến danh sách (source_url). Nhận vị trí giám sát của phễu này (set_agent_state với zone "supervisor") và tự đặt cho mình một tên ngắn bằng ngôn ngữ của tôi theo phễu (name, ví dụ "Giám sát tìm việc"); nếu tôi yêu cầu, hãy đổi tên. Rồi cho tôi xem kết quả trong một tin nhắn.
 
 4. Làm cho mình chạy đều đặn. Tạo một tác vụ theo lịch trong ứng dụng này với tần suất chúng ta đã thống nhất, chạy cuộc trò chuyện này hoặc chạy bạn với hướng dẫn này. Nếu ứng dụng không hỗ trợ lịch, hãy nói với tôi và chúng ta sẽ thống nhất khi nào tôi chạy bạn.
 
@@ -122,7 +122,7 @@ export default {
   'board.lost': (who) => `Không có tín hiệu từ ${who}`,
   'board.runs': 'Các lần chạy trước',
   'board.runNow': 'đang chạy',
-  'board.supervisorName': (who) => `Giám sát ${who}`,
+  'board.supervisorName': (funnel) => `Giám sát · ${funnel}`,
   'board.supStatus.ok': 'Mọi thứ ổn',
   'board.supStatus.bottleneck': 'Điểm nghẽn',
   'board.supStatus.recommendation': 'Đề xuất',

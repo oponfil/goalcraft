@@ -74,7 +74,7 @@ export default {
 - huniden geçen öğelerin listesi nerede duruyor (bir Google tablosu, Notion, e-posta, bir dosya). Yoksa bir tablo öner ve yapabiliyorsan oluştur;
 - huniyi ne sıklıkla kontrol etmelisin (varsayılan olarak günde bir kez).
 
-3. Huniyi oluştur ya da güncelle. list_funnels’ta bu hedef için zaten bir huni varsa onunla çalış, hiçbir şeyi kopyalama. Yoksa upsert_funnel ile oluştur: başlık, aşamalar, sonuç, hedef (kaç sonuç ve hangi hızla), tema ve listenin bağlantısı (source_url). Bu huninin süpervizör yerini al (zone "supervisor" ile set_agent_state). Sonra sonucu bana tek bir mesajda göster.
+3. Huniyi oluştur ya da güncelle. list_funnels’ta bu hedef için zaten bir huni varsa onunla çalış, hiçbir şeyi kopyalama. Yoksa upsert_funnel ile oluştur: başlık, aşamalar, sonuç, hedef (kaç sonuç ve hangi hızla), tema ve listenin bağlantısı (source_url). Bu huninin süpervizör yerini al (zone "supervisor" ile set_agent_state) ve kendine huniye göre benim dilimde kısa bir ad ver (name, örneğin "İş arama süpervizörü"); istersem adını değiştir. Sonra sonucu bana tek bir mesajda göster.
 
 4. Kendini düzenli hâle getir. Bu uygulamada, kararlaştırdığımız sıklıkta bu sohbeti ya da bu talimatlarla seni çalıştıran zamanlanmış bir görev oluştur. Uygulama zamanlamayı desteklemiyorsa bana söyle, seni ne zaman çalıştıracağımı kararlaştıralım.
 
@@ -121,7 +121,7 @@ export default {
   'board.lost': (who) => `${who} ses vermiyor`,
   'board.runs': 'Önceki çalışmalar',
   'board.runNow': 'sürüyor',
-  'board.supervisorName': (who) => `Süpervizör ${who}`,
+  'board.supervisorName': (funnel) => `Süpervizör · ${funnel}`,
   'board.supStatus.ok': 'Her şey yolunda',
   'board.supStatus.bottleneck': 'Darboğaz',
   'board.supStatus.recommendation': 'Öneri',

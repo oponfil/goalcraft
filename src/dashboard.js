@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2f9a56fb';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2f9a56fb';
-import { t, lang } from './i18n.js?v=2f9a56fb';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=ec3eb81b';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=ec3eb81b';
+import { t, lang } from './i18n.js?v=ec3eb81b';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -233,7 +233,8 @@ export function mountDashboard(funnels, opts = {}) {
     // own: the agent's own chat, an app link (claude://, codex://) or a web one; web: where to go
     // when the app isn't on this computer.
     const own = a.chat || info.chat, web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);
-    const who = esc(a.sup ? t('board.supervisorName', info.name) : info.name);
+    // Its own name when it gave one; else a supervisor goes by its funnel, a worker by its model.
+    const named = a.name || (a.sup ? t('board.supervisorName', f.title) : info.name), who = esc(named);
     // The step it works on, with what this run added (the last run's while it sleeps) to the items
     // it works into: "Job Search: jobs found → +4 applied". The supervisor watches the whole funnel:
     // what its last run found instead ("All good", "Bottleneck: …").
@@ -279,7 +280,7 @@ export function mountDashboard(funnels, opts = {}) {
         : 'board.working';
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
-    const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', a.sup ? t('board.supervisorName', info.name) : info.name))}"></textarea>
+    const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
         <div class="ask-buttons"><button class="btn primary send-message" style="${paint}">${esc(t('board.sendMessage'))}</button>${chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : ''}</div>
         <div class="pop-msg"></div></div>`
       : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : '';
@@ -324,7 +325,7 @@ export function mountDashboard(funnels, opts = {}) {
       const error = await opts.onMessage(a, text);
       if (error) { msg.textContent = error; send.disabled = false; return; }
       box.value = ''; send.disabled = false;
-      msg.textContent = t('board.messageSent', agentInfo(a.agent).name); msg.className = 'pop-msg ok';
+      msg.textContent = t('board.messageSent', a.name || (a.sup ? t('board.supervisorName', a.f.title) : agentInfo(a.agent).name)); msg.className = 'pop-msg ok';
       // The demo has no agent to read it: a moment later it answers back as a real one would.
       if (!opts.live) setTimeout(() => { a.replies = [...(a.replies || []), { id: 'demo-' + Date.now(), question: null, answer: text, reply: t('demo.reply') }]; }, 1500);
     });

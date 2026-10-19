@@ -26,8 +26,9 @@ Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage 
 Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when you wake up and again every 5 minutes while you work. The dashboard waits twice that, 10 minutes of silence, then warns the person that you did not wake up (10 minutes past your next_run_at) or that it lost contact with you (10 minutes after your last signal).
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not.
 On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer: while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next); if you need more from the person, ask a new question instead. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
-Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation, question) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
+Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation, question) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
 Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions. On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above.
+Your name: the dashboard and emails show you by your model's name (Claude, ChatGPT…) unless you give your own short name with set_agent_state(name); give one when the person asks you to rename yourself.
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
 Report only counts, dates and links: the items themselves stay in the person's own sources.
@@ -83,7 +84,7 @@ async function funnels(db: Db, key?: string) {
   let q = db.from('funnels')
     .select(`key, title, theme, source_url, result, goal_total, goal_every_days, results, output_flow_per_day, updated_at,
       stages (key, position, label, count, fill_percent, flow_per_day),
-      presence (agent, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, updated_at),
+      presence (agent, display_name, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, updated_at),
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
       agent_messages (id, agent, text, sent_at, read_at)`)
     .order('created_at')
@@ -122,12 +123,12 @@ async function plan(db: Db) {
 
 // Emails the person about a new question if they asked for it, after the reply has gone out to the
 // agent. Settings are read fresh: the checkbox may have changed since the agent's token was issued.
-function notify(caller: Caller, funnelId: string, agent: string, question: string) {
+function notify(caller: Caller, funnelId: string, agent: string, question: string, name?: string | null) {
   const send = async () => {
     const { data: { user } } = await caller.admin.auth.admin.getUserById(caller.id)
     if (!user?.email || !user.user_metadata?.notify_email) return
     const { data: f } = await caller.admin.from('funnels').select('title').eq('id', funnelId).single()
-    await emailQuestion(user.email, user.user_metadata.lang, agent, f?.title ?? '', question)
+    await emailQuestion(user.email, user.user_metadata.lang, agent, f?.title ?? '', question, name)
   }
   const job = send().catch(e => console.error('question email failed:', e?.message ?? e))
   ;(globalThis as any).EdgeRuntime?.waitUntil?.(job)
@@ -260,6 +261,7 @@ function server(db: Db, caller: Caller) {
       next_run_at: z.string().datetime({ offset: true }).optional().describe('For sleep: ISO time of your next run'),
       question: z.string().min(1).max(1000).optional().describe('For ask: what you need from the person'),
       chat_url: z.string().url().regex(CHAT_LINK).optional().describe('Link to this conversation, so the person\'s "Open" leads to this very chat: https://claude.ai/chat/…, https://chatgpt.com/c/…, or in the Claude app claude://claude.ai/epitaxy/<your session id> (see the instructions). Codex links itself. With ask it is kept with the question'),
+      name: z.string().min(1).max(40).optional().describe('Your own short name in the person\'s language, shown instead of your model\'s name, e.g. "Супервайзер поиска работы", "Job Search supervisor". Kept until you send another; rename yourself when the person asks'),
       added: z.number().int().min(0).max(1e9).optional().describe('How many items you added this run, when you know it better than the counts show (e.g. when items also left your stage). Leave it out and the dashboard counts it from report_counts'),
       status: z.enum(['ok', 'bottleneck', 'recommendation', 'question']).optional().describe('Supervisor only: what this run found: ok (all good), bottleneck, recommendation, question (you need the person\'s decision). Shown by you on the dashboard'),
       summary: z.string().min(1).max(200).optional().describe('Supervisor only: the finding in one short line, in the person\'s language, e.g. "interviews → final round", "add an agent on the inflow"'),
@@ -284,7 +286,10 @@ function server(db: Db, caller: Caller) {
       const q = check(await db.from('questions').insert({ funnel_id: f.id, agent: a.agent, question: a.question, chat_url: chat_url ?? null })
         .select('id').single()) as { id: string }
       question_id = q.id
-      if (!again.length) notify(caller, f.id, a.agent, a.question!)
+      if (!again.length) {
+        const named = a.name ?? (check(await db.from('presence').select('display_name').eq('funnel_id', f.id).eq('agent', a.agent).maybeSingle()) as any)?.display_name
+        notify(caller, f.id, a.agent, a.question!, named)
+      }
     }
     // A run starts when the agent comes to work from sleep (or to another zone): its counter starts at 0
     // and is kept through the next sleep, so the person sees what the last run added.
@@ -303,7 +308,7 @@ function server(db: Db, caller: Caller) {
     if (Object.keys(found).length) check(await openRun(db, f.id, a.agent).update(found))
     if (a.state === 'sleep') check(await endRun(db, f.id, a.agent))
     check(await db.from('presence').upsert({
-      funnel_id: f.id, agent: a.agent, zone, state: a.state, ...found,
+      funnel_id: f.id, agent: a.agent, zone, state: a.state, ...found, ...(a.name && { display_name: a.name }),
       next_run_at: a.state === 'sleep' ? a.next_run_at ?? null : null,
       question_id, ...(chat_url !== undefined && { chat_url }),
       ...run,

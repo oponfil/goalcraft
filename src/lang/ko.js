@@ -74,7 +74,7 @@ export default {
 - 퍼널을 지나는 항목 목록이 어디에 있는지(Google 시트, Notion, 이메일, 파일). 없으면 시트를 제안하고, 할 수 있으면 만들어;
 - 퍼널을 얼마나 자주 확인할지(기본은 하루 한 번).
 
-3. 퍼널을 만들거나 업데이트해. list_funnels에 이미 이 목표의 퍼널이 있으면 그걸로 일하고 아무것도 중복하지 마. 없으면 upsert_funnel로 만들어: 제목, 단계, 결과, 목표(결과 몇 개를 어떤 속도로), 테마, 목록 링크(source_url). 이 퍼널의 슈퍼바이저 자리에 서(zone "supervisor"로 set_agent_state). 그다음 결과를 메시지 하나로 보여 줘.
+3. 퍼널을 만들거나 업데이트해. list_funnels에 이미 이 목표의 퍼널이 있으면 그걸로 일하고 아무것도 중복하지 마. 없으면 upsert_funnel로 만들어: 제목, 단계, 결과, 목표(결과 몇 개를 어떤 속도로), 테마, 목록 링크(source_url). 이 퍼널의 슈퍼바이저 자리에 서(zone "supervisor"로 set_agent_state). 그리고 퍼널에 맞춰 내 언어로 짧은 이름을 스스로 정해(name, 예: "구직 슈퍼바이저"); 내가 요청하면 이름을 바꿔. 그다음 결과를 메시지 하나로 보여 줘.
 
 4. 스스로 정기적으로 돌아가게 해. 이 앱에서 우리가 정한 주기로 예약 작업을 만들어, 이 대화나 이 지침을 가진 너를 실행하게 해. 앱에 예약 기능이 없으면 말해 줘, 내가 언제 너를 실행할지 정하자.
 
@@ -121,7 +121,7 @@ export default {
   'board.lost': (who) => `${who}에게서 소식이 없습니다`,
   'board.runs': '이전 실행',
   'board.runNow': '진행 중',
-  'board.supervisorName': (who) => `슈퍼바이저 ${who}`,
+  'board.supervisorName': (funnel) => `슈퍼바이저 · ${funnel}`,
   'board.supStatus.ok': '모두 순조로움',
   'board.supStatus.bottleneck': '병목',
   'board.supStatus.recommendation': '제안',

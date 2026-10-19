@@ -86,11 +86,12 @@ const short = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1).trimEn
 
 let transport: ReturnType<typeof nodemailer.createTransport> | null = null
 
-export async function emailQuestion(to: string, lang: string | undefined, agent: string, funnel: string, question: string) {
+// name: the agent's own name ("Супервайзер поиска работы") when it gave one, else its model's name.
+export async function emailQuestion(to: string, lang: string | undefined, agent: string, funnel: string, question: string, name?: string | null) {
   const pass = Deno.env.get('SMTP_PASS')
   if (!pass) return console.warn('SMTP_PASS is not set: question emails are off')
   transport ??= nodemailer.createTransport({ host: 'smtp.improvmx.com', port: 465, secure: true, auth: { user: FROM, pass } })
-  const w = WORDS[lang ?? ''] ?? WORDS.en, who = nameOf(agent)
+  const w = WORDS[lang ?? ''] ?? WORDS.en, who = name || nameOf(agent)
   const line = question.replace(/\s+/g, ' ').trim()
   await transport.sendMail({
     from: `Goalcraft <${FROM}>`,

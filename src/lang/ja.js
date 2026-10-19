@@ -75,7 +75,7 @@ export default {
 - ファネルを進む項目のリストはどこにあるか（Google スプレッドシート、Notion、メール、ファイル）。なければ表を提案し、できるなら作成する；
 - ファネルをどのくらいの頻度でチェックするか（既定は 1 日 1 回）。
 
-3. ファネルを作成または更新する。list_funnels にこの目標のファネルがすでにあれば、それを使い、重複して作らないでください。なければ upsert_funnel で作成します：タイトル、段階、結果、目標（必要な結果の数とペース）、テーマ、リストへのリンク（source_url）。このファネルの監督の場所に就いてください（set_agent_state で zone を "supervisor" に）。それから結果を 1 通のメッセージで見せてください。
+3. ファネルを作成または更新する。list_funnels にこの目標のファネルがすでにあれば、それを使い、重複して作らないでください。なければ upsert_funnel で作成します：タイトル、段階、結果、目標（必要な結果の数とペース）、テーマ、リストへのリンク（source_url）。このファネルの監督の場所に就き（set_agent_state で zone を "supervisor" に）、ファネルに合わせて私の言語で短い名前を自分に付けてください（name、例：「就活の監督」）。私が頼んだら名前を変えてください。それから結果を 1 通のメッセージで見せてください。
 
 4. 定期的に動くようにする。このアプリで、決めた頻度のスケジュールタスクを作成し、この会話か、この指示を持ったあなたを実行させてください。アプリにスケジュール機能がなければ私に伝えて、私がいつあなたを実行するか決めましょう。
 
@@ -122,7 +122,7 @@ export default {
   'board.lost': (who) => `${who} から連絡がありません`,
   'board.runs': '以前の実行',
   'board.runNow': '実行中',
-  'board.supervisorName': (who) => `監督 ${who}`,
+  'board.supervisorName': (funnel) => `監督 · ${funnel}`,
   'board.supStatus.ok': '順調',
   'board.supStatus.bottleneck': 'ボトルネック',
   'board.supStatus.recommendation': '提案',

@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=2f9a56fb';
+import { supabase } from './auth.js?v=ec3eb81b';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -51,6 +51,8 @@ function agentOf(f, p, now) {
       const state = p.state === 'ask' && !qs.length ? 'work' : p.state;
       return {
         agent: p.agent,
+        // Its own name ("Супервайзер поиска работы"), when it gave one.
+        name: p.display_name,
         zone: p.zone == null ? null : p.zone - 1,
         state,
         wakeIn: p.state === 'sleep' && p.next_run_at ? (Date.parse(p.next_run_at) - now) / 1000 : null,
@@ -77,7 +79,7 @@ export async function loadFunnels() {
     supabase.from('funnels')
       .select(`id, title, theme, source_url, result, goal_total, goal_every_days, results, output_flow_per_day,
         stages (key, position, label, count, fill_percent, flow_per_day),
-        presence (agent, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, updated_at),
+        presence (agent, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
         agent_messages (id, agent, text, reply, replied_at, reply_seen_at)`)
       .order('created_at'),

@@ -74,7 +74,7 @@ export default {
 - dónde está la lista de elementos que avanzan por el embudo (una hoja de Google, Notion, el correo, un archivo). Si no hay ninguna, propón una hoja y créala si puedes;
 - cada cuánto debes revisar el embudo (una vez al día por defecto).
 
-3. Crea o actualiza el embudo. Si list_funnels ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Si no, créalo con upsert_funnel: título, etapas, resultado, meta (cuántos resultados y a qué ritmo), tema y el enlace a la lista (source_url). Ocupa el puesto de supervisor de este embudo (set_agent_state con zone "supervisor"). Después muéstrame el resultado en un solo mensaje.
+3. Crea o actualiza el embudo. Si list_funnels ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Si no, créalo con upsert_funnel: título, etapas, resultado, meta (cuántos resultados y a qué ritmo), tema y el enlace a la lista (source_url). Ocupa el puesto de supervisor de este embudo (set_agent_state con zone "supervisor") y ponte un nombre corto en mi idioma según el embudo (name, por ejemplo «Supervisor de búsqueda de empleo»); si te lo pido, cámbiatelo. Después muéstrame el resultado en un solo mensaje.
 
 4. Hazte regular. Crea en esta aplicación una tarea programada con la frecuencia acordada, que ejecute esta conversación o a ti con estas instrucciones. Si la aplicación no permite programar, dímelo y acordaremos cuándo te ejecuto yo.
 
@@ -121,7 +121,7 @@ export default {
   'board.lost': (who) => `${who} no da señales`,
   'board.runs': 'Ejecuciones anteriores',
   'board.runNow': 'en curso',
-  'board.supervisorName': (who) => `Supervisor ${who}`,
+  'board.supervisorName': (funnel) => `Supervisor · ${funnel}`,
   'board.supStatus.ok': 'Todo bien',
   'board.supStatus.bottleneck': 'Cuello de botella',
   'board.supStatus.recommendation': 'Recomendación',
