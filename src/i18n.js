@@ -6,9 +6,9 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=42ac6881';
-import vi from './lang/vi.js?v=42ac6881';
-import ja from './lang/ja.js?v=42ac6881';
+import es from './lang/es.js?v=06e43b9f';
+import vi from './lang/vi.js?v=06e43b9f';
+import ja from './lang/ja.js?v=06e43b9f';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', zh: '中文', ja: '日本語', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', zh: '中文', ja: 'JA', th: 'ไทย', vi: 'VI' };
@@ -119,6 +119,8 @@ const STRINGS = {
   'home.p3': L('When an agent needs you, it raises a hand. Reply from your phone and it gets back to work.', 'Когда агенту нужны вы, он поднимает руку. Ответьте с телефона — и он вернётся к работе.', '当智能体需要你时，它会举手。用手机回复，它就继续工作。', 'เมื่อเอเจนต์ต้องการคุณ มันจะยกมือ ตอบจากมือถือแล้วมันจะกลับไปทำงานต่อ'),
 
   // The landing page's funnel: what each part is
+  'guide.supervisor.h': L('Supervisor', 'Супервайзер', '主管', 'ผู้ดูแล'),
+  'guide.supervisor': L('Your agent watching the whole funnel.', 'Ваш агент, следящий за всей воронкой.', '你的智能体，盯着整个漏斗。', 'เอเจนต์ของคุณที่คอยดูทั้งกรวย'),
   'guide.sheet.h': L('Sheet', 'Таблица', '表格', 'ตาราง'),
   'guide.sheet': L('The table where the agents keep track of everything.', 'Таблица, где агенты ведут учёт всего.', '智能体记录一切的表格。', 'ตารางที่เอเจนต์ใช้ติดตามทุกอย่าง'),
   'guide.tank.h': L('Tank', 'Бак', '储罐', 'ถัง'),
@@ -135,23 +137,129 @@ const STRINGS = {
   'guide.prediction': L('When the next result is due at the current pace.', 'Когда будет следующий результат при текущем темпе.', '按当前速度，下一个成果何时到来。', 'ผลลัพธ์ถัดไปจะมาเมื่อไรตามจังหวะปัจจุบัน'),
 
   // Connecting an agent
-  'connect.h1': L('Connect an agent', 'Подключите агента', '连接一个智能体', 'เชื่อมต่อเอเจนต์'),
+  'connect.h1': L('Connect Goalcraft and appoint a supervisor for your goal', 'Подключите Goalcraft и назначьте супервайзера вашей цели', '连接 Goalcraft，并为你的目标指定一位主管', 'เชื่อมต่อ Goalcraft และแต่งตั้งผู้ดูแลเป้าหมายของคุณ'),
   'connect.empty.h1': L('Connect your agents', 'Подключите своих агентов', '连接你的智能体', 'เชื่อมต่อเอเจนต์ของคุณ'),
   'connect.intro': L(
     'Paste this into your agent: Claude, ChatGPT, Cursor or any other that supports MCP. It connects Goalcraft, or tells you how.',
     'Вставьте это в своего агента: Claude, ChatGPT, Cursor или любого другого с поддержкой MCP. Он подключит Goalcraft или подскажет, как это сделать.',
     '把这段话粘贴给你的智能体：Claude、ChatGPT、Cursor 或任何支持 MCP 的智能体。它会连接 Goalcraft，或告诉你怎么做。',
     'วางข้อความนี้ในเอเจนต์ของคุณ: Claude, ChatGPT, Cursor หรือเอเจนต์อื่นที่รองรับ MCP มันจะเชื่อมต่อ Goalcraft หรือบอกวิธีให้คุณ'),
-  'connect.after': L(
-    'When the agent connects, a Goalcraft page asks you to sign in and allow it. Then tell the agent which goal to work on, and its funnel appears in Goals. Connect as many agents as you like, one by one. Not sure what it will look like? <a href="../demo/">See the demo</a>.',
-    'Когда агент подключается, страница Goalcraft попросит войти и разрешить доступ. Потом скажите агенту, над какой целью работать, и её воронка появится в разделе Цели. Подключайте сколько угодно агентов, по одному. Хотите посмотреть, как это выглядит? <a href="../demo/">Откройте демо</a>.',
-    '智能体连接时，Goalcraft 页面会请你登录并授权。然后告诉它要推进哪个目标，它的漏斗就会出现在目标里。可以逐个连接任意多个智能体。想先看看效果？<a href="../demo/">查看演示</a>。',
-    'เมื่อเอเจนต์เชื่อมต่อ หน้า Goalcraft จะขอให้คุณเข้าสู่ระบบและอนุญาต จากนั้นบอกเอเจนต์ว่าจะทำเป้าหมายไหน แล้วกรวยของมันจะปรากฏในเป้าหมาย เชื่อมต่อเอเจนต์ได้มากเท่าที่ต้องการ ทีละตัว อยากเห็นหน้าตาก่อน? <a href="../demo/">ดูเดโม</a>'),
   'connect.empty.after': L(
     'Then tell it which goal to work on, and your funnels appear here. Not sure what it will look like? <a href="../demo/">See the demo</a>.',
     'Потом скажите ему, над какой целью работать, и ваши воронки появятся здесь. Хотите посмотреть, как это выглядит? <a href="../demo/">Откройте демо</a>.',
     '然后告诉它要推进哪个目标，你的漏斗就会出现在这里。想先看看效果？<a href="../demo/">查看演示</a>。',
     'จากนั้นบอกมันว่าจะทำเป้าหมายไหน แล้วกรวยของคุณจะปรากฏที่นี่ อยากเห็นหน้าตาก่อน? <a href="../demo/">ดูเดโม</a>'),
+  'connect.supervisor.intro': L(
+    'Paste this prompt into a new chat with your AI agent. The agent connects Goalcraft, asks you about the goal and sets up its funnel. Then it becomes its supervisor: checks it regularly, answers your questions about it and helps you add worker agents.',
+    'Вставьте этот промпт в новый чат с вашим ИИ-агентом. Агент подключит Goalcraft, расспросит вас о цели и настроит её воронку. Дальше он становится её супервайзером: регулярно проверяет воронку, отвечает на ваши вопросы о ней и помогает добавить рабочих агентов.',
+    "把这段提示词粘贴到与你的 AI 智能体的新对话中。智能体会连接 Goalcraft，询问你的目标并搭建它的漏斗。之后它就成为这个漏斗的主管：定期检查漏斗，回答你关于它的问题，并帮你添加工作智能体。",
+    "วางพรอมต์นี้ในแชตใหม่กับเอเจนต์ AI ของคุณ เอเจนต์จะเชื่อมต่อ Goalcraft ถามคุณเกี่ยวกับเป้าหมาย และตั้งค่ากรวยของมัน จากนั้นมันจะเป็นผู้ดูแลกรวยนั้น: ตรวจกรวยเป็นประจำ ตอบคำถามของคุณเกี่ยวกับกรวย และช่วยเพิ่มเอเจนต์ทำงาน"),
+  'connect.supervisor.after': L(
+    'When the agent connects, a Goalcraft page asks you to sign in and allow it. On the dashboard the supervisor stands on the platform at the top of its funnel: click it to see its last check and open its chat. Not sure what it will look like? <a href="../demo/">See the demo</a>.',
+    'Когда агент подключается, страница Goalcraft попросит войти и разрешить доступ. На дашборде супервайзер стоит на площадке наверху своей воронки: нажмите на него, чтобы увидеть его последнюю проверку и перейти в его чат. Хотите посмотреть, как это выглядит? <a href="../demo/">Откройте демо</a>.',
+    "智能体连接时，Goalcraft 页面会请你登录并授权。在看板上，主管站在漏斗顶部的平台上：点击它可以看到它最近一次检查，并打开它的对话。想先看看效果？<a href=\"../demo/\">查看演示</a>。",
+    "เมื่อเอเจนต์เชื่อมต่อ หน้า Goalcraft จะขอให้คุณเข้าสู่ระบบและอนุญาต บนแดชบอร์ด ผู้ดูแลยืนอยู่บนแท่นด้านบนของกรวย: คลิกที่มันเพื่อดูการตรวจครั้งล่าสุดและเปิดแชตของมัน อยากเห็นหน้าตาก่อน? <a href=\"../demo/\">ดูเดโม</a>"),
+  'connect.supervisor.prompt': L(
+    (url) => `You are the supervisor of my goal in Goalcraft (goalcraft.ai). Goalcraft shows a goal as a funnel: stages from top to bottom, the result at the bottom, and AI agents working the stages. You stand above the funnel: you watch it, answer my questions about it and help me improve it. You don't do the stages' work yourself; that is the worker agents' job.
+
+1. Check that Goalcraft is connected: call list_funnels from the Goalcraft MCP server (${url}). If it isn't, connect it yourself (a remote server, sign-in with OAuth in the browser, no API key). If something gets in the way, ask me for help: tell me exactly what to do in this app, and wait.
+
+2. Ask me about the goal, one short question at a time:
+- what the goal is and by when; what counts as a result (an offer, a client, a publication…);
+- which steps lead to the result: suggest 3-5 stages yourself and ask if they are right;
+- what is done already: how many items are at each stage now;
+- where the list of items moving through the funnel lives (a Google Sheet, Notion, email, a file). If there is none, suggest a sheet and create it if you can;
+- how often you should check the funnel (once a day by default).
+
+3. Create or update the funnel. If list_funnels already has a funnel for this goal, work with it and duplicate nothing. Otherwise create it with upsert_funnel: title, stages, result, goal (how many results and the pace), theme, and the link to the list (source_url). Take the supervisor's place of this funnel (set_agent_state with zone "supervisor"). Then show me the result in one message.
+
+4. Make yourself regular. Create a scheduled task in this app with the frequency we agreed on, running this conversation or you with these instructions. If the app has no scheduling, tell me and we'll agree when I'll run you.
+
+5. On every run (how to mark work, questions and sleep is in the Goalcraft instructions):
+- Read the funnel (list_funnels) and, if you can, its list; compare the numbers. If they differ, update them (report_counts) and say where the difference comes from.
+- Check the worker agents: who has been silent too long, who missed a run, who is waiting for my answer.
+- Find the bottleneck: the stage with the lowest conversion or no movement, and any lag behind the goal's pace.
+- Write the run's outcome: a status (ok, bottleneck, recommendation or question) and one short line about it (status and summary in set_agent_state); it shows by you on the dashboard.
+- If you need my decision, ask me through Goalcraft.
+
+6. Help with worker agents. If a stage has no agent or its agent isn't coping, suggest adding one and write a ready prompt for it yourself: what to do at the stage, where to take items from and where to record them, how to report to Goalcraft (its zone, agent name, report_counts, add_result). I'll paste it into a new chat.
+
+7. Answer my questions about the funnel here, in this conversation: where the bottleneck is, when we reach the goal at the current pace, what to improve. Rely on Goalcraft's numbers and my list; don't make things up.`,
+    (url) => `Ты — супервайзер моей цели в Goalcraft (goalcraft.ai). Goalcraft показывает цель как воронку: этапы сверху вниз, результат внизу, а на этапах работают ИИ-агенты. Ты стоишь над воронкой: следишь за ней, отвечаешь на мои вопросы о ней и помогаешь её улучшать. Сам работу этапов не делаешь — это задача рабочих агентов.
+
+1. Проверь, подключён ли Goalcraft: вызови list_funnels из MCP-сервера Goalcraft (${url}). Если нет — подключи его сам (удалённый сервер, вход через OAuth в браузере, ключ не нужен). Если что-то мешает — попроси меня помочь: скажи точно, что сделать в этом приложении, и подожди.
+
+2. Расспроси меня о цели, по одному короткому вопросу за раз:
+- какая цель и к какому сроку; что считать результатом (оффер, клиент, публикация…);
+- из каких шагов складывается путь к результату — предложи 3–5 этапов сам и спроси, так ли;
+- что уже сделано: сколько сейчас на каждом этапе;
+- где лежит список того, что движется по воронке (Google Таблица, Notion, почта, файл). Если списка нет — предложи таблицу и создай её, если можешь;
+- как часто тебе проверять воронку (по умолчанию — раз в день).
+
+3. Создай или обнови воронку. Если в list_funnels уже есть воронка этой цели — работай с ней, ничего не дублируй. Иначе создай её через upsert_funnel: название, этапы, результат, цель (сколько результатов и темп), тема, ссылка на список (source_url). Займи место супервайзера этой воронки (set_agent_state, zone "supervisor"). Затем покажи мне итог одним сообщением.
+
+4. Сделай себя регулярным. Создай в этом приложении задачу по расписанию с частотой, о которой мы договорились: она запускает этот разговор или тебя с этой инструкцией. Если приложение не умеет расписание — скажи мне, и договоримся, когда я буду тебя запускать.
+
+5. На каждом запуске (как отмечать работу, вопросы и сон — в инструкциях Goalcraft):
+- Прочитай воронку (list_funnels) и, если можешь, её список; сверь числа. Если расходятся — обнови (report_counts) и скажи, откуда разница.
+- Проверь рабочих агентов: кто давно молчит, кто проспал запуск, кто ждёт моего ответа.
+- Найди узкое место: этап с самой низкой конверсией или без движения, отставание от темпа цели.
+- Запиши итог прогона: статус (ok, bottleneck, recommendation или question) и одну короткую строку о нём (status и summary в set_agent_state) — он виден у тебя на дашборде.
+- Если нужно моё решение — спроси меня через Goalcraft.
+
+6. Помогай с рабочими агентами. Если на этапе нет агента или он не справляется — предложи добавить агента и сам напиши для него готовый промпт: что делать на этапе, откуда брать и куда записывать, как отчитываться в Goalcraft (его зона, имя агента, report_counts, add_result). Я вставлю его в новый чат.
+
+7. Отвечай на мои вопросы о воронке здесь, в этом разговоре: где узкое место, когда дойдём до цели при текущем темпе, что улучшить. Опирайся на числа Goalcraft и мой список, не выдумывай.`,
+    (url) => `你是我在 Goalcraft（goalcraft.ai）中某个目标的主管。Goalcraft 把目标显示为漏斗：阶段从上到下，结果在底部，AI 智能体在各个阶段工作。你站在漏斗之上：盯着它，回答我关于它的问题，帮我改进它。阶段里的工作你自己不做，那是工作智能体的事。
+
+1. 检查 Goalcraft 是否已连接：调用 Goalcraft MCP 服务器（${url}）的 list_funnels。如果没有连接，就自己连接（远程服务器，在浏览器里用 OAuth 登录，不需要 API 密钥）。如果遇到阻碍，请我帮忙：准确告诉我在这个应用里要做什么，然后等我。
+
+2. 询问我的目标，每次只问一个简短的问题：
+- 目标是什么，截止到什么时候；什么算一个结果（录用通知、客户、发表……）；
+- 哪些步骤通向结果：你自己先提出 3-5 个阶段，再问我对不对；
+- 已经完成了什么：现在每个阶段各有多少；
+- 在漏斗里流动的条目清单放在哪里（Google 表格、Notion、邮件、文件）。如果没有，建议建一个表格，能建的话就建好；
+- 你应该多久检查一次漏斗（默认每天一次）。
+
+3. 创建或更新漏斗。如果 list_funnels 里已经有这个目标的漏斗，就用它，不要重复创建。否则用 upsert_funnel 创建：标题、阶段、结果、目标（需要多少个结果和节奏）、主题，以及清单链接（source_url）。占据这个漏斗的主管位置（set_agent_state，zone 为 "supervisor"）。然后用一条消息告诉我结果。
+
+4. 让自己定期运行。在这个应用里按我们商定的频率创建一个定时任务，运行这个对话或带着这份说明的你。如果应用不支持定时，就告诉我，我们约定我什么时候运行你。
+
+5. 每次运行时（如何标记工作、提问和休眠，见 Goalcraft 的说明）：
+- 读取漏斗（list_funnels），能读的话也读它的清单；核对数字。如果不一致，就更新（report_counts），并说明差异从哪里来。
+- 检查工作智能体：谁沉默太久，谁错过了运行，谁在等我的回答。
+- 找出瓶颈：转化率最低或没有进展的阶段，以及落后于目标节奏的地方。
+- 写下这次运行的结论：一个状态（ok、bottleneck、recommendation 或 question）和一行简短说明（set_agent_state 中的 status 和 summary）；它会显示在看板上你的旁边。
+- 如果需要我做决定，就通过 Goalcraft 问我。
+
+6. 帮忙安排工作智能体。如果某个阶段没有智能体，或它的智能体应付不过来，就建议添加一个，并亲自为它写好提示词：在这个阶段做什么，从哪里取条目、记录到哪里，如何向 Goalcraft 汇报（它的区域、智能体名称、report_counts、add_result）。我会把它粘贴到新的对话里。
+
+7. 就在这个对话里回答我关于漏斗的问题：瓶颈在哪里，按目前的节奏何时达成目标，可以改进什么。以 Goalcraft 的数字和我的清单为依据，不要编造。`,
+    (url) => `คุณคือผู้ดูแลเป้าหมายของฉันใน Goalcraft (goalcraft.ai) Goalcraft แสดงเป้าหมายเป็นกรวย: ขั้นตอนจากบนลงล่าง ผลลัพธ์อยู่ด้านล่าง และมีเอเจนต์ AI ทำงานในแต่ละขั้น คุณยืนอยู่เหนือกรวย: คอยดูมัน ตอบคำถามของฉันเกี่ยวกับมัน และช่วยปรับปรุงมัน คุณไม่ทำงานในขั้นตอนเอง นั่นเป็นหน้าที่ของเอเจนต์ทำงาน
+
+1. ตรวจว่า Goalcraft เชื่อมต่อแล้วหรือยัง: เรียก list_funnels จากเซิร์ฟเวอร์ MCP ของ Goalcraft (${url}) ถ้ายัง ให้เชื่อมต่อเอง (เซิร์ฟเวอร์ระยะไกล เข้าสู่ระบบด้วย OAuth ในเบราว์เซอร์ ไม่ต้องใช้ API key) ถ้ามีอะไรติดขัด ให้ขอให้ฉันช่วย: บอกฉันให้ชัดว่าต้องทำอะไรในแอปนี้ แล้วรอ
+
+2. ถามฉันเกี่ยวกับเป้าหมาย ทีละคำถามสั้นๆ:
+- เป้าหมายคืออะไรและภายในเมื่อไร; อะไรนับเป็นผลลัพธ์ (ข้อเสนองาน ลูกค้า บทความที่ตีพิมพ์…);
+- ขั้นตอนไหนนำไปสู่ผลลัพธ์: เสนอ 3-5 ขั้นเองแล้วถามว่าถูกไหม;
+- ทำอะไรไปแล้วบ้าง: ตอนนี้แต่ละขั้นมีกี่รายการ;
+- รายการที่เคลื่อนผ่านกรวยเก็บไว้ที่ไหน (Google Sheet, Notion, อีเมล, ไฟล์) ถ้ายังไม่มี ให้เสนอทำตารางและสร้างให้ถ้าทำได้;
+- ควรตรวจกรวยบ่อยแค่ไหน (ค่าเริ่มต้นวันละครั้ง)
+
+3. สร้างหรืออัปเดตกรวย ถ้าใน list_funnels มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ไม่เช่นนั้นให้สร้างด้วย upsert_funnel: ชื่อ ขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการและจังหวะ) ธีม และลิงก์ไปยังรายการ (source_url) เข้ารับตำแหน่งผู้ดูแลของกรวยนี้ (set_agent_state โดยใช้ zone "supervisor") แล้วสรุปผลให้ฉันในข้อความเดียว
+
+4. ทำให้ตัวเองทำงานเป็นประจำ สร้างงานตามกำหนดเวลาในแอปนี้ด้วยความถี่ที่เราตกลงกัน ให้เรียกบทสนทนานี้หรือเรียกคุณพร้อมคำสั่งนี้ ถ้าแอปตั้งเวลาไม่ได้ ให้บอกฉัน แล้วเราจะตกลงกันว่าฉันจะเรียกคุณเมื่อไร
+
+5. ทุกครั้งที่ทำงาน (วิธีแจ้งว่ากำลังทำงาน ถามคำถาม และพัก อยู่ในคำแนะนำของ Goalcraft):
+- อ่านกรวย (list_funnels) และรายการของมันถ้าทำได้; เทียบตัวเลข ถ้าไม่ตรงกัน ให้อัปเดต (report_counts) และบอกว่าความต่างมาจากไหน
+- ตรวจเอเจนต์ทำงาน: ใครเงียบไปนาน ใครพลาดรอบทำงาน ใครรอคำตอบจากฉัน
+- หาคอขวด: ขั้นที่อัตราการแปลงต่ำสุดหรือไม่มีความเคลื่อนไหว และการตามหลังจังหวะของเป้าหมาย
+- เขียนผลของรอบนี้: สถานะ (ok, bottleneck, recommendation หรือ question) และหนึ่งบรรทัดสั้นๆ อธิบาย (status และ summary ใน set_agent_state) ซึ่งจะแสดงข้างคุณบนแดชบอร์ด
+- ถ้าต้องให้ฉันตัดสินใจ ให้ถามฉันผ่าน Goalcraft
+
+6. ช่วยเรื่องเอเจนต์ทำงาน ถ้าขั้นไหนไม่มีเอเจนต์หรือเอเจนต์ทำไม่ทัน ให้เสนอเพิ่มเอเจนต์และเขียนพรอมต์สำเร็จรูปให้มันเอง: ต้องทำอะไรในขั้นนั้น เอารายการมาจากไหนและบันทึกไว้ที่ไหน รายงานต่อ Goalcraft อย่างไร (โซนของมัน ชื่อเอเจนต์ report_counts, add_result) ฉันจะวางมันในแชตใหม่
+
+7. ตอบคำถามของฉันเกี่ยวกับกรวยที่นี่ ในบทสนทนานี้: คอขวดอยู่ตรงไหน จะถึงเป้าหมายเมื่อไรด้วยจังหวะปัจจุบัน ควรปรับปรุงอะไร ใช้ตัวเลขของ Goalcraft และรายการของฉันเป็นหลัก อย่าแต่งขึ้นเอง`),
   'connect.prompt': L(
     (url) => `Connect this MCP server for me: ${url} (Goalcraft, remote, sign-in with OAuth). If you can't connect it yourself, tell me exactly how to do it in this app.`,
     (url) => `Подключи мне этот MCP-сервер: ${url} (Goalcraft, удалённый, вход через OAuth). Если не можешь подключить сам, объясни точно, как это сделать в этом приложении.`,
@@ -193,6 +301,19 @@ const STRINGS = {
   'board.lost': L((who) => `No word from ${who}`, (who) => `${who} не выходит на связь`, (who) => `${who} 没有消息`, (who) => `ไม่มีสัญญาณจาก ${who}`),
   'board.runs': L('Previous runs', 'Предыдущие запуски', '之前的运行', 'การรันก่อนหน้า'),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),
+  'board.supervisorName': L((who) => `Supervisor ${who}`, (who) => `Супервайзер ${who}`, (who) => `主管 ${who}`, (who) => `ผู้ดูแล ${who}`),
+  'board.supStatus.ok': L('All good', 'Всё в порядке', '一切正常', 'ทุกอย่างเรียบร้อย'),
+  'board.supStatus.bottleneck': L('Bottleneck', 'Узкое место', '瓶颈', 'คอขวด'),
+  'board.supStatus.recommendation': L('Recommendation', 'Рекомендация', '建议', 'คำแนะนำ'),
+  'board.supStatus.question': L('Waiting for your answer', 'Ждёт вашего ответа', '等待你的回答', 'รอคำตอบจากคุณ'),
+  'board.supervisorNoRun': L('no checks yet', 'проверок ещё не было', '尚未检查', 'ยังไม่ได้ตรวจ'),
+  'board.noSupervisor': L('No supervisor yet', 'Супервайзера пока нет', '还没有主管', 'ยังไม่มีผู้ดูแล'),
+  'board.noSupervisorText': L(
+    'A supervisor is your agent that watches this funnel: it checks the numbers and the agents, finds the bottleneck and suggests what to do.',
+    'Супервайзер — ваш агент, который следит за этой воронкой: сверяет числа и агентов, находит узкое место и подсказывает, что делать.',
+    '主管是你的智能体，负责盯着这个漏斗：核对数字和智能体，找出瓶颈并建议怎么做。',
+    'ผู้ดูแลคือเอเจนต์ของคุณที่คอยดูกรวยนี้: ตรวจตัวเลขและเอเจนต์ หาคอขวด และแนะนำว่าควรทำอะไร'),
+  'board.appointSupervisor': L('Appoint a supervisor', 'Назначить супервайзера', '指定主管', 'แต่งตั้งผู้ดูแล'),
   'board.noRuns': L('No runs recorded yet.', 'Запусков пока не записано.', '还没有记录到运行。', 'ยังไม่มีการรันที่บันทึกไว้'),
   'board.runsFailed': L('Could not load the runs.', 'Не удалось загрузить запуски.', '无法加载运行记录。', 'โหลดการรันไม่สำเร็จ'),
   'board.resting': L((who) => `${who} is asleep`, (who) => `${who} спит`, (who) => `${who} 在睡觉`, (who) => `${who} กำลังหลับ`),
@@ -226,10 +347,10 @@ const STRINGS = {
   'pricing.forever': L('forever', 'навсегда', '永久', 'ตลอดไป'),
   'pricing.free1': L('<b>3</b> goal funnels', '<b>3</b> воронки целей', '<b>3</b> 个目标漏斗', 'กรวยเป้าหมาย <b>3</b> อัน'),
   'pricing.free2': L('<b>3</b> stages in each funnel', '<b>3</b> этапа в каждой воронке', '每个漏斗 <b>3</b> 个阶段', '<b>3</b> ขั้นในแต่ละกรวย'),
-  'pricing.free3': L('<b>1</b> agent at each step, <b>4</b> in a funnel', '<b>1</b> агент на каждом шаге, <b>4</b> в воронке', '每一步 <b>1</b> 个智能体，每个漏斗 <b>4</b> 个', 'เอเจนต์ <b>1</b> ตัวต่อขั้น <b>4</b> ตัวต่อกรวย'),
+  'pricing.free3': L('<b>1</b> supervisor + <b>4</b> worker agents in each funnel', '<b>1</b> супервайзер + <b>4</b> рабочих агента в каждой воронке', '每个漏斗 <b>1</b> 个主管 + <b>4</b> 个工作智能体', 'ผู้ดูแล <b>1</b> + เอเจนต์ทำงาน <b>4</b> ในแต่ละกรวย'),
   'pricing.pro1': L('<b>10</b> goal funnels', '<b>10</b> воронок целей', '<b>10</b> 个目标漏斗', 'กรวยเป้าหมาย <b>10</b> อัน'),
   'pricing.pro2': L('<b>5</b> stages in each funnel', '<b>5</b> этапов в каждой воронке', '每个漏斗 <b>5</b> 个阶段', '<b>5</b> ขั้นในแต่ละกรวย'),
-  'pricing.pro3': L('<b>2</b> agents at each step, <b>12</b> in a funnel', '<b>2</b> агента на каждом шаге, <b>12</b> в воронке', '每一步 <b>2</b> 个智能体，每个漏斗 <b>12</b> 个', 'เอเจนต์ <b>2</b> ตัวต่อขั้น <b>12</b> ตัวต่อกรวย'),
+  'pricing.pro3': L('<b>1</b> supervisor + <b>12</b> worker agents in each funnel', '<b>1</b> супервайзер + <b>12</b> рабочих агентов в каждой воронке', '每个漏斗 <b>1</b> 个主管 + <b>12</b> 个工作智能体', 'ผู้ดูแล <b>1</b> + เอเจนต์ทำงาน <b>12</b> ในแต่ละกรวย'),
   'pricing.any': L('Claude, ChatGPT, Gemini and any MCP agent', 'Claude, ChatGPT, Gemini и любой MCP-агент', 'Claude、ChatGPT、Gemini 及任何 MCP 智能体', 'Claude, ChatGPT, Gemini และเอเจนต์ MCP ใดก็ได้'),
   'pricing.live': L('Live dashboard, all nine themes', 'Живая доска, все девять тем', '实时看板，全部九种主题', 'แดชบอร์ดสด ครบทั้งเก้าธีม'),
   'pricing.themes': L('<b>9</b> visual themes', '<b>9</b> визуальных тем', '<b>9</b> 种视觉主题', 'ธีมภาพ <b>9</b> แบบ'),

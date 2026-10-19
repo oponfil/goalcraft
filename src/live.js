@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=42ac6881';
+import { supabase } from './auth.js?v=06e43b9f';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -35,7 +35,14 @@ function toScene(f, reports, now) {
     manualFill: stages.map(s => (s.fill_percent == null ? null : Number(s.fill_percent) / 100)),
     cubes: f.results,
     goal: { total: f.goal_total, every: Number(f.goal_every_days) },
-    workers: f.presence.map(p => {
+    workers: f.presence.filter(p => p.zone != null).map(p => agentOf(f, p, now)),
+    // The supervisor (no zone): on the platform at the top, with what its last run found.
+    supervisor: f.presence.filter(p => p.zone == null).map(p => ({ ...agentOf(f, p, now), status: p.status, summary: p.summary }))[0] ?? null,
+  };
+}
+
+// One agent's presence → what the scene draws by it.
+function agentOf(f, p, now) {
       // The agent's unanswered questions, oldest first. An agent asking stands and waits for the
       // answers; one that went to sleep keeps them in a bubble and picks them up on its next run.
       // Once all are answered, an asking agent is shown back at work.
@@ -44,7 +51,7 @@ function toScene(f, reports, now) {
       const state = p.state === 'ask' && !qs.length ? 'work' : p.state;
       return {
         agent: p.agent,
-        zone: p.zone - 1,
+        zone: p.zone == null ? null : p.zone - 1,
         state,
         wakeIn: p.state === 'sleep' && p.next_run_at ? (Date.parse(p.next_run_at) - now) / 1000 : null,
         // Seconds since the agent last changed its state (its last word, for an overdue one).
@@ -58,8 +65,6 @@ function toScene(f, reports, now) {
         // What this run added (the last run's, while the agent sleeps); null = not known.
         added: p.run_added,
       };
-    }),
-  };
 }
 
 export async function loadFunnels() {
@@ -68,7 +73,7 @@ export async function loadFunnels() {
     supabase.from('funnels')
       .select(`id, title, theme, source_url, result, goal_total, goal_every_days, results, output_flow_per_day,
         stages (key, position, label, count, fill_percent, flow_per_day),
-        presence (agent, zone, state, next_run_at, question_id, chat_url, run_added, updated_at),
+        presence (agent, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at)`)
       .order('created_at'),
     supabase.from('count_reports')
@@ -91,7 +96,7 @@ export async function answer(questionId, text) {
 // An agent's last runs in its funnel, newest first, for its card.
 export async function runs(a, limit = 10) {
   const { data, error } = await supabase.from('agent_runs')
-    .select('zone, started_at, ended_at, added')
+    .select('zone, started_at, ended_at, added, status, summary')
     .eq('funnel_id', a.f.id).eq('agent', a.agent)
     .order('started_at', { ascending: false }).limit(limit);
   if (error) throw error;

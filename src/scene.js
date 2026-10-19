@@ -1,13 +1,17 @@
-import { agentInfo, plural } from './data.js?v=42ac6881';
-import { drawStanding, drawLying, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=42ac6881';
-import { themeOf } from './themes.js?v=42ac6881';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=42ac6881';
+import { agentInfo, plural } from './data.js?v=06e43b9f';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=06e43b9f';
+import { themeOf } from './themes.js?v=06e43b9f';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=06e43b9f';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
 // The scene is tall enough for 5 tanks; shorter funnels end higher up. Titles live in the page header.
 export const CW = 200;
-const ZW = 164, TOP = 27, ZH = 40, LH = 46, MAX_STAGES = 5;
+const ZW = 164, TOP = 48, ZH = 40, LH = 46, MAX_STAGES = 5;
+// The supervisor's platform: a small deck around the top of the hopper, braced to the pipe; the
+// supervisor walks from one end to the other and looks down from each. Its top is level with the top
+// rim of the hopper; its braces end on the pipe's first band.
+const DECK_HALF = 36, DECK_Y = TOP - 9, BRACE_END = TOP + 12;
 // The pixel layer is drawn at RES× the logical grid: scenery stays blocky, small pieces get finer pixels.
 const RES = 2;
 const tankTop = j => TOP + ZH + j * (LH + ZH);
@@ -44,6 +48,11 @@ const FONT = lang === 'vi' ? '"Be Vietnam Pro", system-ui, sans-serif'
   : lang === 'ja' ? '"Rubik", "Noto Sans JP", system-ui, sans-serif'
     : '"Rubik", "Noto Sans Thai", "Noto Sans SC", system-ui, sans-serif';
 
+
+function shade(hex, k) {
+  const n = parseInt(hex.slice(1), 16), ch = sh => Math.round(((n >> sh) & 255) * k);
+  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+}
 
 function rng(seed) {
   return () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
@@ -116,17 +125,34 @@ export class Scene {
       if (!live && a.added == null) a.added = w.state === 'sleep' ? 1 + Math.floor(r() * 6) : 0;
       this.agents.push(a);
     });
+    // One supervisor per funnel, on the platform. It has no zone: it watches the whole funnel. It
+    // stays in its state (no walking), so the demo keeps it as it is.
+    this.funnels.forEach(f => {
+      const s = f.supervisor;
+      if (!s) return;
+      const a = { ...s, f, sup: true, zone: null, side: 'R', rand: r, phase: r(), added: 0 };
+      a.questions = s.questions ?? (s.question ? [{ id: s.question_id ?? `demo-sup-${f.id ?? f.title}`, question: s.question }] : []);
+      a.replies = s.replies ?? [];
+      if (s.state === 'sleep') a.wakeAt = s.wakeIn;
+      if (!live) Object.assign(a, { keep: s.wakeIn || true, workUntil: null });
+      this.agents.push(a);
+    });
   }
 
   fi(f) { return this.funnels.indexOf(f); }
   cx(fi) { return fi * CW + CW / 2; }
   spot(a, kind) {
+    if (a.sup) {
+      const cx = this.cx(this.fi(a.f)), left = cx - DECK_HALF, right = cx + DECK_HALF - 20;
+      if (kind === 'rest') return { x: left - 2, y: DECK_Y - 10 * P };
+      return { x: kind === 'ask' ? left : left + (right - left) * this.deckWalk(a).k, y: DECK_Y - MINER_H };
+    }
         // Agents stand level with the bottom of the plate, also in the output zone where it is lifted.
     const out = a.zone === a.f.stages.length - 1;
     const cx = this.cx(this.fi(a.f)), floor = zoneTop(a.zone) + ZH - (out ? OUT_LIFT : 0), R = a.side === 'R';
     if (kind === 'work') return { x: R ? cx + 18 : cx - 38, y: floor - MINER_H };
     if (kind === 'ask') return { x: R ? cx + 26 : cx - 46, y: floor - MINER_H };
-    return { x: R ? cx + 52 : cx - 80, y: floor - 10 * P };
+    return { x: R ? cx + 52 : cx - 66, y: floor - 10 * P };
   }
 
   resize(scale, dpr) {
@@ -176,6 +202,7 @@ export class Scene {
         if (k < 0) {
           this.pipe(c, cx, y + 1, y + 4, theme);
           if (f.source_url) this.sheets(c, cx, y - 26);
+          this.deck(c, fi * CW, theme);
           this.hopper(c, cx, y - 8, y + 1, theme);
         }
       }
@@ -209,6 +236,20 @@ export class Scene {
     c.fillStyle = '#1B1714'; c.fillRect(0, 0, CW, h);
     themeOf(this.funnels[fi]).backdrop(c, 0, CW, h, rng(42 + fi));
     return strip;
+  }
+
+  // The supervisor's platform around the top of the hopper, in the theme's frame colour: a floor with
+  // a darker underside and a diagonal brace on each side down to the pipe.
+  deck(c, x0, theme) {
+    const R = (col, ...r) => { c.fillStyle = col; c.fillRect(...r); };
+    const cx = x0 + CW / 2, y = DECK_Y, under = shade(theme.frame, 0.55);
+    R(under, cx - DECK_HALF, y + 1, DECK_HALF * 2 + 1, 2.5); R(theme.frame, cx - DECK_HALF, y, DECK_HALF * 2 + 1, 1.5);
+    // A brace from near each end of the platform's underside down to the pipe's edge.
+    const x1 = DECK_HALF - 1.5, x2 = 5, y1 = y + 3.5, steps = 40;
+    for (let i = 0; i <= steps; i++) {
+      const q = i / steps, dx = x1 + (x2 - x1) * q, yy = y1 + (BRACE_END - y1) * q;
+      R(under, cx - dx - 0.75, yy, 1.5, 1.5); R(under, cx + dx - 0.25, yy, 1.5, 1.5);
+    }
   }
 
   // A small funnel on top of the first pipe, where new items pour in.
@@ -351,6 +392,10 @@ export class Scene {
       }
     });
     for (const a of this.agents) this.drawAgent(c, a);
+    if (this.live) this.funnels.forEach((f, fi) => {
+      // An empty platform: a click on either wing (the sheet keeps the middle) tells how to appoint one.
+      if (!f.supervisor) for (const x of [this.cx(fi) - DECK_HALF, this.cx(fi) + 14]) this.hits.push({ x, y: DECK_Y - 22, w: DECK_HALF - 14, h: 28, type: 'nosup', f });
+    });
     for (const s of this.sparks) { c.fillStyle = s.col; c.fillRect(s.x, s.y, 2, 2); }
     if (this.dropAt !== null) {
       c.fillStyle = '#F2C14E'; c.fillRect(this.dropAt * CW - 2, 2, 4, this.H - 4);
@@ -373,6 +418,7 @@ export class Scene {
 
   drawAgent(c, a) {
     const t = this.t, info = agentInfo(a.agent), theme = themeOf(a.f), outfit = theme.outfit;
+    if (a.sup) return this.drawSupervisor(c, a, info, outfit);
     if (a.state === 'sleep') {
       const p = this.spot(a, 'rest');
       drawLying(c, p.x, p.y, a.agent, info.color, a.side === 'R', outfit);
@@ -380,7 +426,7 @@ export class Scene {
       if (a.questions.length) {
         const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
         const bx = a.side === 'R' ? p.x - 16 - extra : p.x + 30;
-        drawBubble(c, bx, p.y - 14, a.questions.length);
+        drawBubble(c, bx, p.y - 14, a.questions.length, bx > p.x);
         a.bubble = { x: bx, y: p.y - 14 };
         this.hits.push({ x: Math.min(p.x, bx) - 4, y: p.y - 16, w: 52 + extra, h: 38, type: 'ask', a });
       } else this.hits.push({ x: p.x - 4, y: p.y - 14, w: 34, h: 36, type: 'agent', a });
@@ -400,7 +446,7 @@ export class Scene {
       drawStanding(c, p.x, p.y, a.agent, info.color, -1, R, false, outfit);
       const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
       a.bubble = { x: R ? p.x + 11 * P : p.x - 9 * P - extra, y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
-      drawBubble(c, a.bubble.x, a.bubble.y, a.questions.length);
+      drawBubble(c, a.bubble.x, a.bubble.y, a.questions.length, a.bubble.x > p.x);
       this.hits.push({ x: R ? p.x - 2 : p.x - 20 - extra, y: p.y - 6, w: 44 + extra, h: 36, type: 'ask', a });
       return;
     }
@@ -422,6 +468,53 @@ export class Scene {
     }
     this.hits.push({ x: R ? p.x - 14 : p.x - 2, y: p.y - 4, w: 36, h: 34, type: 'agent', a });
     a.noteAt = { x: p.x + 10, y: p.y - 4 };
+  }
+
+  // The supervisor on its platform: asleep lying at its left end, asking with the same red bubble as
+  // the workers, otherwise looking down at the funnel through a spyglass.
+  // On the platform the supervisor stands at one end for a while, looking down, then walks to the
+  // other: k from 0 (left end) to 1 (right end), walking: on the move.
+  deckWalk(a) {
+    const T = 16, q = ((this.t + a.phase * T) % T) / T;
+    if (q < 0.35) return { k: 0, walking: false, facesLeft: false };
+    if (q < 0.5) return { k: (q - 0.35) / 0.15, walking: true, facesLeft: false };
+    if (q < 0.85) return { k: 1, walking: false, facesLeft: true };
+    return { k: 1 - (q - 0.85) / 0.15, walking: true, facesLeft: true };
+  }
+
+  drawSupervisor(c, a, info, outfit) {
+    const t = this.t;
+    if (a.state === 'sleep') {
+      const p = this.spot(a, 'rest');
+      drawBossLying(c, p.x, p.y, a.agent, info.color, outfit);
+      a.noteAt = { x: p.x + 14, y: p.y - 6 };
+      if (a.questions.length) {
+        const bx = p.x + 30;
+        drawBubble(c, bx, p.y - 14, a.questions.length, true);
+        a.bubble = { x: bx, y: p.y - 14 };
+        this.hits.push({ x: p.x - 4, y: p.y - 16, w: 52, h: 38, type: 'ask', a });
+      } else this.hits.push({ x: p.x - 4, y: p.y - 14, w: 34, h: 36, type: 'agent', a });
+      return;
+    }
+    const p = this.spot(a, a.state === 'ask' ? 'ask' : 'work');
+    const w = a.state !== 'ask' ? this.deckWalk(a) : { walking: false, facesLeft: false };
+    drawBoss(c, Math.round(p.x / P) * P, p.y, a.agent, info.color, outfit, w.walking ? Math.floor(t * 7) : -1, w.facesLeft);
+    a.noteAt = { x: p.x + 10, y: p.y - 4 };
+    if (a.state === 'ask') {
+      a.bubble = { x: p.x + 11 * P, y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
+      drawBubble(c, a.bubble.x, a.bubble.y, a.questions.length, true);
+      this.hits.push({ x: p.x - 2, y: p.y - 6, w: 44, h: 36, type: 'ask', a });
+      return;
+    }
+    if (w.walking) { this.hits.push({ x: p.x - 2, y: p.y - 4, w: 24, h: 32, type: 'agent', a }); return; }
+    // The spyglass sweeps between the sheet on top of the funnel and the agent at its bottom on the
+    // side it stands.
+    const ex = w.facesLeft ? p.x + 6 : p.x + 14, ey = p.y + 8, cx = this.cx(this.fi(a.f)), n = a.f.stages.length;
+    const look = (x, y) => Math.atan2(y - ey, x - ex);
+    const top = look(cx, zoneTop(-1) - 16), bottom = look(w.facesLeft ? cx + 28 : cx - 28, zoneTop(n - 1) + ZH - 14);
+    const k = 0.5 - 0.5 * Math.cos(t * 0.9 + a.phase * 9);
+    drawSpyglass(c, ex, ey, top + (bottom - top) * k);
+    this.hits.push({ x: p.x - 2, y: p.y - 4, w: 34, h: 34, type: 'agent', a });
   }
 
   // Crisp text on the full-resolution canvas, over the pixel layer.

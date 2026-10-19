@@ -26,6 +26,7 @@ Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage 
 Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when you wake up and again every 5 minutes while you work. The dashboard waits twice that, 10 minutes of silence, then warns the person that you did not wake up (10 minutes past your next_run_at) or that it lost contact with you (10 minutes after your last signal).
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not.
 On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer: while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next); if you need more from the person, ask a new question instead. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
+Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation, question) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
 Report only counts, dates and links: the items themselves stay in the person's own sources.
@@ -81,7 +82,7 @@ async function funnels(db: Db, key?: string) {
   let q = db.from('funnels')
     .select(`key, title, theme, source_url, result, goal_total, goal_every_days, results, output_flow_per_day, updated_at,
       stages (key, position, label, count, fill_percent, flow_per_day),
-      presence (agent, zone, state, next_run_at, chat_url, question_id, run_added, updated_at),
+      presence (agent, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, updated_at),
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at)`)
     .order('created_at')
   if (key) q = q.eq('key', key)
@@ -97,7 +98,9 @@ async function funnels(db: Db, key?: string) {
     stages: f.stages.sort((a: any, b: any) => a.position - b.position)
       .map(({ key, label, count, fill_percent, flow_per_day }: any) => ({ key, label, count, fill_percent, flow_per_day })),
     output_flow_per_day: f.output_flow_per_day,
-    agents: f.presence,
+    agents: f.presence.filter((p: any) => p.zone != null).map(({ status, summary, ...p }: any) => p),
+    // The agent on the platform over the whole funnel, with what its last run found.
+    supervisor: f.presence.filter((p: any) => p.zone == null).map(({ zone, run_added, ...p }: any) => p)[0] ?? null,
     open_questions: f.questions.filter((q: any) => !q.answered_at),
     // Answered but not replied to yet: the agent owes the person a short reply.
     answers_to_reply: f.questions.filter((q: any) => q.answered_at && !q.replied_at).map(({ id, agent, question, answer, answered_at }: any) => ({ id, agent, question, answer, answered_at })),
@@ -244,22 +247,28 @@ function server(db: Db, caller: Caller) {
 
   s.registerTool('set_agent_state', {
     title: 'Set your state',
-    description: 'Show where you are and what you are doing: work (working now; send it when you wake up and every 5 minutes while you work: the heartbeat), sleep (until next_run_at), ask (waiting for the person, with a question; returns the question_id its answer is read by).',
+    description: 'Show where you are and what you are doing: work (working now; send it when you wake up and every 5 minutes while you work: the heartbeat), sleep (until next_run_at), ask (waiting for the person, with a question; returns the question_id its answer is read by). The funnel\'s supervisor uses zone "supervisor" and gives what its run found as status and summary.',
     inputSchema: req({
       funnel_id: funnelId,
       agent,
-      zone: z.number().int().min(0).max(5).describe('0 = inflow above the first stage, k = into stage k, n = output below the last stage'),
+      zone: z.union([z.number().int().min(0).max(5), z.literal('supervisor')]).describe('0 = inflow above the first stage, k = into stage k, n = output below the last stage; "supervisor" = the platform over the whole funnel (one agent per funnel)'),
       state: z.enum(['work', 'sleep', 'ask']),
       next_run_at: z.string().datetime({ offset: true }).optional().describe('For sleep: ISO time of your next run'),
       question: z.string().min(1).max(1000).optional().describe('For ask: what you need from the person'),
       chat_url: z.string().url().regex(CHAT_LINK).optional().describe('Link to this conversation, so the person\'s "Open" leads to this very chat: https://claude.ai/chat/…, https://chatgpt.com/c/…, or in the Claude app claude://claude.ai/epitaxy/<your session id> (see the instructions). Codex links itself. With ask it is kept with the question'),
       added: z.number().int().min(0).max(1e9).optional().describe('How many items you added this run, when you know it better than the counts show (e.g. when items also left your stage). Leave it out and the dashboard counts it from report_counts'),
+      status: z.enum(['ok', 'bottleneck', 'recommendation', 'question']).optional().describe('Supervisor only: what this run found: ok (all good), bottleneck, recommendation, question (you need the person\'s decision). Shown by you on the dashboard'),
+      summary: z.string().min(1).max(200).optional().describe('Supervisor only: the finding in one short line, in the person\'s language, e.g. "interviews → final round", "add an agent on the inflow"'),
     }),
     annotations: { title: 'Set your state', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, async (a) => {
     const f = await funnelRow(db, a.funnel_id)
     const n = (check(await db.from('stages').select('key').eq('funnel_id', f.id)) as unknown[]).length
-    if (a.zone > n) fail(`This funnel has ${n} stages, so zones are 0-${n}`)
+    // The supervisor's place has no zone (null in the database).
+    const zone = a.zone === 'supervisor' ? null : a.zone
+    if (zone != null && zone > n) fail(`This funnel has ${n} stages, so zones are 0-${n}`)
+    if (zone != null && (a.status || a.summary)) fail('status and summary are for the supervisor (zone "supervisor"); a worker reports what it added')
+    if (zone == null && a.added != null) fail('The supervisor adds no items: give what you found as status and summary')
     if (a.state === 'ask' && !a.question) fail('state "ask" needs a question')
     const chat_url = a.chat_url ?? caller.chat
     let question_id: string | null = null
@@ -276,16 +285,21 @@ function server(db: Db, caller: Caller) {
     // A run starts when the agent comes to work from sleep (or to another zone): its counter starts at 0
     // and is kept through the next sleep, so the person sees what the last run added.
     const prev = check(await db.from('presence').select('zone, state').eq('funnel_id', f.id).eq('agent', a.agent).maybeSingle()) as any
-    const newRun = a.state === 'work' && (!prev || prev.state === 'sleep' || prev.zone !== a.zone)
-    const run = newRun ? { run_base: (await zoneTargets(db, f.id))(a.zone), run_added: 0, run_manual: false } : {}
+    const newRun = a.state === 'work' && (!prev || prev.state === 'sleep' || prev.zone !== zone)
+    const run = !newRun ? {} : zone == null ? { run_base: null, run_added: null, run_manual: false }
+      : { run_base: (await zoneTargets(db, f.id))(zone), run_added: 0, run_manual: false }
     if (newRun) {
       check(await endRun(db, f.id, a.agent))
-      check(await db.from('agent_runs').insert({ funnel_id: f.id, agent: a.agent, zone: a.zone }))
+      check(await db.from('agent_runs').insert({ funnel_id: f.id, agent: a.agent, zone }))
     }
     if (a.added != null) check(await openRun(db, f.id, a.agent).update({ added: a.added }))
+    // What the supervisor found, on its run (before a sleep ends it) and by it on the dashboard.
+    const found: Record<string, unknown> = { ...(a.status && { status: a.status }), ...(a.summary && { summary: a.summary }) }
+    if (a.status && !a.summary) found.summary = null
+    if (Object.keys(found).length) check(await openRun(db, f.id, a.agent).update(found))
     if (a.state === 'sleep') check(await endRun(db, f.id, a.agent))
     check(await db.from('presence').upsert({
-      funnel_id: f.id, agent: a.agent, zone: a.zone, state: a.state,
+      funnel_id: f.id, agent: a.agent, zone, state: a.state, ...found,
       next_run_at: a.state === 'sleep' ? a.next_run_at ?? null : null,
       question_id, ...(chat_url !== undefined && { chat_url }),
       ...run,

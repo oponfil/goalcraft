@@ -306,6 +306,108 @@ function body(c, agent, color, walk, reach, outfit = 'helmet') {
   }
 }
 
+// The supervisor of a funnel: the same figure as the workers, dressed as the one in charge of them,
+// a look per theme (keyed by the theme's worker outfit). Drawn bare-headed by body() (an outfit it
+// doesn't know), then dressed on top; the middle of the shirt stays free for the brand logo.
+const BOSS = {
+  // Mine: the foreman — a white hard hat with a red stripe, a hi-vis vest, a moustache.
+  helmet(c) {
+    ellipse(c, 10, 5.5, 5.5, 4.5, '#F4F4F0', true); rect(c, 4, 5, 13, 1.5, '#C8C8C0'); rect(c, 8.8, 1.2, 2.4, 4, '#D23A2E');
+    rect(c, 4.5, 13.5, 2.5, 8, '#F07A1E'); rect(c, 13, 13.5, 2.5, 8, '#D0601A');
+    rect(c, 4.5, 17, 2.5, 1, '#E8F0F0'); rect(c, 13, 17, 2.5, 1, '#E8F0F0');
+    rect(c, 10.5, 9.8, 4, 1, '#5A3A20'); rect(c, 14, 10.3, 1, 0.8, '#5A3A20');
+  },
+  // Lab: the head of the lab — grey hair, round glasses, a long coat, a red tie.
+  goggles(c) {
+    ellipse(c, 10, 6.5, 4.8, 3.2, '#C8C8C8', true); rect(c, 5.5, 6.5, 1.5, 3, '#C8C8C8');
+    rect(c, 10, 7, 2.2, 2, '#2B2B2B'); rect(c, 10.4, 7.4, 1.4, 1.2, '#CFEFFF');
+    rect(c, 12.8, 7, 2.2, 2, '#2B2B2B'); rect(c, 13.2, 7.4, 1.4, 1.2, '#CFEFFF'); rect(c, 12.2, 7.6, 0.6, 0.5, '#2B2B2B');
+    rect(c, 4, 13.5, 3, 12, '#F6F6F2'); rect(c, 13, 13.5, 3, 12, '#D6D8D0'); rect(c, 4, 21.5, 12, 4, '#F6F6F2');
+    rect(c, 9.4, 12, 1.2, 2, '#B8342A');
+  },
+  // Garden: the head gardener — a wide hat with a flower, a beard, a green waistcoat.
+  straw(c) {
+    ellipse(c, 10, 4.2, 4.4, 2.8, '#E8C872', true); rect(c, 6, 4.2, 8, 1, '#B8342A');
+    rect(c, 1.5, 5.2, 17, 1.6, '#D9B45A'); rect(c, 1.5, 5.2, 17, 0.5, '#F2DC90');
+    ellipse(c, 13.5, 3.2, 1.2, 1.2, '#F28AB8'); rect(c, 13.2, 2.9, 0.6, 0.6, '#FFE38A');
+    ellipse(c, 11.5, 11.2, 3, 1.8, '#8A5A32'); rect(c, 10, 10.4, 4, 0.5, '#B0705A');
+    rect(c, 4.5, 13.5, 2.5, 8, '#3E6A2E'); rect(c, 13, 13.5, 2.5, 8, '#2E5A22');
+    rect(c, 5, 15, 1, 1, '#D9B44A'); rect(c, 5, 18, 1, 1, '#D9B44A');
+  },
+  // Love: the head cupid — a halo like a saint's, big wings (drawn first), a pink sash.
+  wings(c) {
+    ellipse(c, 10, 6.2, 5, 3.4, '#F2D06B', true);
+    rect(c, 6.5, 0, 7, 0.8, '#FFE38A'); rect(c, 6.5, 1.8, 7, 0.8, '#FFE38A'); rect(c, 5.8, 0.6, 0.8, 1.4, '#FFE38A'); rect(c, 13.4, 0.6, 0.8, 1.4, '#FFE38A');
+    for (let i = 0; i < 4; i++) rect(c, 12.5 + i * 0.8, 13.5 + i * 2, 1.6, 2, '#F28AB8');
+  },
+  // Code: the tech lead — no hood, dark hair, glasses, a headset with a mic, a dark jacket.
+  hoodie(c) {
+    ellipse(c, 10, 6.5, 4.8, 3.4, '#2B1D14', true);
+    rect(c, 5, 4, 10, 1, '#1E1E22'); rect(c, 4.5, 4, 1, 5, '#1E1E22'); rect(c, 4, 7.5, 2, 3, '#3A3E46');
+    rect(c, 6, 10.2, 5, 0.6, '#3A3E46'); rect(c, 10.5, 9.8, 1.2, 1.2, '#3CF27A');
+    rect(c, 10, 7, 2.2, 1.8, '#1E1E22'); rect(c, 10.4, 7.3, 1.4, 1, '#9FE3FF'); rect(c, 12.8, 7, 2.2, 1.8, '#1E1E22'); rect(c, 13.2, 7.3, 1.4, 1, '#9FE3FF');
+    rect(c, 4.5, 13.5, 2.5, 8, '#2E333B'); rect(c, 13, 13.5, 2.5, 8, '#22262C');
+  },
+  // Money: the bank manager — a top hat, a monocle, a tailcoat, a gold watch chain.
+  suit(c) {
+    ellipse(c, 10, 6.5, 4.8, 3.2, '#3A2A1E', true);
+    rect(c, 6.5, -1.5, 7, 6, '#1E1E22'); rect(c, 6.5, 2.8, 7, 1, '#B8342A'); rect(c, 4.5, 4.5, 11, 1.2, '#1E1E22');
+    rect(c, 12.6, 6.8, 2.4, 2.4, '#D9B44A'); rect(c, 13, 7.2, 1.6, 1.6, '#CFEFFF'); rect(c, 13.6, 9.2, 0.5, 3, '#D9B44A');
+    rect(c, 4.5, 13.5, 2.5, 9, '#1E2330'); rect(c, 13, 13.5, 2.5, 11, '#161A24'); rect(c, 3.5, 21, 2, 4, '#1E2330');
+    rect(c, 7, 13.5, 1, 2, '#FFFFFF'); rect(c, 12, 13.5, 1, 2, '#FFFFFF');
+    for (let i = 0; i < 5; i++) rect(c, 13.5 - i * 0.8, 21.6 + (i % 2) * 0.4, 0.8, 0.5, '#E8C040');
+  },
+  // Forge: the master smith — a gold crown, a black apron with a gold medal.
+  smith(c) {
+    ellipse(c, 10, 6.5, 4.8, 3.4, '#2B1D14', true);
+    rect(c, 6, 2, 8, 3, '#E8B020'); rect(c, 6, 0.5, 1.5, 1.5, '#E8B020'); rect(c, 9.25, 0, 1.5, 2, '#E8B020'); rect(c, 12.5, 0.5, 1.5, 1.5, '#E8B020');
+    rect(c, 6, 4.5, 8, 0.8, '#B8861A'); rect(c, 9.5, 2.8, 1, 1, '#D23A2E');
+    rect(c, 5.5, 21, 9, 4.5, '#2A2420'); rect(c, 5.5, 21, 9, 0.5, '#4A403A');
+    rect(c, 7, 13.5, 0.5, 6, '#2A2420'); rect(c, 12.5, 13.5, 0.5, 6, '#2A2420');
+    ellipse(c, 10, 23.2, 1.2, 1.2, '#F2C14E'); rect(c, 9.6, 22.8, 0.8, 0.8, '#FFE38A');
+  },
+  // Bakery: the head chef — a very tall toque, a curled moustache, a double-breasted jacket, a red scarf.
+  chef(c) {
+    rect(c, 6.5, -3.5, 7, 8.5, '#FFFFFF'); ellipse(c, 10, -3.5, 4.2, 2.6, '#FFFFFF'); rect(c, 6, 4, 8, 1.6, '#E6E6E0');
+    rect(c, 10, 9.8, 4.5, 0.9, '#5A3A20'); rect(c, 9.5, 9.2, 0.8, 0.8, '#5A3A20'); rect(c, 14.3, 9.2, 0.8, 0.8, '#5A3A20');
+    rect(c, 8, 12.2, 4.5, 1.6, '#B8342A');
+    rect(c, 4.5, 13.5, 2.5, 9, '#F6F6F2'); rect(c, 13, 13.5, 2.5, 9, '#D6D8D0');
+    for (let i = 0; i < 3; i++) { rect(c, 5.2, 15 + i * 2.2, 0.8, 0.8, '#D9B44A'); rect(c, 13.8, 15 + i * 2.2, 0.8, 0.8, '#D9B44A'); }
+  },
+  // Blocks: the commander — gold armour and a gold helmet with a red plume.
+  blocky(c) {
+    rect(c, 5.5, 4.5, 9.5, 8, SKIN);
+    rect(c, 5, 2.5, 10.5, 3.5, '#F2C14E'); rect(c, 5, 2.5, 10.5, 0.5, '#FFE38A'); rect(c, 5, 6, 2, 5, '#F2C14E'); rect(c, 5, 6, 10.5, 0.5, '#C9952B');
+    rect(c, 9, -1.5, 2.5, 4, '#D23A2E'); rect(c, 8, -1.5, 1, 1.5, '#D23A2E');
+    rect(c, 10.5, 7.5, 1.5, 1.5, '#FFFFFF'); rect(c, 11, 7.5, 1, 1.5, '#3A5AA8'); rect(c, 13, 7.5, 1.5, 1.5, '#FFFFFF'); rect(c, 13.5, 7.5, 1, 1.5, '#3A5AA8');
+    rect(c, 4, 13, 3.5, 9, '#F2C14E'); rect(c, 12.5, 13, 3.5, 9, '#C9952B'); rect(c, 4, 13, 12, 1, '#FFE38A'); rect(c, 4, 21, 12, 1.5, '#C9952B');
+    rect(c, 5, 22.5, 4.5, 2, '#F2C14E'); rect(c, 10.5, 22.5, 4.5, 2, '#F2C14E');
+  },
+};
+function bossBody(c, agent, color, outfit, walk = -1) {
+  if (outfit === 'wings') { ellipse(c, 1, 14.5, 4, 6, '#FFFFFF'); ellipse(c, 1, 16.5, 2.8, 4, '#DCE6F0'); }
+  body(c, agent, color, walk, false, 'boss');
+  (BOSS[outfit] || BOSS.helmet)(c);
+}
+// walkFrame: -1 standing, else the walk frame; flip: facing left.
+export function drawBoss(ctx, x, y, agent, color, outfit = 'helmet', walkFrame = -1, flip = false) {
+  ctx.save();
+  if (flip) { ctx.translate(x + MINER_W, y); ctx.scale(-1, 1); } else ctx.translate(x, y);
+  bossBody(ctx, agent, color, outfit, walkFrame); ctx.restore();
+  drawLogo(ctx, x + 10, y + 17.5, agent);
+}
+export function drawBossLying(ctx, x, y, agent, color, outfit = 'helmet') {
+  ctx.save(); ctx.translate(x, y + 20); ctx.rotate(-Math.PI / 2); bossBody(ctx, agent, color, outfit); ctx.restore();
+  drawLogo(ctx, x + 17.5, y + 10, agent);
+}
+// A spyglass held at the eye (x, y), pointing at angle (radians, 0 = straight ahead, down is
+// positive).
+export function drawSpyglass(ctx, x, y, angle) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+  rect(ctx, 0, -1.5, 13, 3, '#6E5A3A'); rect(ctx, 9, -2, 5, 4, '#B8A27A'); rect(ctx, 13.5, -1.5, 1, 3, '#CDE8FF');
+  ctx.restore();
+}
+
 // Logo centred at (cx, cy) in half-unit pixels; never mirrored.
 function drawLogo(ctx, cx, cy, agent) {
   // "claude-search" wears the Claude logo.
@@ -435,11 +537,13 @@ export function drawArrow(ctx, x, y) {
 // One "!" per open question up to four, each widening the bubble by BUBBLE_STEP; from five on
 // the bubble is as wide as for four and the scene writes the number before a single "!".
 export const BUBBLE_STEP = 4;
-export function drawBubble(ctx, x, y, n = 1) {
+// tailLeft: the bubble's tail points left, at an agent standing to its left (by default it points
+// right, at an agent to its right).
+export function drawBubble(ctx, x, y, n = 1, tailLeft = false) {
   const k = n > 4 ? 1 : Math.max(1, n), w = 14 + (Math.min(4, Math.max(1, n)) - 1) * BUBBLE_STEP;
   rect(ctx, x + 0.5, y, w - 1, 16, '#E24B4A');
   rect(ctx, x, y + 0.5, w, 15, '#E24B4A');
-  rect(ctx, x + w, y + 10, 2, 2, '#E24B4A');
+  rect(ctx, tailLeft ? x - 2 : x + w, y + 10, 2, 2, '#E24B4A');
   const x0 = n > 4 ? x + w - 8 : x + 6;
   for (let i = 0; i < k; i++) {
     rect(ctx, x0 + i * BUBBLE_STEP, y + 3, 2, 7, '#FFFFFF');

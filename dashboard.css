@@ -182,6 +182,13 @@ body {
 .connect code { padding: 1px 6px; }
 .connect pre { padding: 10px 12px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 8px; }
 .connect a { color: #F2C14E; }
+/* On the Connect page the supervisor's long prompt scrolls inside its block. */
+.connect pre.long { max-height: 420px; overflow-y: auto; font-size: 13px; }
+.sup-status { font-weight: 400; }
+.sup-status.st-ok { color: #9FE870; }
+.sup-status.st-bottleneck { color: #F2A33C; }
+.sup-status.st-recommendation { color: #8FC4FF; }
+.sup-status.st-question { color: #FF7A78; }
 
 /* Site header, the same as on the landing page. */
 .sitebar {

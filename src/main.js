@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS } from './data.js?v=42ac6881';
-import { mountDashboard } from './dashboard.js?v=42ac6881';
-import { t } from './i18n.js?v=42ac6881';
+import { FUNNELS, SUP_RUNS } from './data.js?v=06e43b9f';
+import { mountDashboard } from './dashboard.js?v=06e43b9f';
+import { t } from './i18n.js?v=06e43b9f';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -17,6 +17,19 @@ mountDashboard(FUNNELS, {
 function demoRuns(a) {
   let seed = [...a.f.title + a.agent].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
   const r = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  // The supervisor: a short check every few hours, each with the status it ended on; the newest is
+  // its current one.
+  if (a.sup) {
+    const now = Date.now(), rows = [];
+    let start = now - (a.state === 'sleep' ? 1 + r() * 3 : 0.1) * 3600e3;
+    for (let i = 0; i < 8; i++) {
+      const going = i === 0 && a.state === 'work';
+      rows.push({ started_at: new Date(start).toISOString(), ended_at: going ? null : new Date(start + (3 + r() * 6) * 60e3).toISOString(),
+        status: i === 0 ? a.status : SUP_RUNS[Math.floor(r() * SUP_RUNS.length)] });
+      start -= (3 + r() * 3) * 3600e3;
+    }
+    return rows;
+  }
   const z = a.zone + 1, st = a.f.stages, holds = z < st.length ? st[z].count : a.f.cubes;
   const perDay = a.f.flows[z] || 0, crew = Math.max(1, a.f.workers.filter(w => w.zone === a.zone).length);
   const now = Date.now(), rows = [];

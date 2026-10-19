@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=42ac6881';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=42ac6881';
-import { t, lang } from './i18n.js?v=42ac6881';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=06e43b9f';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=06e43b9f';
+import { t, lang } from './i18n.js?v=06e43b9f';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -218,17 +218,31 @@ export function mountDashboard(funnels, opts = {}) {
     if (h.type === 'ask' && opts.onAnswer) bindAnswer(h.a);
   });
 
+  // A supervisor's status word in its own colour: all good, bottleneck, recommendation, question.
+  const supStatus = s => `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
+
   function content(h) {
+    // An empty platform: the funnel has no supervisor yet; the Connect page tells how to appoint one.
+    if (h.type === 'nosup') {
+      return `<div class="pop-title">${esc(t('board.noSupervisor'))}</div>
+        <p class="pop-note">${esc(t('board.noSupervisorText'))}</p>
+        <a class="btn" href="../connect/#supervisor">${esc(t('board.appointSupervisor'))}</a>`;
+    }
     const a = h.a, info = agentInfo(a.agent), f = a.f;
     // own: the agent's own chat, an app link (claude://, codex://) or a web one; web: where to go
     // when the app isn't on this computer.
     const own = a.chat || info.chat, web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);
-    const who = esc(info.name);
+    const who = esc(a.sup ? t('board.supervisorName', info.name) : info.name);
     // The step it works on, with what this run added (the last run's while it sleeps) to the items
-    // it works into: "Job Search: jobs found → +4 applied".
-    const st = f.stages, n = a.added || 0, from = a.zone < 0 ? '' : `${esc(plural(5, st[a.zone].forms))} → `;
-    const into = a.zone === st.length - 1 ? f.result : st[a.zone + 1].forms;
-    const where = `${esc(f.title)}: ${from}<b class="run">+${fmtCount(n)}</b> ${esc(plural(n, into))}`;
+    // it works into: "Job Search: jobs found → +4 applied". The supervisor watches the whole funnel:
+    // what its last run found instead ("All good", "Bottleneck: …").
+    let where;
+    if (a.sup) where = a.status ? `${supStatus(a.status)}${a.summary ? `: ${esc(a.summary)}` : ''}` : esc(t('board.supervisorNoRun'));
+    else {
+      const st = f.stages, n = a.added || 0, from = a.zone < 0 ? '' : `${esc(plural(5, st[a.zone].forms))} → `;
+      const into = a.zone === st.length - 1 ? f.result : st[a.zone + 1].forms;
+      where = `${from}<b class="run">+${fmtCount(n)}</b> ${esc(plural(n, into))}`;
+    }
     // Live only: the agent's last runs, loaded when the person opens them.
     const history = opts.runs ? `<details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-list"></div></details>` : '';
     // Overdue (it should have run by now) or silent at work: when it was last heard from.
@@ -281,10 +295,12 @@ export function mountDashboard(funnels, opts = {}) {
         const rows = await opts.runs(a);
         const st = a.f.stages, when = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
         list.innerHTML = rows.length ? rows.map(r => {
-          const into = r.zone < st.length ? st[r.zone].forms : a.f.result;
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
+          // A supervisor's run says what it found; a worker's run, what it added.
+          const what = a.sup ? `<span>${r.status ? supStatus(r.status) : ''}</span>`
+            : `<span><b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}</span>`;
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
-            <span><b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, into))}</span></div>`;
+            ${what}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`;
         pop.style.top = Math.max(8, Math.min(window.innerHeight - pop.offsetHeight - 8, pop.offsetTop)) + 'px';
       } catch { list.textContent = t('board.runsFailed'); delete list.dataset.loaded; }

@@ -40,6 +40,8 @@ export default {
   'home.p3h': 'Trả lời từ bất cứ đâu',
   'home.p3': 'Khi cần bạn, tác tử sẽ giơ tay. Trả lời từ điện thoại và nó quay lại làm việc.',
 
+  'guide.supervisor.h': 'Giám sát',
+  'guide.supervisor': 'Tác tử của bạn theo dõi toàn bộ phễu.',
   'guide.sheet.h': 'Bảng tính',
   'guide.sheet': 'Bảng nơi các tác tử ghi lại mọi thứ.',
   'guide.tank.h': 'Bể',
@@ -55,12 +57,38 @@ export default {
   'guide.prediction.h': 'Dự báo',
   'guide.prediction': 'Khi nào có kết quả tiếp theo với nhịp hiện tại.',
 
-  'connect.h1': 'Kết nối một tác tử',
+  'connect.h1': 'Kết nối Goalcraft và chỉ định giám sát cho mục tiêu của bạn',
   'connect.empty.h1': 'Kết nối tác tử của bạn',
   'connect.intro': 'Dán đoạn này vào tác tử của bạn: Claude, ChatGPT, Cursor hoặc bất kỳ tác tử nào hỗ trợ MCP. Nó sẽ kết nối Goalcraft hoặc chỉ cho bạn cách làm.',
-  'connect.after': 'Khi tác tử kết nối, một trang Goalcraft sẽ yêu cầu bạn đăng nhập và cho phép. Sau đó hãy nói với tác tử mục tiêu cần làm, và phễu của nó sẽ xuất hiện trong Mục tiêu. Kết nối bao nhiêu tác tử cũng được, từng cái một. Muốn xem trước trông thế nào? <a href="../demo/">Xem bản demo</a>.',
   'connect.empty.after': 'Sau đó hãy nói với nó mục tiêu cần làm, và các phễu của bạn sẽ xuất hiện ở đây. Muốn xem trước trông thế nào? <a href="../demo/">Xem bản demo</a>.',
   'connect.prompt': (url) => `Hãy kết nối máy chủ MCP này cho tôi: ${url} (Goalcraft, từ xa, đăng nhập bằng OAuth). Nếu bạn không tự kết nối được, hãy chỉ chính xác cho tôi cách làm trong ứng dụng này.`,
+  'connect.supervisor.intro': "Dán prompt này vào một cuộc trò chuyện mới với tác tử AI của bạn. Tác tử sẽ kết nối Goalcraft, hỏi bạn về mục tiêu và dựng phễu cho nó. Sau đó nó trở thành giám sát của phễu: kiểm tra phễu thường xuyên, trả lời câu hỏi của bạn về phễu và giúp bạn thêm các tác tử làm việc.",
+  'connect.supervisor.after': "Khi tác tử kết nối, một trang Goalcraft sẽ yêu cầu bạn đăng nhập và cho phép. Trên bảng điều khiển, giám sát đứng trên bục ở đỉnh phễu của nó: bấm vào nó để xem lần kiểm tra gần nhất và mở cuộc trò chuyện của nó. Muốn xem trước trông thế nào? <a href=\"../demo/\">Xem bản demo</a>.",
+  'connect.supervisor.prompt': (url) => `Bạn là giám sát cho mục tiêu của tôi trong Goalcraft (goalcraft.ai). Goalcraft hiển thị mục tiêu dưới dạng phễu: các giai đoạn từ trên xuống, kết quả ở dưới cùng, và các tác tử AI làm việc ở các giai đoạn. Bạn đứng phía trên phễu: theo dõi nó, trả lời câu hỏi của tôi về nó và giúp tôi cải thiện nó. Bạn không tự làm việc của các giai đoạn; đó là việc của các tác tử làm việc.
+
+1. Kiểm tra Goalcraft đã được kết nối chưa: gọi list_funnels từ máy chủ MCP của Goalcraft (${url}). Nếu chưa, hãy tự kết nối (máy chủ từ xa, đăng nhập bằng OAuth trong trình duyệt, không cần khóa API). Nếu có gì cản trở, hãy nhờ tôi giúp: nói chính xác tôi cần làm gì trong ứng dụng này, rồi chờ.
+
+2. Hỏi tôi về mục tiêu, mỗi lần một câu hỏi ngắn:
+- mục tiêu là gì và đến khi nào; thế nào là một kết quả (lời mời làm việc, khách hàng, bài đăng…);
+- những bước nào dẫn đến kết quả: tự đề xuất 3-5 giai đoạn rồi hỏi xem có đúng không;
+- những gì đã làm: hiện mỗi giai đoạn có bao nhiêu mục;
+- danh sách các mục đi qua phễu nằm ở đâu (Google Sheet, Notion, email, một tệp). Nếu chưa có, hãy đề xuất một bảng tính và tạo nó nếu bạn làm được;
+- bạn nên kiểm tra phễu bao lâu một lần (mặc định mỗi ngày một lần).
+
+3. Tạo hoặc cập nhật phễu. Nếu list_funnels đã có phễu cho mục tiêu này, hãy làm việc với nó và đừng tạo trùng. Nếu chưa, hãy tạo bằng upsert_funnel: tiêu đề, các giai đoạn, kết quả, mục tiêu (cần bao nhiêu kết quả và nhịp độ), chủ đề, và liên kết đến danh sách (source_url). Nhận vị trí giám sát của phễu này (set_agent_state với zone "supervisor"). Rồi cho tôi xem kết quả trong một tin nhắn.
+
+4. Làm cho mình chạy đều đặn. Tạo một tác vụ theo lịch trong ứng dụng này với tần suất chúng ta đã thống nhất, chạy cuộc trò chuyện này hoặc chạy bạn với hướng dẫn này. Nếu ứng dụng không hỗ trợ lịch, hãy nói với tôi và chúng ta sẽ thống nhất khi nào tôi chạy bạn.
+
+5. Mỗi lần chạy (cách đánh dấu làm việc, câu hỏi và nghỉ có trong hướng dẫn của Goalcraft):
+- Đọc phễu (list_funnels) và, nếu được, danh sách của nó; đối chiếu các con số. Nếu lệch nhau, hãy cập nhật (report_counts) và nói chênh lệch đến từ đâu.
+- Kiểm tra các tác tử làm việc: ai im lặng quá lâu, ai bỏ lỡ lần chạy, ai đang chờ câu trả lời của tôi.
+- Tìm điểm nghẽn: giai đoạn có tỷ lệ chuyển đổi thấp nhất hoặc không có chuyển động, và chỗ chậm hơn nhịp độ của mục tiêu.
+- Ghi kết quả của lần chạy: một trạng thái (ok, bottleneck, recommendation hoặc question) và một dòng ngắn về nó (status và summary trong set_agent_state); nó hiện cạnh bạn trên bảng điều khiển.
+- Nếu cần tôi quyết định, hãy hỏi tôi qua Goalcraft.
+
+6. Giúp về các tác tử làm việc. Nếu một giai đoạn không có tác tử hoặc tác tử của nó không theo kịp, hãy đề xuất thêm một tác tử và tự viết sẵn prompt cho nó: làm gì ở giai đoạn đó, lấy các mục từ đâu và ghi vào đâu, báo cáo cho Goalcraft thế nào (vùng của nó, tên tác tử, report_counts, add_result). Tôi sẽ dán nó vào một cuộc trò chuyện mới.
+
+7. Trả lời câu hỏi của tôi về phễu ngay tại đây, trong cuộc trò chuyện này: điểm nghẽn ở đâu, với nhịp độ hiện tại khi nào đạt mục tiêu, nên cải thiện gì. Dựa vào số liệu của Goalcraft và danh sách của tôi; đừng bịa ra.`,
   'copy': 'Sao chép',
   'copied': 'Đã sao chép',
   'copy.manual': 'Hãy chọn văn bản và sao chép',
@@ -84,6 +112,15 @@ export default {
   'board.lost': (who) => `Không có tín hiệu từ ${who}`,
   'board.runs': 'Các lần chạy trước',
   'board.runNow': 'đang chạy',
+  'board.supervisorName': (who) => `Giám sát ${who}`,
+  'board.supStatus.ok': 'Mọi thứ ổn',
+  'board.supStatus.bottleneck': 'Điểm nghẽn',
+  'board.supStatus.recommendation': 'Đề xuất',
+  'board.supStatus.question': 'Đang chờ bạn trả lời',
+  'board.supervisorNoRun': 'chưa kiểm tra lần nào',
+  'board.noSupervisor': 'Chưa có giám sát',
+  'board.noSupervisorText': 'Giám sát là tác tử của bạn theo dõi phễu này: kiểm tra số liệu và các tác tử, tìm điểm nghẽn và gợi ý cần làm gì.',
+  'board.appointSupervisor': 'Chỉ định giám sát',
   'board.noRuns': 'Chưa có lần chạy nào được ghi lại.',
   'board.runsFailed': 'Không tải được các lần chạy.',
   'board.resting': (who) => `${who} đang ngủ`,
@@ -116,10 +153,10 @@ export default {
   'pricing.forever': 'mãi mãi',
   'pricing.free1': '<b>3</b> phễu mục tiêu',
   'pricing.free2': '<b>3</b> giai đoạn mỗi phễu',
-  'pricing.free3': '<b>1</b> tác tử mỗi bước, <b>4</b> mỗi phễu',
+  'pricing.free3': '<b>1</b> giám sát + <b>4</b> tác tử làm việc trong mỗi phễu',
   'pricing.pro1': '<b>10</b> phễu mục tiêu',
   'pricing.pro2': '<b>5</b> giai đoạn mỗi phễu',
-  'pricing.pro3': '<b>2</b> tác tử mỗi bước, <b>12</b> mỗi phễu',
+  'pricing.pro3': '<b>1</b> giám sát + <b>12</b> tác tử làm việc trong mỗi phễu',
   'pricing.any': 'Claude, ChatGPT, Gemini và mọi tác tử MCP',
   'pricing.live': 'Bảng trực tiếp, đủ cả chín chủ đề',
   'pricing.themes': '<b>9</b> chủ đề hình ảnh',

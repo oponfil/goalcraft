@@ -39,6 +39,8 @@ export default {
   'home.p3h': 'Responde desde cualquier lugar',
   'home.p3': 'Cuando un agente te necesita, levanta la mano. Responde desde el móvil y vuelve al trabajo.',
 
+  'guide.supervisor.h': 'Supervisor',
+  'guide.supervisor': 'Tu agente que vigila todo el embudo.',
   'guide.sheet.h': 'Hoja',
   'guide.sheet': 'La tabla donde los agentes llevan la cuenta de todo.',
   'guide.tank.h': 'Tanque',
@@ -54,12 +56,38 @@ export default {
   'guide.prediction.h': 'Predicción',
   'guide.prediction': 'Cuándo llegará el próximo resultado al ritmo actual.',
 
-  'connect.h1': 'Conecta un agente',
+  'connect.h1': 'Conecta Goalcraft y nombra un supervisor para tu meta',
   'connect.empty.h1': 'Conecta tus agentes',
   'connect.intro': 'Pega esto en tu agente: Claude, ChatGPT, Cursor o cualquier otro compatible con MCP. Conectará Goalcraft o te dirá cómo hacerlo.',
-  'connect.after': 'Cuando el agente se conecte, una página de Goalcraft te pedirá iniciar sesión y darle permiso. Luego dile en qué meta trabajar y su embudo aparecerá en Metas. Conecta tantos agentes como quieras, uno por uno. ¿Quieres ver cómo se verá? <a href="../demo/">Mira la demo</a>.',
   'connect.empty.after': 'Luego dile en qué meta trabajar y tus embudos aparecerán aquí. ¿Quieres ver cómo se verá? <a href="../demo/">Mira la demo</a>.',
   'connect.prompt': (url) => `Conéctame este servidor MCP: ${url} (Goalcraft, remoto, inicio de sesión con OAuth). Si no puedes conectarlo tú mismo, dime exactamente cómo hacerlo en esta aplicación.`,
+  'connect.supervisor.intro': "Pega este prompt en un chat nuevo con tu agente de IA. El agente conecta Goalcraft, te pregunta por la meta y configura su embudo. Luego se convierte en su supervisor: lo revisa con regularidad, responde tus preguntas sobre él y te ayuda a añadir agentes de trabajo.",
+  'connect.supervisor.after': "Cuando el agente se conecte, una página de Goalcraft te pedirá iniciar sesión y darle permiso. En el panel, el supervisor está en la plataforma en lo alto de su embudo: haz clic en él para ver su última revisión y abrir su chat. ¿Quieres ver cómo se verá? <a href=\"../demo/\">Mira la demo</a>.",
+  'connect.supervisor.prompt': (url) => `Eres el supervisor de mi meta en Goalcraft (goalcraft.ai). Goalcraft muestra una meta como un embudo: etapas de arriba abajo, el resultado abajo y agentes de IA trabajando en las etapas. Tú estás por encima del embudo: lo vigilas, respondes mis preguntas sobre él y me ayudas a mejorarlo. No haces tú mismo el trabajo de las etapas; eso es tarea de los agentes de trabajo.
+
+1. Comprueba que Goalcraft está conectado: llama a list_funnels del servidor MCP de Goalcraft (${url}). Si no lo está, conéctalo tú mismo (servidor remoto, inicio de sesión con OAuth en el navegador, sin clave de API). Si algo lo impide, pídeme ayuda: dime exactamente qué hacer en esta aplicación y espera.
+
+2. Pregúntame por la meta, una pregunta corta cada vez:
+- cuál es la meta y para cuándo; qué cuenta como resultado (una oferta, un cliente, una publicación…);
+- qué pasos llevan al resultado: propón tú 3-5 etapas y pregunta si son correctas;
+- qué está hecho ya: cuántos elementos hay ahora en cada etapa;
+- dónde está la lista de elementos que avanzan por el embudo (una hoja de Google, Notion, el correo, un archivo). Si no hay ninguna, propón una hoja y créala si puedes;
+- cada cuánto debes revisar el embudo (una vez al día por defecto).
+
+3. Crea o actualiza el embudo. Si list_funnels ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Si no, créalo con upsert_funnel: título, etapas, resultado, meta (cuántos resultados y a qué ritmo), tema y el enlace a la lista (source_url). Ocupa el puesto de supervisor de este embudo (set_agent_state con zone "supervisor"). Después muéstrame el resultado en un solo mensaje.
+
+4. Hazte regular. Crea en esta aplicación una tarea programada con la frecuencia acordada, que ejecute esta conversación o a ti con estas instrucciones. Si la aplicación no permite programar, dímelo y acordaremos cuándo te ejecuto yo.
+
+5. En cada ejecución (cómo marcar el trabajo, las preguntas y el descanso está en las instrucciones de Goalcraft):
+- Lee el embudo (list_funnels) y, si puedes, su lista; compara las cifras. Si no coinciden, actualízalas (report_counts) y di de dónde viene la diferencia.
+- Revisa a los agentes de trabajo: quién lleva demasiado tiempo en silencio, quién se saltó una ejecución, quién espera mi respuesta.
+- Encuentra el cuello de botella: la etapa con la conversión más baja o sin movimiento, y cualquier retraso respecto al ritmo de la meta.
+- Escribe el resultado de la ejecución: un estado (ok, bottleneck, recommendation o question) y una línea corta sobre él (status y summary en set_agent_state); se muestra junto a ti en el panel.
+- Si necesitas que decida algo, pregúntame a través de Goalcraft.
+
+6. Ayuda con los agentes de trabajo. Si una etapa no tiene agente o su agente no da abasto, propón añadir uno y escribe tú mismo un prompt listo para él: qué hacer en la etapa, de dónde tomar los elementos y dónde registrarlos, cómo informar a Goalcraft (su zona, nombre de agente, report_counts, add_result). Yo lo pegaré en un chat nuevo.
+
+7. Responde aquí, en esta conversación, a mis preguntas sobre el embudo: dónde está el cuello de botella, cuándo llegaremos a la meta al ritmo actual, qué mejorar. Básate en las cifras de Goalcraft y en mi lista; no te inventes nada.`,
   'copy': 'Copiar',
   'copied': 'Copiado',
   'copy.manual': 'Selecciona el texto y cópialo',
@@ -83,6 +111,15 @@ export default {
   'board.lost': (who) => `${who} no da señales`,
   'board.runs': 'Ejecuciones anteriores',
   'board.runNow': 'en curso',
+  'board.supervisorName': (who) => `Supervisor ${who}`,
+  'board.supStatus.ok': 'Todo bien',
+  'board.supStatus.bottleneck': 'Cuello de botella',
+  'board.supStatus.recommendation': 'Recomendación',
+  'board.supStatus.question': 'Esperando tu respuesta',
+  'board.supervisorNoRun': 'aún sin revisiones',
+  'board.noSupervisor': 'Aún no hay supervisor',
+  'board.noSupervisorText': 'El supervisor es tu agente que vigila este embudo: revisa las cifras y los agentes, encuentra el cuello de botella y sugiere qué hacer.',
+  'board.appointSupervisor': 'Nombrar supervisor',
   'board.noRuns': 'Aún no hay ejecuciones registradas.',
   'board.runsFailed': 'No se pudieron cargar las ejecuciones.',
   'board.resting': (who) => `${who} está dormido`,
@@ -115,10 +152,10 @@ export default {
   'pricing.forever': 'para siempre',
   'pricing.free1': '<b>3</b> embudos de metas',
   'pricing.free2': '<b>3</b> etapas en cada embudo',
-  'pricing.free3': '<b>1</b> agente en cada paso, <b>4</b> por embudo',
+  'pricing.free3': '<b>1</b> supervisor + <b>4</b> agentes de trabajo en cada embudo',
   'pricing.pro1': '<b>10</b> embudos de metas',
   'pricing.pro2': '<b>5</b> etapas en cada embudo',
-  'pricing.pro3': '<b>2</b> agentes en cada paso, <b>12</b> por embudo',
+  'pricing.pro3': '<b>1</b> supervisor + <b>12</b> agentes de trabajo en cada embudo',
   'pricing.any': 'Claude, ChatGPT, Gemini y cualquier agente MCP',
   'pricing.live': 'Panel en vivo, los nueve temas',
   'pricing.themes': '<b>9</b> temas visuales',
