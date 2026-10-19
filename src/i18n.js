@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=dc3a4cdb';
-import vi from './lang/vi.js?v=dc3a4cdb';
-import ja from './lang/ja.js?v=dc3a4cdb';
-import pt from './lang/pt.js?v=dc3a4cdb';
-import tr from './lang/tr.js?v=dc3a4cdb';
-import ko from './lang/ko.js?v=dc3a4cdb';
+import es from './lang/es.js?v=fb27b397';
+import vi from './lang/vi.js?v=fb27b397';
+import ja from './lang/ja.js?v=fb27b397';
+import pt from './lang/pt.js?v=fb27b397';
+import tr from './lang/tr.js?v=fb27b397';
+import ko from './lang/ko.js?v=fb27b397';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -183,10 +183,10 @@ const STRINGS = {
 - what the goal is and by when; what counts as a result (an offer, a client, a publication…);
 - which steps lead to the result: suggest 3-5 stages yourself and ask if they are right;
 - what is done already: how many items are at each stage now;
-- where the list of items moving through the funnel lives (a Google Sheet, Notion, email, a file). If there is none, suggest a sheet and create it if you can;
+- where to keep the funnel's list (the items moving through it) and its notes (one document with everything about the funnel): in which service, for example Google Sheets and Google Docs, or Notion. Suggest keeping both in one service, so one connector reads both. If I already keep a list somewhere, use it. Check that you can reach that service; if not, ask me to connect it here and wait;
 - how often you should check the funnel (once a day by default).
 
-3. Create or update the funnel. If list_funnels already has a funnel for this goal, work with it and duplicate nothing. Otherwise create it with upsert_funnel: title, stages, result, goal (how many results and the pace), theme, and the link to the list (source_url). Take the supervisor's place of this funnel (set_agent_state with zone "supervisor") and give yourself a short name in my language after the funnel (name, for example "Job Search supervisor"); if I ask, rename yourself. Create the funnel's guide next to its list (a Google Doc beside the Google Sheet, a Notion page beside the Notion database): one document with everything about this funnel for you and the worker agents: the goal, the stages, where the list is, how to work each stage and how to report. Give its link as guide_url and keep it up to date; the prompts you write for worker agents tell them to read it at the start of every run. Then show me the result in one message.
+3. Create or update the funnel. If list_funnels already has a funnel for this goal, work with it and duplicate nothing. Otherwise create it with upsert_funnel: title, stages, result, goal (how many results and the pace), theme, and the link to the list (source_url). Take the supervisor's place of this funnel (set_agent_state with zone "supervisor") and give yourself a short name in my language after the funnel (name, for example "Job Search supervisor"); if I ask, rename yourself. Create the list and the notes where we agreed (or use the ones I already have). The notes hold everything about this funnel for you and the worker agents: the goal, the stages, where the list is, how to work each stage and how to report. Give their links as source_url and guide_url, and keep the notes up to date; the prompts you write for worker agents tell them to read the notes at the start of every run. Then show me the result in one message.
 
 4. Make yourself regular. Create a scheduled task in this app with the frequency we agreed on, running this conversation or you with these instructions. If the app has no scheduling, tell me and we'll agree when I'll run you.
 
@@ -208,10 +208,10 @@ const STRINGS = {
 - какая цель и к какому сроку; что считать результатом (оффер, клиент, публикация…);
 - из каких шагов складывается путь к результату — предложи 3–5 этапов сам и спроси, так ли;
 - что уже сделано: сколько сейчас на каждом этапе;
-- где лежит список того, что движется по воронке (Google Таблица, Notion, почта, файл). Если списка нет — предложи таблицу и создай её, если можешь;
+- где хранить список воронки (то, что по ней движется) и её заметки (один документ со всем, что нужно знать о воронке): в каком сервисе, например Google Таблицы и Google Документы или Notion. Предложи держать и то и другое в одном сервисе, чтобы хватало одного коннектора. Если список у меня уже где-то есть — используй его. Проверь, что у тебя есть доступ к этому сервису; если нет — попроси меня подключить его здесь и подожди;
 - как часто тебе проверять воронку (по умолчанию — раз в день).
 
-3. Создай или обнови воронку. Если в list_funnels уже есть воронка этой цели — работай с ней, ничего не дублируй. Иначе создай её через upsert_funnel: название, этапы, результат, цель (сколько результатов и темп), тема, ссылка на список (source_url). Займи место супервайзера этой воронки (set_agent_state, zone "supervisor") и дай себе короткое имя на моём языке по воронке (name, например «Супервайзер поиска работы»); если я попрошу — переименуйся. Создай инструкцию воронки рядом с её списком (Google Документ рядом с Google Таблицей, страница Notion рядом с базой Notion): один документ со всем, что нужно знать о воронке тебе и рабочим агентам: цель, этапы, где список, как работать на каждом этапе и как отчитываться. Пришли её ссылку как guide_url и держи её актуальной; в промптах для рабочих агентов пиши, чтобы они читали её в начале каждого запуска. Затем покажи мне итог одним сообщением.
+3. Создай или обнови воронку. Если в list_funnels уже есть воронка этой цели — работай с ней, ничего не дублируй. Иначе создай её через upsert_funnel: название, этапы, результат, цель (сколько результатов и темп), тема, ссылка на список (source_url). Займи место супервайзера этой воронки (set_agent_state, zone "supervisor") и дай себе короткое имя на моём языке по воронке (name, например «Супервайзер поиска работы»); если я попрошу — переименуйся. Создай список и заметки там, где мы договорились (или возьми те, что у меня уже есть). В заметках — всё, что нужно знать о воронке тебе и рабочим агентам: цель, этапы, где список, как работать на каждом этапе и как отчитываться. Пришли их ссылки как source_url и guide_url и держи заметки актуальными; в промптах для рабочих агентов пиши, чтобы они читали заметки в начале каждого запуска. Затем покажи мне итог одним сообщением.
 
 4. Сделай себя регулярным. Создай в этом приложении задачу по расписанию с частотой, о которой мы договорились: она запускает этот разговор или тебя с этой инструкцией. Если приложение не умеет расписание — скажи мне, и договоримся, когда я буду тебя запускать.
 
@@ -233,10 +233,10 @@ const STRINGS = {
 - 目标是什么，截止到什么时候；什么算一个结果（录用通知、客户、发表……）；
 - 哪些步骤通向结果：你自己先提出 3-5 个阶段，再问我对不对；
 - 已经完成了什么：现在每个阶段各有多少；
-- 在漏斗里流动的条目清单放在哪里（Google 表格、Notion、邮件、文件）。如果没有，建议建一个表格，能建的话就建好；
+- 漏斗的清单（在漏斗里流动的条目）和笔记（一份写着关于漏斗一切的文档）放在哪里：用哪个服务，例如 Google 表格和 Google 文档，或者 Notion。建议两者放在同一个服务里，这样一个连接器就能读取。如果我已经在某处有清单，就用它。确认你能访问这个服务；如果不能，请我在这里把它连接上，然后等待；
 - 你应该多久检查一次漏斗（默认每天一次）。
 
-3. 创建或更新漏斗。如果 list_funnels 里已经有这个目标的漏斗，就用它，不要重复创建。否则用 upsert_funnel 创建：标题、阶段、结果、目标（需要多少个结果和节奏）、主题，以及清单链接（source_url）。占据这个漏斗的主管位置（set_agent_state，zone 为 "supervisor"），并用我的语言按漏斗给自己起一个简短的名字（name，例如“求职主管”）；如果我要求，就改名。在清单旁边创建漏斗说明（Google 表格旁放 Google 文档，Notion 数据库旁放 Notion 页面）：一份文档，写清你和工作智能体需要知道的关于这个漏斗的一切：目标、阶段、清单在哪里、每个阶段怎么做、如何汇报。把它的链接作为 guide_url 提交，并保持更新；你给工作智能体写的提示词里要让它们在每次运行开始时先读它。然后用一条消息告诉我结果。
+3. 创建或更新漏斗。如果 list_funnels 里已经有这个目标的漏斗，就用它，不要重复创建。否则用 upsert_funnel 创建：标题、阶段、结果、目标（需要多少个结果和节奏）、主题，以及清单链接（source_url）。占据这个漏斗的主管位置（set_agent_state，zone 为 "supervisor"），并用我的语言按漏斗给自己起一个简短的名字（name，例如“求职主管”）；如果我要求，就改名。在我们商定的地方创建清单和笔记（或使用我已有的）。笔记里写清你和工作智能体需要知道的关于这个漏斗的一切：目标、阶段、清单在哪里、每个阶段怎么做、如何汇报。把它们的链接作为 source_url 和 guide_url 提交，并保持笔记更新；你给工作智能体写的提示词里要让它们在每次运行开始时先读笔记。然后用一条消息告诉我结果。
 
 4. 让自己定期运行。在这个应用里按我们商定的频率创建一个定时任务，运行这个对话或带着这份说明的你。如果应用不支持定时，就告诉我，我们约定我什么时候运行你。
 
@@ -258,10 +258,10 @@ const STRINGS = {
 - เป้าหมายคืออะไรและภายในเมื่อไร; อะไรนับเป็นผลลัพธ์ (ข้อเสนองาน ลูกค้า บทความที่ตีพิมพ์…);
 - ขั้นตอนไหนนำไปสู่ผลลัพธ์: เสนอ 3-5 ขั้นเองแล้วถามว่าถูกไหม;
 - ทำอะไรไปแล้วบ้าง: ตอนนี้แต่ละขั้นมีกี่รายการ;
-- รายการที่เคลื่อนผ่านกรวยเก็บไว้ที่ไหน (Google Sheet, Notion, อีเมล, ไฟล์) ถ้ายังไม่มี ให้เสนอทำตารางและสร้างให้ถ้าทำได้;
+- จะเก็บรายการของกรวย (สิ่งที่เคลื่อนผ่าน) และโน้ตของกรวย (เอกสารเดียวที่มีทุกอย่างเกี่ยวกับกรวย) ไว้ที่ไหน: ในบริการใด เช่น Google Sheets กับ Google Docs หรือ Notion เสนอให้เก็บทั้งสองไว้ในบริการเดียวกัน เพื่อให้ใช้ตัวเชื่อมต่อเดียวพอ ถ้าฉันมีรายการอยู่แล้วที่ไหนสักแห่ง ให้ใช้อันนั้น ตรวจว่าคุณเข้าถึงบริการนั้นได้ ถ้าไม่ได้ ให้ขอให้ฉันเชื่อมต่อที่นี่แล้วรอ;
 - ควรตรวจกรวยบ่อยแค่ไหน (ค่าเริ่มต้นวันละครั้ง)
 
-3. สร้างหรืออัปเดตกรวย ถ้าใน list_funnels มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ไม่เช่นนั้นให้สร้างด้วย upsert_funnel: ชื่อ ขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการและจังหวะ) ธีม และลิงก์ไปยังรายการ (source_url) เข้ารับตำแหน่งผู้ดูแลของกรวยนี้ (set_agent_state โดยใช้ zone "supervisor") และตั้งชื่อสั้นๆ ให้ตัวเองเป็นภาษาของฉันตามกรวย (name เช่น "ผู้ดูแลหางาน") ถ้าฉันขอ ให้เปลี่ยนชื่อ สร้างคู่มือกรวยไว้ข้างรายการ (Google Docs ข้าง Google Sheet, หน้า Notion ข้างฐานข้อมูล Notion): เอกสารเดียวที่มีทุกอย่างเกี่ยวกับกรวยนี้สำหรับคุณและเอเจนต์ทำงาน: เป้าหมาย ขั้นตอน รายการอยู่ที่ไหน ทำงานแต่ละขั้นอย่างไร และรายงานอย่างไร ส่งลิงก์เป็น guide_url และอัปเดตให้ทันสมัยเสมอ พรอมต์ที่คุณเขียนให้เอเจนต์ทำงานต้องบอกให้อ่านคู่มือนี้ตอนเริ่มทุกรอบ แล้วสรุปผลให้ฉันในข้อความเดียว
+3. สร้างหรืออัปเดตกรวย ถ้าใน list_funnels มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ไม่เช่นนั้นให้สร้างด้วย upsert_funnel: ชื่อ ขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการและจังหวะ) ธีม และลิงก์ไปยังรายการ (source_url) เข้ารับตำแหน่งผู้ดูแลของกรวยนี้ (set_agent_state โดยใช้ zone "supervisor") และตั้งชื่อสั้นๆ ให้ตัวเองเป็นภาษาของฉันตามกรวย (name เช่น "ผู้ดูแลหางาน") ถ้าฉันขอ ให้เปลี่ยนชื่อ สร้างรายการและโน้ตในที่ที่เราตกลงกัน (หรือใช้ของที่ฉันมีอยู่แล้ว) โน้ตมีทุกอย่างเกี่ยวกับกรวยนี้สำหรับคุณและเอเจนต์ทำงาน: เป้าหมาย ขั้นตอน รายการอยู่ที่ไหน ทำงานแต่ละขั้นอย่างไร และรายงานอย่างไร ส่งลิงก์เป็น source_url และ guide_url และอัปเดตโน้ตให้ทันสมัยเสมอ พรอมต์ที่คุณเขียนให้เอเจนต์ทำงานต้องบอกให้อ่านโน้ตตอนเริ่มทุกรอบ แล้วสรุปผลให้ฉันในข้อความเดียว
 
 4. ทำให้ตัวเองทำงานเป็นประจำ สร้างงานตามกำหนดเวลาในแอปนี้ด้วยความถี่ที่เราตกลงกัน ให้เรียกบทสนทนานี้หรือเรียกคุณพร้อมคำสั่งนี้ ถ้าแอปตั้งเวลาไม่ได้ ให้บอกฉัน แล้วเราจะตกลงกันว่าฉันจะเรียกคุณเมื่อไร
 
