@@ -141,6 +141,8 @@ body {
   text-decoration: none;
 }
 .btn:hover { background: #3A322B; }
+/* A <button> styled as .btn (Create a key on the Connect page): no browser grey behind its text. */
+button.btn { background: none; font: inherit; cursor: pointer; }
 .btn.primary { background: #D97757; border-color: #D97757; color: #fff; }
 #pop textarea {
   width: 100%;

@@ -1,6 +1,6 @@
 // The prompt that connects Goalcraft to any agent, with a copy icon on its block.
-import { MCP_URL } from './config.js?v=fb27b397';
-import { t } from './i18n.js?v=fb27b397';
+import { MCP_URL } from './config.js?v=ae864ee5';
+import { t } from './i18n.js?v=ae864ee5';
 
 export const CONNECT_PROMPT = t('connect.prompt', MCP_URL);
 // The Connect page's prompt: the agent connects Goalcraft and becomes the supervisor of one goal's funnel.
@@ -36,7 +36,7 @@ const WAKE_INSTALL = key => 'mkdir -p ~/.goalcraft && curl -fsSL https://goalcra
 export async function setUpWake(root = document) {
   const box = root.querySelector('[data-wake]');
   if (!box) return;
-  const { supabase } = await import('./auth.js?v=fb27b397');
+  const { supabase } = await import('./auth.js?v=ae864ee5');
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { box.innerHTML = `<p>${t('connect.wake.signin')}</p>`; return; }
   box.innerHTML = `<button class="btn" type="button">${t('connect.wake.create')}</button><p class="wake-msg"></p>`;
