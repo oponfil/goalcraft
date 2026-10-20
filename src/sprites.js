@@ -420,6 +420,10 @@ function drawLogo(ctx, cx, cy, agent) {
   });
 }
 
+// The top of each figure's head with its hat, in its 20×28 box: where an agent's reply note points.
+export const HEAD_TOP = { helmet: 1, goggles: 3, straw: 2, hoodie: 2, suit: 3, smith: 3, chef: -0.5, blocky: 2.5, wings: 2.5 };
+export const BOSS_TOP = { helmet: 1, goggles: 3.3, straw: 1.4, hoodie: 3, suit: -1.5, smith: 0, chef: -6, blocky: -1.5, wings: 0 };
+
 export function drawStanding(ctx, x, y, agent, color, walkFrame = -1, flip = false, reach = false, outfit = 'helmet') {
   ctx.save();
   if (flip) { ctx.translate(x + MINER_W, y); ctx.scale(-1, 1); } else ctx.translate(x, y);

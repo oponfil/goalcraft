@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=849dcb8a';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=849dcb8a';
-import { themeOf } from './themes.js?v=849dcb8a';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=849dcb8a';
+import { agentInfo, plural } from './data.js?v=d05af6c0';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=d05af6c0';
+import { themeOf } from './themes.js?v=d05af6c0';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=d05af6c0';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -442,7 +442,7 @@ export class Scene {
         this.hits.push({ x: Math.min(p.x, bx) - 4, y: p.y - 16, w: 52 + extra, h: 38, type: 'ask', a });
       } else this.hits.push({ x: p.x - 4, y: p.y - 14, w: 34, h: 36, type: 'agent', a });
       // Where the page pins the tip of the agent's reply note: right at its head.
-      a.noteAt = { x: p.x + 14, y: p.y + 2 };
+      a.noteAt = { x: p.x + 14, y: p.y + 4 };
       return;
     }
     if (a.state === 'walk') {
@@ -478,7 +478,7 @@ export class Scene {
       }
     }
     this.hits.push({ x: R ? p.x - 14 : p.x - 2, y: p.y - 4, w: 36, h: 34, type: 'agent', a });
-    a.noteAt = { x: p.x + 10, y: p.y - 1 };
+    a.noteAt = { x: p.x + 10, y: p.y + (HEAD_TOP[outfit] ?? 1) - 1 };
   }
 
   // A platform with no supervisor yet: an empty director's chair waits on it. A click on it (or the
@@ -510,7 +510,7 @@ export class Scene {
     if (a.state === 'sleep') {
       const p = this.spot(a, 'rest');
       drawBossLying(c, p.x, p.y, a.agent, info.color, outfit);
-      a.noteAt = { x: p.x + 14, y: p.y + 2 };
+      a.noteAt = { x: p.x + 14, y: p.y + 4 };
       if (a.questions.length) {
         const bx = p.x + 30;
         drawBubble(c, bx, p.y - 14, a.questions.length, true);
@@ -522,7 +522,7 @@ export class Scene {
     const p = this.spot(a, a.state === 'ask' ? 'ask' : 'work');
     const w = a.state !== 'ask' ? this.deckWalk(a) : { walking: false, facesLeft: false };
     drawBoss(c, Math.round(p.x / P) * P, p.y, a.agent, info.color, outfit, w.walking ? Math.floor(t * 7) : -1, w.facesLeft);
-    a.noteAt = { x: p.x + 10, y: p.y - 1 };
+    a.noteAt = { x: p.x + 10, y: p.y + (BOSS_TOP[outfit] ?? 1) - 1 };
     if (a.state === 'ask') {
       a.bubble = { x: p.x + 11 * P, y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
       drawBubble(c, a.bubble.x, a.bubble.y, a.questions.length, true);

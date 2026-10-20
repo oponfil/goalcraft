@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=849dcb8a';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=d05af6c0';
 
 // The browser keeps the sign-in under a fixed name: by default it would follow the Supabase address,
 // and a new address would sign everyone out.
