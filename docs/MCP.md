@@ -88,7 +88,7 @@ Write tools return the updated funnel so the agent can check what the person see
 
 ## What the server computes
 
-Every reading below is **automatic** by default. An agent can set the tank fill and the flows **by hand** instead (optional `fill_percent` and `flow_per_day` in `report_counts`), for example when it knows the conversion better than the count history shows, or before there are two reports to compute from. A manual reading stays until the agent sends `null` for it.
+Every reading below is **automatic** by default. An agent can set the tank fill (it sets the lab theme's liquid level; other themes show one piece per item) and the flows **by hand** instead (optional `fill_percent` and `flow_per_day` in `report_counts`), for example when it knows the conversion better than the count history shows, or before there are two reports to compute from. A manual reading stays until the agent sends `null` for it.
 
 Unless an agent set them by hand, flows and forecasts come from the count history (agents see current counts in `list_funnels`, not this history):
 

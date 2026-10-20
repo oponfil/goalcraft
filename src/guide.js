@@ -1,8 +1,8 @@
 // The funnel the landing page and the README explain: the demo's Job Search cut to two stages,
 // with an agent in each state the labels point at. They stay in their states, so the labels always
 // point at them. The landing page runs it live; tools/render-docs.js records it.
-import { FUNNELS } from './data.js?v=b4c2648b';
-import { Scene, CW } from './scene.js?v=b4c2648b';
+import { FUNNELS } from './data.js?v=26f7bacf';
+import { Scene, CW } from './scene.js?v=26f7bacf';
 
 export const TH = 22;  // the title strip over the funnel, in scene units
 const FONT = 'Rubik, system-ui, sans-serif';
@@ -25,8 +25,8 @@ export function guideScene() {
     .map(([id, side]) => [`${f0.title}|${id}`, side]));
   const scene = new Scene(document.createElement('canvas'), [f0], { sides });
   // The supervisor's walk is timed so it stands at the platform's left end, where the arrow points,
-  // from 5 to 7.5 seconds in: when the README pictures are taken.
-  scene.agents.find(a => a.sup).phase = 0.78;
+  // from 15 to 17.5 seconds in: when the README pictures are taken.
+  scene.agents.find(a => a.sup).phase = 0.1;
   return scene;
 }
 

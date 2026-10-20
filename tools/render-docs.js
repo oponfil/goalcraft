@@ -1,12 +1,12 @@
 // Renders the README pictures (agents sheet, theme samples, the board) and the link preview card from the same drawing code as
 // the dashboard and saves them through serve.py: open http://localhost:5173/tools/render-docs.html
 // (always in English: the page adds ?lang=en to itself).
-import { AGENTS, FUNNELS } from '../src/data.js?v=b4c2648b';
-import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=b4c2648b';
-import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=b4c2648b';
+import { AGENTS, FUNNELS } from '../src/data.js?v=26f7bacf';
+import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=26f7bacf';
+import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=26f7bacf';
 import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
-import { THEMES } from '../src/themes.js?v=b4c2648b';
-import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=b4c2648b';
+import { THEMES } from '../src/themes.js?v=26f7bacf';
+import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=26f7bacf';
 
 const FONT = 'Rubik, system-ui, sans-serif';
 
@@ -196,10 +196,11 @@ async function ogCard() {
 // the supervisor stands at the left end of its platform.
 function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   const scale = 2, dpr = 2, K = scale * dpr, side = 440;
-  // A fresh scene runs five seconds first, so the tanks have filled and the agents are at work.
+  // A fresh scene runs fifteen seconds first, so the tanks have filled (a piece drops in every
+  // 0.05 s) and the agents are at work.
   if (!scene) {
     scene = guideScene(); scene.resize(scale, dpr);
-    for (let i = 0; i < 5 * 30; i++) { scene.update(1 / 30); scene.render(); }
+    for (let i = 0; i < 15 * 30; i++) { scene.update(1 / 30); scene.render(); }
   }
   scene.render();
   // Without labels (the landing page writes them as text, in the page's language) the picture is
@@ -281,7 +282,7 @@ function themesGif() {
 function funnelGif() {
   const first = funnelGuide({ show: false }), scene = guideScene();
   scene.resize(2, 2);
-  for (let i = 0; i < 5 * 30; i++) { scene.update(1 / 30); scene.render(); }
+  for (let i = 0; i < 15 * 30; i++) { scene.update(1 / 30); scene.render(); }
   return gif(() => { scene.update(1 / 15); return funnelGuide({ scene, show: false }); }, 36, first.width / 2, first.height / 2, 66);
 }
 

@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=b4c2648b';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=b4c2648b';
-import { themeOf } from './themes.js?v=b4c2648b';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=b4c2648b';
+import { agentInfo, plural } from './data.js?v=26f7bacf';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=26f7bacf';
+import { themeOf } from './themes.js?v=26f7bacf';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=26f7bacf';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -15,6 +15,13 @@ const ZW = 164, TOP = 48, ZH = 45, LH = 46, MAX_STAGES = 5;
 const DECK_HALF = 28, DECK_Y = TOP;
 // The plank is a little shorter than the walk: the supervisor's feet reach its ends.
 const PLANK_HALF = 23;
+// A tank holds one piece per item, up to what fits. Every theme's piece fits the same square cell, so
+// a tank holds as many in every theme.
+const CELL = 6;
+const sameSize = P => ({ w: CELL, h: CELL, draw(c, x, y, ...rest) {
+  const k = Math.min(CELL / P.w, CELL / P.h);
+  c.save(); c.translate(x + (CELL - P.w * k) / 2, y + (CELL - P.h * k)); c.scale(k, k); P.draw(c, 0, 0, ...rest); c.restore();
+} });
 // The funnel's notes (left) and its list (right) hang in the air beside the platform's ends, DOC_W
 // wide each, their bottoms a little above its floor.
 const DOC_W = 18, GUIDE_X = -DECK_HALF - 5 - DOC_W, SHEET_X = DECK_HALF + 6, DOC_Y = DECK_Y - 25;
@@ -665,7 +672,7 @@ export class Scene {
   // pile up into a mound; as many cells are taken as the share of what the goal needs. Pieces join
   // one at a time, each falling from the pipe to its cell (also on load, so the heap builds up).
   drawHeap(c, f, fi, j, cx, y, share, theme) {
-    const n = f.stages.length, P = theme.piece, key = `${f.id ?? f.title}|${j}`;
+    const n = f.stages.length, P = sameSize(theme.piece), key = `${f.id ?? f.title}|${j}`;
     let h = this.heaps.get(key);
     if (!h) {
       const cells = [], rows = Math.floor((LH - 3) / P.h);
@@ -682,7 +689,7 @@ export class Scene {
       h = { cells, shown: 0, falling: [], next: 0 };
       this.heaps.set(key, h);
     }
-    const t = this.t, want = Math.min(h.cells.length, Math.round(h.cells.length * share)) || (share > 0 ? 1 : 0);
+    const t = this.t, want = Math.min(h.cells.length, f.stages[j].count);
     if (h.shown > want) { h.shown = want; h.falling = []; }
     if (h.shown + h.falling.length < want && t >= h.next) {
       h.falling.push({ cell: h.cells[h.shown + h.falling.length], born: t });
