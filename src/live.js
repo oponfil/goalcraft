@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=a894eda7';
+import { supabase } from './auth.js?v=8e332ba8';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -8,6 +8,18 @@ const WINDOW_DAYS = 7;
 // last 7 days, an average per day. Only increases count, so a stage that items leave does not read
 // as negative. With less than a day of history the growth so far counts as one day's: +1 in the
 // first hour is +1/d, not +24/d. Until there are two reports to compare it is 0: "+0/d".
+// Every row of a query, page by page: the database gives at most 1000 rows at a time, and the count
+// reports run to thousands a week. query() builds the query afresh for each page.
+async function all(query, page = 1000) {
+  const rows = [];
+  for (let from = 0; ; from += page) {
+    const { data, error } = await query().range(from, from + page - 1);
+    if (error) return { data: null, error };
+    rows.push(...data);
+    if (data.length < page) return { data: rows, error: null };
+  }
+}
+
 function flowOf(reports, now) {
   if (reports.length < 2) return 0;
   let grew = 0;
@@ -117,10 +129,10 @@ export async function loadFunnels() {
         agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),
         person_tasks (id, position, title, detail, url, due_at, done_at)`)
       .order('created_at'),
-    supabase.from('count_reports')
+    all(() => supabase.from('count_reports')
       .select('funnel_id, stage_key, value, at')
       .gte('at', new Date(now - WINDOW_DAYS * DAY).toISOString())
-      .order('at'),
+      .order('at').order('id')),
     supabase.from('agent_usage')
       .select('funnel_id, agent, app, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at')
       .gte('ended_at', new Date(now - DAY).toISOString()),
@@ -171,9 +183,10 @@ export async function runs(a, limit = 10) {
 // tank's +N per day counts them), all of it, keyed by the local date "YYYY-MM-DD".
 export async function history(f, j) {
   const key = j < f.stages.length ? f.stages[j].key : null;
-  let q = supabase.from('count_reports').select('value, at').eq('funnel_id', f.id).order('at').limit(20000);
-  q = key == null ? q.is('stage_key', null) : q.eq('stage_key', key);
-  const { data, error } = await q;
+  const { data, error } = await all(() => {
+    const q = supabase.from('count_reports').select('value, at').eq('funnel_id', f.id).order('at').order('id');
+    return key == null ? q.is('stage_key', null) : q.eq('stage_key', key);
+  });
   if (error) throw error;
   const days = {};
   for (let i = 1; i < data.length; i++) {
