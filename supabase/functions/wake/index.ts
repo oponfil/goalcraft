@@ -7,7 +7,8 @@
 //                          token use the script reads (nobody is woken or marked)
 //   POST /wake { usage: [{ funnel_id, agent, run_key, app, model, started_at, ended_at, tokens, new_tokens,
 //                input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd,
-//                limit_percent, limit_used, limit_window_minutes }] }   → { saved }: what their runs used
+//                limit_percent, limit_used, limit_window_minutes }], replace_from? }   → { saved }: what their runs
+//                used; replace_from drops what was sent before for runs that ended since then
 //
 // An agent is woken once for each reason: a message it has not read (from the person, or for a
 // worker from its supervisor), an answer to its question while it sleeps, for a supervisor a worker's
@@ -64,6 +65,12 @@ async function saveUsage(user: string, body: any) {
       updated_at: new Date().toISOString(),
     }]
   })
+  // replace_from: the script sends all it read of these days, so what it sent before for them goes.
+  const from = time(body?.replace_from)
+  if (from) {
+    const { error: e } = await admin.from('agent_usage').delete().eq('user_id', user).gte('ended_at', from)
+    if (e) return json({ error: 'failed' }, 500)
+  }
   if (ok.length) {
     const { error: e } = await admin.from('agent_usage').upsert(ok, { onConflict: 'funnel_id,agent,run_key' })
     if (e) return json({ error: 'failed' }, 500)

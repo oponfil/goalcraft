@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=a6fb8f4a';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=a6fb8f4a';
-import { t, lang } from './i18n.js?v=a6fb8f4a';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=021c2932';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=021c2932';
+import { t, lang } from './i18n.js?v=021c2932';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -264,15 +264,15 @@ export function mountDashboard(funnels, opts = {}) {
     out.limit = list[0].limit ?? null; out.limitDays = list[0].limitDays ?? null;
     return out;
   };
-  // The hover text for a cost: the tokens behind it by kind, the total, and the limit it took.
+  // The hover text for a cost: the tokens behind it by kind, the total, and how much of the plan's
+  // limit it took (Codex).
   const usageTip = u => [
     u.input_tokens != null && t('board.tokNew', fmtTokens(u.input_tokens)),
     u.cache_read_tokens != null && t('board.tokCacheRead', fmtTokens(u.cache_read_tokens)),
     u.cache_write_tokens > 0 && t('board.tokCacheWrite', fmtTokens(u.cache_write_tokens)),
     u.output_tokens != null && t('board.tokOut', fmtTokens(u.output_tokens)),
     t('board.tokTotal', fmtTokens(u.tokens)),
-    u.limit_used != null && t('board.limitUsed', fmtPercent(u.limit_used)),
-    u.limit != null && t('board.limitNow', fmtPercent(u.limit), u.limitDays),
+    u.limit_used != null && t('board.usageLimit', fmtPercent(u.limit_used), u.limitDays),
   ].filter(Boolean).join('\n');
   const supStatus = s => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
 
@@ -361,13 +361,13 @@ export function mountDashboard(funnels, opts = {}) {
         const rows = await opts.runs(a);
         const st = a.f.stages, when = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
         // What it spent, in money: the last day (the wake script's count; in the demo, the listed runs
-        // of the last day) and each run at API prices, and for Codex the plan's limit too. Hovering
-        // one shows its tokens by kind.
+        // of the last day) and each run at API prices, and for Codex how much of the plan's limit it
+        // took. Hovering one shows its tokens by kind.
         const day = rows.filter(r => r.usage && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 864e5);
         const u = a.usage || (day.length ? sumUsage(day.map(r => r.usage)) : null);
         const spent = u ? `<p class="pop-note usage" data-tip="${esc(usageTip(u))}">${esc(t('board.usageDay', [
           u.cost != null ? t('board.usageCost', fmtCost(u.cost)) : t('board.tokens', fmtTokens(u.tokens)),
-          u.limit != null ? t('board.usageLimit', fmtPercent(u.limit), u.limitDays) : ''].filter(Boolean).join(' · ')))}</p>` : '';
+          u.limit_used != null ? t('board.usageLimit', fmtPercent(u.limit_used), u.limitDays) : ''].filter(Boolean).join(' · ')))}</p>` : '';
         box.querySelector('.runs-day').innerHTML = spent;
         list.innerHTML = (rows.length ? rows.map(r => {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');

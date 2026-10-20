@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=a6fb8f4a';
+import { supabase } from './auth.js?v=021c2932';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -142,16 +142,22 @@ export async function runs(a, limit = 10) {
     .order('started_at', { ascending: false }).limit(limit);
   if (error) throw error;
   if (!data.length) return data;
-  // Each run's tokens: every stretch the wake script counted goes to the one run it started in (the
-  // latest run started by then, a couple of minutes' slack for the agent's first signal).
+  // Each run's tokens: every stretch the wake script counted goes to the one run it overlaps most
+  // (a few minutes' slack for the agent's first and last signal).
   const from = data[data.length - 1].started_at;
   const { data: used } = await supabase.from('agent_usage').select('started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
     .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from);
   if (!used?.length) return data;
-  const pad = 2 * 60e3, mine = data.map(() => []);
+  const pad = 5 * 60e3, mine = data.map(() => []);
+  const span = r => [Date.parse(r.started_at) - pad, (r.ended_at ? Date.parse(r.ended_at) : Date.now()) + pad];
   for (const u of used) {
-    const i = data.findIndex(r => Date.parse(r.started_at) - pad <= Date.parse(u.started_at));
-    if (i >= 0 && (!data[i].ended_at || Date.parse(u.started_at) <= Date.parse(data[i].ended_at) + pad)) mine[i].push(u);
+    const us = Date.parse(u.started_at), ue = Date.parse(u.ended_at);
+    let best = -1, most = 0;
+    data.forEach((r, i) => {
+      const [s, e] = span(r), o = Math.min(ue, e) - Math.max(us, s);
+      if (o >= 0 && (best < 0 || o > most)) { best = i; most = o; }
+    });
+    if (best >= 0) mine[best].push(u);
   }
   return data.map((r, i) => mine[i].length ? { ...r, usage: { ...kinds(mine[i]),
     cost: mine[i].every(u => u.cost_usd != null) ? mine[i].reduce((n, u) => n + Number(u.cost_usd), 0) : null } } : r);

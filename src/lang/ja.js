@@ -126,8 +126,6 @@ export default {
   'board.tokCacheWrite': (n) => `キャッシュへの書き込み: ${n}`,
   'board.tokOut': (n) => `出力: ${n}`,
   'board.tokTotal': (n) => `合計: ${n} トークン`,
-  'board.limitUsed': (p) => `使った上限: ${p}`,
-  'board.limitNow': (p, d) => `${d}日間の上限は現在${p}使用済み`,
   'board.usageCost': (c) => `API価格で約${c}`,
   'board.usageLimit': (p, d) => `${d}日間の上限の${p}`,
   'board.runNow': '実行中',

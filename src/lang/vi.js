@@ -126,8 +126,6 @@ export default {
   'board.tokCacheWrite': (n) => `Ghi vào bộ nhớ đệm: ${n}`,
   'board.tokOut': (n) => `Đầu ra: ${n}`,
   'board.tokTotal': (n) => `Tổng: ${n} token`,
-  'board.limitUsed': (p) => `Hạn mức đã dùng: ${p}`,
-  'board.limitNow': (p, d) => `Hạn mức ${d} ngày hiện đã dùng ${p}`,
   'board.usageCost': (c) => `≈${c} theo giá API`,
   'board.usageLimit': (p, d) => `${p} hạn mức ${d} ngày`,
   'board.runNow': 'đang chạy',

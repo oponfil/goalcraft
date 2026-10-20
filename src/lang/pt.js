@@ -125,8 +125,6 @@ export default {
   'board.tokCacheWrite': (n) => `Gravado no cache: ${n}`,
   'board.tokOut': (n) => `Saída: ${n}`,
   'board.tokTotal': (n) => `Total: ${n} tokens`,
-  'board.limitUsed': (p) => `Limite usado: ${p}`,
-  'board.limitNow': (p, d) => `O limite de ${d} dias está ${p} usado`,
   'board.usageCost': (c) => `≈${c} a preços da API`,
   'board.usageLimit': (p, d) => `${p} do limite de ${d} dias`,
   'board.runNow': 'em andamento',

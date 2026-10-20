@@ -169,7 +169,7 @@ def wake(item):
 # them per run and sends Goalcraft the numbers only, nothing from the conversations.
 USAGE_EVERY = 5 * 60
 USAGE_DAYS = 2      # runs ended this recently are (re)sent
-RUN_GAP = 15 * 60   # a pause this long in one session starts a new run
+RUN_GAP = 5 * 60    # a pause this long in one session starts a new run
 PROJECTS = HOME / '.claude' / 'projects'
 CODEX_SESSIONS = HOME / '.codex' / 'sessions'
 # Anthropic's API prices in $ per million tokens (input, output, cache read); cache writes cost 1.25x
@@ -360,8 +360,12 @@ def report_usage(key, show=False):
             limit = f' limit {r["limit_percent"]}% (+{r["limit_used"]})' if r.get('limit_percent') is not None else ''
             print(f'{r["funnel_id"]:>14} {r["agent"]:<18} {r["started_at"]} {r["tokens"] / 1e6:7.2f}M tokens{cost}{limit}')
     saved = 0
+    # The first batch replaces what was sent before for the same days, so runs read differently
+    # this time (say, split at another pause) are not counted twice.
+    since = iso(time.time() - USAGE_DAYS * 86400)
+    rows = [r for r in rows if r['ended_at'] >= since]
     for i in range(0, len(rows), 400):
-        body = json.dumps({'usage': rows[i:i + 400]}).encode()
+        body = json.dumps({'usage': rows[i:i + 400], **({'replace_from': since} if i == 0 else {})}).encode()
         req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={
             'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1', 'Content-Type': 'application/json'})
         try:

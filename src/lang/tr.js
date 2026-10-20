@@ -125,8 +125,6 @@ export default {
   'board.tokCacheWrite': (n) => `Önbelleğe yazılan: ${n}`,
   'board.tokOut': (n) => `Çıktı: ${n}`,
   'board.tokTotal': (n) => `Toplam: ${n} token`,
-  'board.limitUsed': (p) => `Kullanılan limit: ${p}`,
-  'board.limitNow': (p, d) => `${d} günlük limitin şu an ${p} kadarı kullanıldı`,
   'board.usageCost': (c) => `API fiyatıyla ≈${c}`,
   'board.usageLimit': (p, d) => `${d} günlük limitin ${p}`,
   'board.runNow': 'sürüyor',

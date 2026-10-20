@@ -125,8 +125,6 @@ export default {
   'board.tokCacheWrite': (n) => `캐시에 쓴 입력: ${n}`,
   'board.tokOut': (n) => `출력: ${n}`,
   'board.tokTotal': (n) => `합계: ${n} 토큰`,
-  'board.limitUsed': (p) => `사용한 한도: ${p}`,
-  'board.limitNow': (p, d) => `${d}일 한도 현재 ${p} 사용`,
   'board.usageCost': (c) => `API 가격 기준 약 ${c}`,
   'board.usageLimit': (p, d) => `${d}일 한도의 ${p}`,
   'board.runNow': '진행 중',
