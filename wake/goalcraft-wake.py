@@ -99,10 +99,12 @@ def claude_command(item):
 
 
 def codex_command(item):
+    """`codex exec resume` for a Codex thread. Run from the home folder: a login item may not read
+    ~/Documents, where the Codex app keeps its threads' folders."""
     codex = find('codex')
     if not codex:
         return None, 'codex command not found'
-    return ([codex, 'exec', 'resume', item['session'], note(item)], str(HOME)), None
+    return ([codex, 'exec', 'resume', '--skip-git-repo-check', item['session'], note(item)], str(HOME)), None
 
 
 running = set()  # sessions being woken now: one run at a time per conversation
@@ -126,8 +128,10 @@ def wake(item):
             out = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=RUN_LIMIT)
             last = (out.stdout.strip().splitlines() or [''])[-1][:200]
             log(f'woke {who} in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
-            if out.returncode:
-                log('  ' + out.stderr.strip()[:500])
+            if 'already has an active writer' in out.stderr:
+                log('  the ChatGPT app keeps this Codex thread open, so it cannot be resumed from outside; it gets the news on its next run')
+            elif out.returncode:
+                log('  ' + out.stderr.strip()[-500:])
         except subprocess.TimeoutExpired:
             log(f'woke {who}: stopped after {RUN_LIMIT // 60} min')
         finally:
@@ -136,7 +140,7 @@ def wake(item):
     log(f'waking {who}')
 
 
-def check(key):
+def check(key, wake_them=True):
     req = urllib.request.Request(ENDPOINT, headers={'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1'})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
@@ -147,9 +151,22 @@ def check(key):
     except Exception as e:  # offline, timeout: try again next time
         log(f'check failed: {e}')
         return None
-    for item in items:
-        wake(item)
+    if wake_them:
+        for item in items:
+            wake(item)
     return 200
+
+
+def verify(key):
+    """Whether Goalcraft knows the key, without asking whom to wake (that would mark them as woken)."""
+    req = urllib.request.Request(ENDPOINT + '?check=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1'})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
+    except Exception:
+        return None
 
 
 def key_or_exit():
@@ -178,7 +195,8 @@ def install(key):
     me = DIR / 'goalcraft-wake.py'
     if pathlib.Path(__file__).resolve() != me.resolve():
         shutil.copy(__file__, me)
-    if check(key) == 401:
+    # Only check the key here: the service started below does the waking, and logs it.
+    if verify(key) == 401:
         sys.exit('Goalcraft does not know this key: the MCP tool create_wake_key makes a new one.')
     if sys.platform != 'darwin':
         print(f'Key saved. Keep `python3 {me} run` running (for example from cron or a service).')

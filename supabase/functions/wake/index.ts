@@ -40,6 +40,8 @@ Deno.serve(async (req) => {
   if (!owner) return json({ error: 'bad_key' }, 401)
   const user = owner.user_id, now = Date.now(), iso = (t: number) => new Date(t).toISOString()
   await admin.from('wake_keys').update({ last_used_at: iso(now) }).eq('user_id', user)
+  // ?check=1: the script only checks its key (when it is installed); nobody is woken or marked.
+  if (new URL(req.url).searchParams.has('check')) return json({ ok: true })
 
   const [presence, messages, answers, wakes] = await Promise.all([
     admin.from('presence').select('funnel_id, agent, state, next_run_at, chat_url, updated_at, funnels (key, title)')

@@ -31,6 +31,10 @@ A new key replaces the old, and the script installed with the old one stops with
 
 On Linux it saves the key and asks you to keep `goalcraft-wake.py run` running yourself (cron, systemd).
 
+## Limits
+
+- A Codex thread the ChatGPT app keeps open (a Codex automation, a chat open in the app) can't be resumed from outside: Codex answers that the thread "already has an active writer". The script logs it and leaves the agent to its next run. Claude app sessions wake fine, open or not.
+
 ## What it can do
 
 - The key only lets the script ask Goalcraft which of your agents to wake (agent, funnel, chat link). It can't read your messages or change anything.
