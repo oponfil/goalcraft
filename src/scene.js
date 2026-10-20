@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=47b04410';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=47b04410';
-import { themeOf } from './themes.js?v=47b04410';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=47b04410';
+import { agentInfo, plural } from './data.js?v=8d07f18f';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=8d07f18f';
+import { themeOf } from './themes.js?v=8d07f18f';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=8d07f18f';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -696,10 +696,9 @@ export class Scene {
     if (h.shown > 0) {
       c.save(); c.beginPath();
       for (let r = rows - h.shown; r < rows; r++) { const hw = tankHalf(j, n, r + 1) - 1; c.rect(cx - hw, y + 1 + r, hw * 2, 1); }
-      // Drawn from the liquid's surface, so the lighter band on top of it shows the level; a full
-      // tank keeps it above the clip, or it would sit on the tank's own rim and double it.
-      const top = y + 1 + rows - h.shown, full = h.shown >= rows;
-      c.clip(); theme.tank(c, x - 20, full ? top - 2 : top, lw + 40, h.shown + (full ? 2 : 0), j, n, t, fi * 97 + j * 13 + 5); c.restore();
+      // Plain liquid up to its level: the tank's lighter top band is drawn above the clip, out of sight.
+      const top = y + 1 + rows - h.shown;
+      c.clip(); theme.tank(c, x - 20, top - 2, lw + 40, h.shown + 2, j, n, t, fi * 97 + j * 13 + 5); c.restore();
     }
     const surface = y + 1 + rows - h.shown;
     c.fillStyle = theme.drop(j, n);
