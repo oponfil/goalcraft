@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=56db5831';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=56db5831';
-import { t, lang } from './i18n.js?v=56db5831';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=42acda14';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=42acda14';
+import { t, lang } from './i18n.js?v=42acda14';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -266,7 +266,7 @@ export function mountDashboard(funnels, opts = {}) {
     if (host === 'docs.google.com') return /\/document\//.test(url + '/') ? 'Google Docs' : /\/presentation\//.test(url + '/') ? 'Google Slides' : 'Google Sheets';
     const known = [['docs.google.com', 'Google Sheets'], ['notion.so', 'Notion'], ['notion.site', 'Notion'], ['airtable.com', 'Airtable'],
       ['github.com', 'GitHub'], ['gitlab.com', 'GitLab'], ['trello.com', 'Trello'], ['coda.io', 'Coda'], ['clickup.com', 'ClickUp'],
-      ['onedrive.live.com', 'Excel'], ['sharepoint.com', 'Excel'], ['dropbox.com', 'Dropbox']];
+      ['onedrive.live.com', 'Excel'], ['sharepoint.com', 'Excel'], ['dropbox.com', 'Dropbox'], ['basicmemory.com', 'Basic Memory']];
     return known.find(([d]) => host === d || host.endsWith('.' + d))?.[1] ?? host;
   }
 
