@@ -1,8 +1,8 @@
 // The pitch deck: each slide's backdrop is one of the dashboard themes, with an agent of that theme
 // at work under the text. Arrow keys, Page Up/Down and Space move between slides.
-import { THEMES } from './themes.js?v=9415e8eb';
-import { AGENTS } from './data.js?v=9415e8eb';
-import { drawStanding, drawLying, drawBubble, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, MINER_H } from './sprites.js?v=9415e8eb';
+import { THEMES } from './themes.js?v=47b04410';
+import { AGENTS } from './data.js?v=47b04410';
+import { drawStanding, drawLying, drawBubble, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, MINER_H } from './sprites.js?v=47b04410';
 
 const K = 4;  // screen pixels per logical pixel, as blocky as the dashboard
 

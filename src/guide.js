@@ -1,8 +1,8 @@
 // The funnel the landing page and the README explain: the demo's Job Search cut to two stages,
 // with an agent in each state the labels point at. They stay in their states, so the labels always
 // point at them. The landing page runs it live; tools/render-docs.js records it.
-import { FUNNELS } from './data.js?v=9415e8eb';
-import { Scene, CW } from './scene.js?v=9415e8eb';
+import { FUNNELS } from './data.js?v=47b04410';
+import { Scene, CW } from './scene.js?v=47b04410';
 
 export const TH = 22;  // the title strip over the funnel, in scene units
 const FONT = 'Rubik, system-ui, sans-serif';
@@ -11,7 +11,9 @@ export function guideScene() {
   const job = FUNNELS[0];
   const f0 = {
     ...job,
-    stages: [job.stages[0], job.stages[3]],
+    // The top tank (179 pieces when full) starts at 50: about 110 when the README pictures are taken,
+    // so the pieces dropping in show it fill up.
+    stages: [{ ...job.stages[0], count: 50 }, job.stages[3]],
     flows: [job.flows[0], job.flows[3], job.flows[5]],
     workers: [
       { agent: 'chatgpt', zone: -1, state: 'work', keep: true }, { agent: 'perplexity', zone: -1, state: 'work', keep: true },
