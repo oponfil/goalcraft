@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2a60d667';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2a60d667';
-import { t, lang } from './i18n.js?v=2a60d667';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c7b9eeae';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c7b9eeae';
+import { t, lang } from './i18n.js?v=c7b9eeae';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -64,18 +64,20 @@ export function mountDashboard(funnels, opts = {}) {
   }
   window.addEventListener('resize', layout);
 
-  // Zoom: the point at the middle of the view stays in the middle.
-  const zoomBox = document.createElement('div');
-  zoomBox.id = 'zoom';
-  zoomBox.innerHTML = `<button type="button" data-d="-1" aria-label="${esc(t('board.zoomOut'))}" title="${esc(t('board.zoomOut'))}">−</button><button type="button" data-d="1" aria-label="${esc(t('board.zoomIn'))}" title="${esc(t('board.zoomIn'))}">+</button>`;
-  document.body.append(zoomBox);
+  // Zoom, in the top bar before the clock: − 100% +; a click on the percentage goes back to 100%.
+  // The point at the middle of the view stays in the middle.
+  const zoomBox = document.createElement('span');
+  zoomBox.id = 'zoom'; zoomBox.className = 'wide';
+  zoomBox.innerHTML = `<button type="button" data-d="-1" aria-label="${esc(t('board.zoomOut'))}" title="${esc(t('board.zoomOut'))}">−</button><button type="button" class="pct" data-d="0"></button><button type="button" data-d="1" aria-label="${esc(t('board.zoomIn'))}" title="${esc(t('board.zoomIn'))}">+</button>`;
+  clock.before(zoomBox);
   const zoomButtons = () => zoomBox.querySelectorAll('button').forEach(b => {
+    if (b.dataset.d === '0') { b.textContent = Math.round(zoom * 100) + '%'; b.disabled = zoom === 1; return; }
     const i = ZOOMS.indexOf(zoom) + Number(b.dataset.d); b.disabled = i < 0 || i >= ZOOMS.length;
   });
   zoomButtons();
   zoomBox.addEventListener('click', e => {
-    const b = e.target.closest('button'), next = b && ZOOMS[ZOOMS.indexOf(zoom) + Number(b.dataset.d)];
-    if (!next) return;
+    const b = e.target.closest('button'), d = b && Number(b.dataset.d), next = b && (d === 0 ? 1 : ZOOMS[ZOOMS.indexOf(zoom) + d]);
+    if (!next || next === zoom) return;
     const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / scale, cy = (scroller.scrollTop + scroller.clientHeight / 2) / scale;
     zoom = next;
     try { localStorage.setItem(ZOOM_KEY, String(zoom)); } catch {}
