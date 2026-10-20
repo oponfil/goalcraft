@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=42acda14';
-import { mountDashboard } from './dashboard.js?v=42acda14';
-import { t } from './i18n.js?v=42acda14';
+import { FUNNELS, SUP_RUNS } from './data.js?v=e4c48041';
+import { mountDashboard } from './dashboard.js?v=e4c48041';
+import { t } from './i18n.js?v=e4c48041';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -9,7 +9,22 @@ mountDashboard(FUNNELS, {
   onAnswer: async () => null,
   onMessage: async () => null,
   runs: demoRuns,
+  history: demoHistory,
 });
+
+// Made-up daily growth of a stage for its card, the same each time: about its flow per day, more
+// on weekdays, over the last 120 days.
+async function demoHistory(f, j) {
+  let seed = [...f.title + j].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 11);
+  const r = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const flow = f.flows[j] || 0.3, days = {};
+  for (let i = 119; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 864e5), weekend = d.getDay() === 0 || d.getDay() === 6;
+    const v = flow * (weekend ? 0.4 : 1.2) * (0.3 + r() * 1.4) * Math.min(1, (130 - i) / 60);
+    days[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`] = Math.floor(v) + (r() < v % 1 ? 1 : 0);
+  }
+  return { days, since: Object.keys(days)[0] };
+}
 
 // Made-up last runs for an agent's card, the same each time for the same agent: a run every 6-12
 // hours lasting 10-40 minutes, the newest still going while the agent works. Each run adds about

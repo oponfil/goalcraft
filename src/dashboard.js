@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=42acda14';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=42acda14';
-import { t, lang } from './i18n.js?v=42acda14';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=e4c48041';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=e4c48041';
+import { t, lang } from './i18n.js?v=e4c48041';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -192,6 +192,43 @@ export function mountDashboard(funnels, opts = {}) {
     return [(e.clientX - r.left) / scene.scale, (e.clientY - r.top) / scene.scale];
   }
 
+  // A stage's history: bars of how much it grew each day over a period the person picks (7, 30, 90
+  // days or all of it), with the period's total and daily average; hovering a bar shows its day.
+  const PERIODS = [7, 30, 90, 0];
+  let period = 30;
+  try { const p = localStorage.getItem('goalcraft-period'); if (p !== null && PERIODS.includes(Number(p))) period = Number(p); } catch {}
+  async function showHistory(e, f, j) {
+    const st = f.stages[j], name = plural(2, st.forms);
+    showPop(e, `<div class="pop-title">${esc(f.title)}: ${esc(name)}</div><div class="hist-body"><p class="pop-note">…</p></div>`);
+    let data;
+    try { data = await opts.history(f, j); } catch { pop.querySelector('.hist-body').innerHTML = `<p class="pop-note">${esc(t('hist.failed'))}</p>`; return; }
+    const body = pop.querySelector('.hist-body');
+    if (!body) return;
+    const day = new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short' });
+    const short = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short' });
+    const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const avgFmt = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
+    const draw = () => {
+      // The days of the period, oldest first, up to today; all of it starts at the first report.
+      const today = new Date(); today.setHours(12, 0, 0, 0);
+      let n = period;
+      if (!n) n = data.since ? Math.max(1, Math.round((today - new Date(data.since + 'T12:00')) / 864e5) + 1) : 1;
+      const days = Array.from({ length: n }, (_, i) => new Date(today - (n - 1 - i) * 864e5));
+      const vals = days.map(d => data.days[key(d)] || 0), max = Math.max(1, ...vals), sum = vals.reduce((a, b) => a + b, 0);
+      body.innerHTML = `<div class="hist-periods">${PERIODS.map(p => `<button type="button" data-p="${p}" class="${p === period ? 'on' : ''}">${esc(p ? t('hist.days', p) : t('hist.all'))}</button>`).join('')}</div>
+        <p class="pop-note">${esc(t('hist.total', fmtCount(sum), avgFmt.format(sum / n)))}</p>
+        <div class="hist-bars">${days.map((d, i) => `<span data-tip="${esc(`${day.format(d)}: +${fmtCount(vals[i])}`)}"><i style="height:${vals[i] ? Math.max(3, (vals[i] / max) * 100) : 0}%"></i></span>`).join('')}</div>
+        <div class="hist-axis"><span>${esc(short.format(days[0]))}</span><span>${esc(short.format(days[n - 1]))}</span></div>`;
+      body.querySelectorAll('.hist-periods button').forEach(b => b.addEventListener('click', ev => {
+        ev.stopPropagation();
+        period = Number(b.dataset.p);
+        try { localStorage.setItem('goalcraft-period', String(period)); } catch {}
+        draw();
+      }));
+    };
+    draw();
+  }
+
   // The person's tasks for a funnel, by its title. Only the supervisor adds, orders and marks them
   // done (MCP set_tasks); the person sees the list, most urgent first.
   track.addEventListener('click', e => {
@@ -239,7 +276,7 @@ export function mountDashboard(funnels, opts = {}) {
 
   canvas.addEventListener('pointermove', e => {
     const h = scene.hitTest(...toLogical(e));
-    canvas.style.cursor = h && h.type !== 'stage' ? 'pointer' : 'default';
+    canvas.style.cursor = h && (h.type !== 'stage' || opts.history) ? 'pointer' : 'default';
     // A tank shows only its number and flow; what it holds pops up on hover. The sheet on top says
     // where the list it opens is kept.
     if (!['stage', 'source', 'guide'].includes(h?.type) || e.pointerType === 'touch') return (tip.hidden = true);
@@ -273,8 +310,11 @@ export function mountDashboard(funnels, opts = {}) {
   canvas.addEventListener('click', e => {
     const h = scene.hitTest(...toLogical(e));
     if (!h) return hidePop();
-    // On a phone there is no hover: a tap on a tank shows what it holds for a moment.
+    // A tank opens its history: how much it grew each day. Without one (no history given), a tap
+    // shows what it holds for a moment, as on a phone with no hover.
     if (h.type === 'stage') {
+      tip.hidden = true;
+      if (opts.history) return showHistory(e, scene.funnels[h.fi], h.j);
       hidePop(); showTip(e, h);
       clearTimeout(tipTimer); tipTimer = setTimeout(() => { tip.hidden = true; }, 2000);
       return;

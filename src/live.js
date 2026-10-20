@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=42acda14';
+import { supabase } from './auth.js?v=e4c48041';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -166,6 +166,23 @@ export async function runs(a, limit = 10) {
   return data.map((r, i) => mine[i].length ? { ...r, usage: { ...kinds(mine[i]),
     cost: mine[i].every(u => u.cost_usd != null) ? mine[i].reduce((n, u) => n + Number(u.cost_usd), 0) : null } } : r);
 }
+
+// A stage's history for its card: how much it grew each day (its reports' rises added up, as the
+// tank's +N per day counts them), all of it, keyed by the local date "YYYY-MM-DD".
+export async function history(f, j) {
+  const key = j < f.stages.length ? f.stages[j].key : null;
+  let q = supabase.from('count_reports').select('value, at').eq('funnel_id', f.id).order('at').limit(20000);
+  q = key == null ? q.is('stage_key', null) : q.eq('stage_key', key);
+  const { data, error } = await q;
+  if (error) throw error;
+  const days = {};
+  for (let i = 1; i < data.length; i++) {
+    const d = localDay(new Date(data[i].at));
+    days[d] = (days[d] || 0) + Math.max(0, data[i].value - data[i - 1].value);
+  }
+  return { days, since: data.length ? localDay(new Date(data[0].at)) : null };
+}
+export const localDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 // The person wrote to an agent from its card; the agent reads it through MCP (get_messages).
 export async function sendMessage(a, text) {

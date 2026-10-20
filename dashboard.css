@@ -364,3 +364,15 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop .task-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
 #pop .task-meta a { color: var(--text); }
 #pop .task-meta .late { color: var(--alert); }
+
+/* A stage's history: period buttons, then a bar per day in the pop's accent, the first and last day
+   under them. */
+#pop .hist-periods { display: inline-flex; border: 2px solid var(--border); margin: 10px 0 4px; }
+#pop .hist-periods button { background: none; border: 0; color: var(--muted); font: 500 13px var(--font); padding: 4px 10px; cursor: pointer; }
+#pop .hist-periods button + button { border-left: 2px solid var(--border); }
+#pop .hist-periods button.on { background: #3A322B; color: var(--text); }
+#pop .hist-bars { display: flex; align-items: flex-end; gap: 1px; height: 120px; width: 100%; margin-top: 8px; border-bottom: 2px solid var(--border); }
+#pop .hist-bars span { flex: 1; height: 100%; display: flex; align-items: flex-end; cursor: default; }
+#pop .hist-bars span:hover { background: rgba(255, 255, 255, 0.06); }
+#pop .hist-bars i { display: block; width: 100%; background: #9FE870; }
+#pop .hist-axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
