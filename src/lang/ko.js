@@ -141,6 +141,8 @@ export default {
   'board.sheet': (where) => `${where}에서 목록 열기`,
   'board.guide': (where) => `${where}에서 메모 열기`,
   'board.close': '닫기',
+  'board.zoomOut': '축소',
+  'board.zoomIn': '확대',
   'board.goalReached': '목표 달성 ✓',
   'board.goal': (total, time) => `목표: ${time} 안에 +${total}`,
   'board.next': (eta) => `다음 ${eta}`,

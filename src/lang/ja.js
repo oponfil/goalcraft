@@ -142,6 +142,8 @@ export default {
   'board.sheet': (where) => `${where} でリストを開く`,
   'board.guide': (where) => `${where} でメモを開く`,
   'board.close': '閉じる',
+  'board.zoomOut': '縮小',
+  'board.zoomIn': '拡大',
   'board.goalReached': '目標達成 ✓',
   'board.goal': (total, time) => `目標：${time}で +${total}`,
   'board.next': (eta) => `次 ${eta}`,

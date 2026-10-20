@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=206b853e';
-import vi from './lang/vi.js?v=206b853e';
-import ja from './lang/ja.js?v=206b853e';
-import pt from './lang/pt.js?v=206b853e';
-import tr from './lang/tr.js?v=206b853e';
-import ko from './lang/ko.js?v=206b853e';
+import es from './lang/es.js?v=2a60d667';
+import vi from './lang/vi.js?v=2a60d667';
+import ja from './lang/ja.js?v=2a60d667';
+import pt from './lang/pt.js?v=2a60d667';
+import tr from './lang/tr.js?v=2a60d667';
+import ko from './lang/ko.js?v=2a60d667';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -345,6 +345,8 @@ const STRINGS = {
   'board.sheet': L((where) => `Open the list in ${where}`, (where) => `Открыть список в ${where}`, (where) => `在 ${where} 中打开列表`, (where) => `เปิดรายการใน ${where}`),
   'board.guide': L((where) => `Open the notes in ${where}`, (where) => `Открыть заметки в ${where}`, (where) => `在 ${where} 中打开笔记`, (where) => `เปิดโน้ตใน ${where}`),
   'board.close': L('Close', 'Закрыть', '关闭', 'ปิด'),
+  'board.zoomOut': L('Zoom out', 'Мельче', '缩小', 'ย่อ'),
+  'board.zoomIn': L('Zoom in', 'Крупнее', '放大', 'ขยาย'),
   'board.goalReached': L('goal reached ✓', 'цель достигнута ✓', '目标已达成 ✓', 'ถึงเป้าหมายแล้ว ✓'),
   'board.goal': L((total, time) => `goal: +${total} in ${time}`, (total, time) => `цель: +${total} за ${time}`, (total, time) => `目标：${time} 内 +${total}`, (total, time) => `เป้าหมาย: +${total} ใน ${time}`),
   'board.next': L((eta) => `next ${eta}`, (eta) => `следующий ${eta}`, (eta) => `下一个 ${eta}`, (eta) => `ถัดไป ${eta}`),

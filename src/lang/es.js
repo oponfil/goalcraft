@@ -141,6 +141,8 @@ export default {
   'board.sheet': (where) => `Abrir la lista en ${where}`,
   'board.guide': (where) => `Abrir las notas en ${where}`,
   'board.close': 'Cerrar',
+  'board.zoomOut': 'Alejar',
+  'board.zoomIn': 'Acercar',
   'board.goalReached': 'meta alcanzada ✓',
   'board.goal': (total, time) => `meta: +${total} en ${time}`,
   'board.next': (eta) => `próximo ${eta}`,

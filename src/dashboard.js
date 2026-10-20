@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=206b853e';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=206b853e';
-import { t, lang } from './i18n.js?v=206b853e';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2a60d667';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2a60d667';
+import { t, lang } from './i18n.js?v=2a60d667';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -50,17 +50,42 @@ export function mountDashboard(funnels, opts = {}) {
   const saveOrder = () => { try { localStorage.setItem(ORDER_KEY, JSON.stringify(scene.order())); } catch {} };
   loadOrder();
 
-  // Scene size is fixed at load: four funnels across the screen, whatever its height (the board
-  // scrolls down for the rest of a funnel). Resizing the window only changes how many funnels are
-  // visible; the rest are reached with horizontal scroll.
-  // On a phone the pixel scene would be too small at 1:1, so it starts 30% larger there.
-  const minScale = scroller.clientWidth < 600 ? 1.3 : 1;
-  const scale = Math.max(minScale, scroller.clientWidth / (4 * CW));
+  // The scene has a fixed size, the same on every screen: as many funnels show as fit, the rest are
+  // reached with horizontal scroll. On a phone one funnel fills the width. The viewer's zoom (the
+  // − and + buttons, kept in this browser) scales it.
+  const BASE = 1.6, ZOOMS = [0.6, 0.7, 0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2], ZOOM_KEY = 'goalcraft-zoom';
+  let zoom = 1;
+  try { const z = Number(localStorage.getItem(ZOOM_KEY)); if (ZOOMS.includes(z)) zoom = z; } catch {}
+  const baseScale = () => (scroller.clientWidth < 600 ? scroller.clientWidth / CW : BASE);
+  let scale = baseScale() * zoom;
   function layout() {
     if (scene.dpr !== (window.devicePixelRatio || 1)) scene.resize(scale, window.devicePixelRatio || 1);
     scroller.classList.toggle('fits', scene.funnels.length * CW * scale <= scroller.clientWidth);
   }
   window.addEventListener('resize', layout);
+
+  // Zoom: the point at the middle of the view stays in the middle.
+  const zoomBox = document.createElement('div');
+  zoomBox.id = 'zoom';
+  zoomBox.innerHTML = `<button type="button" data-d="-1" aria-label="${esc(t('board.zoomOut'))}" title="${esc(t('board.zoomOut'))}">−</button><button type="button" data-d="1" aria-label="${esc(t('board.zoomIn'))}" title="${esc(t('board.zoomIn'))}">+</button>`;
+  document.body.append(zoomBox);
+  const zoomButtons = () => zoomBox.querySelectorAll('button').forEach(b => {
+    const i = ZOOMS.indexOf(zoom) + Number(b.dataset.d); b.disabled = i < 0 || i >= ZOOMS.length;
+  });
+  zoomButtons();
+  zoomBox.addEventListener('click', e => {
+    const b = e.target.closest('button'), next = b && ZOOMS[ZOOMS.indexOf(zoom) + Number(b.dataset.d)];
+    if (!next) return;
+    const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / scale, cy = (scroller.scrollTop + scroller.clientHeight / 2) / scale;
+    zoom = next;
+    try { localStorage.setItem(ZOOM_KEY, String(zoom)); } catch {}
+    scale = baseScale() * zoom;
+    hidePop(); tip.hidden = true;
+    scene.resize(scale, window.devicePixelRatio || 1);
+    layout(); buildTitles(); zoomButtons();
+    scroller.scrollLeft = cx * scale - scroller.clientWidth / 2;
+    scroller.scrollTop = cy * scale - scroller.clientHeight / 2;
+  });
   // Drawn once the fonts are in: then the loading pickaxe goes (see .loader in dashboard.css).
   const ready = () => requestAnimationFrame(() => document.body.classList.add('ready'));
   if (document.fonts) document.fonts.ready.then(() => { scene.resize(scale, window.devicePixelRatio || 1); ready(); });

@@ -141,6 +141,8 @@ export default {
   'board.sheet': (where) => `Listeyi ${where} içinde aç`,
   'board.guide': (where) => `Notları ${where} içinde aç`,
   'board.close': 'Kapat',
+  'board.zoomOut': 'Uzaklaştır',
+  'board.zoomIn': 'Yakınlaştır',
   'board.goalReached': 'hedefe ulaşıldı ✓',
   'board.goal': (total, time) => `hedef: ${time} içinde +${total}`,
   'board.next': (eta) => `sıradaki ${eta}`,

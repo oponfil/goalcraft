@@ -142,6 +142,8 @@ export default {
   'board.sheet': (where) => `Mở danh sách trong ${where}`,
   'board.guide': (where) => `Mở ghi chú trong ${where}`,
   'board.close': 'Đóng',
+  'board.zoomOut': 'Thu nhỏ',
+  'board.zoomIn': 'Phóng to',
   'board.goalReached': 'đã đạt mục tiêu ✓',
   'board.goal': (total, time) => `mục tiêu: +${total} trong ${time}`,
   'board.next': (eta) => `tiếp theo ${eta}`,
