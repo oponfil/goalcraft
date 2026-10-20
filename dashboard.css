@@ -278,11 +278,14 @@ html:lang(ja) { --font: "Rubik", "Noto Sans JP", system-ui, sans-serif; }
 html:lang(ko) { --font: "Rubik", "Noto Sans KR", system-ui, sans-serif; }
 /* An agent's short reply to the person's answer: a note over its head in the board's own style
    (the popups' dark panel and border, square corners), the text and a ×. */
-.agent-note { position: fixed; z-index: 5; transform: translateY(calc(-100% - 6px)); max-width: 210px; background: var(--panel); color: var(--text); border: 2px solid var(--border); font: 500 13px/1.35 var(--font); padding: 6px 24px 7px 10px; pointer-events: auto; }
-/* The tail: a small square step down from the border to the agent, pixel style. */
+.agent-note { position: fixed; z-index: 5; transform: translateY(calc(-100% - 14px)); max-width: 210px; background: var(--panel); color: var(--text); border: 2px solid var(--border); font: 500 13px/1.35 var(--font); padding: 6px 24px 7px 10px; pointer-events: auto; }
+/* The tail: a stepped pixel triangle from the note's bottom edge down to the agent's head, the
+   border colour outside and the panel inside, so the note reads as the agent's speech. */
 .agent-note::before, .agent-note::after { content: ""; position: absolute; left: var(--tail, 50%); }
-.agent-note::before { bottom: -8px; width: 8px; height: 6px; margin-left: -4px; background: var(--border); }
-.agent-note::after { bottom: -4px; width: 4px; height: 2px; margin-left: -2px; background: var(--panel); }
+.agent-note::before { bottom: -12px; width: 16px; height: 12px; margin-left: -8px; background: var(--border);
+  clip-path: polygon(0 0, 16px 0, 16px 3px, 14px 3px, 14px 6px, 12px 6px, 12px 9px, 10px 9px, 10px 12px, 6px 12px, 6px 9px, 4px 9px, 4px 6px, 2px 6px, 2px 3px, 0 3px); }
+.agent-note::after { bottom: -9px; width: 12px; height: 9px; margin-left: -6px; background: var(--panel);
+  clip-path: polygon(0 0, 12px 0, 12px 3px, 10px 3px, 10px 6px, 8px 6px, 8px 9px, 4px 9px, 4px 6px, 2px 6px, 2px 3px, 0 3px); }
 .agent-note button { position: absolute; top: 3px; right: 4px; background: none; border: 0; color: var(--muted); font: 16px/1 var(--font); cursor: pointer; padding: 2px 3px; }
 .agent-note button:hover { color: var(--text); }
 .agent-note[hidden] { display: none; }

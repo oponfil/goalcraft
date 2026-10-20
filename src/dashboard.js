@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=8e16be41';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=8e16be41';
-import { t, lang } from './i18n.js?v=8e16be41';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=849dcb8a';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=849dcb8a';
+import { t, lang } from './i18n.js?v=849dcb8a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -152,7 +152,7 @@ export function mountDashboard(funnels, opts = {}) {
       // Kept inside the window; the tail still points at the agent.
       const w = el.offsetWidth, left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w / 2));
       el.style.left = left + 'px'; el.style.top = y + 'px';
-      el.style.setProperty('--tail', (x - left) + 'px');
+      el.style.setProperty('--tail', Math.max(12, Math.min(w - 12, x - left)) + 'px');
     }
     for (const [key, el] of notes) if (!seen.has(key)) { el.remove(); notes.delete(key); }
   }
