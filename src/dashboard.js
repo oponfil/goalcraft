@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=65a915ad';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=65a915ad';
-import { t, lang } from './i18n.js?v=65a915ad';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=518f8294';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=518f8294';
+import { t, lang } from './i18n.js?v=518f8294';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -283,11 +283,6 @@ export function mountDashboard(funnels, opts = {}) {
       const into = a.zone === st.length - 1 ? f.result : st[a.zone + 1].forms;
       where = `${from}<b class="run">+${fmtCount(n)}</b> ${esc(plural(n, into))}`;
     }
-    // What it spent over the last day, when the person's wake script could read it: tokens, their
-    // cost at API prices (Claude), the plan's limit (Codex).
-    const u = a.usage, spent = u ? `<p class="pop-note usage">${esc(t('board.usageDay', fmtTokens(u.tokens)))}${
-      u.cost != null ? ` · ${esc(t('board.usageCost', fmtCost(u.cost)))}` : ''}${
-      u.limit != null ? ` · ${esc(t('board.usageLimit', fmtPercent(u.limit), u.limitDays))}` : ''}</p>` : '';
     // Live only: the agent's last runs, loaded when the person opens them.
     const history = opts.runs ? `<details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-list"></div></details>` : '';
     // Overdue (it should have run by now) or silent at work: when it was last heard from.
@@ -312,7 +307,7 @@ export function mountDashboard(funnels, opts = {}) {
       const when = left > 0 ? fmtDuration(left) : null;
       return `<div class="pop-title">${t(asleep ? 'board.askedAsleep' : 'board.asking', who)}</div>
         <div class="pop-sub">${where}</div>
-        ${asleep && !missed ? `<p class="pop-note">${esc(t('board.nextRun', when))}</p>` : ''}${missed}${spent}${asks}${reply}${history}`;
+        ${asleep && !missed ? `<p class="pop-note">${esc(t('board.nextRun', when))}</p>` : ''}${missed}${asks}${reply}${history}`;
     }
     const lost = scene.lost(a) ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.silence(a))))}</p>` : '';
     // Asleep on time: when it wakes up.
@@ -328,7 +323,7 @@ export function mountDashboard(funnels, opts = {}) {
         <div class="pop-msg"></div></div>`
       : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : '';
     return `<div class="pop-title">${t(state, who)}</div>
-      <div class="pop-sub">${where}</div>${wakes}${missed}${lost}${spent}
+      <div class="pop-sub">${where}</div>${wakes}${missed}${lost}
       ${write}${history}`;
   }
 
@@ -345,7 +340,16 @@ export function mountDashboard(funnels, opts = {}) {
       try {
         const rows = await opts.runs(a);
         const st = a.f.stages, when = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
-        list.innerHTML = rows.length ? rows.map(r => {
+        // What it spent: the last day's tokens as the wake script read them (in the demo, the runs
+        // listed of the last day), their cost at API prices (Claude) or the plan's limit (Codex).
+        const day = rows.filter(r => r.tokens != null && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 864e5);
+        const u = a.usage || (day.length ? { tokens: day.reduce((n, r) => n + r.tokens, 0),
+          cost: day.every(r => r.cost != null) ? day.reduce((n, r) => n + r.cost, 0) : null,
+          limit: day[0].limit ?? null, limitDays: day[0].limitDays ?? null } : null);
+        const spent = u ? `<p class="pop-note usage">${esc(t('board.usageDay', fmtTokens(u.tokens)))}${
+          u.cost != null ? ` · ${esc(t('board.usageCost', fmtCost(u.cost)))}` : ''}${
+          u.limit != null ? ` · ${esc(t('board.usageLimit', fmtPercent(u.limit), u.limitDays))}` : ''}</p>` : '';
+        list.innerHTML = spent + (rows.length ? rows.map(r => {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
           // A supervisor's run says what it found; a worker's run, what it added.
           const what = a.sup ? `<span>${r.status ? supStatus(r.status) : ''}</span>`
@@ -353,7 +357,7 @@ export function mountDashboard(funnels, opts = {}) {
           const tok = r.tokens != null ? `<span class="tok" title="${esc(r.cost != null ? t('board.usageCost', fmtCost(r.cost)) : '')}">${esc(fmtTokens(r.tokens))}</span>` : '';
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
             ${what}${tok}</div>`;
-        }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`;
+        }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
         pop.style.top = Math.max(8, Math.min(window.innerHeight - pop.offsetHeight - 8, pop.offsetTop)) + 'px';
       } catch { list.textContent = t('board.runsFailed'); delete list.dataset.loaded; }
     });

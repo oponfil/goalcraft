@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=65a915ad';
-import { mountDashboard } from './dashboard.js?v=65a915ad';
-import { t } from './i18n.js?v=65a915ad';
+import { FUNNELS, SUP_RUNS } from './data.js?v=518f8294';
+import { mountDashboard } from './dashboard.js?v=518f8294';
+import { t } from './i18n.js?v=518f8294';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -29,7 +29,7 @@ function demoRuns(a) {
         status: i === 0 ? a.status : SUP_RUNS[Math.floor(r() * SUP_RUNS.length)] });
       start -= (3 + r() * 3) * 3600e3;
     }
-    return rows;
+    return withTokens(a, rows, r);
   }
   const z = a.zone + 1, st = a.f.stages, holds = z < st.length ? st[z].count : a.f.cubes;
   const perDay = a.f.flows[z] || 0, crew = Math.max(1, a.f.workers.filter(w => w.zone === a.zone).length);
@@ -44,5 +44,19 @@ function demoRuns(a) {
     rows.push({ zone: z, started_at: new Date(start).toISOString(), ended_at: ended && new Date(ended).toISOString(), added });
     start -= gap * 3600e3;
   }
-  return rows;
+  return withTokens(a, rows, r);
+}
+
+// Made-up token use, as the wake script reads it on the person's computer: Claude (Claude Code) with
+// its cost at API prices, ChatGPT (Codex) with its plan's weekly limit. Other agents run in web chats,
+// whose use nobody outside can read, so they show none.
+function withTokens(a, rows, r) {
+  if (a.agent !== 'claude' && a.agent !== 'chatgpt') return rows;
+  let limit = 6 + r() * 20;
+  return rows.map(row => {
+    const minutes = ((row.ended_at ? Date.parse(row.ended_at) : Date.now()) - Date.parse(row.started_at)) / 60e3;
+    const tokens = Math.round(Math.max(0.4, minutes) * (0.25 + r() * 0.35) * 1e6);
+    limit = Math.max(1, limit - minutes / 20);
+    return a.agent === 'claude' ? { ...row, tokens, cost: tokens * 0.4 / 1e6 } : { ...row, tokens, limit: Math.round(limit), limitDays: 7 };
+  });
 }
