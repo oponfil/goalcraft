@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c7b9eeae';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c7b9eeae';
-import { t, lang } from './i18n.js?v=c7b9eeae';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=0d0eebb9';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=0d0eebb9';
+import { t, lang } from './i18n.js?v=0d0eebb9';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -64,12 +64,12 @@ export function mountDashboard(funnels, opts = {}) {
   }
   window.addEventListener('resize', layout);
 
-  // Zoom, in the top bar before the clock: − 100% +; a click on the percentage goes back to 100%.
+  // Zoom, in the top bar next to the logo: − 100% +; a click on the percentage goes back to 100%.
   // The point at the middle of the view stays in the middle.
   const zoomBox = document.createElement('span');
-  zoomBox.id = 'zoom'; zoomBox.className = 'wide';
+  zoomBox.id = 'zoom';
   zoomBox.innerHTML = `<button type="button" data-d="-1" aria-label="${esc(t('board.zoomOut'))}" title="${esc(t('board.zoomOut'))}">−</button><button type="button" class="pct" data-d="0"></button><button type="button" data-d="1" aria-label="${esc(t('board.zoomIn'))}" title="${esc(t('board.zoomIn'))}">+</button>`;
-  clock.before(zoomBox);
+  document.querySelector('.sitebar .logo').after(zoomBox);
   const zoomButtons = () => zoomBox.querySelectorAll('button').forEach(b => {
     if (b.dataset.d === '0') { b.textContent = Math.round(zoom * 100) + '%'; b.disabled = zoom === 1; return; }
     const i = ZOOMS.indexOf(zoom) + Number(b.dataset.d); b.disabled = i < 0 || i >= ZOOMS.length;

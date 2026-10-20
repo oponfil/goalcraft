@@ -322,8 +322,10 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 .spin { display: inline-block; width: 0.9em; height: 0.9em; margin-right: 0.5em; vertical-align: -0.12em;
   border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
 
-/* Zoom in the top bar: − 100% +, framed like the Refresh button. */
-#zoom { display: inline-flex; align-items: center; border: 2px solid var(--border); }
+/* Zoom in the top bar next to the logo: − 100% +, framed like the Refresh button. Phones zoom with
+   their fingers, so it hides there. */
+#zoom { display: inline-flex; align-items: center; border: 2px solid var(--border); margin: 0 auto 0 24px; }
+@media (max-width: 560px) { #zoom { display: none; } }
 #zoom button { height: 26px; min-width: 26px; padding: 0 6px; background: none; border: 0; color: var(--text); font: 600 15px/1 var(--font); cursor: pointer; }
 #zoom button.pct { min-width: 48px; font-size: 13px; font-weight: 500; color: var(--muted); }
 #zoom button + button { border-left: 2px solid var(--border); }
