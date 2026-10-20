@@ -1,12 +1,12 @@
 // Renders the README pictures (agents sheet, theme samples, the board) and the link preview card from the same drawing code as
 // the dashboard and saves them through serve.py: open http://localhost:5173/tools/render-docs.html
 // (always in English: the page adds ?lang=en to itself).
-import { AGENTS, FUNNELS } from '../src/data.js?v=8e332ba8';
-import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=8e332ba8';
-import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=8e332ba8';
+import { AGENTS, FUNNELS } from '../src/data.js?v=44d6396f';
+import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=44d6396f';
+import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=44d6396f';
 import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
-import { THEMES } from '../src/themes.js?v=8e332ba8';
-import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=8e332ba8';
+import { THEMES } from '../src/themes.js?v=44d6396f';
+import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=44d6396f';
 
 const FONT = 'Rubik, system-ui, sans-serif';
 
@@ -191,9 +191,9 @@ async function ogCard() {
   return c;
 }
 
-// One funnel with labels on its right, each with a line to the part it explains: the README's guide
-// to reading the board. The Job Search demo funnel after a few seconds, while Grok still sleeps and
-// the supervisor stands at the left end of its platform.
+// One funnel with labels on both sides, each with a straight line to the part it explains: the
+// README's guide to reading the board. The Job Search demo funnel after a few seconds, while Grok
+// still sleeps and the supervisor stands at the left end of its platform.
 function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   const scale = 2, dpr = 2, K = scale * dpr, side = 440;
   // A fresh scene runs fifteen seconds first, so the tanks have filled (a piece drops in every
@@ -205,8 +205,8 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   scene.render();
   // Without labels (the landing page writes them as text, in the page's language) the picture is
   // just the funnel.
-  const left = labels ? side : 0;
-  const [c, g] = canvas(left + CW * K, TH * K + Math.min(scene.canvas.height, Math.ceil(guideHeight(scene) * K)), show);
+  const left = labels ? side : 0, fw = CW * K;
+  const [c, g] = canvas(left + fw + (labels ? side : 0), TH * K + Math.min(scene.canvas.height, Math.ceil(guideHeight(scene) * K)), show);
   g.fillStyle = '#1B1714'; g.fillRect(0, 0, c.width, c.height);
   const drawn = drawGuide(scene, g, left);
   // Points in the scene's logical coordinates → picture pixels.
@@ -214,30 +214,35 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   const f = scene.funnels[0], n = f.stages.length, cx = scene.cx(0);
   const stage = j => scene.hits.find(h => h.type === 'stage' && h.j === j);
   const agent = (id, state) => scene.agents.find(a => a.agent === id && a.state === state);
-  const s0 = stage(0), last = stage(n - 1);
-  const ask = agent('claude', 'ask'), sleep = scene.spot(agent('grok', 'sleep'), 'rest'), work = scene.spot(agent('chatgpt', 'work'), 'work');
+  const s0 = stage(0), s1 = stage(1), last = stage(n - 1);
+  const ask = agent('claude', 'ask'), sleep = scene.spot(agent('grok', 'sleep'), 'rest');
+  const work = scene.spot(agent('gemini', 'work'), 'work'), late = scene.spot(agent('mistral', 'work'), 'work');
   const src0 = scene.hits.find(h => h.type === 'source'), doc0 = scene.hits.find(h => h.type === 'guide');
   const resultsY = last.y + last.h + 40 + 9;
-  // The tank's left side halfway down: the sides run straight from this tank's top to the next one's.
-  const s1 = stage(1), tankMid = s0.w / 2 - (s0.w - s1.w) / 2 * (s0.h / 2) / (s1.y - s0.y);
-  // Each arrow ends on the left edge of what it explains.
+  // The tanks' sides run straight from one tank's top to the next: how far in they go per unit down.
+  const slope = (s0.w - s1.w) / 2 / (s1.y - s0.y);
   // The supervisor stands at the platform's left end for a while; the arrow points at it there.
   const sup = scene.spot(scene.agents.find(a => a.sup), 'ask');
+  // [point, side, heading, text]: a left label's arrow ends on the left edge of what it explains, a
+  // right one's on the right edge.
   const notes = [
-    ...(drawn.tasks ? [[[left + drawn.tasks.x, drawn.tasks.y + drawn.tasks.h / 2], 'Your tasks', 'What only you can do, most urgent first; the supervisor keeps the list. Click to see it.']] : []),
-    [P(sup.x + 2, sup.y + 2), 'Supervisor', 'Your agent watching the whole funnel.'],
-    [P(doc0.x + 3, doc0.y + 18), 'Notes and list', 'Notes on the left: everything the agents need to know about the funnel. The list on the right: where they keep track.'],
-    [P(cx - tankMid + 2, s0.y + s0.h / 2), 'Tank', 'Items at this stage so far, and +N a day. Click the number for its history by day.'],
+    ...(drawn.tasks ? [[[left + drawn.tasks.x, drawn.tasks.y + drawn.tasks.h / 2], 'L', 'Your tasks', 'What only you can do, most urgent first; the supervisor keeps the list. Click to see it.']] : []),
+    ...(drawn.badges ? [[[left + drawn.badges.x + drawn.badges.w, drawn.badges.y + drawn.badges.h / 2], 'R', 'Waiting and silent', 'Red: questions waiting for you. Amber: agents gone silent.']] : []),
+    [P(sup.x + 2, sup.y + 2), 'L', 'Supervisor', 'Your agent watching the whole funnel.'],
+    [P(doc0.x + 3, doc0.y + 18), 'L', 'Notes', 'Everything the agents need to know about the funnel. Click to open.'],
+    [P(src0.x + src0.w - 3, src0.y + 18), 'R', 'List', 'Where the agents keep track of the items. Click to open.'],
+    [P(work.x + 19, work.y + 12), 'R', 'Agent at work', '+N is what its current run added.'],
+    [P(cx + s1.w / 2 - slope * s1.h * 0.3 - 2, s1.y + s1.h * 0.3), 'R', 'Tank', 'Items at this stage so far, and +N a day. Click the number for its history.'],
     // The bubble bobs; the arrow points where it rests, so the label stays still.
-    [P(ask.bubble.x, scene.spot(ask, 'ask').y - 2 + 11), 'Question', 'An agent waits for your answer. Click it to reply.'],
-    [P(sleep.x - 1, sleep.y + 1), 'Asleep', 'Resting until its next run; the timer counts down.'],
-    [P(work.x + 1, work.y + 12), 'Agent at work', '+N is what its current run added.'],
-    [P(cx - 45, resultsY + 8), 'Results', 'One per result the goal needs; filled ones are done.'],
-    [P(cx - 23, resultsY + 48), 'Prediction', 'When the next result is due at the current pace.'],
-  ];
-  // The landing page's labels point at the same places: each as a fraction of the picture.
+    [P(ask.bubble.x, scene.spot(ask, 'ask').y - 2 + 11), 'L', 'Question', 'An agent waits for your answer. Click it to reply.'],
+    [P(late.x + 23, late.y - 10), 'R', 'Silent', 'No word from this agent at work for 20 minutes: check on it.'],
+    [P(sleep.x - 1, sleep.y + 1), 'L', 'Asleep', 'Resting until its next run; the timer counts down.'],
+    [P(cx - 45, resultsY + 8), 'L', 'Results', 'One per result the goal needs; filled ones are done.'],
+    [P(cx - 23, resultsY + 48), 'L', 'Prediction', 'When the next result is due at the current pace.'],
+  ].map(([pt, sd, head, text]) => [pt, head, text, sd]);
+  // The landing page's labels point at the same places: each as a fraction of the funnel picture.
   if (!labels) {
-    const points = notes.map(([[x, y], head]) => `${head}: x ${(x / c.width).toFixed(3)}, y ${(y / c.height).toFixed(3)}`);
+    const points = notes.map(([[x, y], head, , sd]) => `${head} (${sd}): x ${(x / c.width).toFixed(3)}, y ${(y / c.height).toFixed(3)}`);
     return Object.assign(c, { points });
   }
   const wrap = (text, w) => {
@@ -249,28 +254,33 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
     return lines;
   };
   // A label beside its arrow: the heading on the arrow's level, the text under it. The arrow runs
-  // from the heading to the point: straight across, or slanting up when the label above pushed this
-  // one down.
-  let bottom = 0;
-  notes.sort((a, b) => a[0][1] - b[0][1]).forEach(([[tx, ty], head, text, minTop = 0]) => {
-    g.font = `500 22px ${FONT}`;
-    const lines = wrap(text, side - 130), lh = 28, h = 36 + lines.length * lh, x = 70;
-    const top = Math.max(bottom + 16, ty - 16, minTop);
-    bottom = top + h;
-    g.textAlign = 'left'; g.textBaseline = 'top';
-    g.font = `700 28px ${FONT}`; g.fillStyle = '#F2C14E'; g.fillText(head, x, top);
-    const hw = g.measureText(head).width;
-    g.font = `500 22px ${FONT}`; g.fillStyle = '#D8CFC2';
-    lines.forEach((l, i) => g.fillText(l, x, top + 36 + i * lh));
-    const y0 = Math.max(ty, top + 16), x0 = x + hw + 14, x1 = tx - 4, head2 = 14;
-    const a = Math.atan2(ty - y0, x1 - x0), cos = Math.cos(a), sin = Math.sin(a);
-    g.strokeStyle = '#F2C14E'; g.lineWidth = 3;
-    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1 - (head2 - 2) * cos, ty - (head2 - 2) * sin); g.stroke();
-    g.fillStyle = '#F2C14E';
-    g.beginPath(); g.moveTo(x1, ty);
-    g.lineTo(x1 - head2 * cos + 8 * sin, ty - head2 * sin - 8 * cos); g.lineTo(x1 - head2 * cos - 8 * sin, ty - head2 * sin + 8 * cos);
-    g.closePath(); g.fill();
-  });
+  // from the heading to the point: straight across, or slanting when the label above pushed this one
+  // down. Each side stacks its own labels.
+  for (const sd of ['L', 'R']) {
+    let bottom = 0;
+    notes.filter(nt => nt[3] === sd).sort((a, b) => a[0][1] - b[0][1]).forEach(([[tx, ty], head, text]) => {
+      g.font = `500 22px ${FONT}`;
+      const lines = wrap(text, side - 130), lh = 28, h = 36 + lines.length * lh;
+      const top = Math.max(bottom + 16, ty - 16);
+      bottom = top + h;
+      g.font = `700 28px ${FONT}`;
+      const hw = g.measureText(head).width;
+      // Left labels start at the picture's left edge, right ones end at its right edge.
+      const x = sd === 'L' ? 70 : c.width - 70 - Math.max(hw, ...lines.map(l => (g.font = `500 22px ${FONT}`, g.measureText(l).width)));
+      g.textAlign = 'left'; g.textBaseline = 'top';
+      g.font = `700 28px ${FONT}`; g.fillStyle = '#F2C14E'; g.fillText(head, x, top);
+      g.font = `500 22px ${FONT}`; g.fillStyle = '#D8CFC2';
+      lines.forEach((l, i) => g.fillText(l, x, top + 36 + i * lh));
+      const y0 = Math.max(ty, top + 16), x0 = sd === 'L' ? x + hw + 14 : x - 14, x1 = sd === 'L' ? tx - 4 : tx + 4, head2 = 14;
+      const a = Math.atan2(ty - y0, x1 - x0), cos = Math.cos(a), sin = Math.sin(a);
+      g.strokeStyle = '#F2C14E'; g.lineWidth = 3;
+      g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1 - (head2 - 2) * cos, ty - (head2 - 2) * sin); g.stroke();
+      g.fillStyle = '#F2C14E';
+      g.beginPath(); g.moveTo(x1, ty);
+      g.lineTo(x1 - head2 * cos + 8 * sin, ty - head2 * sin - 8 * cos); g.lineTo(x1 - head2 * cos - 8 * sin, ty - head2 * sin + 8 * cos);
+      g.closePath(); g.fill();
+    });
+  }
   return c;
 }
 

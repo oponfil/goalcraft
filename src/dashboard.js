@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=8e332ba8';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=8e332ba8';
-import { t, lang } from './i18n.js?v=8e332ba8';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=44d6396f';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=44d6396f';
+import { t, lang } from './i18n.js?v=44d6396f';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -114,7 +114,7 @@ export function mountDashboard(funnels, opts = {}) {
   function buildTitles() {
     track.innerHTML = scene.funnels.map((f, fi) =>
       `<div class="col-title" data-fi="${fi}" style="left:${fi * CW * scale}px;width:${CW * scale}px">
-        <span class="name">${esc(f.title)}</span><span class="badge" hidden></span><span class="badge warn" hidden></span><button type="button" class="tasks-btn" hidden>${TASKS_ICON}<span></span></button></div>`).join('');
+        <button type="button" class="tasks-btn" hidden>${TASKS_ICON}<span></span></button><span class="name">${esc(f.title)}</span><span class="badge" hidden></span><span class="badge warn" hidden></span></div>`).join('');
     const h = track.parentElement.clientHeight / scale;
     track.querySelectorAll('.col-title').forEach(el => {
       el.style.backgroundImage = `url(${scene.titleStrip(+el.dataset.fi, h).toDataURL()})`;

@@ -1,8 +1,8 @@
 // The funnel the landing page and the README explain: the demo's Job Search cut to two stages,
 // with an agent in each state the labels point at. They stay in their states, so the labels always
 // point at them. The landing page runs it live; tools/render-docs.js records it.
-import { FUNNELS } from './data.js?v=8e332ba8';
-import { Scene, CW } from './scene.js?v=8e332ba8';
+import { FUNNELS } from './data.js?v=44d6396f';
+import { Scene, CW } from './scene.js?v=44d6396f';
 
 export const TH = 22;  // the title strip over the funnel, in scene units
 const FONT = 'Rubik, system-ui, sans-serif';
@@ -16,7 +16,8 @@ export function guideScene() {
     workers: [
       { agent: 'chatgpt', zone: -1, state: 'work', keep: true }, { agent: 'perplexity', zone: -1, state: 'work', keep: true },
       { agent: 'claude', zone: 0, state: 'ask', question: job.workers.find(w => w.state === 'ask').question }, { agent: 'gemini', zone: 0, state: 'work', keep: true },
-      { agent: 'grok', zone: 1, state: 'sleep', wakeIn: 12, keep: true }, { agent: 'mistral', zone: 1, state: 'work', keep: true },
+      // Mistral has said nothing for 20 minutes at work: the amber triangle over it.
+      { agent: 'grok', zone: 1, state: 'sleep', wakeIn: 12, keep: true }, { agent: 'mistral', zone: 1, state: 'work', keep: true, silentFor: 20 * 60 },
     ],
   };
   // The agents the arrows point at stand on the left, by the labels, so no arrow crosses anything
@@ -64,5 +65,21 @@ export function drawGuide(scene, g, left = 0) {
     g.fillText(String(f.tasks.length), x + 25 * d, my + 0.5 * d);
     tasks = { x: x - left, y, w: bw, h: bh };
   }
-  return { w: fw, h: TH * K + h, tasks };
+  // On its right, as on the dashboard: the red badge counts the questions waiting for you, the amber
+  // one the agents gone silent.
+  let badges = null;
+  g.font = `600 ${19 * d}px ${FONT}`;
+  let bx = left + fw / 2 + g.measureText(f.title).width / 2 + 8 * d;
+  const pill = (n, bg, fg) => {
+    if (!n) return;
+    g.font = `500 ${13 * d}px ${FONT}`;
+    const w = Math.max(20 * d, g.measureText(String(n)).width + 12 * d), ph = 20 * d, y = my - ph / 2;
+    g.fillStyle = bg; g.beginPath(); g.roundRect(bx, y, w, ph, ph / 2); g.fill();
+    g.fillStyle = fg; g.textAlign = 'center'; g.fillText(String(n), bx + w / 2, my + 0.5 * d);
+    badges ??= { x: bx - left, y, h: ph }; badges.w = bx + w - left - badges.x;
+    bx += w + 6 * d;
+  };
+  pill(scene.waitingFor(f), '#FF6B5E', '#FFFFFF');
+  pill(scene.silentIn(f), '#F2A33C', '#1B1714');
+  return { w: fw, h: TH * K + h, tasks, badges };
 }

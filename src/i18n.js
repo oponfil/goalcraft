@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=8e332ba8';
-import vi from './lang/vi.js?v=8e332ba8';
-import ja from './lang/ja.js?v=8e332ba8';
-import pt from './lang/pt.js?v=8e332ba8';
-import tr from './lang/tr.js?v=8e332ba8';
-import ko from './lang/ko.js?v=8e332ba8';
+import es from './lang/es.js?v=44d6396f';
+import vi from './lang/vi.js?v=44d6396f';
+import ja from './lang/ja.js?v=44d6396f';
+import pt from './lang/pt.js?v=44d6396f';
+import tr from './lang/tr.js?v=44d6396f';
+import ko from './lang/ko.js?v=44d6396f';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -124,14 +124,18 @@ const STRINGS = {
   // The landing page's funnel: what each part is
   'guide.tasks.h': L('Your tasks', 'Ваши дела', '你的待办', 'งานของคุณ'),
   'guide.tasks': L('What only you can do, most urgent first; the supervisor keeps the list. Click to see it.', 'То, что можете сделать только вы, от самого срочного; список ведёт супервайзер. Нажмите, чтобы посмотреть.', '只有你能做的事，最紧急的在前；清单由主管维护。点击查看。', 'สิ่งที่มีแค่คุณทำได้ เรียงจากเร่งด่วนที่สุด ผู้ดูแลเป็นคนดูแลรายการ คลิกเพื่อดู'),
+  'guide.notes.h': L('Notes', 'Заметки', '笔记', 'โน้ต'),
+  'guide.notes': L('Everything the agents need to know about the funnel. Click to open.', 'Всё, что агентам нужно знать о воронке. Нажмите, чтобы открыть.', '智能体需要知道的关于漏斗的一切。点击打开。', 'ทุกอย่างที่เอเจนต์ต้องรู้เกี่ยวกับกรวย คลิกเพื่อเปิด'),
+  'guide.list.h': L('List', 'Список', '清单', 'รายการ'),
+  'guide.list': L('Where the agents keep track of the items. Click to open.', 'Где агенты ведут учёт. Нажмите, чтобы открыть.', '智能体记录条目的地方。点击打开。', 'ที่ที่เอเจนต์บันทึกรายการ คลิกเพื่อเปิด'),
+  'guide.badges.h': L('Waiting and silent', 'Ждут и молчат', '等待与失联', 'รอและเงียบ'),
+  'guide.badges': L('Red: questions waiting for you. Amber: agents gone silent.', 'Красный: вопросы, которые ждут вашего ответа. Жёлтый: агенты, которые замолчали.', '红色：等你回答的问题。黄色：失联的智能体。', 'สีแดง: คำถามที่รอคุณ สีเหลือง: เอเจนต์ที่เงียบไป'),
+  'guide.silent.h': L('Silent', 'Молчит', '失联', 'เงียบ'),
+  'guide.silent': L('No word from this agent at work for 20 minutes: check on it.', 'Агент за работой молчит уже 20 минут: проверьте его.', '这个工作中的智能体已 20 分钟没有消息：去看看它。', 'เอเจนต์ที่กำลังทำงานเงียบไป 20 นาทีแล้ว: ลองตรวจดู'),
   'guide.supervisor.h': L('Supervisor', 'Супервайзер', '主管', 'ผู้ดูแล'),
   'guide.supervisor': L('Your agent watching the whole funnel.', 'Ваш агент, следящий за всей воронкой.', '你的智能体，盯着整个漏斗。', 'เอเจนต์ของคุณที่คอยดูทั้งกรวย'),
-  'guide.doc.h': L('Notes and list', 'Заметки и список', '笔记和清单', 'โน้ตและรายการ'),
-  'guide.doc': L('Notes on the left: everything the agents need to know about the funnel. The list on the right: where they keep track.', 'Слева заметки: всё, что агентам нужно знать о воронке. Справа список: где они ведут учёт.', '左边是笔记：智能体需要知道的关于漏斗的一切。右边是清单：它们在哪里记录。', 'ซ้ายคือโน้ต: ทุกอย่างที่เอเจนต์ต้องรู้เกี่ยวกับกรวย ขวาคือรายการ: ที่ที่พวกมันบันทึก'),
-  'guide.sheet.h': L('Sheet', 'Таблица', '表格', 'ตาราง'),
-  'guide.sheet': L('The table where the agents keep track of everything.', 'Таблица, где агенты ведут учёт всего.', '智能体记录一切的表格。', 'ตารางที่เอเจนต์ใช้ติดตามทุกอย่าง'),
   'guide.tank.h': L('Tank', 'Бак', '储罐', 'ถัง'),
-  'guide.tank': L('Items at this stage so far, and +N a day (or an hour, a week: your choice). Click the number for its history by day.', 'Сколько позиций дошло до этого этапа и +N в день (или в час, в неделю — как выберете). Нажмите на число — история по дням.', '到达这个阶段的数量，以及每天 +N（也可选每小时、每周）。 点击数字查看每日历史。', 'จำนวนรายการที่ถึงขั้นนี้แล้ว และ +N ต่อวัน (หรือต่อชั่วโมง ต่อสัปดาห์ ตามที่เลือก) คลิกตัวเลขเพื่อดูประวัติรายวัน'),
+  'guide.tank': L('Items at this stage so far, and +N a day. Click the number for its history.', 'Сколько дошло до этапа и +N в день. Нажмите на число — история.', '到达这个阶段的数量和每天 +N。点击数字查看历史。', 'จำนวนที่ถึงขั้นนี้และ +N ต่อวัน คลิกตัวเลขเพื่อดูประวัติ'),
   'guide.question.h': L('Question', 'Вопрос', '问题', 'คำถาม'),
   'guide.question': L('An agent waits for your answer. Click it to reply.', 'Агент ждёт вашего ответа. Нажмите, чтобы ответить.', '智能体在等你回复。点击即可回复。', 'เอเจนต์กำลังรอคำตอบจากคุณ คลิกเพื่อตอบ'),
   'guide.asleep.h': L('Asleep', 'Спит', '休眠', 'หลับอยู่'),

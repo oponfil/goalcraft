@@ -34,16 +34,20 @@ h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.12; margin: 0 auto 18px; 
 .btn.primary:hover { background: #FFD866; border-color: #FFD866; }
 .btn:disabled { opacity: 0.5; cursor: wait; }
 .shot { display: block; margin: 40px auto 0; width: 100%; border: 2px solid var(--border); image-rendering: pixelated; }
-/* The landing page's funnel with labels: the picture on the right, each label on the left at its
-   part's height with a straight arrow to it. On a phone the labels follow the picture as a list. */
-.guide { --img: 460px; position: relative; margin: 40px auto 0; max-width: 820px; }
-.guide img, .guide canvas.live { display: block; width: var(--img); height: auto; margin-left: auto; border: 2px solid var(--border); }
-.guide .note { position: absolute; top: calc(var(--y) * 100%); right: calc(var(--img) + 28px); width: calc(100% - var(--img) - 40px); transform: translateY(-13px); text-align: right; font-size: 15px; line-height: 1.35; color: var(--muted); }
+/* The landing page's funnel with labels: the picture in the middle, each label beside it at its part's
+   height with a straight arrow to it, on the left or (.r) on the right. On a phone the labels follow
+   the picture as a list. */
+.guide { --img: 460px; --side: calc(50% - var(--img) / 2); position: relative; margin: 40px auto 0; max-width: 1240px; }
+.guide img, .guide canvas.live { display: block; width: var(--img); height: auto; margin: 0 auto; border: 2px solid var(--border); }
+.guide .note { position: absolute; top: calc(var(--y) * 100%); right: calc(var(--side) + var(--img) + 28px); width: calc(var(--side) - 40px); transform: translateY(-13px); text-align: right; font-size: 15px; line-height: 1.35; color: var(--muted); }
 .guide .note b { display: block; color: var(--accent); font-size: 19px; line-height: 1.35; }
 .guide .note::after { content: ""; position: absolute; top: 13px; left: calc(100% + 6px); width: calc(var(--x) * var(--img) + 20px); height: 3px; margin-top: -1px; background: var(--accent); }
 .guide .note::before { content: ""; position: absolute; top: calc(13px - 7px); left: calc(100% + 18px + var(--x) * var(--img)); border: 7px solid transparent; border-left: 12px solid var(--accent); border-right: 0; z-index: 1; }
-/* The top label (the supervisor) grows upwards, its text over its heading: on a narrow page its text
-   wraps to more lines and would run into the label under it. The heading stays on the arrow. */
+.guide .note.r { right: auto; left: calc(var(--side) + var(--img) + 28px); text-align: left; }
+.guide .note.r::after { left: auto; right: calc(100% + 6px); width: calc((1 - var(--x)) * var(--img) + 20px); }
+.guide .note.r::before { left: auto; right: calc(100% + 18px + (1 - var(--x)) * var(--img)); border-left: 0; border-right: 12px solid var(--accent); }
+/* The top labels grow upwards, their text over the heading: on a narrow page the text wraps to more
+   lines and would run into the label under it. The heading stays on the arrow. */
 .guide .note.up { display: flex; flex-direction: column-reverse; transform: translateY(calc(-100% + 13px)); }
 .guide .note.up::after { top: auto; bottom: 12px; }
 .guide .note.up::before { top: auto; bottom: 6px; }
