@@ -37,7 +37,9 @@ LABEL = 'ai.goalcraft.wake'
 PLIST = HOME / 'Library' / 'LaunchAgents' / f'{LABEL}.plist'
 SESSIONS = HOME / 'Library' / 'Application Support' / 'Claude' / 'claude-code-sessions'
 # Where the agents' command-line tools usually are: launchd starts the script with a bare PATH.
-BINS = [HOME / '.local' / 'bin', pathlib.Path('/opt/homebrew/bin'), pathlib.Path('/usr/local/bin'), HOME / '.npm-global' / 'bin']
+BINS = [HOME / '.local' / 'bin', pathlib.Path('/opt/homebrew/bin'), pathlib.Path('/usr/local/bin'), HOME / '.npm-global' / 'bin',
+        # Codex as it comes inside the ChatGPT app on macOS.
+        pathlib.Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin')]
 # The Goalcraft MCP server under the names it usually has: as a claude.ai connector, or added by hand.
 GOALCRAFT_TOOLS = ['mcp__claude_ai_Goalcraft', 'mcp__goalcraft', 'mcp__goalagents']
 RUN_LIMIT = 30 * 60  # a woken run that takes longer is stopped

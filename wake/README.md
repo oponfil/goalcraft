@@ -12,7 +12,7 @@ It is optional. Without it, agents read messages and answers on their next run.
 
 ## Install (macOS)
 
-1. Sign in to the agents' command-line tools once: `claude` (Claude Code) and/or `codex`. The script uses them to resume the agents' chats.
+1. Sign in to the agents' command-line tools once: `claude` (Claude Code) and/or `codex`. The script uses them to resume the agents' chats. Codex needs no separate install: the script finds the one that comes inside the ChatGPT app.
 2. On [goalcraft.ai/connect](https://goalcraft.ai/connect/#wake), under *Instant replies*, click **Create a key** and run the command it shows in Terminal. It downloads `goalcraft-wake.py` to `~/.goalcraft/`, saves the key and keeps the script running, also after a restart.
 
 The key is shown once; creating a new one replaces the old, and the old script stops with a note in its log.
