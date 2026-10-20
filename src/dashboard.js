@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=3a120dbf';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=3a120dbf';
-import { t, lang } from './i18n.js?v=3a120dbf';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=206b853e';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=206b853e';
+import { t, lang } from './i18n.js?v=206b853e';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -50,14 +50,12 @@ export function mountDashboard(funnels, opts = {}) {
   const saveOrder = () => { try { localStorage.setItem(ORDER_KEY, JSON.stringify(scene.order())); } catch {} };
   loadOrder();
 
-  // Scene size is fixed at load: about four funnels across the screen, but not much taller than
-  // the screen (a little vertical scroll is fine for the tallest funnel). Resizing the window
-  // only changes how many funnels are visible; the rest are reached with horizontal scroll. The
-  // funnel tanks are tall, so a bit more vertical scroll is allowed than the screen's height.
-  const byH = (scroller.clientHeight - 20) / scene.H;
+  // Scene size is fixed at load: four funnels across the screen, whatever its height (the board
+  // scrolls down for the rest of a funnel). Resizing the window only changes how many funnels are
+  // visible; the rest are reached with horizontal scroll.
   // On a phone the pixel scene would be too small at 1:1, so it starts 30% larger there.
   const minScale = scroller.clientWidth < 600 ? 1.3 : 1;
-  const scale = Math.max(minScale, Math.min(scroller.clientWidth / (4.2 * CW), byH * 1.6));
+  const scale = Math.max(minScale, scroller.clientWidth / (4 * CW));
   function layout() {
     if (scene.dpr !== (window.devicePixelRatio || 1)) scene.resize(scale, window.devicePixelRatio || 1);
     scroller.classList.toggle('fits', scene.funnels.length * CW * scale <= scroller.clientWidth);
