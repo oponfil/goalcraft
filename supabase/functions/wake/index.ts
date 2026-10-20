@@ -6,7 +6,8 @@
 //   GET /wake?agents=1   → { agents: [{ agent, funnel_id, app, session }] }: the agents on this computer whose
 //                          token use the script reads (nobody is woken or marked)
 //   POST /wake { usage: [{ funnel_id, agent, run_key, app, model, started_at, ended_at, tokens, new_tokens,
-//                cost_usd, limit_percent, limit_window_minutes }] }   → { saved }: what their runs used
+//                input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd,
+//                limit_percent, limit_used, limit_window_minutes }] }   → { saved }: what their runs used
 //
 // An agent is woken once for each reason: a message it has not read (from the person, or for a
 // worker from its supervisor), an answer to its question while it sleeps, for a supervisor a worker's
@@ -57,7 +58,10 @@ async function saveUsage(user: string, body: any) {
       user_id: user, funnel_id, agent, run_key, app: r.app, model: str(r.model, 64), started_at, ended_at,
       tokens: Math.round(num(r.tokens, 1e12) ?? 0), new_tokens: Math.round(num(r.new_tokens, 1e12) ?? 0),
       cost_usd: num(r.cost_usd, 1e6), limit_percent: num(r.limit_percent, 100),
-      limit_window_minutes: num(r.limit_window_minutes, 1e6), updated_at: new Date().toISOString(),
+      limit_window_minutes: num(r.limit_window_minutes, 1e6), limit_used: num(r.limit_used, 100),
+      input_tokens: num(r.input_tokens, 1e12), cache_read_tokens: num(r.cache_read_tokens, 1e12),
+      cache_write_tokens: num(r.cache_write_tokens, 1e12), output_tokens: num(r.output_tokens, 1e12),
+      updated_at: new Date().toISOString(),
     }]
   })
   if (ok.length) {

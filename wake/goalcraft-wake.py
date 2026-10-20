@@ -172,8 +172,8 @@ USAGE_DAYS = 2      # runs ended this recently are (re)sent
 RUN_GAP = 15 * 60   # a pause this long in one session starts a new run
 PROJECTS = HOME / '.claude' / 'projects'
 CODEX_SESSIONS = HOME / '.codex' / 'sessions'
-# API prices in $ per million tokens (input, output, cache read); cache writes cost 1.25x input for
-# 5 minutes and 2x for an hour. Longest matching prefix wins; other models get no cost.
+# Anthropic's API prices in $ per million tokens (input, output, cache read); cache writes cost 1.25x
+# input for 5 minutes and 2x for an hour. Longest matching prefix wins; other models get no cost.
 PRICES = {
     'claude-fable-5-1': (10, 50, 0.25), 'claude-fable-5': (10, 50, 1.0), 'claude-mythos': (10, 50, 1.0),
     'claude-opus-5-5': (4, 20, 0.2), 'claude-opus-5': (5, 25, 0.5), 'claude-opus-4': (5, 25, 0.5),
@@ -182,9 +182,13 @@ PRICES = {
 }
 
 
-def price(model):
-    hits = [k for k in PRICES if model and model.startswith(k)]
-    return PRICES[max(hits, key=len)] if hits else None
+# OpenAI's API prices for Codex's models, $ per million tokens (input, output, cached input, cache write).
+OPENAI_PRICES = {'gpt-6.1-sol': (2, 10, 0.10, 2.5)}
+
+
+def price(model, table=PRICES):
+    hits = [k for k in table if model and model.startswith(k)]
+    return table[max(hits, key=len)] if hits else None
 
 
 def when(ts):
@@ -245,14 +249,16 @@ def claude_usage(item, sessions):
             for run in split_runs(points):
                 if run[-1][0] < since:
                     continue
-                tokens = new = 0
+                kinds = {'input_tokens': 0, 'cache_read_tokens': 0, 'cache_write_tokens': 0, 'output_tokens': 0}
                 cost, models = 0.0, {}
                 for _, model, u in run:
                     fresh, read, out_ = u.get('input_tokens', 0), u.get('cache_read_input_tokens', 0), u.get('output_tokens', 0)
                     write = u.get('cache_creation_input_tokens', 0)
                     hour = (u.get('cache_creation') or {}).get('ephemeral_1h_input_tokens', 0)
-                    tokens += fresh + write + read + out_
-                    new += fresh + write + out_
+                    kinds['input_tokens'] += fresh
+                    kinds['cache_read_tokens'] += read
+                    kinds['cache_write_tokens'] += write
+                    kinds['output_tokens'] += out_
                     models[model] = models.get(model, 0) + 1
                     pr = price(model)
                     if model == '<synthetic>':  # Claude Code's own notes, not a model call
@@ -263,9 +269,15 @@ def claude_usage(item, sessions):
                         cost += (fresh * pr[0] + out_ * pr[1] + read * pr[2] + hour * pr[0] * 2 + (write - hour) * pr[0] * 1.25) / 1e6
                 out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'claude',
                             'run_key': f'{cli}:{int(run[0][0])}', 'model': max(models, key=models.get),
-                            'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), 'tokens': tokens, 'new_tokens': new,
+                            'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), **totals(kinds),
                             'cost_usd': round(cost, 4) if cost is not None else None})
     return out
+
+
+def totals(kinds):
+    """A run's tokens by kind, with the sum of all of them and of all but the re-reads from the cache."""
+    total = sum(kinds.values())
+    return {**kinds, 'tokens': total, 'new_tokens': total - kinds['cache_read_tokens']}
 
 
 def codex_usage(item):
@@ -277,9 +289,17 @@ def codex_usage(item):
     for f in files:
         if os.path.getmtime(f) < since:
             continue
-        points = []
+        points, model = [], None
         with open(f, errors='ignore') as fh:
             for line in fh:
+                # The thread's model: set when the thread starts, and again when it changes.
+                if '"thread_settings_applied"' in line or '"turn_context"' in line:
+                    try:
+                        pl = json.loads(line).get('payload') or {}
+                        model = (pl.get('thread_settings') or pl).get('model') or model
+                    except Exception:
+                        pass
+                    continue
                 if '"token_count"' not in line:
                     continue
                 try:
@@ -290,22 +310,31 @@ def codex_usage(item):
                 total = (pl.get('info') or {}).get('total_token_usage')
                 t = when(d.get('timestamp') or '')
                 if pl.get('type') == 'token_count' and total and t is not None:
-                    points.append((t, total, (pl.get('rate_limits') or {}).get('primary') or {}))
-        before = {}
+                    points.append((t, total, (pl.get('rate_limits') or {}).get('primary') or {}, model))
+        before, limit_before = {}, None
         for run in split_runs(points):
             end = run[-1][1]
-            diff = {k: end.get(k, 0) - before.get(k, 0) for k in ('input_tokens', 'cached_input_tokens', 'output_tokens', 'total_tokens')}
+            d = {k: end.get(k, 0) - before.get(k, 0) for k in ('input_tokens', 'cached_input_tokens', 'cache_write_input_tokens', 'output_tokens')}
             before = end
+            limit = run[-1][2]
+            used = limit.get('used_percent')
+            # What this run took of the limit: its rise since the run before (none across a reset).
+            took = used - limit_before if used is not None and limit_before is not None and used >= limit_before else None
+            limit_before = used if used is not None else limit_before
             if run[-1][0] < since:
                 continue
-            limit = run[-1][2]
+            read, write = max(0, d['cached_input_tokens']), max(0, d['cache_write_input_tokens'])
+            kinds = {'input_tokens': max(0, d['input_tokens'] - read - write), 'cache_read_tokens': read,
+                     'cache_write_tokens': write, 'output_tokens': max(0, d['output_tokens'])}
+            model_ = run[-1][3]
+            pr = price(model_, OPENAI_PRICES)
+            cost = None if pr is None else (kinds['input_tokens'] * pr[0] + kinds['output_tokens'] * pr[1]
+                                            + read * pr[2] + write * pr[3]) / 1e6
             out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'codex',
-                        'run_key': f'{item["session"]}:{int(run[0][0])}', 'model': None,
-                        'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]),
-                        'tokens': max(0, diff['total_tokens']),
-                        'new_tokens': max(0, diff['input_tokens'] - diff['cached_input_tokens'] + diff['output_tokens']),
-                        'cost_usd': None, 'limit_percent': limit.get('used_percent'),
-                        'limit_window_minutes': limit.get('window_minutes')})
+                        'run_key': f'{item["session"]}:{int(run[0][0])}', 'model': model_,
+                        'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), **totals(kinds),
+                        'cost_usd': round(cost, 4) if cost is not None else None, 'limit_percent': used,
+                        'limit_used': took, 'limit_window_minutes': limit.get('window_minutes')})
     return out
 
 
@@ -328,7 +357,7 @@ def report_usage(key, show=False):
     if show:
         for r in rows:
             cost = f' ≈${r["cost_usd"]:.2f}' if r.get('cost_usd') is not None else ''
-            limit = f' limit {r["limit_percent"]}%' if r.get('limit_percent') is not None else ''
+            limit = f' limit {r["limit_percent"]}% (+{r["limit_used"]})' if r.get('limit_percent') is not None else ''
             print(f'{r["funnel_id"]:>14} {r["agent"]:<18} {r["started_at"]} {r["tokens"] / 1e6:7.2f}M tokens{cost}{limit}')
     saved = 0
     for i in range(0, len(rows), 400):

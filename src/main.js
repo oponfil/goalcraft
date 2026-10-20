@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=518f8294';
-import { mountDashboard } from './dashboard.js?v=518f8294';
-import { t } from './i18n.js?v=518f8294';
+import { FUNNELS, SUP_RUNS } from './data.js?v=255fa81d';
+import { mountDashboard } from './dashboard.js?v=255fa81d';
+import { t } from './i18n.js?v=255fa81d';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -47,16 +47,22 @@ function demoRuns(a) {
   return withTokens(a, rows, r);
 }
 
-// Made-up token use, as the wake script reads it on the person's computer: Claude (Claude Code) with
-// its cost at API prices, ChatGPT (Codex) with its plan's weekly limit. Other agents run in web chats,
-// whose use nobody outside can read, so they show none.
+// Made-up token use, as the wake script reads it on the person's computer, priced as there: Claude
+// (Claude Code, Opus 5.5) and ChatGPT (Codex, GPT-6.1 Sol, with its plan's weekly limit). Other agents
+// run in web chats, whose use nobody outside can read, so they show none.
 function withTokens(a, rows, r) {
   if (a.agent !== 'claude' && a.agent !== 'chatgpt') return rows;
+  const claude = a.agent === 'claude';
   let limit = 6 + r() * 20;
   return rows.map(row => {
     const minutes = ((row.ended_at ? Date.parse(row.ended_at) : Date.now()) - Date.parse(row.started_at)) / 60e3;
     const tokens = Math.round(Math.max(0.4, minutes) * (0.25 + r() * 0.35) * 1e6);
-    limit = Math.max(1, limit - minutes / 20);
-    return a.agent === 'claude' ? { ...row, tokens, cost: tokens * 0.4 / 1e6 } : { ...row, tokens, limit: Math.round(limit), limitDays: 7 };
+    const read = Math.round(tokens * (claude ? 0.955 : 0.93)), output = Math.round(tokens * (0.008 + r() * 0.01));
+    const write = claude ? Math.round(tokens * 0.025) : 0, input = tokens - read - output - write;
+    const cost = claude ? (input * 4 + read * 0.2 + write * 8 + output * 20) / 1e6 : (input * 2 + read * 0.1 + output * 10) / 1e6;
+    const took = claude ? null : Math.round(Math.max(0, minutes / 15));
+    limit = Math.max(1, limit - (took ?? 0));
+    return { ...row, usage: { tokens, input_tokens: input, cache_read_tokens: read, cache_write_tokens: write, output_tokens: output,
+      cost, limit_used: took, ...(!claude && { limit: Math.round(limit), limitDays: 7 }) } };
   });
 }

@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=518f8294';
+import { supabase } from './auth.js?v=255fa81d';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -78,6 +78,15 @@ function agentOf(f, p, now, usage = []) {
       };
 }
 
+// Tokens by kind added up over some runs (null for a kind the script didn't send), and their sum.
+const KINDS = ['input_tokens', 'cache_read_tokens', 'cache_write_tokens', 'output_tokens'];
+function kinds(rows) {
+  const out = { tokens: rows.reduce((n, r) => n + Number(r.tokens), 0) };
+  for (const k of KINDS) out[k] = rows.every(r => r[k] != null) ? rows.reduce((n, r) => n + Number(r[k]), 0) : null;
+  out.limit_used = rows.some(r => r.limit_used != null) ? rows.reduce((n, r) => n + Number(r.limit_used ?? 0), 0) : null;
+  return out;
+}
+
 // The last day's runs of one agent added up: tokens, cost at API prices (when every run has one) and
 // the plan's limit as its app last logged it (Codex).
 function dayUsage(rows) {
@@ -85,7 +94,7 @@ function dayUsage(rows) {
   const last = rows.filter(r => r.limit_percent != null).sort((a, b) => Date.parse(b.ended_at) - Date.parse(a.ended_at))[0];
   return {
     runs: rows.length,
-    tokens: rows.reduce((n, r) => n + Number(r.tokens), 0),
+    ...kinds(rows),
     cost: rows.every(r => r.cost_usd != null) ? rows.reduce((n, r) => n + Number(r.cost_usd), 0) : null,
     app: rows[0].app,
     limit: last ? Number(last.limit_percent) : null,
@@ -108,7 +117,7 @@ export async function loadFunnels() {
       .gte('at', new Date(now - WINDOW_DAYS * DAY).toISOString())
       .order('at'),
     supabase.from('agent_usage')
-      .select('funnel_id, agent, app, tokens, cost_usd, limit_percent, limit_window_minutes, ended_at')
+      .select('funnel_id, agent, app, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at')
       .gte('ended_at', new Date(now - DAY).toISOString()),
   ]);
   if (funnels.error) throw funnels.error;
@@ -135,7 +144,7 @@ export async function runs(a, limit = 10) {
   // Each run's tokens: every stretch the wake script counted goes to the one run it started in (the
   // latest run started by then, a couple of minutes' slack for the agent's first signal).
   const from = data[data.length - 1].started_at;
-  const { data: used } = await supabase.from('agent_usage').select('started_at, ended_at, tokens, cost_usd')
+  const { data: used } = await supabase.from('agent_usage').select('started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used')
     .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from);
   if (!used?.length) return data;
   const pad = 2 * 60e3, mine = data.map(() => []);
@@ -143,8 +152,8 @@ export async function runs(a, limit = 10) {
     const i = data.findIndex(r => Date.parse(r.started_at) - pad <= Date.parse(u.started_at));
     if (i >= 0 && (!data[i].ended_at || Date.parse(u.started_at) <= Date.parse(data[i].ended_at) + pad)) mine[i].push(u);
   }
-  return data.map((r, i) => mine[i].length ? { ...r, tokens: mine[i].reduce((n, u) => n + Number(u.tokens), 0),
-    cost: mine[i].every(u => u.cost_usd != null) ? mine[i].reduce((n, u) => n + Number(u.cost_usd), 0) : null } : r);
+  return data.map((r, i) => mine[i].length ? { ...r, usage: { ...kinds(mine[i]),
+    cost: mine[i].every(u => u.cost_usd != null) ? mine[i].reduce((n, u) => n + Number(u.cost_usd), 0) : null } } : r);
 }
 
 // The person wrote to an agent from its card; the agent reads it through MCP (get_messages).

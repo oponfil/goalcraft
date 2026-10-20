@@ -97,6 +97,9 @@ body {
   white-space: nowrap;
 }
 #tip[hidden] { display: none; }
+/* Over a card: a cost's tokens by kind, one per line, above the card. */
+#tip.over { z-index: 40; white-space: pre; line-height: 1.5; }
+#pop [data-tip] { cursor: help; }
 #pop {
   position: fixed;
   z-index: 10;
@@ -163,11 +166,13 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop details.runs { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 13px; }
 #pop details.runs summary { cursor: pointer; color: var(--muted); }
 #pop details.runs summary:hover { color: var(--text); }
-#pop .runs-list { margin-top: 6px; max-height: 220px; overflow-y: auto; }
+#pop .runs-list { margin-top: 6px; max-height: 220px; overflow-y: auto; scrollbar-gutter: stable; padding-right: 4px; }
+#pop .runs-day .pop-note { margin: 6px 0 0; }
 /* A run's tokens, at the end of its row, as the wake script counted them. */
 #pop .run-row .tok { color: var(--muted); white-space: nowrap; }
 #pop .pop-note.usage { color: var(--muted); }
-#pop .run-row { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; padding: 3px 0; }
+#pop .run-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 10px; padding: 3px 0; }
+#pop .run-row > span:nth-child(3) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #pop .run-row .at, #pop .run-row .took { color: var(--muted); white-space: nowrap; }
 .pop-msg { color: var(--alert); margin-top: 6px; }
 .pop-msg.ok { color: var(--muted); }

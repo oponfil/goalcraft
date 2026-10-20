@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=518f8294';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=518f8294';
-import { t, lang } from './i18n.js?v=518f8294';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=255fa81d';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=255fa81d';
+import { t, lang } from './i18n.js?v=255fa81d';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -207,6 +207,7 @@ export function mountDashboard(funnels, opts = {}) {
   });
   let tipTimer;
   function showTip(e, h) {
+    tip.classList.remove('over');
     if (h.type === 'source') tip.textContent = t('board.sheet', sheetPlace(h.url));
     else if (h.type === 'guide') tip.textContent = t('board.guide', sheetPlace(h.url));
     else {
@@ -250,10 +251,28 @@ export function mountDashboard(funnels, opts = {}) {
   // Tokens as "12 млн", "850 тыс.": the person's language, one decimal at most.
   const compact = new Intl.NumberFormat(lang, { notation: 'compact', maximumFractionDigits: 1 });
   const fmtTokens = n => compact.format(n);
-  const fmtCost = n => '$' + (n >= 10 ? Math.round(n) : n.toFixed(2));
+  const money = [0, 2].map(d => new Intl.NumberFormat(lang, { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const fmtCost = n => '$' + money[n >= 10 ? 0 : 1].format(n);
   const fmtPercent = n => new Intl.NumberFormat(lang, { maximumFractionDigits: 0 }).format(n) + '%';
   // A question to the person shows only one way, as the "!" with the question itself; an older run
   // that ended on status "question" (no longer a status) shows no status.
+  // Usage of several runs added up (the demo's last day).
+  const sumUsage = list => {
+    const out = {};
+    for (const k of ['tokens', 'input_tokens', 'cache_read_tokens', 'cache_write_tokens', 'output_tokens', 'cost', 'limit_used'])
+      out[k] = list.every(x => x[k] != null) ? list.reduce((n, x) => n + x[k], 0) : null;
+    out.limit = list[0].limit ?? null; out.limitDays = list[0].limitDays ?? null;
+    return out;
+  };
+  // The hover text for a cost: the tokens behind it by kind, the total, and the limit it took.
+  const usageTip = u => [
+    u.input_tokens != null && t('board.tokNew', fmtTokens(u.input_tokens)),
+    u.cache_read_tokens != null && t('board.tokCacheRead', fmtTokens(u.cache_read_tokens)),
+    u.cache_write_tokens > 0 && t('board.tokCacheWrite', fmtTokens(u.cache_write_tokens)),
+    u.output_tokens != null && t('board.tokOut', fmtTokens(u.output_tokens)),
+    t('board.tokTotal', fmtTokens(u.tokens)),
+    u.limit_used != null && t('board.limitUsed', fmtPercent(u.limit_used)),
+  ].filter(Boolean).join('\n');
   const supStatus = s => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
 
   function content(h) {
@@ -284,7 +303,7 @@ export function mountDashboard(funnels, opts = {}) {
       where = `${from}<b class="run">+${fmtCount(n)}</b> ${esc(plural(n, into))}`;
     }
     // Live only: the agent's last runs, loaded when the person opens them.
-    const history = opts.runs ? `<details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-list"></div></details>` : '';
+    const history = opts.runs ? `<details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-day"></div><div class="runs-list"></div></details>` : '';
     // Overdue (it should have run by now) or silent at work: when it was last heard from.
     const missed = scene.overdue(a)
       ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.t + (a.seenAgo || 0))))}</p>` : '';
@@ -340,21 +359,23 @@ export function mountDashboard(funnels, opts = {}) {
       try {
         const rows = await opts.runs(a);
         const st = a.f.stages, when = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
-        // What it spent: the last day's tokens as the wake script read them (in the demo, the runs
-        // listed of the last day), their cost at API prices (Claude) or the plan's limit (Codex).
-        const day = rows.filter(r => r.tokens != null && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 864e5);
-        const u = a.usage || (day.length ? { tokens: day.reduce((n, r) => n + r.tokens, 0),
-          cost: day.every(r => r.cost != null) ? day.reduce((n, r) => n + r.cost, 0) : null,
-          limit: day[0].limit ?? null, limitDays: day[0].limitDays ?? null } : null);
-        const spent = u ? `<p class="pop-note usage">${esc(t('board.usageDay', fmtTokens(u.tokens)))}${
-          u.cost != null ? ` · ${esc(t('board.usageCost', fmtCost(u.cost)))}` : ''}${
-          u.limit != null ? ` · ${esc(t('board.usageLimit', fmtPercent(u.limit), u.limitDays))}` : ''}</p>` : '';
-        list.innerHTML = spent + (rows.length ? rows.map(r => {
+        // What it spent, in money: the last day (the wake script's count; in the demo, the listed runs
+        // of the last day) and each run at API prices, and for Codex the plan's limit too. Hovering
+        // one shows its tokens by kind.
+        const day = rows.filter(r => r.usage && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 864e5);
+        const u = a.usage || (day.length ? sumUsage(day.map(r => r.usage)) : null);
+        const spent = u ? `<p class="pop-note usage" data-tip="${esc(usageTip(u))}">${esc(t('board.usageDay', [
+          u.cost != null ? t('board.usageCost', fmtCost(u.cost)) : t('board.tokens', fmtTokens(u.tokens)),
+          u.limit != null ? t('board.usageLimit', fmtPercent(u.limit), u.limitDays) : ''].filter(Boolean).join(' · ')))}</p>` : '';
+        box.querySelector('.runs-day').innerHTML = spent;
+        list.innerHTML = (rows.length ? rows.map(r => {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
           // A supervisor's run says what it found; a worker's run, what it added.
           const what = a.sup ? `<span>${r.status ? supStatus(r.status) : ''}</span>`
             : `<span><b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}</span>`;
-          const tok = r.tokens != null ? `<span class="tok" title="${esc(r.cost != null ? t('board.usageCost', fmtCost(r.cost)) : '')}">${esc(fmtTokens(r.tokens))}</span>` : '';
+          const ru = r.usage, tok = ru ? `<span class="tok" data-tip="${esc(usageTip(ru))}">${esc([
+            ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)),
+            ru.limit_used != null ? '+' + fmtPercent(ru.limit_used) : ''].filter(Boolean).join(' · '))}</span>` : '';
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
             ${what}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
@@ -411,7 +432,16 @@ export function mountDashboard(funnels, opts = {}) {
     pop.style.left = Math.max(8, Math.min(window.innerWidth - pw - 8, e.clientX - pw / 2)) + 'px';
     pop.style.top = Math.max(8, Math.min(window.innerHeight - ph - 8, e.clientY + 14)) + 'px';
   }
-  function hidePop() { pop.hidden = true; }
+  function hidePop() { pop.hidden = true; tip.hidden = true; }
+  // A cost in the card shows its tokens by kind on hover, in the board's tooltip.
+  pop.addEventListener('pointermove', e => {
+    const el = e.target.closest('[data-tip]');
+    if (!el || e.pointerType === 'touch') { if (tip.classList.contains('over')) tip.hidden = true; return; }
+    tip.textContent = el.dataset.tip; tip.classList.add('over'); tip.hidden = false;
+    tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, e.clientX + 14)) + 'px';
+    tip.style.top = Math.min(window.innerHeight - tip.offsetHeight - 8, e.clientY + 18) + 'px';
+  });
+  pop.addEventListener('pointerleave', () => { if (tip.classList.contains('over')) tip.hidden = true; });
   // A link in the card (Appoint a supervisor, Open in Claude…) takes the person elsewhere: the card
   // closes, so it isn't still open when they come back.
   pop.addEventListener('click', e => { if (e.target.closest('a[href]')) hidePop(); });
