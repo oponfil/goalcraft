@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=8d795089';
-import vi from './lang/vi.js?v=8d795089';
-import ja from './lang/ja.js?v=8d795089';
-import pt from './lang/pt.js?v=8d795089';
-import tr from './lang/tr.js?v=8d795089';
-import ko from './lang/ko.js?v=8d795089';
+import es from './lang/es.js?v=e602257a';
+import vi from './lang/vi.js?v=e602257a';
+import ja from './lang/ja.js?v=e602257a';
+import pt from './lang/pt.js?v=e602257a';
+import tr from './lang/tr.js?v=e602257a';
+import ko from './lang/ko.js?v=e602257a';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -331,10 +331,8 @@ const STRINGS = {
   'board.tokCacheWrite': L((n) => `Written to cache: ${n}`, (n) => `Запись в кэш: ${n}`, (n) => `写入缓存：${n}`, (n) => `เขียนลงแคช: ${n}`),
   'board.tokOut': L((n) => `Output: ${n}`, (n) => `Исходящие: ${n}`, (n) => `输出：${n}`, (n) => `เอาต์พุต: ${n}`),
   'board.tokTotal': L((n) => `Total: ${n} tokens`, (n) => `Всего: ${n} токенов`, (n) => `合计：${n} 个 token`, (n) => `รวม: ${n} โทเค็น`),
-  'tasks.button': L('Tasks', 'Дела', '待办', 'งาน'),
   'tasks.count': L((n) => `Your tasks from the supervisor: ${n}`, (n) => `Ваших дел от супервайзера: ${n}`, (n) => `主管给你的待办：${n}`, (n) => `งานของคุณจากผู้ดูแล: ${n}`),
   'tasks.title': L((f) => `Your tasks: ${f}`, (f) => `Ваши дела: ${f}`, (f) => `你的待办：${f}`, (f) => `งานของคุณ: ${f}`),
-  'tasks.allTitle': L('Your tasks', 'Ваши дела', '你的待办', 'งานของคุณ'),
   'tasks.due': L((w) => `by ${w}`, (w) => `до ${w}`, (w) => `截止 ${w}`, (w) => `ภายใน ${w}`),
   'tasks.overdue': L((w) => `overdue: was due ${w}`, (w) => `просрочено: срок был ${w}`, (w) => `已逾期：截止于 ${w}`, (w) => `เลยกำหนด: ครบกำหนด ${w}`),
   'tasks.open': L('Open', 'Открыть', '打开', 'เปิด'),

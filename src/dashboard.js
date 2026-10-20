@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=8d795089';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=8d795089';
-import { t, lang } from './i18n.js?v=8d795089';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=e602257a';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=e602257a';
+import { t, lang } from './i18n.js?v=e602257a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -125,9 +125,6 @@ export function mountDashboard(funnels, opts = {}) {
       tb.lastChild.textContent = k;
       tb.title = k ? t('tasks.count', k) : '';
     });
-    const all = scene.funnels.reduce((n, f) => n + (f.tasks?.length || 0), 0);
-    tasksAll.hidden = !all;
-    tasksAll.querySelector('.badge').textContent = all;
   }
   buildTitles();
 
@@ -183,34 +180,24 @@ export function mountDashboard(funnels, opts = {}) {
     return [(e.clientX - r.left) / scene.scale, (e.clientY - r.top) / scene.scale];
   }
 
-  // The person's tasks: by a funnel's title, that funnel's; in the top bar, all of them. Only the
-  // supervisor adds, orders and marks them done (MCP set_tasks); the person sees the list.
+  // The person's tasks for a funnel, by its title. Only the supervisor adds, orders and marks them
+  // done (MCP set_tasks); the person sees the list, most urgent first.
   track.addEventListener('click', e => {
     const b = e.target.closest('.tasks-btn');
-    if (b) showPop(e, tasksCard([scene.funnels[+b.closest('.col-title').dataset.fi]]));
+    if (b) showPop(e, tasksCard(scene.funnels[+b.closest('.col-title').dataset.fi]));
   });
-  const tasksAll = document.createElement('button');
-  tasksAll.type = 'button'; tasksAll.className = 'refresh tasks-all'; tasksAll.hidden = true;
-  tasksAll.innerHTML = `${TASKS_ICON}<span class="wide">${esc(t('tasks.button'))}</span><span class="badge"></span>`;
-  document.querySelector('.sitebar .links').prepend(tasksAll);
-  tasksAll.addEventListener('click', e => showPop(e, tasksCard(scene.funnels)));
-  function tasksCard(fs) {
-    const one = fs.length === 1, now = Date.now();
+  function tasksCard(f) {
+    const now = Date.now();
     const when = new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    // Each funnel's own order is its supervisor's; across funnels, the ones with a deadline first,
-    // soonest first, then by place in their own list.
-    const list = fs.flatMap(f => (f.tasks || []).map((x, i) => ({ ...x, f, i })))
-      .sort((a, b) => (!a.due_at - !b.due_at) || (a.due_at && b.due_at ? Date.parse(a.due_at) - Date.parse(b.due_at) : 0) || a.i - b.i);
-    const items = list.map(x => {
+    const items = (f.tasks || []).map(x => {
       const late = x.due_at && Date.parse(x.due_at) < now;
       const meta = [
-        !one && esc(x.f.title),
         x.due_at && `<span class="${late ? 'late' : ''}">${esc(late ? t('tasks.overdue', when.format(new Date(x.due_at))) : t('tasks.due', when.format(new Date(x.due_at))))}</span>`,
         x.url && `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(t('tasks.open'))}</a>`,
       ].filter(Boolean).join(' · ');
       return `<li><div class="task-title">${esc(x.title)}</div>${x.detail ? `<div class="task-detail">${esc(x.detail)}</div>` : ''}${meta ? `<div class="task-meta">${meta}</div>` : ''}</li>`;
     }).join('');
-    return `<div class="pop-title">${esc(one ? t('tasks.title', fs[0].title) : t('tasks.allTitle'))}</div>
+    return `<div class="pop-title">${esc(t('tasks.title', f.title))}</div>
       <ol class="tasks">${items}</ol>`;
   }
 
