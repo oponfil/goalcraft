@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tiny5&family=Rubik:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../site.css?v=85ec3a7f">
+  <link rel="stylesheet" href="../site.css?v=84397053">
 </head>
 <body>
   <div class="wrap">
@@ -51,9 +51,9 @@
   </div>
 
   <script type="module">
-    import { supabase, afterSignIn } from '../src/auth.js?v=85ec3a7f';
-    import { GOOGLE_CLIENT_ID } from '../src/config.js?v=85ec3a7f';
-    import { t, lang } from '../src/i18n.js?v=85ec3a7f';
+    import { supabase, afterSignIn } from '../src/auth.js?v=84397053';
+    import { GOOGLE_CLIENT_ID } from '../src/config.js?v=84397053';
+    import { t, lang } from '../src/i18n.js?v=84397053';
 
     const msg = document.getElementById('msg');
     const say = (text, kind = '') => { msg.textContent = text; msg.className = 'msg ' + kind; };
@@ -165,6 +165,6 @@
       else say(t('login.sendFailed'), 'error');
     });
   </script>
-  <script type="module" src="../src/nav.js?v=85ec3a7f"></script>
+  <script type="module" src="../src/nav.js?v=84397053"></script>
 </body>
 </html>
