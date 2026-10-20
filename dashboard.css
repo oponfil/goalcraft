@@ -297,7 +297,8 @@ html:lang(ko) { --font: "Rubik", "Noto Sans KR", system-ui, sans-serif; }
 }
 body.ready .loader { display: none; }
 @keyframes loader-in { to { opacity: 1; } }
-.loader svg { image-rendering: pixelated; }
+/* Mirrored: the rock on the left, the pickaxe striking it from the right. */
+.loader svg { image-rendering: pixelated; transform: scaleX(-1); }
 .loader .pick { transform-origin: 13.5px 13.5px; animation: pick-swing 0.6s steps(1) infinite; }
 .loader .spark { opacity: 0; animation: pick-spark 0.6s steps(1) infinite; }
 /* Two pixel frames, as on the board: raised, then down on the rock with sparks. */
