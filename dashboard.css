@@ -221,7 +221,7 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 @media (max-width: 560px) { .sitebar .links { gap: 14px; } .sitebar .links .wide { display: none; } .sitebar .links a.signin { padding: 4px 12px; } }
 /* Phones: the logo is just its mark, as on the site's pages. */
 @media (max-width: 420px) { .sitebar .links { gap: 10px; } .sitebar .logo { font-size: 0; } .sitebar .logo .mark { margin-right: 0; } }
-.sitebar .sitebar .logo { display: inline-flex; align-items: center; }
+.sitebar .logo { display: inline-flex; align-items: center; white-space: nowrap; }
 .sitebar .logo .mark { image-rendering: pixelated; margin-right: 8px; }
 .copybox { position: relative; margin: 0 0 8px; }
 .copybox pre { margin: 0; padding-right: 48px; }
@@ -338,12 +338,16 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #zoom button.pct { min-width: 48px; font-size: 13px; font-weight: 500; color: var(--muted); }
 #zoom button + button { border-left: 2px solid var(--border); }
 #zoom button:hover:not(:disabled) { background: #3A322B; color: var(--text); }
-/* A narrow window (a phone): the logo is its mark alone and the zoom just − +,
-   to leave the bar room. */
+/* On a phone, and whenever the bar doesn't fit in one line (a narrow window, a long language), the
+   dashboard makes it compact: the logo is its mark alone and the zoom just − +; if that is still too wide,
+   the wide extras (the update time, button labels) go too. */
+.sitebar.compact .logo { font-size: 0; } .sitebar.compact .logo .mark { margin-right: 0; }
+.sitebar.compact #zoom { margin-left: 12px; } .sitebar.compact #zoom button.pct { display: none; }
 @media (max-width: 600px) {
   .sitebar .logo { font-size: 0; } .sitebar .logo .mark { margin-right: 0; }
   #zoom { margin-left: 12px; } #zoom button.pct { display: none; }
 }
+.sitebar.tight .links .wide { display: none; }
 #zoom button:disabled { opacity: 0.4; cursor: default; }
 #zoom button.pct:disabled { opacity: 1; }
 

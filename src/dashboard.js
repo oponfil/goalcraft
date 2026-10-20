@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=e602257a';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=e602257a';
-import { t, lang } from './i18n.js?v=e602257a';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=56db5831';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=56db5831';
+import { t, lang } from './i18n.js?v=56db5831';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -72,6 +72,18 @@ export function mountDashboard(funnels, opts = {}) {
   zoomBox.id = 'zoom';
   zoomBox.innerHTML = `<button type="button" data-d="-1" aria-label="${esc(t('board.zoomOut'))}" title="${esc(t('board.zoomOut'))}">−</button><button type="button" class="pct" data-d="0"></button><button type="button" data-d="1" aria-label="${esc(t('board.zoomIn'))}" title="${esc(t('board.zoomIn'))}">+</button>`;
   document.querySelector('.sitebar .logo').after(zoomBox);
+  // The bar in one line: compact (the logo's mark, − + only) when it doesn't fit, tighter still if
+  // it doesn't fit then either. Checked when the window or the bar's text changes.
+  const bar = document.querySelector('.sitebar');
+  const fitBar = () => {
+    bar.classList.remove('compact', 'tight');
+    for (const level of ['compact', 'tight']) {
+      if (bar.scrollWidth <= bar.clientWidth + 1) break;
+      bar.classList.add(level);
+    }
+  };
+  new ResizeObserver(fitBar).observe(bar.querySelector('.links'));
+  window.addEventListener('resize', fitBar);
   const zoomButtons = () => zoomBox.querySelectorAll('button').forEach(b => {
     if (b.dataset.d === '0') { b.textContent = Math.round(zoom * 100) + '%'; b.disabled = zoom === 1; return; }
     const i = ZOOMS.indexOf(zoom) + Number(b.dataset.d); b.disabled = i < 0 || i >= ZOOMS.length;
