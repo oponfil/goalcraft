@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=d344de2b';
-import vi from './lang/vi.js?v=d344de2b';
-import ja from './lang/ja.js?v=d344de2b';
-import pt from './lang/pt.js?v=d344de2b';
-import tr from './lang/tr.js?v=d344de2b';
-import ko from './lang/ko.js?v=d344de2b';
+import es from './lang/es.js?v=65a915ad';
+import vi from './lang/vi.js?v=65a915ad';
+import ja from './lang/ja.js?v=65a915ad';
+import pt from './lang/pt.js?v=65a915ad';
+import tr from './lang/tr.js?v=65a915ad';
+import ko from './lang/ko.js?v=65a915ad';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -190,7 +190,7 @@ const STRINGS = {
 - Read the funnel in Goalcraft and, if you can, its list; compare the numbers. If they differ, update Goalcraft and say where the difference comes from.
 - Check the worker agents: who has been silent too long, who missed a run, who is waiting for my answer.
 - Find the bottleneck: the stage with the lowest conversion or no movement, and any lag behind the goal's pace.
-- Record the run's outcome in Goalcraft: a status (all good, bottleneck, recommendation or question) and one short line about it; it shows by you on the dashboard.
+- Record the run's outcome in Goalcraft: a status (all good, bottleneck or recommendation) and one short line about it; it shows by you on the dashboard.
 - If you need my decision, ask me through Goalcraft.
 
 7. Help with worker agents. If a stage has no agent or its agent isn't coping, suggest adding one and write a ready prompt for it yourself: what to do at the stage, where to take items from and where to record them, and that it reports its work to Goalcraft at its stage. I'll paste it into a new chat. You can also write to a worker yourself through Goalcraft (ask why it missed its run, give it a task); its reply comes back to you.
@@ -218,7 +218,7 @@ const STRINGS = {
 - Прочитай воронку в Goalcraft и, если можешь, её список; сверь числа. Если расходятся — обнови Goalcraft и скажи, откуда разница.
 - Проверь рабочих агентов: кто давно молчит, кто проспал запуск, кто ждёт моего ответа.
 - Найди узкое место: этап с самой низкой конверсией или без движения, отставание от темпа цели.
-- Запиши итог прогона в Goalcraft: статус (всё в порядке, узкое место, рекомендация или вопрос) и одну короткую строку о нём — он виден у тебя на дашборде.
+- Запиши итог прогона в Goalcraft: статус (всё в порядке, узкое место или рекомендация) и одну короткую строку о нём — он виден у тебя на дашборде.
 - Если нужно моё решение — спроси меня через Goalcraft.
 
 7. Помогай с рабочими агентами. Если на этапе нет агента или он не справляется — предложи добавить агента и сам напиши для него готовый промпт: что делать на этапе, откуда брать и куда записывать, и что о своей работе он отчитывается в Goalcraft на своём этапе. Я вставлю его в новый чат. Ты можешь и сам написать рабочему агенту через Goalcraft (спросить, почему он пропустил запуск, дать задание); его ответ придёт тебе.
@@ -246,7 +246,7 @@ const STRINGS = {
 - 读取 Goalcraft 里的漏斗，能读的话也读它的清单；核对数字。如果不一致，就更新 Goalcraft，并说明差异从哪里来。
 - 检查工作智能体：谁沉默太久，谁错过了运行，谁在等我的回答。
 - 找出瓶颈：转化率最低或没有进展的阶段，以及落后于目标节奏的地方。
-- 在 Goalcraft 里记下这次运行的结论：一个状态（一切正常、瓶颈、建议或问题）和一行简短说明；它会显示在看板上你的旁边。
+- 在 Goalcraft 里记下这次运行的结论：一个状态（一切正常、瓶颈或建议）和一行简短说明；它会显示在看板上你的旁边。
 - 如果需要我做决定，就通过 Goalcraft 问我。
 
 7. 帮忙安排工作智能体。如果某个阶段没有智能体，或它的智能体应付不过来，就建议添加一个，并亲自为它写好提示词：在这个阶段做什么，从哪里取条目、记录到哪里，以及它要在自己的阶段向 Goalcraft 汇报工作。我会把它粘贴到新的对话里。你也可以通过 Goalcraft 直接给工作智能体写信（问它为什么错过运行，给它布置任务）；它的回复会回到你这里。
@@ -274,7 +274,7 @@ const STRINGS = {
 - อ่านกรวยใน Goalcraft และรายการของมันถ้าทำได้; เทียบตัวเลข ถ้าไม่ตรงกัน ให้อัปเดต Goalcraft และบอกว่าความต่างมาจากไหน
 - ตรวจเอเจนต์ทำงาน: ใครเงียบไปนาน ใครพลาดรอบทำงาน ใครรอคำตอบจากฉัน
 - หาคอขวด: ขั้นที่อัตราการแปลงต่ำสุดหรือไม่มีความเคลื่อนไหว และการตามหลังจังหวะของเป้าหมาย
-- บันทึกผลของรอบนี้ใน Goalcraft: สถานะ (ทุกอย่างเรียบร้อย คอขวด คำแนะนำ หรือคำถาม) และหนึ่งบรรทัดสั้นๆ อธิบาย ซึ่งจะแสดงข้างคุณบนแดชบอร์ด
+- บันทึกผลของรอบนี้ใน Goalcraft: สถานะ (ทุกอย่างเรียบร้อย คอขวด หรือคำแนะนำ) และหนึ่งบรรทัดสั้นๆ อธิบาย ซึ่งจะแสดงข้างคุณบนแดชบอร์ด
 - ถ้าต้องให้ฉันตัดสินใจ ให้ถามฉันผ่าน Goalcraft
 
 7. ช่วยเรื่องเอเจนต์ทำงาน ถ้าขั้นไหนไม่มีเอเจนต์หรือเอเจนต์ทำไม่ทัน ให้เสนอเพิ่มเอเจนต์และเขียนพรอมต์สำเร็จรูปให้มันเอง: ต้องทำอะไรในขั้นนั้น เอารายการมาจากไหนและบันทึกไว้ที่ไหน และให้รายงานงานของมันต่อ Goalcraft ในขั้นของมัน ฉันจะวางมันในแชตใหม่ คุณยังเขียนถึงเอเจนต์ทำงานเองได้ผ่าน Goalcraft (ถามว่าทำไมพลาดรอบทำงาน มอบงานให้) คำตอบจะกลับมาหาคุณ
@@ -329,7 +329,6 @@ const STRINGS = {
   'board.supStatus.ok': L('All good', 'Всё в порядке', '一切正常', 'ทุกอย่างเรียบร้อย'),
   'board.supStatus.bottleneck': L('Bottleneck', 'Узкое место', '瓶颈', 'คอขวด'),
   'board.supStatus.recommendation': L('Recommendation', 'Рекомендация', '建议', 'คำแนะนำ'),
-  'board.supStatus.question': L('Waiting for your answer', 'Ждёт вашего ответа', '等待你的回答', 'รอคำตอบจากคุณ'),
   'board.supervisorNoRun': L('no checks yet', 'проверок ещё не было', '尚未检查', 'ยังไม่ได้ตรวจ'),
   'board.noSupervisor': L('No supervisor yet', 'Супервайзера пока нет', '还没有主管', 'ยังไม่มีผู้ดูแล'),
   'board.noSupervisorText': L(

@@ -87,7 +87,7 @@ export default {
 - Goalcraft’taki huniyi ve yapabiliyorsan listesini oku; sayıları karşılaştır. Uyuşmuyorsa Goalcraft’ı güncelle ve farkın nereden geldiğini söyle.
 - Çalışan ajanları kontrol et: kim çok uzun süredir sessiz, kim bir çalışmayı kaçırdı, kim cevabımı bekliyor.
 - Darboğazı bul: dönüşümü en düşük ya da hareketsiz aşama ve hedefin hızının gerisinde kalınan yer.
-- Çalışmanın sonucunu Goalcraft’a yaz: bir durum (her şey yolunda, darboğaz, öneri ya da soru) ve onunla ilgili kısa bir satır; panelde yanında görünür.
+- Çalışmanın sonucunu Goalcraft’a yaz: bir durum (her şey yolunda, darboğaz ya da öneri) ve onunla ilgili kısa bir satır; panelde yanında görünür.
 - Benim kararıma ihtiyacın varsa bana Goalcraft üzerinden sor.
 
 7. Çalışan ajanlarla ilgili yardım et. Bir aşamada ajan yoksa ya da ajanı yetişemiyorsa, bir tane eklemeyi öner ve onun için hazır bir istemi kendin yaz: aşamada ne yapacağı, öğeleri nereden alıp nereye kaydedeceği ve işini kendi aşamasında Goalcraft’a bildireceği. Ben onu yeni bir sohbete yapıştırırım. Çalışan bir ajana Goalcraft üzerinden kendin de yazabilirsin (çalışmasını neden kaçırdığını sor, ona görev ver); cevabı sana döner.
@@ -126,7 +126,6 @@ export default {
   'board.supStatus.ok': 'Her şey yolunda',
   'board.supStatus.bottleneck': 'Darboğaz',
   'board.supStatus.recommendation': 'Öneri',
-  'board.supStatus.question': 'Cevabınızı bekliyor',
   'board.supervisorNoRun': 'henüz kontrol yok',
   'board.noSupervisor': 'Henüz süpervizör yok',
   'board.noSupervisorText': 'Süpervizör, bu huniyi izleyen ajanınızdır: sayıları ve ajanları kontrol eder, darboğazı bulur ve ne yapılacağını önerir.',

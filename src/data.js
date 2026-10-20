@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=d344de2b';
+import { lang } from './i18n.js?v=65a915ad';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -197,7 +197,7 @@ export const FUNNELS = [
     cubes: 0,
     goal: { total: 10, every: 14 },
     // The supervisor on the platform: what its last run found.
-    supervisor: { agent: 'gemini', state: 'ask', status: 'question', question: 'Two investors asked for a call on Friday. Take both, or only the lead?' },
+    supervisor: { agent: 'gemini', state: 'ask', status: 'recommendation', summary: 'take the lead investor first', question: 'Two investors asked for a call on Friday. Take both, or only the lead?' },
     workers: [
       { agent: 'chatgpt', zone: -1, state: 'work' },
       { agent: 'perplexity', zone: -1, state: 'work' },

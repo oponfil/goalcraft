@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=d344de2b';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=d344de2b';
-import { t, lang } from './i18n.js?v=d344de2b';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=65a915ad';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=65a915ad';
+import { t, lang } from './i18n.js?v=65a915ad';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -252,7 +252,9 @@ export function mountDashboard(funnels, opts = {}) {
   const fmtTokens = n => compact.format(n);
   const fmtCost = n => '$' + (n >= 10 ? Math.round(n) : n.toFixed(2));
   const fmtPercent = n => new Intl.NumberFormat(lang, { maximumFractionDigits: 0 }).format(n) + '%';
-  const supStatus = s => `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
+  // A question to the person shows only one way, as the "!" with the question itself; an older run
+  // that ended on status "question" (no longer a status) shows no status.
+  const supStatus = s => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
 
   function content(h) {
     // An empty platform: the funnel has no supervisor yet; the Connect page tells how to appoint one.
@@ -271,7 +273,10 @@ export function mountDashboard(funnels, opts = {}) {
     // it works into: "Job Search: jobs found → +4 applied". The supervisor watches the whole funnel:
     // what its last run found instead ("All good", "Bottleneck: …").
     let where;
-    if (a.sup) where = a.status ? `${supStatus(a.status)}${a.summary ? `: ${esc(a.summary)}` : ''}` : esc(t('board.supervisorNoRun'));
+    if (a.sup) {
+      const found = a.status ? supStatus(a.status) : '';
+      where = found ? `${found}${a.summary ? `: ${esc(a.summary)}` : ''}` : a.summary ? esc(a.summary) : esc(t('board.supervisorNoRun'));
+    }
     else {
       // The card's number is kept for its runs list, so its running row says the same.
       const st = f.stages, n = a.shownAdded = a.added || 0, from = a.zone < 0 ? '' : `${esc(plural(5, st[a.zone].forms))} → `;

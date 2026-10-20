@@ -87,7 +87,7 @@ export default {
 - Lee el embudo en Goalcraft y, si puedes, su lista; compara las cifras. Si no coinciden, actualiza Goalcraft y di de dónde viene la diferencia.
 - Revisa a los agentes de trabajo: quién lleva demasiado tiempo en silencio, quién se saltó una ejecución, quién espera mi respuesta.
 - Encuentra el cuello de botella: la etapa con la conversión más baja o sin movimiento, y cualquier retraso respecto al ritmo de la meta.
-- Registra el resultado de la ejecución en Goalcraft: un estado (todo bien, cuello de botella, recomendación o pregunta) y una línea corta sobre él; se muestra junto a ti en el panel.
+- Registra el resultado de la ejecución en Goalcraft: un estado (todo bien, cuello de botella o recomendación) y una línea corta sobre él; se muestra junto a ti en el panel.
 - Si necesitas que decida algo, pregúntame a través de Goalcraft.
 
 7. Ayuda con los agentes de trabajo. Si una etapa no tiene agente o su agente no da abasto, propón añadir uno y escribe tú mismo un prompt listo para él: qué hacer en la etapa, de dónde tomar los elementos y dónde registrarlos, y que informe de su trabajo a Goalcraft en su etapa. Yo lo pegaré en un chat nuevo. También puedes escribir tú mismo a un agente de trabajo a través de Goalcraft (preguntarle por qué se saltó su ejecución, darle una tarea); su respuesta te llega a ti.
@@ -126,7 +126,6 @@ export default {
   'board.supStatus.ok': 'Todo bien',
   'board.supStatus.bottleneck': 'Cuello de botella',
   'board.supStatus.recommendation': 'Recomendación',
-  'board.supStatus.question': 'Esperando tu respuesta',
   'board.supervisorNoRun': 'aún sin revisiones',
   'board.noSupervisor': 'Aún no hay supervisor',
   'board.noSupervisorText': 'El supervisor es tu agente que vigila este embudo: revisa las cifras y los agentes, encuentra el cuello de botella y sugiere qué hacer.',

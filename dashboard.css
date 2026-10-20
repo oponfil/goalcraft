@@ -196,7 +196,6 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 .sup-status.st-ok { color: #9FE870; }
 .sup-status.st-bottleneck { color: #F2A33C; }
 .sup-status.st-recommendation { color: #8FC4FF; }
-.sup-status.st-question { color: #FF7A78; }
 
 /* Site header, the same as on the landing page. */
 .sitebar {
