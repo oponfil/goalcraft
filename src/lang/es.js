@@ -78,18 +78,20 @@ export default {
 
 3. Crea o actualiza el embudo. Si list_funnels ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Si no, créalo con upsert_funnel: título, etapas, resultado, meta (cuántos resultados y a qué ritmo), tema y el enlace a la lista (source_url). Ocupa el puesto de supervisor de este embudo (set_agent_state con zone "supervisor") y ponte un nombre corto en mi idioma según el embudo (name, por ejemplo «Supervisor de búsqueda de empleo»); si te lo pido, cámbiatelo. Crea la lista y las notas donde acordamos (o usa las que ya tengo). Las notas recogen todo lo que tú y los agentes de trabajo necesitáis saber del embudo: la meta, las etapas, dónde está la lista, cómo trabajar cada etapa y cómo informar. Envía sus enlaces como source_url y guide_url y mantén las notas al día; los prompts que escribas para los agentes de trabajo les dicen que lean las notas al empezar cada ejecución. Después muéstrame el resultado en un solo mensaje.
 
-4. Hazte regular. Crea en esta aplicación una tarea programada con la frecuencia acordada, que ejecute esta conversación o a ti con estas instrucciones. Si la aplicación no permite programar, dímelo y acordaremos cuándo te ejecuto yo. Si trabajas en mi propio ordenador (Claude Code, Codex), ofrece instalar también el script de despertar de Goalcraft: os despierta a ti y a los demás agentes de aquí en segundos cuando escribo a alguno, respondo una pregunta o un agente se salta su ejecución. Con mi permiso, llama a create_wake_key y ejecuta el comando de instalación que devuelve; si ya está instalado, sáltate esto.
+4. Hazte regular. Crea en esta aplicación una tarea programada con la frecuencia acordada, que ejecute esta conversación o a ti con estas instrucciones. Si la aplicación no permite programar, dímelo y acordaremos cuándo te ejecuto yo.
 
-5. En cada ejecución (cómo marcar el trabajo, las preguntas y el descanso está en las instrucciones de Goalcraft):
+5. Despierta al instante. Si trabajas en mi propio ordenador (Claude Code, Codex), ofrece instalar el script de despertar de Goalcraft: os despierta a ti y a los demás agentes de aquí en segundos cuando escribo a alguno, respondo una pregunta o un agente se salta su ejecución. Con mi permiso, llama a create_wake_key y ejecuta el comando de instalación que devuelve; si ya está instalado, sáltate esto.
+
+6. En cada ejecución (cómo marcar el trabajo, las preguntas y el descanso está en las instrucciones de Goalcraft):
 - Lee el embudo (list_funnels) y, si puedes, su lista; compara las cifras. Si no coinciden, actualízalas (report_counts) y di de dónde viene la diferencia.
 - Revisa a los agentes de trabajo: quién lleva demasiado tiempo en silencio, quién se saltó una ejecución, quién espera mi respuesta.
 - Encuentra el cuello de botella: la etapa con la conversión más baja o sin movimiento, y cualquier retraso respecto al ritmo de la meta.
 - Escribe el resultado de la ejecución: un estado (ok, bottleneck, recommendation o question) y una línea corta sobre él (status y summary en set_agent_state); se muestra junto a ti en el panel.
 - Si necesitas que decida algo, pregúntame a través de Goalcraft.
 
-6. Ayuda con los agentes de trabajo. Si una etapa no tiene agente o su agente no da abasto, propón añadir uno y escribe tú mismo un prompt listo para él: qué hacer en la etapa, de dónde tomar los elementos y dónde registrarlos, cómo informar a Goalcraft (su zona, nombre de agente, report_counts, add_result). Yo lo pegaré en un chat nuevo.
+7. Ayuda con los agentes de trabajo. Si una etapa no tiene agente o su agente no da abasto, propón añadir uno y escribe tú mismo un prompt listo para él: qué hacer en la etapa, de dónde tomar los elementos y dónde registrarlos, cómo informar a Goalcraft (su zona, nombre de agente, report_counts, add_result). Yo lo pegaré en un chat nuevo.
 
-7. Responde aquí, en esta conversación, a mis preguntas sobre el embudo: dónde está el cuello de botella, cuándo llegaremos a la meta al ritmo actual, qué mejorar. Básate en las cifras de Goalcraft y en mi lista; no te inventes nada.`,
+8. Responde aquí, en esta conversación, a mis preguntas sobre el embudo: dónde está el cuello de botella, cuándo llegaremos a la meta al ritmo actual, qué mejorar. Básate en las cifras de Goalcraft y en mi lista; no te inventes nada.`,
   'board.message': (who) => `Escribe a ${who}…`,
   'board.sendMessage': 'Enviar',
   'board.messageSent': (who) => `Enviado. ${who} lo leerá en cuanto se conecte.`,

@@ -79,18 +79,20 @@ export default {
 
 3. Tạo hoặc cập nhật phễu. Nếu list_funnels đã có phễu cho mục tiêu này, hãy làm việc với nó và đừng tạo trùng. Nếu chưa, hãy tạo bằng upsert_funnel: tiêu đề, các giai đoạn, kết quả, mục tiêu (cần bao nhiêu kết quả và nhịp độ), chủ đề, và liên kết đến danh sách (source_url). Nhận vị trí giám sát của phễu này (set_agent_state với zone "supervisor") và tự đặt cho mình một tên ngắn bằng ngôn ngữ của tôi theo phễu (name, ví dụ "Giám sát tìm việc"); nếu tôi yêu cầu, hãy đổi tên. Tạo danh sách và ghi chú ở nơi chúng ta đã thống nhất (hoặc dùng cái tôi đã có). Ghi chú chứa mọi điều bạn và các tác tử làm việc cần biết về phễu này: mục tiêu, các giai đoạn, danh sách ở đâu, làm từng giai đoạn thế nào và báo cáo ra sao. Gửi liên kết của chúng dưới dạng source_url và guide_url và luôn cập nhật ghi chú; các prompt bạn viết cho tác tử làm việc phải bảo chúng đọc ghi chú khi bắt đầu mỗi lần chạy. Rồi cho tôi xem kết quả trong một tin nhắn.
 
-4. Làm cho mình chạy đều đặn. Tạo một tác vụ theo lịch trong ứng dụng này với tần suất chúng ta đã thống nhất, chạy cuộc trò chuyện này hoặc chạy bạn với hướng dẫn này. Nếu ứng dụng không hỗ trợ lịch, hãy nói với tôi và chúng ta sẽ thống nhất khi nào tôi chạy bạn. Nếu bạn chạy trên máy tính của tôi (Claude Code, Codex), hãy đề xuất cài luôn script đánh thức của Goalcraft: nó đánh thức bạn và các tác tử khác ở đây trong vài giây khi tôi nhắn cho một ai đó, trả lời câu hỏi, hoặc một tác tử bỏ lỡ lần chạy. Khi tôi đồng ý, gọi create_wake_key và chạy lệnh cài đặt nó trả về; nếu đã cài rồi thì bỏ qua.
+4. Làm cho mình chạy đều đặn. Tạo một tác vụ theo lịch trong ứng dụng này với tần suất chúng ta đã thống nhất, chạy cuộc trò chuyện này hoặc chạy bạn với hướng dẫn này. Nếu ứng dụng không hỗ trợ lịch, hãy nói với tôi và chúng ta sẽ thống nhất khi nào tôi chạy bạn.
 
-5. Mỗi lần chạy (cách đánh dấu làm việc, câu hỏi và nghỉ có trong hướng dẫn của Goalcraft):
+5. Thức dậy ngay. Nếu bạn chạy trên máy tính của tôi (Claude Code, Codex), hãy đề xuất cài script đánh thức của Goalcraft: nó đánh thức bạn và các tác tử khác ở đây trong vài giây khi tôi nhắn cho một ai đó, trả lời câu hỏi, hoặc một tác tử bỏ lỡ lần chạy. Khi tôi đồng ý, gọi create_wake_key và chạy lệnh cài đặt nó trả về; nếu đã cài rồi thì bỏ qua.
+
+6. Mỗi lần chạy (cách đánh dấu làm việc, câu hỏi và nghỉ có trong hướng dẫn của Goalcraft):
 - Đọc phễu (list_funnels) và, nếu được, danh sách của nó; đối chiếu các con số. Nếu lệch nhau, hãy cập nhật (report_counts) và nói chênh lệch đến từ đâu.
 - Kiểm tra các tác tử làm việc: ai im lặng quá lâu, ai bỏ lỡ lần chạy, ai đang chờ câu trả lời của tôi.
 - Tìm điểm nghẽn: giai đoạn có tỷ lệ chuyển đổi thấp nhất hoặc không có chuyển động, và chỗ chậm hơn nhịp độ của mục tiêu.
 - Ghi kết quả của lần chạy: một trạng thái (ok, bottleneck, recommendation hoặc question) và một dòng ngắn về nó (status và summary trong set_agent_state); nó hiện cạnh bạn trên bảng điều khiển.
 - Nếu cần tôi quyết định, hãy hỏi tôi qua Goalcraft.
 
-6. Giúp về các tác tử làm việc. Nếu một giai đoạn không có tác tử hoặc tác tử của nó không theo kịp, hãy đề xuất thêm một tác tử và tự viết sẵn prompt cho nó: làm gì ở giai đoạn đó, lấy các mục từ đâu và ghi vào đâu, báo cáo cho Goalcraft thế nào (vùng của nó, tên tác tử, report_counts, add_result). Tôi sẽ dán nó vào một cuộc trò chuyện mới.
+7. Giúp về các tác tử làm việc. Nếu một giai đoạn không có tác tử hoặc tác tử của nó không theo kịp, hãy đề xuất thêm một tác tử và tự viết sẵn prompt cho nó: làm gì ở giai đoạn đó, lấy các mục từ đâu và ghi vào đâu, báo cáo cho Goalcraft thế nào (vùng của nó, tên tác tử, report_counts, add_result). Tôi sẽ dán nó vào một cuộc trò chuyện mới.
 
-7. Trả lời câu hỏi của tôi về phễu ngay tại đây, trong cuộc trò chuyện này: điểm nghẽn ở đâu, với nhịp độ hiện tại khi nào đạt mục tiêu, nên cải thiện gì. Dựa vào số liệu của Goalcraft và danh sách của tôi; đừng bịa ra.`,
+8. Trả lời câu hỏi của tôi về phễu ngay tại đây, trong cuộc trò chuyện này: điểm nghẽn ở đâu, với nhịp độ hiện tại khi nào đạt mục tiêu, nên cải thiện gì. Dựa vào số liệu của Goalcraft và danh sách của tôi; đừng bịa ra.`,
   'board.message': (who) => `Nhắn cho ${who}…`,
   'board.sendMessage': 'Gửi',
   'board.messageSent': (who) => `Đã gửi. ${who} sẽ đọc ngay khi kết nối lại.`,

@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=daa1b8b8';
-import vi from './lang/vi.js?v=daa1b8b8';
-import ja from './lang/ja.js?v=daa1b8b8';
-import pt from './lang/pt.js?v=daa1b8b8';
-import tr from './lang/tr.js?v=daa1b8b8';
-import ko from './lang/ko.js?v=daa1b8b8';
+import es from './lang/es.js?v=78e60bcb';
+import vi from './lang/vi.js?v=78e60bcb';
+import ja from './lang/ja.js?v=78e60bcb';
+import pt from './lang/pt.js?v=78e60bcb';
+import tr from './lang/tr.js?v=78e60bcb';
+import ko from './lang/ko.js?v=78e60bcb';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -181,18 +181,20 @@ const STRINGS = {
 
 3. Create or update the funnel. If list_funnels already has a funnel for this goal, work with it and duplicate nothing. Otherwise create it with upsert_funnel: title, stages, result, goal (how many results and the pace), theme, and the link to the list (source_url). Take the supervisor's place of this funnel (set_agent_state with zone "supervisor") and give yourself a short name in my language after the funnel (name, for example "Job Search supervisor"); if I ask, rename yourself. Create the list and the notes where we agreed (or use the ones I already have). The notes hold everything about this funnel for you and the worker agents: the goal, the stages, where the list is, how to work each stage and how to report. Give their links as source_url and guide_url, and keep the notes up to date; the prompts you write for worker agents tell them to read the notes at the start of every run. Then show me the result in one message.
 
-4. Make yourself regular. Create a scheduled task in this app with the frequency we agreed on, running this conversation or you with these instructions. If the app has no scheduling, tell me and we'll agree when I'll run you. If you run on my own computer (Claude Code, Codex), offer to set up the Goalcraft wake script too: it wakes you and the other agents here within seconds when I write to one of you, answer a question, or an agent misses its run. With my OK, call create_wake_key and run the install command it returns; if it is already installed, skip this.
+4. Make yourself regular. Create a scheduled task in this app with the frequency we agreed on, running this conversation or you with these instructions. If the app has no scheduling, tell me and we'll agree when I'll run you.
 
-5. On every run (how to mark work, questions and sleep is in the Goalcraft instructions):
+5. Wake up at once. If you run on my own computer (Claude Code, Codex), offer to set up the Goalcraft wake script: it wakes you and the other agents here within seconds when I write to one of you, answer a question, or an agent misses its run. With my OK, call create_wake_key and run the install command it returns; if it is already installed, skip this.
+
+6. On every run (how to mark work, questions and sleep is in the Goalcraft instructions):
 - Read the funnel (list_funnels) and, if you can, its list; compare the numbers. If they differ, update them (report_counts) and say where the difference comes from.
 - Check the worker agents: who has been silent too long, who missed a run, who is waiting for my answer.
 - Find the bottleneck: the stage with the lowest conversion or no movement, and any lag behind the goal's pace.
 - Write the run's outcome: a status (ok, bottleneck, recommendation or question) and one short line about it (status and summary in set_agent_state); it shows by you on the dashboard.
 - If you need my decision, ask me through Goalcraft.
 
-6. Help with worker agents. If a stage has no agent or its agent isn't coping, suggest adding one and write a ready prompt for it yourself: what to do at the stage, where to take items from and where to record them, how to report to Goalcraft (its zone, agent name, report_counts, add_result). I'll paste it into a new chat.
+7. Help with worker agents. If a stage has no agent or its agent isn't coping, suggest adding one and write a ready prompt for it yourself: what to do at the stage, where to take items from and where to record them, how to report to Goalcraft (its zone, agent name, report_counts, add_result). I'll paste it into a new chat.
 
-7. Answer my questions about the funnel here, in this conversation: where the bottleneck is, when we reach the goal at the current pace, what to improve. Rely on Goalcraft's numbers and my list; don't make things up.`,
+8. Answer my questions about the funnel here, in this conversation: where the bottleneck is, when we reach the goal at the current pace, what to improve. Rely on Goalcraft's numbers and my list; don't make things up.`,
     (url) => `Ты — супервайзер моей цели в Goalcraft (goalcraft.ai). Goalcraft показывает цель как воронку: этапы сверху вниз, результат внизу, а на этапах работают ИИ-агенты. Ты стоишь над воронкой: следишь за ней, отвечаешь на мои вопросы о ней и помогаешь её улучшать. Сам работу этапов не делаешь — это задача рабочих агентов.
 
 1. Проверь, подключён ли Goalcraft: вызови list_funnels из MCP-сервера Goalcraft (${url}). Если нет — подключи его сам (удалённый сервер, вход через OAuth в браузере, ключ не нужен). Если что-то мешает — попроси меня помочь: скажи точно, что сделать в этом приложении, и подожди.
@@ -206,18 +208,20 @@ const STRINGS = {
 
 3. Создай или обнови воронку. Если в list_funnels уже есть воронка этой цели — работай с ней, ничего не дублируй. Иначе создай её через upsert_funnel: название, этапы, результат, цель (сколько результатов и темп), тема, ссылка на список (source_url). Займи место супервайзера этой воронки (set_agent_state, zone "supervisor") и дай себе короткое имя на моём языке по воронке (name, например «Супервайзер поиска работы»); если я попрошу — переименуйся. Создай список и заметки там, где мы договорились (или возьми те, что у меня уже есть). В заметках — всё, что нужно знать о воронке тебе и рабочим агентам: цель, этапы, где список, как работать на каждом этапе и как отчитываться. Пришли их ссылки как source_url и guide_url и держи заметки актуальными; в промптах для рабочих агентов пиши, чтобы они читали заметки в начале каждого запуска. Затем покажи мне итог одним сообщением.
 
-4. Сделай себя регулярным. Создай в этом приложении задачу по расписанию с частотой, о которой мы договорились: она запускает этот разговор или тебя с этой инструкцией. Если приложение не умеет расписание — скажи мне, и договоримся, когда я буду тебя запускать. Если ты работаешь на моём компьютере (Claude Code, Codex), предложи заодно поставить скрипт пробуждения Goalcraft: он за секунды будит тебя и других агентов здесь, когда я пишу кому-то из вас, отвечаю на вопрос или агент пропускает запуск. С моего согласия вызови create_wake_key и выполни команду установки, которую он вернёт; если скрипт уже стоит — пропусти это.
+4. Сделай себя регулярным. Создай в этом приложении задачу по расписанию с частотой, о которой мы договорились: она запускает этот разговор или тебя с этой инструкцией. Если приложение не умеет расписание — скажи мне, и договоримся, когда я буду тебя запускать.
 
-5. На каждом запуске (как отмечать работу, вопросы и сон — в инструкциях Goalcraft):
+5. Просыпайся сразу. Если ты работаешь на моём компьютере (Claude Code, Codex), предложи поставить скрипт пробуждения Goalcraft: он за секунды будит тебя и других агентов здесь, когда я пишу кому-то из вас, отвечаю на вопрос или агент пропускает запуск. С моего согласия вызови create_wake_key и выполни команду установки, которую он вернёт; если скрипт уже стоит — пропусти это.
+
+6. На каждом запуске (как отмечать работу, вопросы и сон — в инструкциях Goalcraft):
 - Прочитай воронку (list_funnels) и, если можешь, её список; сверь числа. Если расходятся — обнови (report_counts) и скажи, откуда разница.
 - Проверь рабочих агентов: кто давно молчит, кто проспал запуск, кто ждёт моего ответа.
 - Найди узкое место: этап с самой низкой конверсией или без движения, отставание от темпа цели.
 - Запиши итог прогона: статус (ok, bottleneck, recommendation или question) и одну короткую строку о нём (status и summary в set_agent_state) — он виден у тебя на дашборде.
 - Если нужно моё решение — спроси меня через Goalcraft.
 
-6. Помогай с рабочими агентами. Если на этапе нет агента или он не справляется — предложи добавить агента и сам напиши для него готовый промпт: что делать на этапе, откуда брать и куда записывать, как отчитываться в Goalcraft (его зона, имя агента, report_counts, add_result). Я вставлю его в новый чат.
+7. Помогай с рабочими агентами. Если на этапе нет агента или он не справляется — предложи добавить агента и сам напиши для него готовый промпт: что делать на этапе, откуда брать и куда записывать, как отчитываться в Goalcraft (его зона, имя агента, report_counts, add_result). Я вставлю его в новый чат.
 
-7. Отвечай на мои вопросы о воронке здесь, в этом разговоре: где узкое место, когда дойдём до цели при текущем темпе, что улучшить. Опирайся на числа Goalcraft и мой список, не выдумывай.`,
+8. Отвечай на мои вопросы о воронке здесь, в этом разговоре: где узкое место, когда дойдём до цели при текущем темпе, что улучшить. Опирайся на числа Goalcraft и мой список, не выдумывай.`,
     (url) => `你是我在 Goalcraft（goalcraft.ai）中某个目标的主管。Goalcraft 把目标显示为漏斗：阶段从上到下，结果在底部，AI 智能体在各个阶段工作。你站在漏斗之上：盯着它，回答我关于它的问题，帮我改进它。阶段里的工作你自己不做，那是工作智能体的事。
 
 1. 检查 Goalcraft 是否已连接：调用 Goalcraft MCP 服务器（${url}）的 list_funnels。如果没有连接，就自己连接（远程服务器，在浏览器里用 OAuth 登录，不需要 API 密钥）。如果遇到阻碍，请我帮忙：准确告诉我在这个应用里要做什么，然后等我。
@@ -231,18 +235,20 @@ const STRINGS = {
 
 3. 创建或更新漏斗。如果 list_funnels 里已经有这个目标的漏斗，就用它，不要重复创建。否则用 upsert_funnel 创建：标题、阶段、结果、目标（需要多少个结果和节奏）、主题，以及清单链接（source_url）。占据这个漏斗的主管位置（set_agent_state，zone 为 "supervisor"），并用我的语言按漏斗给自己起一个简短的名字（name，例如“求职主管”）；如果我要求，就改名。在我们商定的地方创建清单和笔记（或使用我已有的）。笔记里写清你和工作智能体需要知道的关于这个漏斗的一切：目标、阶段、清单在哪里、每个阶段怎么做、如何汇报。把它们的链接作为 source_url 和 guide_url 提交，并保持笔记更新；你给工作智能体写的提示词里要让它们在每次运行开始时先读笔记。然后用一条消息告诉我结果。
 
-4. 让自己定期运行。在这个应用里按我们商定的频率创建一个定时任务，运行这个对话或带着这份说明的你。如果应用不支持定时，就告诉我，我们约定我什么时候运行你。如果你在我的电脑上运行（Claude Code、Codex），也提议安装 Goalcraft 唤醒脚本：当我给你们中的某个留言、回答问题，或某个智能体错过运行时，它会在几秒内唤醒你和这里的其他智能体。经我同意后，调用 create_wake_key 并运行它返回的安装命令；如果已经安装，就跳过。
+4. 让自己定期运行。在这个应用里按我们商定的频率创建一个定时任务，运行这个对话或带着这份说明的你。如果应用不支持定时，就告诉我，我们约定我什么时候运行你。
 
-5. 每次运行时（如何标记工作、提问和休眠，见 Goalcraft 的说明）：
+5. 即时唤醒。如果你在我的电脑上运行（Claude Code、Codex），提议安装 Goalcraft 唤醒脚本：当我给你们中的某个留言、回答问题，或某个智能体错过运行时，它会在几秒内唤醒你和这里的其他智能体。经我同意后，调用 create_wake_key 并运行它返回的安装命令；如果已经安装，就跳过。
+
+6. 每次运行时（如何标记工作、提问和休眠，见 Goalcraft 的说明）：
 - 读取漏斗（list_funnels），能读的话也读它的清单；核对数字。如果不一致，就更新（report_counts），并说明差异从哪里来。
 - 检查工作智能体：谁沉默太久，谁错过了运行，谁在等我的回答。
 - 找出瓶颈：转化率最低或没有进展的阶段，以及落后于目标节奏的地方。
 - 写下这次运行的结论：一个状态（ok、bottleneck、recommendation 或 question）和一行简短说明（set_agent_state 中的 status 和 summary）；它会显示在看板上你的旁边。
 - 如果需要我做决定，就通过 Goalcraft 问我。
 
-6. 帮忙安排工作智能体。如果某个阶段没有智能体，或它的智能体应付不过来，就建议添加一个，并亲自为它写好提示词：在这个阶段做什么，从哪里取条目、记录到哪里，如何向 Goalcraft 汇报（它的区域、智能体名称、report_counts、add_result）。我会把它粘贴到新的对话里。
+7. 帮忙安排工作智能体。如果某个阶段没有智能体，或它的智能体应付不过来，就建议添加一个，并亲自为它写好提示词：在这个阶段做什么，从哪里取条目、记录到哪里，如何向 Goalcraft 汇报（它的区域、智能体名称、report_counts、add_result）。我会把它粘贴到新的对话里。
 
-7. 就在这个对话里回答我关于漏斗的问题：瓶颈在哪里，按目前的节奏何时达成目标，可以改进什么。以 Goalcraft 的数字和我的清单为依据，不要编造。`,
+8. 就在这个对话里回答我关于漏斗的问题：瓶颈在哪里，按目前的节奏何时达成目标，可以改进什么。以 Goalcraft 的数字和我的清单为依据，不要编造。`,
     (url) => `คุณคือผู้ดูแลเป้าหมายของฉันใน Goalcraft (goalcraft.ai) Goalcraft แสดงเป้าหมายเป็นกรวย: ขั้นตอนจากบนลงล่าง ผลลัพธ์อยู่ด้านล่าง และมีเอเจนต์ AI ทำงานในแต่ละขั้น คุณยืนอยู่เหนือกรวย: คอยดูมัน ตอบคำถามของฉันเกี่ยวกับมัน และช่วยปรับปรุงมัน คุณไม่ทำงานในขั้นตอนเอง นั่นเป็นหน้าที่ของเอเจนต์ทำงาน
 
 1. ตรวจว่า Goalcraft เชื่อมต่อแล้วหรือยัง: เรียก list_funnels จากเซิร์ฟเวอร์ MCP ของ Goalcraft (${url}) ถ้ายัง ให้เชื่อมต่อเอง (เซิร์ฟเวอร์ระยะไกล เข้าสู่ระบบด้วย OAuth ในเบราว์เซอร์ ไม่ต้องใช้ API key) ถ้ามีอะไรติดขัด ให้ขอให้ฉันช่วย: บอกฉันให้ชัดว่าต้องทำอะไรในแอปนี้ แล้วรอ
@@ -256,18 +262,20 @@ const STRINGS = {
 
 3. สร้างหรืออัปเดตกรวย ถ้าใน list_funnels มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ไม่เช่นนั้นให้สร้างด้วย upsert_funnel: ชื่อ ขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการและจังหวะ) ธีม และลิงก์ไปยังรายการ (source_url) เข้ารับตำแหน่งผู้ดูแลของกรวยนี้ (set_agent_state โดยใช้ zone "supervisor") และตั้งชื่อสั้นๆ ให้ตัวเองเป็นภาษาของฉันตามกรวย (name เช่น "ผู้ดูแลหางาน") ถ้าฉันขอ ให้เปลี่ยนชื่อ สร้างรายการและโน้ตในที่ที่เราตกลงกัน (หรือใช้ของที่ฉันมีอยู่แล้ว) โน้ตมีทุกอย่างเกี่ยวกับกรวยนี้สำหรับคุณและเอเจนต์ทำงาน: เป้าหมาย ขั้นตอน รายการอยู่ที่ไหน ทำงานแต่ละขั้นอย่างไร และรายงานอย่างไร ส่งลิงก์เป็น source_url และ guide_url และอัปเดตโน้ตให้ทันสมัยเสมอ พรอมต์ที่คุณเขียนให้เอเจนต์ทำงานต้องบอกให้อ่านโน้ตตอนเริ่มทุกรอบ แล้วสรุปผลให้ฉันในข้อความเดียว
 
-4. ทำให้ตัวเองทำงานเป็นประจำ สร้างงานตามกำหนดเวลาในแอปนี้ด้วยความถี่ที่เราตกลงกัน ให้เรียกบทสนทนานี้หรือเรียกคุณพร้อมคำสั่งนี้ ถ้าแอปตั้งเวลาไม่ได้ ให้บอกฉัน แล้วเราจะตกลงกันว่าฉันจะเรียกคุณเมื่อไร ถ้าคุณทำงานบนคอมพิวเตอร์ของฉัน (Claude Code, Codex) ให้เสนอติดตั้งสคริปต์ปลุกของ Goalcraft ด้วย: มันจะปลุกคุณและเอเจนต์อื่นที่นี่ภายในไม่กี่วินาทีเมื่อฉันเขียนถึงใครคนหนึ่ง ตอบคำถาม หรือเอเจนต์พลาดรอบทำงาน เมื่อฉันตกลง ให้เรียก create_wake_key แล้วรันคำสั่งติดตั้งที่ได้มา ถ้าติดตั้งแล้วให้ข้ามไป
+4. ทำให้ตัวเองทำงานเป็นประจำ สร้างงานตามกำหนดเวลาในแอปนี้ด้วยความถี่ที่เราตกลงกัน ให้เรียกบทสนทนานี้หรือเรียกคุณพร้อมคำสั่งนี้ ถ้าแอปตั้งเวลาไม่ได้ ให้บอกฉัน แล้วเราจะตกลงกันว่าฉันจะเรียกคุณเมื่อไร
 
-5. ทุกครั้งที่ทำงาน (วิธีแจ้งว่ากำลังทำงาน ถามคำถาม และพัก อยู่ในคำแนะนำของ Goalcraft):
+5. ตื่นทันที ถ้าคุณทำงานบนคอมพิวเตอร์ของฉัน (Claude Code, Codex) ให้เสนอติดตั้งสคริปต์ปลุกของ Goalcraft: มันจะปลุกคุณและเอเจนต์อื่นที่นี่ภายในไม่กี่วินาทีเมื่อฉันเขียนถึงใครคนหนึ่ง ตอบคำถาม หรือเอเจนต์พลาดรอบทำงาน เมื่อฉันตกลง ให้เรียก create_wake_key แล้วรันคำสั่งติดตั้งที่ได้มา ถ้าติดตั้งแล้วให้ข้ามไป
+
+6. ทุกครั้งที่ทำงาน (วิธีแจ้งว่ากำลังทำงาน ถามคำถาม และพัก อยู่ในคำแนะนำของ Goalcraft):
 - อ่านกรวย (list_funnels) และรายการของมันถ้าทำได้; เทียบตัวเลข ถ้าไม่ตรงกัน ให้อัปเดต (report_counts) และบอกว่าความต่างมาจากไหน
 - ตรวจเอเจนต์ทำงาน: ใครเงียบไปนาน ใครพลาดรอบทำงาน ใครรอคำตอบจากฉัน
 - หาคอขวด: ขั้นที่อัตราการแปลงต่ำสุดหรือไม่มีความเคลื่อนไหว และการตามหลังจังหวะของเป้าหมาย
 - เขียนผลของรอบนี้: สถานะ (ok, bottleneck, recommendation หรือ question) และหนึ่งบรรทัดสั้นๆ อธิบาย (status และ summary ใน set_agent_state) ซึ่งจะแสดงข้างคุณบนแดชบอร์ด
 - ถ้าต้องให้ฉันตัดสินใจ ให้ถามฉันผ่าน Goalcraft
 
-6. ช่วยเรื่องเอเจนต์ทำงาน ถ้าขั้นไหนไม่มีเอเจนต์หรือเอเจนต์ทำไม่ทัน ให้เสนอเพิ่มเอเจนต์และเขียนพรอมต์สำเร็จรูปให้มันเอง: ต้องทำอะไรในขั้นนั้น เอารายการมาจากไหนและบันทึกไว้ที่ไหน รายงานต่อ Goalcraft อย่างไร (โซนของมัน ชื่อเอเจนต์ report_counts, add_result) ฉันจะวางมันในแชตใหม่
+7. ช่วยเรื่องเอเจนต์ทำงาน ถ้าขั้นไหนไม่มีเอเจนต์หรือเอเจนต์ทำไม่ทัน ให้เสนอเพิ่มเอเจนต์และเขียนพรอมต์สำเร็จรูปให้มันเอง: ต้องทำอะไรในขั้นนั้น เอารายการมาจากไหนและบันทึกไว้ที่ไหน รายงานต่อ Goalcraft อย่างไร (โซนของมัน ชื่อเอเจนต์ report_counts, add_result) ฉันจะวางมันในแชตใหม่
 
-7. ตอบคำถามของฉันเกี่ยวกับกรวยที่นี่ ในบทสนทนานี้: คอขวดอยู่ตรงไหน จะถึงเป้าหมายเมื่อไรด้วยจังหวะปัจจุบัน ควรปรับปรุงอะไร ใช้ตัวเลขของ Goalcraft และรายการของฉันเป็นหลัก อย่าแต่งขึ้นเอง`),
+8. ตอบคำถามของฉันเกี่ยวกับกรวยที่นี่ ในบทสนทนานี้: คอขวดอยู่ตรงไหน จะถึงเป้าหมายเมื่อไรด้วยจังหวะปัจจุบัน ควรปรับปรุงอะไร ใช้ตัวเลขของ Goalcraft และรายการของฉันเป็นหลัก อย่าแต่งขึ้นเอง`),
   'connect.prompt': L(
     (url) => `Connect this MCP server for me: ${url} (Goalcraft, remote, sign-in with OAuth). If you can't connect it yourself, tell me exactly how to do it in this app.`,
     (url) => `Подключи мне этот MCP-сервер: ${url} (Goalcraft, удалённый, вход через OAuth). Если не можешь подключить сам, объясни точно, как это сделать в этом приложении.`,

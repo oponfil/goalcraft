@@ -78,18 +78,20 @@ export default {
 
 3. Huniyi oluştur ya da güncelle. list_funnels’ta bu hedef için zaten bir huni varsa onunla çalış, hiçbir şeyi kopyalama. Yoksa upsert_funnel ile oluştur: başlık, aşamalar, sonuç, hedef (kaç sonuç ve hangi hızla), tema ve listenin bağlantısı (source_url). Bu huninin süpervizör yerini al (zone "supervisor" ile set_agent_state) ve kendine huniye göre benim dilimde kısa bir ad ver (name, örneğin "İş arama süpervizörü"); istersem adını değiştir. Listeyi ve notları kararlaştırdığımız yerde oluştur (ya da elimde olanları kullan). Notlar, senin ve çalışan ajanların bu huni hakkında bilmesi gereken her şeyi içerir: hedef, aşamalar, listenin yeri, her aşamada nasıl çalışılacağı ve nasıl rapor verileceği. Bağlantılarını source_url ve guide_url olarak gönder ve notları güncel tut; çalışan ajanlar için yazdığın istemler her çalışmanın başında notları okumalarını söylesin. Sonra sonucu bana tek bir mesajda göster.
 
-4. Kendini düzenli hâle getir. Bu uygulamada, kararlaştırdığımız sıklıkta bu sohbeti ya da bu talimatlarla seni çalıştıran zamanlanmış bir görev oluştur. Uygulama zamanlamayı desteklemiyorsa bana söyle, seni ne zaman çalıştıracağımı kararlaştıralım. Benim bilgisayarımda çalışıyorsan (Claude Code, Codex), Goalcraft uyandırma betiğini kurmayı da öner: birinize yazdığımda, bir soruyu cevapladığımda ya da bir ajan çalışmasını kaçırdığında seni ve buradaki diğer ajanları saniyeler içinde uyandırır. Onayımla create_wake_key aracını çağır ve döndürdüğü kurulum komutunu çalıştır; zaten kuruluysa bunu atla.
+4. Kendini düzenli hâle getir. Bu uygulamada, kararlaştırdığımız sıklıkta bu sohbeti ya da bu talimatlarla seni çalıştıran zamanlanmış bir görev oluştur. Uygulama zamanlamayı desteklemiyorsa bana söyle, seni ne zaman çalıştıracağımı kararlaştıralım.
 
-5. Her çalışmada (çalışmayı, soruları ve uykuyu nasıl işaretleyeceğin Goalcraft talimatlarında):
+5. Hemen uyan. Benim bilgisayarımda çalışıyorsan (Claude Code, Codex), Goalcraft uyandırma betiğini kurmayı öner: birinize yazdığımda, bir soruyu cevapladığımda ya da bir ajan çalışmasını kaçırdığında seni ve buradaki diğer ajanları saniyeler içinde uyandırır. Onayımla create_wake_key aracını çağır ve döndürdüğü kurulum komutunu çalıştır; zaten kuruluysa bunu atla.
+
+6. Her çalışmada (çalışmayı, soruları ve uykuyu nasıl işaretleyeceğin Goalcraft talimatlarında):
 - Huniyi (list_funnels) ve yapabiliyorsan listesini oku; sayıları karşılaştır. Uyuşmuyorsa güncelle (report_counts) ve farkın nereden geldiğini söyle.
 - Çalışan ajanları kontrol et: kim çok uzun süredir sessiz, kim bir çalışmayı kaçırdı, kim cevabımı bekliyor.
 - Darboğazı bul: dönüşümü en düşük ya da hareketsiz aşama ve hedefin hızının gerisinde kalınan yer.
 - Çalışmanın sonucunu yaz: bir durum (ok, bottleneck, recommendation ya da question) ve onunla ilgili kısa bir satır (set_agent_state’te status ve summary); panelde yanında görünür.
 - Benim kararıma ihtiyacın varsa bana Goalcraft üzerinden sor.
 
-6. Çalışan ajanlarla ilgili yardım et. Bir aşamada ajan yoksa ya da ajanı yetişemiyorsa, bir tane eklemeyi öner ve onun için hazır bir istemi kendin yaz: aşamada ne yapacağı, öğeleri nereden alıp nereye kaydedeceği, Goalcraft’a nasıl rapor vereceği (bölgesi, ajan adı, report_counts, add_result). Ben onu yeni bir sohbete yapıştırırım.
+7. Çalışan ajanlarla ilgili yardım et. Bir aşamada ajan yoksa ya da ajanı yetişemiyorsa, bir tane eklemeyi öner ve onun için hazır bir istemi kendin yaz: aşamada ne yapacağı, öğeleri nereden alıp nereye kaydedeceği, Goalcraft’a nasıl rapor vereceği (bölgesi, ajan adı, report_counts, add_result). Ben onu yeni bir sohbete yapıştırırım.
 
-7. Huniyle ilgili sorularımı burada, bu sohbette cevapla: darboğaz nerede, bu hızla hedefe ne zaman ulaşırız, neyi iyileştirmeli. Goalcraft’ın sayılarına ve benim listeme dayan; bir şey uydurma.`,
+8. Huniyle ilgili sorularımı burada, bu sohbette cevapla: darboğaz nerede, bu hızla hedefe ne zaman ulaşırız, neyi iyileştirmeli. Goalcraft’ın sayılarına ve benim listeme dayan; bir şey uydurma.`,
   'board.message': (who) => `${who} için mesaj yaz…`,
   'board.sendMessage': 'Gönder',
   'board.messageSent': (who) => `Gönderildi. ${who} bağlanır bağlanmaz okuyacak.`,
