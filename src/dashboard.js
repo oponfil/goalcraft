@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=540513f6';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=540513f6';
-import { t, lang } from './i18n.js?v=540513f6';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=8d795089';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=8d795089';
+import { t, lang } from './i18n.js?v=8d795089';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -211,7 +211,7 @@ export function mountDashboard(funnels, opts = {}) {
       return `<li><div class="task-title">${esc(x.title)}</div>${x.detail ? `<div class="task-detail">${esc(x.detail)}</div>` : ''}${meta ? `<div class="task-meta">${meta}</div>` : ''}</li>`;
     }).join('');
     return `<div class="pop-title">${esc(one ? t('tasks.title', fs[0].title) : t('tasks.allTitle'))}</div>
-      <ol class="tasks">${items}</ol><p class="pop-note">${esc(t('tasks.note'))}</p>`;
+      <ol class="tasks">${items}</ol>`;
   }
 
   // Drag a funnel by its title in the header to reorder.

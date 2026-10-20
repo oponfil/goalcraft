@@ -134,7 +134,6 @@ export default {
   'tasks.due': (w) => `期限 ${w}`,
   'tasks.overdue': (w) => `期限切れ: 期限は ${w}`,
   'tasks.open': '開く',
-  'tasks.note': 'このリストはスーパーバイザーが管理します。タスクを追加し、緊急度順に並べ、完了したものに印を付けます。',
   'board.usageCost': (c) => `API価格で約${c}`,
   'board.usageLimit': (p, d) => `${d}日間の上限の${p}`,
   'board.runNow': '実行中',

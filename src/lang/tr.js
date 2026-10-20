@@ -133,7 +133,6 @@ export default {
   'tasks.due': (w) => `son tarih ${w}`,
   'tasks.overdue': (w) => `gecikti: son tarih ${w} idi`,
   'tasks.open': 'Aç',
-  'tasks.note': 'Bu listeyi süpervizör tutar: görev ekler, aciliyete göre sıralar ve yapılanları işaretler.',
   'board.usageCost': (c) => `API fiyatıyla ≈${c}`,
   'board.usageLimit': (p, d) => `${d} günlük limitin ${p}`,
   'board.runNow': 'sürüyor',

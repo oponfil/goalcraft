@@ -133,7 +133,6 @@ export default {
   'tasks.due': (w) => `até ${w}`,
   'tasks.overdue': (w) => `atrasada: o prazo era ${w}`,
   'tasks.open': 'Abrir',
-  'tasks.note': 'O supervisor cuida desta lista: adiciona tarefas, ordena por urgência e marca as concluídas.',
   'board.usageCost': (c) => `≈${c} a preços da API`,
   'board.usageLimit': (p, d) => `${p} do limite de ${d} dias`,
   'board.runNow': 'em andamento',

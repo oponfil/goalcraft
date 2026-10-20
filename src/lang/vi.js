@@ -134,7 +134,6 @@ export default {
   'tasks.due': (w) => `trước ${w}`,
   'tasks.overdue': (w) => `quá hạn: hạn là ${w}`,
   'tasks.open': 'Mở',
-  'tasks.note': 'Người giám sát quản lý danh sách này: thêm việc, sắp xếp theo mức khẩn cấp và đánh dấu việc đã xong.',
   'board.usageCost': (c) => `≈${c} theo giá API`,
   'board.usageLimit': (p, d) => `${p} hạn mức ${d} ngày`,
   'board.runNow': 'đang chạy',

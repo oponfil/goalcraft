@@ -133,7 +133,6 @@ export default {
   'tasks.due': (w) => `${w}까지`,
   'tasks.overdue': (w) => `기한 지남: ${w}까지였음`,
   'tasks.open': '열기',
-  'tasks.note': '이 목록은 슈퍼바이저가 관리합니다. 할 일을 추가하고, 급한 순서로 정렬하고, 끝난 일을 표시합니다.',
   'board.usageCost': (c) => `API 가격 기준 약 ${c}`,
   'board.usageLimit': (p, d) => `${d}일 한도의 ${p}`,
   'board.runNow': '진행 중',
