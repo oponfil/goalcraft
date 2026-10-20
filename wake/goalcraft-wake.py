@@ -12,7 +12,8 @@ Goalcraft: a Claude app session (Claude Code) through `claude -p --resume`, a Co
     python3 goalcraft-wake.py once            one check, then exit (to try it)
     python3 goalcraft-wake.py run             the loop itself (what install starts)
 
-The key comes from goalcraft.ai/connect (Instant replies). It only lets the script ask whom to wake.
+The key comes from the Goalcraft MCP tool create_wake_key (your agent calls it and runs install for you).
+It only lets the script ask whom to wake.
 Standard library only; the log is ~/.goalcraft/wake.log.
 """
 import glob
@@ -155,7 +156,7 @@ def key_or_exit():
     try:
         return json.loads(CONFIG.read_text())['key']
     except Exception:
-        sys.exit('No key yet: run `python3 goalcraft-wake.py install <key>` with the key from goalcraft.ai/connect')
+        sys.exit('No key yet: ask your agent to set up the Goalcraft wake script (it calls create_wake_key and installs it)')
 
 
 def run():
@@ -163,14 +164,14 @@ def run():
     log('started')
     while True:
         if check(key) == 401:
-            log('the key was replaced or removed: stopping. Create a new key on goalcraft.ai/connect and install again.')
+            log('the key was replaced or removed: stopping. Ask your agent to set up the wake script again (create_wake_key).')
             return
         time.sleep(EVERY)
 
 
 def install(key):
     if not key.startswith('gck_'):
-        sys.exit('That does not look like a Goalcraft wake key (gck_…). Create one on goalcraft.ai/connect.')
+        sys.exit('That does not look like a Goalcraft wake key (gck_…): the MCP tool create_wake_key makes one.')
     DIR.mkdir(exist_ok=True)
     CONFIG.write_text(json.dumps({'key': key}))
     CONFIG.chmod(0o600)
@@ -178,7 +179,7 @@ def install(key):
     if pathlib.Path(__file__).resolve() != me.resolve():
         shutil.copy(__file__, me)
     if check(key) == 401:
-        sys.exit('Goalcraft does not know this key. Create a new one on goalcraft.ai/connect.')
+        sys.exit('Goalcraft does not know this key: the MCP tool create_wake_key makes a new one.')
     if sys.platform != 'darwin':
         print(f'Key saved. Keep `python3 {me} run` running (for example from cron or a service).')
         return
@@ -207,7 +208,7 @@ def uninstall():
         subprocess.run(['launchctl', 'bootout', f'gui/{os.getuid()}/{LABEL}'], capture_output=True)
         if PLIST.exists():
             PLIST.unlink()
-    print('Goalcraft wake is off. The key stays in ~/.goalcraft/wake.json until you replace it on goalcraft.ai/connect.')
+    print('Goalcraft wake is off. The key stays in ~/.goalcraft/wake.json until a new one replaces it.')
 
 
 if __name__ == '__main__':

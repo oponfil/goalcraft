@@ -78,7 +78,7 @@ export default {
 
 3. Crie ou atualize o funil. Se list_funnels já tiver um funil para esta meta, trabalhe com ele e não duplique nada. Senão, crie com upsert_funnel: título, etapas, resultado, meta (quantos resultados e em que ritmo), tema e o link para a lista (source_url). Ocupe o lugar de supervisor deste funil (set_agent_state com zone "supervisor") e dê a si mesmo um nome curto no meu idioma, de acordo com o funil (name, por exemplo "Supervisor da busca de emprego"); se eu pedir, mude de nome. Crie a lista e as notas onde combinamos (ou use as que eu já tenho). As notas reúnem tudo o que você e os agentes de trabalho precisam saber sobre o funil: a meta, as etapas, onde fica a lista, como trabalhar cada etapa e como reportar. Envie os links como source_url e guide_url e mantenha as notas atualizadas; os prompts que você escrever para os agentes de trabalho devem pedir que leiam as notas no início de cada execução. Depois me mostre o resultado em uma única mensagem.
 
-4. Torne-se regular. Crie neste aplicativo uma tarefa agendada com a frequência combinada, que execute esta conversa ou você com estas instruções. Se o aplicativo não permitir agendar, me diga e combinamos quando eu vou executar você.
+4. Torne-se regular. Crie neste aplicativo uma tarefa agendada com a frequência combinada, que execute esta conversa ou você com estas instruções. Se o aplicativo não permitir agendar, me diga e combinamos quando eu vou executar você. Se você roda no meu próprio computador (Claude Code, Codex), ofereça também instalar o script de despertar do Goalcraft: ele acorda você e os outros agentes daqui em segundos quando eu escrevo para algum de vocês, respondo uma pergunta ou um agente perde a execução. Com a minha permissão, chame create_wake_key e rode o comando de instalação que ele devolver; se já estiver instalado, pule esta parte.
 
 5. Em cada execução (como marcar trabalho, perguntas e descanso está nas instruções do Goalcraft):
 - Leia o funil (list_funnels) e, se puder, a lista dele; compare os números. Se não baterem, atualize-os (report_counts) e diga de onde vem a diferença.
@@ -93,13 +93,6 @@ export default {
   'board.message': (who) => `Escreva para ${who}…`,
   'board.sendMessage': 'Enviar',
   'board.messageSent': (who) => `Enviado. ${who} vai ler assim que se conectar.`,
-  'connect.wake.h2': 'Respostas na hora dos agentes no seu computador',
-  'connect.wake.intro': 'Agentes no app do Claude (Claude Code) ou no Codex no seu computador podem acordar em segundos quando você escreve para eles, responde à pergunta deles ou quando perdem uma execução. Um pequeno script faz isso: confere o Goalcraft a cada 10 segundos e acorda o agente no próprio chat dele. Opcional; por enquanto só no macOS.',
-  'connect.wake.create': 'Criar uma chave',
-  'connect.wake.signin': '<a href="../login/?next=../connect/%23wake">Entre</a> para criar uma chave.',
-  'connect.wake.run': 'Rode isto no Terminal do seu Mac. O comando instala o script com a sua chave e o mantém rodando; a chave aparece só uma vez, e uma nova substitui a anterior.',
-  'connect.wake.more': 'Como funciona e como remover: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">o script e as instruções</a>.',
-  'connect.wake.failed': 'Não foi possível criar a chave. Tente de novo.',
   'copy': 'Copiar',
   'copied': 'Copiado',
   'copy.manual': 'Selecione o texto e copie',

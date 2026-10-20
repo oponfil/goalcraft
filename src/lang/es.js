@@ -78,7 +78,7 @@ export default {
 
 3. Crea o actualiza el embudo. Si list_funnels ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Si no, créalo con upsert_funnel: título, etapas, resultado, meta (cuántos resultados y a qué ritmo), tema y el enlace a la lista (source_url). Ocupa el puesto de supervisor de este embudo (set_agent_state con zone "supervisor") y ponte un nombre corto en mi idioma según el embudo (name, por ejemplo «Supervisor de búsqueda de empleo»); si te lo pido, cámbiatelo. Crea la lista y las notas donde acordamos (o usa las que ya tengo). Las notas recogen todo lo que tú y los agentes de trabajo necesitáis saber del embudo: la meta, las etapas, dónde está la lista, cómo trabajar cada etapa y cómo informar. Envía sus enlaces como source_url y guide_url y mantén las notas al día; los prompts que escribas para los agentes de trabajo les dicen que lean las notas al empezar cada ejecución. Después muéstrame el resultado en un solo mensaje.
 
-4. Hazte regular. Crea en esta aplicación una tarea programada con la frecuencia acordada, que ejecute esta conversación o a ti con estas instrucciones. Si la aplicación no permite programar, dímelo y acordaremos cuándo te ejecuto yo.
+4. Hazte regular. Crea en esta aplicación una tarea programada con la frecuencia acordada, que ejecute esta conversación o a ti con estas instrucciones. Si la aplicación no permite programar, dímelo y acordaremos cuándo te ejecuto yo. Si trabajas en mi propio ordenador (Claude Code, Codex), ofrece instalar también el script de despertar de Goalcraft: os despierta a ti y a los demás agentes de aquí en segundos cuando escribo a alguno, respondo una pregunta o un agente se salta su ejecución. Con mi permiso, llama a create_wake_key y ejecuta el comando de instalación que devuelve; si ya está instalado, sáltate esto.
 
 5. En cada ejecución (cómo marcar el trabajo, las preguntas y el descanso está en las instrucciones de Goalcraft):
 - Lee el embudo (list_funnels) y, si puedes, su lista; compara las cifras. Si no coinciden, actualízalas (report_counts) y di de dónde viene la diferencia.
@@ -93,13 +93,6 @@ export default {
   'board.message': (who) => `Escribe a ${who}…`,
   'board.sendMessage': 'Enviar',
   'board.messageSent': (who) => `Enviado. ${who} lo leerá en cuanto se conecte.`,
-  'connect.wake.h2': 'Respuestas al instante de los agentes en tu ordenador',
-  'connect.wake.intro': 'Los agentes en la app de Claude (Claude Code) o en Codex en tu ordenador pueden despertar en segundos cuando les escribes, respondes a su pregunta o se saltan una ejecución. Lo hace un pequeño script: revisa Goalcraft cada 10 segundos y despierta al agente en su propio chat. Opcional; por ahora solo macOS.',
-  'connect.wake.create': 'Crear una clave',
-  'connect.wake.signin': '<a href="../login/?next=../connect/%23wake">Entra</a> para crear una clave.',
-  'connect.wake.run': 'Ejecuta esto en la Terminal de tu Mac. Instala el script con tu clave y lo mantiene en marcha; la clave se muestra una sola vez y una nueva la reemplaza.',
-  'connect.wake.more': 'Cómo funciona y cómo quitarlo: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">el script y sus instrucciones</a>.',
-  'connect.wake.failed': 'No se pudo crear la clave. Inténtalo de nuevo.',
   'copy': 'Copiar',
   'copied': 'Copiado',
   'copy.manual': 'Selecciona el texto y cópialo',

@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=f143d60b';
-import vi from './lang/vi.js?v=f143d60b';
-import ja from './lang/ja.js?v=f143d60b';
-import pt from './lang/pt.js?v=f143d60b';
-import tr from './lang/tr.js?v=f143d60b';
-import ko from './lang/ko.js?v=f143d60b';
+import es from './lang/es.js?v=daa1b8b8';
+import vi from './lang/vi.js?v=daa1b8b8';
+import ja from './lang/ja.js?v=daa1b8b8';
+import pt from './lang/pt.js?v=daa1b8b8';
+import tr from './lang/tr.js?v=daa1b8b8';
+import ko from './lang/ko.js?v=daa1b8b8';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -157,13 +157,6 @@ const STRINGS = {
   'board.message': L((who) => `Write to ${who}…`, (who) => `Написать: ${who}…`, (who) => `给 ${who} 留言…`, (who) => `เขียนถึง ${who}…`),
   'board.sendMessage': L('Send', 'Отправить', '发送', 'ส่ง'),
   'board.messageSent': L((who) => `Sent. ${who} reads it as soon as it checks in.`, (who) => `Отправлено. ${who} прочитает, как только выйдет на связь.`, (who) => `已发送。${who} 一上线就会读到。`, (who) => `ส่งแล้ว ${who} จะอ่านทันทีที่กลับมาออนไลน์`),
-  'connect.wake.h2': L('Instant replies from agents on your computer', 'Мгновенные ответы агентов на вашем компьютере', '让你电脑上的智能体即时响应', 'ให้เอเจนต์บนคอมพิวเตอร์ของคุณตอบทันที'),
-  'connect.wake.intro': L('Agents in the Claude app (Claude Code) or Codex on your computer can wake up within seconds when you write to them, answer their question, or when they miss a run. A small script does it: it checks Goalcraft every 10 seconds and wakes the agent in its own chat. Optional; macOS for now.', 'Агенты в приложении Claude (Claude Code) или в Codex на вашем компьютере могут просыпаться за секунды: когда вы им пишете, отвечаете на вопрос или когда они пропустили запуск. Это делает маленький скрипт: каждые 10 секунд он проверяет Goalcraft и будит агента в его же чате. Необязательно; пока только для macOS.', '你电脑上 Claude 应用（Claude Code）或 Codex 里的智能体，可以在几秒内被唤醒：当你给它留言、回答它的问题，或它错过了运行时。由一个小脚本完成：每 10 秒检查一次 Goalcraft，并在智能体自己的对话里唤醒它。可选；目前仅支持 macOS。', 'เอเจนต์ในแอป Claude (Claude Code) หรือ Codex บนคอมพิวเตอร์ของคุณตื่นได้ในไม่กี่วินาที เมื่อคุณเขียนถึงมัน ตอบคำถามของมัน หรือเมื่อมันพลาดรอบทำงาน สคริปต์เล็กๆ ทำหน้าที่นี้: ตรวจ Goalcraft ทุก 10 วินาทีและปลุกเอเจนต์ในแชตของมันเอง ไม่บังคับ; ตอนนี้รองรับเฉพาะ macOS'),
-  'connect.wake.create': L('Create a key', 'Создать ключ', '创建密钥', 'สร้างคีย์'),
-  'connect.wake.signin': L('<a href="../login/?next=../connect/%23wake">Sign in</a> to create a key.', '<a href="../login/?next=../connect/%23wake">Войдите</a>, чтобы создать ключ.', '<a href="../login/?next=../connect/%23wake">登录</a>后创建密钥。', '<a href="../login/?next=../connect/%23wake">เข้าสู่ระบบ</a>เพื่อสร้างคีย์'),
-  'connect.wake.run': L('Run this in Terminal on your Mac. It installs the script with your key and keeps it running; the key is shown only once, and a new one replaces it.', 'Выполните это в Терминале на вашем Mac. Команда установит скрипт с вашим ключом и будет держать его запущенным. Ключ показывается один раз; новый заменяет старый.', '在 Mac 的终端里运行这条命令。它会用你的密钥安装脚本并保持运行；密钥只显示一次，新建的会替换旧的。', 'รันคำสั่งนี้ใน Terminal บน Mac ของคุณ มันจะติดตั้งสคริปต์พร้อมคีย์ของคุณและให้ทำงานต่อเนื่อง คีย์แสดงเพียงครั้งเดียว และคีย์ใหม่จะแทนที่คีย์เดิม'),
-  'connect.wake.more': L('How it works and how to remove it: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">the script and its instructions</a>.', 'Как это работает и как удалить: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">скрипт и инструкция</a>.', '工作原理和卸载方法：<a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">脚本和说明</a>。', 'วิธีทำงานและวิธีถอนการติดตั้ง: <a href="https://github.com/oponfil/goalcraft/tree/main/wake" target="_blank" rel="noopener">สคริปต์และคำแนะนำ</a>'),
-  'connect.wake.failed': L('Could not create the key. Try again.', 'Не удалось создать ключ. Попробуйте ещё раз.', '无法创建密钥，请重试。', 'สร้างคีย์ไม่สำเร็จ ลองอีกครั้ง'),
   'connect.supervisor.intro': L(
     'Paste this prompt into a new chat with your AI agent. The agent connects Goalcraft, asks you about the goal and sets up its funnel. Then it becomes its supervisor: checks it regularly, answers your questions about it and helps you add worker agents.',
     'Вставьте этот промпт в новый чат с вашим ИИ-агентом. Агент подключит Goalcraft, расспросит вас о цели и настроит её воронку. Дальше он становится её супервайзером: регулярно проверяет воронку, отвечает на ваши вопросы о ней и помогает добавить рабочих агентов.',
@@ -188,7 +181,7 @@ const STRINGS = {
 
 3. Create or update the funnel. If list_funnels already has a funnel for this goal, work with it and duplicate nothing. Otherwise create it with upsert_funnel: title, stages, result, goal (how many results and the pace), theme, and the link to the list (source_url). Take the supervisor's place of this funnel (set_agent_state with zone "supervisor") and give yourself a short name in my language after the funnel (name, for example "Job Search supervisor"); if I ask, rename yourself. Create the list and the notes where we agreed (or use the ones I already have). The notes hold everything about this funnel for you and the worker agents: the goal, the stages, where the list is, how to work each stage and how to report. Give their links as source_url and guide_url, and keep the notes up to date; the prompts you write for worker agents tell them to read the notes at the start of every run. Then show me the result in one message.
 
-4. Make yourself regular. Create a scheduled task in this app with the frequency we agreed on, running this conversation or you with these instructions. If the app has no scheduling, tell me and we'll agree when I'll run you.
+4. Make yourself regular. Create a scheduled task in this app with the frequency we agreed on, running this conversation or you with these instructions. If the app has no scheduling, tell me and we'll agree when I'll run you. If you run on my own computer (Claude Code, Codex), offer to set up the Goalcraft wake script too: it wakes you and the other agents here within seconds when I write to one of you, answer a question, or an agent misses its run. With my OK, call create_wake_key and run the install command it returns; if it is already installed, skip this.
 
 5. On every run (how to mark work, questions and sleep is in the Goalcraft instructions):
 - Read the funnel (list_funnels) and, if you can, its list; compare the numbers. If they differ, update them (report_counts) and say where the difference comes from.
@@ -213,7 +206,7 @@ const STRINGS = {
 
 3. Создай или обнови воронку. Если в list_funnels уже есть воронка этой цели — работай с ней, ничего не дублируй. Иначе создай её через upsert_funnel: название, этапы, результат, цель (сколько результатов и темп), тема, ссылка на список (source_url). Займи место супервайзера этой воронки (set_agent_state, zone "supervisor") и дай себе короткое имя на моём языке по воронке (name, например «Супервайзер поиска работы»); если я попрошу — переименуйся. Создай список и заметки там, где мы договорились (или возьми те, что у меня уже есть). В заметках — всё, что нужно знать о воронке тебе и рабочим агентам: цель, этапы, где список, как работать на каждом этапе и как отчитываться. Пришли их ссылки как source_url и guide_url и держи заметки актуальными; в промптах для рабочих агентов пиши, чтобы они читали заметки в начале каждого запуска. Затем покажи мне итог одним сообщением.
 
-4. Сделай себя регулярным. Создай в этом приложении задачу по расписанию с частотой, о которой мы договорились: она запускает этот разговор или тебя с этой инструкцией. Если приложение не умеет расписание — скажи мне, и договоримся, когда я буду тебя запускать.
+4. Сделай себя регулярным. Создай в этом приложении задачу по расписанию с частотой, о которой мы договорились: она запускает этот разговор или тебя с этой инструкцией. Если приложение не умеет расписание — скажи мне, и договоримся, когда я буду тебя запускать. Если ты работаешь на моём компьютере (Claude Code, Codex), предложи заодно поставить скрипт пробуждения Goalcraft: он за секунды будит тебя и других агентов здесь, когда я пишу кому-то из вас, отвечаю на вопрос или агент пропускает запуск. С моего согласия вызови create_wake_key и выполни команду установки, которую он вернёт; если скрипт уже стоит — пропусти это.
 
 5. На каждом запуске (как отмечать работу, вопросы и сон — в инструкциях Goalcraft):
 - Прочитай воронку (list_funnels) и, если можешь, её список; сверь числа. Если расходятся — обнови (report_counts) и скажи, откуда разница.
@@ -238,7 +231,7 @@ const STRINGS = {
 
 3. 创建或更新漏斗。如果 list_funnels 里已经有这个目标的漏斗，就用它，不要重复创建。否则用 upsert_funnel 创建：标题、阶段、结果、目标（需要多少个结果和节奏）、主题，以及清单链接（source_url）。占据这个漏斗的主管位置（set_agent_state，zone 为 "supervisor"），并用我的语言按漏斗给自己起一个简短的名字（name，例如“求职主管”）；如果我要求，就改名。在我们商定的地方创建清单和笔记（或使用我已有的）。笔记里写清你和工作智能体需要知道的关于这个漏斗的一切：目标、阶段、清单在哪里、每个阶段怎么做、如何汇报。把它们的链接作为 source_url 和 guide_url 提交，并保持笔记更新；你给工作智能体写的提示词里要让它们在每次运行开始时先读笔记。然后用一条消息告诉我结果。
 
-4. 让自己定期运行。在这个应用里按我们商定的频率创建一个定时任务，运行这个对话或带着这份说明的你。如果应用不支持定时，就告诉我，我们约定我什么时候运行你。
+4. 让自己定期运行。在这个应用里按我们商定的频率创建一个定时任务，运行这个对话或带着这份说明的你。如果应用不支持定时，就告诉我，我们约定我什么时候运行你。如果你在我的电脑上运行（Claude Code、Codex），也提议安装 Goalcraft 唤醒脚本：当我给你们中的某个留言、回答问题，或某个智能体错过运行时，它会在几秒内唤醒你和这里的其他智能体。经我同意后，调用 create_wake_key 并运行它返回的安装命令；如果已经安装，就跳过。
 
 5. 每次运行时（如何标记工作、提问和休眠，见 Goalcraft 的说明）：
 - 读取漏斗（list_funnels），能读的话也读它的清单；核对数字。如果不一致，就更新（report_counts），并说明差异从哪里来。
@@ -263,7 +256,7 @@ const STRINGS = {
 
 3. สร้างหรืออัปเดตกรวย ถ้าใน list_funnels มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ไม่เช่นนั้นให้สร้างด้วย upsert_funnel: ชื่อ ขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการและจังหวะ) ธีม และลิงก์ไปยังรายการ (source_url) เข้ารับตำแหน่งผู้ดูแลของกรวยนี้ (set_agent_state โดยใช้ zone "supervisor") และตั้งชื่อสั้นๆ ให้ตัวเองเป็นภาษาของฉันตามกรวย (name เช่น "ผู้ดูแลหางาน") ถ้าฉันขอ ให้เปลี่ยนชื่อ สร้างรายการและโน้ตในที่ที่เราตกลงกัน (หรือใช้ของที่ฉันมีอยู่แล้ว) โน้ตมีทุกอย่างเกี่ยวกับกรวยนี้สำหรับคุณและเอเจนต์ทำงาน: เป้าหมาย ขั้นตอน รายการอยู่ที่ไหน ทำงานแต่ละขั้นอย่างไร และรายงานอย่างไร ส่งลิงก์เป็น source_url และ guide_url และอัปเดตโน้ตให้ทันสมัยเสมอ พรอมต์ที่คุณเขียนให้เอเจนต์ทำงานต้องบอกให้อ่านโน้ตตอนเริ่มทุกรอบ แล้วสรุปผลให้ฉันในข้อความเดียว
 
-4. ทำให้ตัวเองทำงานเป็นประจำ สร้างงานตามกำหนดเวลาในแอปนี้ด้วยความถี่ที่เราตกลงกัน ให้เรียกบทสนทนานี้หรือเรียกคุณพร้อมคำสั่งนี้ ถ้าแอปตั้งเวลาไม่ได้ ให้บอกฉัน แล้วเราจะตกลงกันว่าฉันจะเรียกคุณเมื่อไร
+4. ทำให้ตัวเองทำงานเป็นประจำ สร้างงานตามกำหนดเวลาในแอปนี้ด้วยความถี่ที่เราตกลงกัน ให้เรียกบทสนทนานี้หรือเรียกคุณพร้อมคำสั่งนี้ ถ้าแอปตั้งเวลาไม่ได้ ให้บอกฉัน แล้วเราจะตกลงกันว่าฉันจะเรียกคุณเมื่อไร ถ้าคุณทำงานบนคอมพิวเตอร์ของฉัน (Claude Code, Codex) ให้เสนอติดตั้งสคริปต์ปลุกของ Goalcraft ด้วย: มันจะปลุกคุณและเอเจนต์อื่นที่นี่ภายในไม่กี่วินาทีเมื่อฉันเขียนถึงใครคนหนึ่ง ตอบคำถาม หรือเอเจนต์พลาดรอบทำงาน เมื่อฉันตกลง ให้เรียก create_wake_key แล้วรันคำสั่งติดตั้งที่ได้มา ถ้าติดตั้งแล้วให้ข้ามไป
 
 5. ทุกครั้งที่ทำงาน (วิธีแจ้งว่ากำลังทำงาน ถามคำถาม และพัก อยู่ในคำแนะนำของ Goalcraft):
 - อ่านกรวย (list_funnels) และรายการของมันถ้าทำได้; เทียบตัวเลข ถ้าไม่ตรงกัน ให้อัปเดต (report_counts) และบอกว่าความต่างมาจากไหน

@@ -12,10 +12,14 @@ It is optional. Without it, agents read messages and answers on their next run.
 
 ## Install (macOS)
 
-1. Sign in to the agents' command-line tools once: `claude` (Claude Code) and/or `codex`. The script uses them to resume the agents' chats. Codex needs no separate install: the script finds the one that comes inside the ChatGPT app.
-2. On [goalcraft.ai/connect](https://goalcraft.ai/connect/#wake), under *Instant replies*, click **Create a key** and run the command it shows in Terminal. It downloads `goalcraft-wake.py` to `~/.goalcraft/`, saves the key and keeps the script running, also after a restart.
+Your agent sets it up; you only agree. The supervisor's prompt on [goalcraft.ai/connect](https://goalcraft.ai/connect/) has it offer this when it runs on your computer (Claude Code, Codex), and any agent there can do it when you ask ("set up the Goalcraft wake script"):
 
-The key is shown once; creating a new one replaces the old, and the old script stops with a note in its log.
+1. The agent calls the MCP tool `create_wake_key`. It returns a key and the one command that installs the script with it.
+2. The agent runs that command: it downloads `goalcraft-wake.py` to `~/.goalcraft/`, saves the key and keeps the script running, also after a restart (a login item).
+
+The agents' command-line tools must be signed in once: `claude` (Claude Code) and/or `codex`; the script uses them to resume the agents' chats. Codex needs no separate install: the script finds the one inside the ChatGPT app.
+
+A new key replaces the old, and the script installed with the old one stops with a note in its log.
 
 ## Use
 

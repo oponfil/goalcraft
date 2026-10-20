@@ -27,7 +27,7 @@ Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when 
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not.
 On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer: while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next); if you need more from the person, ask a new question instead. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation, question) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
-Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions. On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above.
+Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions. On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns.
 Your name: the dashboard and emails show you by your model's name (Claude, ChatGPT…) unless you give your own short name with set_agent_state(name); give one when the person asks you to rename yourself.
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
@@ -414,6 +414,25 @@ function server(db: Db, caller: Caller) {
     check(await endRun(db, f.id, agent))
     check(await db.from('presence').delete().eq('funnel_id', f.id).eq('agent', agent))
     return text(await one(db, funnel_id))
+  })
+
+  s.registerTool('create_wake_key', {
+    title: 'Create a wake key',
+    description: 'Only when you run on the person\'s own computer (Claude Code, Codex) and the person agreed: a key for the Goalcraft wake script, which wakes their agents here within seconds when they write to one, answer a question or an agent misses its run. Returns the key and the one shell command that installs the script with it (macOS). Run that command, then tell the person it is on and where its log is. A new key replaces the old one, which stops the script installed with it.',
+    inputSchema: req({}),
+    annotations: { title: 'Create a wake key', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  }, async () => {
+    const bytes = crypto.getRandomValues(new Uint8Array(24))
+    const key = 'gck_' + [...bytes].map(b => b.toString(16).padStart(2, '0')).join('')
+    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key)))].map(b => b.toString(16).padStart(2, '0')).join('')
+    check(await db.from('wake_keys').upsert({ user_id: caller.id, key_hash: hash, created_at: new Date().toISOString() }, { onConflict: 'user_id' }))
+    return text({
+      key,
+      install: `mkdir -p ~/.goalcraft && curl -fsSL https://goalcraft.ai/wake/goalcraft-wake.py -o ~/.goalcraft/goalcraft-wake.py && python3 ~/.goalcraft/goalcraft-wake.py install ${key}`,
+      log: '~/.goalcraft/wake.log',
+      remove: 'python3 ~/.goalcraft/goalcraft-wake.py uninstall',
+      about: 'https://github.com/oponfil/goalcraft/tree/main/wake',
+    })
   })
 
   s.registerTool('delete_funnel', {
