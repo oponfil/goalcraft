@@ -39,6 +39,8 @@ export default {
   'home.p3h': 'Responda de qualquer lugar',
   'home.p3': 'Quando um agente precisa de você, ele levanta a mão. Responda pelo celular e volte ao trabalho.',
 
+  'guide.tasks.h': 'Suas tarefas',
+  'guide.tasks': 'O que só você pode fazer, do mais urgente ao menos; o supervisor cuida da lista. Clique para ver.',
   'guide.supervisor.h': 'Supervisor',
   'guide.supervisor': 'Seu agente que acompanha o funil inteiro.',
   'guide.doc.h': 'Notas e lista',
@@ -46,7 +48,7 @@ export default {
   'guide.sheet.h': 'Planilha',
   'guide.sheet': 'A tabela onde os agentes registram tudo.',
   'guide.tank.h': 'Tanque',
-  'guide.tank': 'Itens que chegaram a esta etapa, e +N por dia (ou por hora, por semana: você escolhe).',
+  'guide.tank': 'Itens que chegaram a esta etapa, e +N por dia (ou por hora, por semana: você escolhe). Clique no número para ver o histórico por dia.',
   'guide.question.h': 'Pergunta',
   'guide.question': 'Um agente espera sua resposta. Clique para responder.',
   'guide.asleep.h': 'Dormindo',

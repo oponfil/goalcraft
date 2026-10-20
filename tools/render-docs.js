@@ -1,12 +1,12 @@
 // Renders the README pictures (agents sheet, theme samples, the board) and the link preview card from the same drawing code as
 // the dashboard and saves them through serve.py: open http://localhost:5173/tools/render-docs.html
 // (always in English: the page adds ?lang=en to itself).
-import { AGENTS, FUNNELS } from '../src/data.js?v=e7998c4c';
-import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=e7998c4c';
-import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=e7998c4c';
+import { AGENTS, FUNNELS } from '../src/data.js?v=a894eda7';
+import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=a894eda7';
+import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=a894eda7';
 import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
-import { THEMES } from '../src/themes.js?v=e7998c4c';
-import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=e7998c4c';
+import { THEMES } from '../src/themes.js?v=a894eda7';
+import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=a894eda7';
 
 const FONT = 'Rubik, system-ui, sans-serif';
 
@@ -208,7 +208,7 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   const left = labels ? side : 0;
   const [c, g] = canvas(left + CW * K, TH * K + Math.min(scene.canvas.height, Math.ceil(guideHeight(scene) * K)), show);
   g.fillStyle = '#1B1714'; g.fillRect(0, 0, c.width, c.height);
-  drawGuide(scene, g, left);
+  const drawn = drawGuide(scene, g, left);
   // Points in the scene's logical coordinates → picture pixels.
   const P = (x, y) => [left + x * K, TH * K + y * K];
   const f = scene.funnels[0], n = f.stages.length, cx = scene.cx(0);
@@ -224,9 +224,10 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   // The supervisor stands at the platform's left end for a while; the arrow points at it there.
   const sup = scene.spot(scene.agents.find(a => a.sup), 'ask');
   const notes = [
+    ...(drawn.tasks ? [[[left + drawn.tasks.x, drawn.tasks.y + drawn.tasks.h / 2], 'Your tasks', 'What only you can do, most urgent first; the supervisor keeps the list. Click to see it.']] : []),
     [P(sup.x + 2, sup.y + 2), 'Supervisor', 'Your agent watching the whole funnel.'],
     [P(doc0.x + 3, doc0.y + 18), 'Notes and list', 'Notes on the left: everything the agents need to know about the funnel. The list on the right: where they keep track.'],
-    [P(cx - tankMid + 2, s0.y + s0.h / 2), 'Tank', 'Items at this stage so far, and +N a day.'],
+    [P(cx - tankMid + 2, s0.y + s0.h / 2), 'Tank', 'Items at this stage so far, and +N a day. Click the number for its history by day.'],
     // The bubble bobs; the arrow points where it rests, so the label stays still.
     [P(ask.bubble.x, scene.spot(ask, 'ask').y - 2 + 11), 'Question', 'An agent waits for your answer. Click it to reply.'],
     [P(sleep.x - 1, sleep.y + 1), 'Asleep', 'Resting until its next run; the timer counts down.'],
@@ -251,10 +252,10 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   // from the heading to the point: straight across, or slanting up when the label above pushed this
   // one down.
   let bottom = 0;
-  notes.sort((a, b) => a[0][1] - b[0][1]).forEach(([[tx, ty], head, text]) => {
+  notes.sort((a, b) => a[0][1] - b[0][1]).forEach(([[tx, ty], head, text, minTop = 0]) => {
     g.font = `500 22px ${FONT}`;
     const lines = wrap(text, side - 130), lh = 28, h = 36 + lines.length * lh, x = 70;
-    const top = Math.max(bottom + 16, ty - 16);
+    const top = Math.max(bottom + 16, ty - 16, minTop);
     bottom = top + h;
     g.textAlign = 'left'; g.textBaseline = 'top';
     g.font = `700 28px ${FONT}`; g.fillStyle = '#F2C14E'; g.fillText(head, x, top);

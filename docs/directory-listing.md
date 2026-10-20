@@ -7,7 +7,7 @@ the ChatGPT plugin directory (OpenAI Platform → plugins → With MCP). Both re
 
 - URL: `https://goalcraft.ai/mcp` (Streamable HTTP)
 - Auth: OAuth 2.1 with dynamic client registration. Discovery: `https://goalcraft.ai/.well-known/oauth-protected-resource/mcp`
-- Tools (13), all with `title`, `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint: false`:
+- Tools (14), all with `title`, `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint: false`:
 
 | Tool | Reads / writes | Destructive |
 |---|---|---|
@@ -19,6 +19,7 @@ the ChatGPT plugin directory (OpenAI Platform → plugins → With MCP). Both re
 | `add_result` | write | no |
 | `set_agent_state` | write | no |
 | `send_message` | write: a supervisor writes to its worker | no |
+| `set_tasks` | write: a supervisor keeps the person's tasks | yes: tasks left out are removed |
 | `reply` | write | no |
 | `close_question` | write | no |
 | `clear_agent` | write | no |

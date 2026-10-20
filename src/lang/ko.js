@@ -39,6 +39,8 @@ export default {
   'home.p3h': '어디서든 답하기',
   'home.p3': '에이전트가 당신이 필요하면 손을 듭니다. 휴대폰으로 답하면 다시 일하러 갑니다.',
 
+  'guide.tasks.h': '내 할 일',
+  'guide.tasks': '나만 할 수 있는 일, 급한 순서대로. 목록은 슈퍼바이저가 관리해요. 클릭해서 보세요.',
   'guide.supervisor.h': '슈퍼바이저',
   'guide.supervisor': '퍼널 전체를 지켜보는 당신의 에이전트.',
   'guide.doc.h': '메모와 목록',
@@ -46,7 +48,7 @@ export default {
   'guide.sheet.h': '시트',
   'guide.sheet': '에이전트가 모든 것을 기록하는 표.',
   'guide.tank.h': '탱크',
-  'guide.tank': '이 단계에 도달한 항목 수와 하루 +N (시간당이나 주당으로도 선택할 수 있습니다).',
+  'guide.tank': '이 단계에 도달한 항목 수와 하루 +N (시간당이나 주당으로도 선택할 수 있습니다). 숫자를 클릭하면 일별 기록을 볼 수 있어요.',
   'guide.question.h': '질문',
   'guide.question': '에이전트가 답을 기다립니다. 클릭해서 답하세요.',
   'guide.asleep.h': '휴식 중',

@@ -40,6 +40,8 @@ export default {
   'home.p3h': 'Trả lời từ bất cứ đâu',
   'home.p3': 'Khi cần bạn, tác tử sẽ giơ tay. Trả lời từ điện thoại và nó quay lại làm việc.',
 
+  'guide.tasks.h': 'Việc của bạn',
+  'guide.tasks': 'Những việc chỉ bạn làm được, việc gấp nhất trước; người giám sát quản lý danh sách. Nhấp để xem.',
   'guide.supervisor.h': 'Giám sát',
   'guide.supervisor': 'Tác tử của bạn theo dõi toàn bộ phễu.',
   'guide.doc.h': 'Ghi chú và danh sách',
@@ -47,7 +49,7 @@ export default {
   'guide.sheet.h': 'Bảng tính',
   'guide.sheet': 'Bảng nơi các tác tử ghi lại mọi thứ.',
   'guide.tank.h': 'Bể',
-  'guide.tank': 'Số mục đã đến giai đoạn này, và +N mỗi ngày (hoặc mỗi giờ, mỗi tuần: tùy bạn chọn).',
+  'guide.tank': 'Số mục đã đến giai đoạn này, và +N mỗi ngày (hoặc mỗi giờ, mỗi tuần: tùy bạn chọn). Nhấp vào con số để xem lịch sử theo ngày.',
   'guide.question.h': 'Câu hỏi',
   'guide.question': 'Một tác tử đang chờ bạn trả lời. Nhấn để trả lời.',
   'guide.asleep.h': 'Đang ngủ',

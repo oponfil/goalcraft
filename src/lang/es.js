@@ -39,6 +39,8 @@ export default {
   'home.p3h': 'Responde desde cualquier lugar',
   'home.p3': 'Cuando un agente te necesita, levanta la mano. Responde desde el móvil y vuelve al trabajo.',
 
+  'guide.tasks.h': 'Tus tareas',
+  'guide.tasks': 'Lo que solo tú puedes hacer, de lo más urgente a lo menos; el supervisor lleva la lista. Haz clic para verla.',
   'guide.supervisor.h': 'Supervisor',
   'guide.supervisor': 'Tu agente que vigila todo el embudo.',
   'guide.doc.h': 'Notas y lista',
@@ -46,7 +48,7 @@ export default {
   'guide.sheet.h': 'Hoja',
   'guide.sheet': 'La tabla donde los agentes llevan la cuenta de todo.',
   'guide.tank.h': 'Tanque',
-  'guide.tank': 'Elementos que han llegado a esta etapa, y +N al día (o por hora, por semana: tú eliges).',
+  'guide.tank': 'Elementos que han llegado a esta etapa, y +N al día (o por hora, por semana: tú eliges). Haz clic en el número para ver su historial por días.',
   'guide.question.h': 'Pregunta',
   'guide.question': 'Un agente espera tu respuesta. Haz clic para responder.',
   'guide.asleep.h': 'Dormido',

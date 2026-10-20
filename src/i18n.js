@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=e7998c4c';
-import vi from './lang/vi.js?v=e7998c4c';
-import ja from './lang/ja.js?v=e7998c4c';
-import pt from './lang/pt.js?v=e7998c4c';
-import tr from './lang/tr.js?v=e7998c4c';
-import ko from './lang/ko.js?v=e7998c4c';
+import es from './lang/es.js?v=a894eda7';
+import vi from './lang/vi.js?v=a894eda7';
+import ja from './lang/ja.js?v=a894eda7';
+import pt from './lang/pt.js?v=a894eda7';
+import tr from './lang/tr.js?v=a894eda7';
+import ko from './lang/ko.js?v=a894eda7';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -122,6 +122,8 @@ const STRINGS = {
   'home.p3': L('When an agent needs you, it raises a hand. Reply from your phone and it gets back to work.', 'Когда агенту нужны вы, он поднимает руку. Ответьте с телефона — и он вернётся к работе.', '当智能体需要你时，它会举手。用手机回复，它就继续工作。', 'เมื่อเอเจนต์ต้องการคุณ มันจะยกมือ ตอบจากมือถือแล้วมันจะกลับไปทำงานต่อ'),
 
   // The landing page's funnel: what each part is
+  'guide.tasks.h': L('Your tasks', 'Ваши дела', '你的待办', 'งานของคุณ'),
+  'guide.tasks': L('What only you can do, most urgent first; the supervisor keeps the list. Click to see it.', 'То, что можете сделать только вы, от самого срочного; список ведёт супервайзер. Нажмите, чтобы посмотреть.', '只有你能做的事，最紧急的在前；清单由主管维护。点击查看。', 'สิ่งที่มีแค่คุณทำได้ เรียงจากเร่งด่วนที่สุด ผู้ดูแลเป็นคนดูแลรายการ คลิกเพื่อดู'),
   'guide.supervisor.h': L('Supervisor', 'Супервайзер', '主管', 'ผู้ดูแล'),
   'guide.supervisor': L('Your agent watching the whole funnel.', 'Ваш агент, следящий за всей воронкой.', '你的智能体，盯着整个漏斗。', 'เอเจนต์ของคุณที่คอยดูทั้งกรวย'),
   'guide.doc.h': L('Notes and list', 'Заметки и список', '笔记和清单', 'โน้ตและรายการ'),
@@ -129,7 +131,7 @@ const STRINGS = {
   'guide.sheet.h': L('Sheet', 'Таблица', '表格', 'ตาราง'),
   'guide.sheet': L('The table where the agents keep track of everything.', 'Таблица, где агенты ведут учёт всего.', '智能体记录一切的表格。', 'ตารางที่เอเจนต์ใช้ติดตามทุกอย่าง'),
   'guide.tank.h': L('Tank', 'Бак', '储罐', 'ถัง'),
-  'guide.tank': L('Items at this stage so far, and +N a day (or an hour, a week: your choice).', 'Сколько позиций дошло до этого этапа и +N в день (или в час, в неделю — как выберете).', '到达这个阶段的数量，以及每天 +N（也可选每小时、每周）。', 'จำนวนรายการที่ถึงขั้นนี้แล้ว และ +N ต่อวัน (หรือต่อชั่วโมง ต่อสัปดาห์ ตามที่เลือก)'),
+  'guide.tank': L('Items at this stage so far, and +N a day (or an hour, a week: your choice). Click the number for its history by day.', 'Сколько позиций дошло до этого этапа и +N в день (или в час, в неделю — как выберете). Нажмите на число — история по дням.', '到达这个阶段的数量，以及每天 +N（也可选每小时、每周）。 点击数字查看每日历史。', 'จำนวนรายการที่ถึงขั้นนี้แล้ว และ +N ต่อวัน (หรือต่อชั่วโมง ต่อสัปดาห์ ตามที่เลือก) คลิกตัวเลขเพื่อดูประวัติรายวัน'),
   'guide.question.h': L('Question', 'Вопрос', '问题', 'คำถาม'),
   'guide.question': L('An agent waits for your answer. Click it to reply.', 'Агент ждёт вашего ответа. Нажмите, чтобы ответить.', '智能体在等你回复。点击即可回复。', 'เอเจนต์กำลังรอคำตอบจากคุณ คลิกเพื่อตอบ'),
   'guide.asleep.h': L('Asleep', 'Спит', '休眠', 'หลับอยู่'),

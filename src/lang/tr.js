@@ -39,6 +39,8 @@ export default {
   'home.p3h': 'Her yerden cevap verin',
   'home.p3': 'Bir ajanın size ihtiyacı olduğunda elini kaldırır. Telefonunuzdan cevap verin ve işe dönsün.',
 
+  'guide.tasks.h': 'Görevlerin',
+  'guide.tasks': 'Yalnızca senin yapabileceklerin, en acilden başlayarak; listeyi süpervizör tutar. Görmek için tıkla.',
   'guide.supervisor.h': 'Süpervizör',
   'guide.supervisor': 'Tüm huniyi izleyen ajanınız.',
   'guide.doc.h': 'Notlar ve liste',
@@ -46,7 +48,7 @@ export default {
   'guide.sheet.h': 'Tablo',
   'guide.sheet': 'Ajanların her şeyi kaydettiği tablo.',
   'guide.tank.h': 'Tank',
-  'guide.tank': 'Bu aşamaya ulaşan öğeler ve günde +N (ya da saatte, haftada: siz seçersiniz).',
+  'guide.tank': 'Bu aşamaya ulaşan öğeler ve günde +N (ya da saatte, haftada: siz seçersiniz). Günlük geçmiş için sayıya tıkla.',
   'guide.question.h': 'Soru',
   'guide.question': 'Bir ajan cevabınızı bekliyor. Cevaplamak için tıklayın.',
   'guide.asleep.h': 'Uykuda',

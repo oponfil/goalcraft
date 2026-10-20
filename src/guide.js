@@ -1,8 +1,8 @@
 // The funnel the landing page and the README explain: the demo's Job Search cut to two stages,
 // with an agent in each state the labels point at. They stay in their states, so the labels always
 // point at them. The landing page runs it live; tools/render-docs.js records it.
-import { FUNNELS } from './data.js?v=e7998c4c';
-import { Scene, CW } from './scene.js?v=e7998c4c';
+import { FUNNELS } from './data.js?v=a894eda7';
+import { Scene, CW } from './scene.js?v=a894eda7';
 
 export const TH = 22;  // the title strip over the funnel, in scene units
 const FONT = 'Rubik, system-ui, sans-serif';
@@ -45,6 +45,24 @@ export function drawGuide(scene, g, left = 0) {
   scene.strip ??= scene.titleStrip(0, TH);
   g.drawImage(scene.strip, left, 0, fw, TH * K);
   g.font = `600 ${19 * scene.dpr}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillStyle = '#F4EDE1'; g.fillText(scene.funnels[0].title, left + fw / 2, TH * K / 2);
-  return { w: fw, h: TH * K + h };
+  const f = scene.funnels[0], d = scene.dpr, my = TH * K / 2;
+  g.fillStyle = '#F4EDE1'; g.fillText(f.title, left + fw / 2, my);
+  // The person's tasks by the title, as on the dashboard: a clipboard and how many. Here on its left,
+  // so the label's arrow reaches it without crossing the title.
+  let tasks = null;
+  if (f.tasks?.length) {
+    const tw = g.measureText(f.title).width, bw = 40 * d, bh = 22 * d, x = left + fw / 2 - tw / 2 - 10 * d - bw, y = my - bh / 2;
+    g.fillStyle = 'rgba(27, 23, 20, 0.85)'; g.fillRect(x, y, bw, bh);
+    g.strokeStyle = '#4A3F35'; g.lineWidth = 2 * d; g.strokeRect(x + d, y + d, bw - 2 * d, bh - 2 * d);
+    g.save(); g.translate(x + 6 * d, y + 3.5 * d); g.scale(15 * d / 24, 15 * d / 24);
+    g.strokeStyle = '#F4EDE1'; g.lineWidth = 2.2; g.lineCap = 'round'; g.lineJoin = 'round';
+    g.strokeRect(5, 4, 14, 17);
+    g.beginPath(); g.moveTo(9, 4); g.lineTo(9, 2.5); g.lineTo(15, 2.5); g.lineTo(15, 4);
+    g.moveTo(8.5, 10); g.lineTo(15.5, 10); g.moveTo(8.5, 14); g.lineTo(15.5, 14); g.moveTo(8.5, 18); g.lineTo(12.5, 18); g.stroke();
+    g.restore();
+    g.font = `600 ${13 * d}px ${FONT}`; g.textAlign = 'left'; g.fillStyle = '#F4EDE1';
+    g.fillText(String(f.tasks.length), x + 25 * d, my + 0.5 * d);
+    tasks = { x: x - left, y, w: bw, h: bh };
+  }
+  return { w: fw, h: TH * K + h, tasks };
 }
