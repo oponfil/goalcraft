@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=2b68eb0c';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=2b68eb0c';
-import { themeOf } from './themes.js?v=2b68eb0c';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=2b68eb0c';
+import { agentInfo, plural } from './data.js?v=99c4aedc';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=99c4aedc';
+import { themeOf } from './themes.js?v=99c4aedc';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=99c4aedc';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -680,7 +680,7 @@ export class Scene {
     for (const w of widths) { if (target <= 0) break; target -= w; want++; }
     if (count > 0 && !want) want = 1;
     if (h.shown > want) { h.shown = want; h.falling = []; }
-    h.step ??= Math.min(0.08, (FIRST_FILL - 0.4) / Math.max(1, want));
+    h.step ??= (FIRST_FILL - 0.4) / Math.max(1, want);
     while (h.shown + h.falling.length < want && t >= h.next) { h.falling.push({ born: t }); h.next = Math.max(h.next, t - h.step) + h.step; }
     if (h.shown + h.falling.length >= want) h.step = 0.08;
     h.falling = h.falling.filter(d => { if (t - d.born < 0.4) return true; h.shown++; return false; });
@@ -719,7 +719,7 @@ export class Scene {
     if (h.shown > want) { h.shown = want; h.falling = []; }
     // The first fill takes FIRST_FILL seconds whatever the count, so every tank fills together on
     // load; later items drop one by one.
-    h.step ??= Math.min(0.05, (FIRST_FILL - 0.45) / Math.max(1, want));
+    h.step ??= (FIRST_FILL - 0.45) / Math.max(1, want);
     while (h.shown + h.falling.length < want && t >= h.next) {
       h.falling.push({ cell: h.cells[h.shown + h.falling.length], born: t });
       h.next = Math.max(h.next, t - h.step) + h.step;
