@@ -1,12 +1,12 @@
 // Renders the README pictures (agents sheet, theme samples, the board) and the link preview card from the same drawing code as
 // the dashboard and saves them through serve.py: open http://localhost:5173/tools/render-docs.html
 // (always in English: the page adds ?lang=en to itself).
-import { AGENTS, FUNNELS } from '../src/data.js?v=44d6396f';
-import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=44d6396f';
-import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=44d6396f';
+import { AGENTS, FUNNELS } from '../src/data.js?v=9415e8eb';
+import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=9415e8eb';
+import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=9415e8eb';
 import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
-import { THEMES } from '../src/themes.js?v=44d6396f';
-import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=44d6396f';
+import { THEMES } from '../src/themes.js?v=9415e8eb';
+import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=9415e8eb';
 
 const FONT = 'Rubik, system-ui, sans-serif';
 
@@ -226,19 +226,19 @@ function funnelGuide({ labels = true, scene = null, show = true } = {}) {
   // [point, side, heading, text]: a left label's arrow ends on the left edge of what it explains, a
   // right one's on the right edge.
   const notes = [
-    ...(drawn.tasks ? [[[left + drawn.tasks.x, drawn.tasks.y + drawn.tasks.h / 2], 'L', 'Your tasks', 'What only you can do, most urgent first; the supervisor keeps the list. Click to see it.']] : []),
-    ...(drawn.badges ? [[[left + drawn.badges.x + drawn.badges.w, drawn.badges.y + drawn.badges.h / 2], 'R', 'Waiting and silent', 'Red: questions waiting for you. Amber: agents gone silent.']] : []),
+    ...(drawn.tasks ? [[[left + drawn.tasks.x - 8, drawn.tasks.y + drawn.tasks.h / 2], 'L', 'Your tasks', 'What only you can do, most urgent first; the supervisor keeps the list. Click to see it.']] : []),
+    ...(drawn.badges ? [[[left + drawn.badges.x + drawn.badges.w + 8, drawn.badges.y + drawn.badges.h / 2], 'R', 'Waiting and silent', 'Red: questions waiting for you. Amber: agents gone silent.']] : []),
     [P(sup.x + 2, sup.y + 2), 'L', 'Supervisor', 'Your agent watching the whole funnel.'],
-    [P(doc0.x + 3, doc0.y + 18), 'L', 'Notes', 'Everything the agents need to know about the funnel. Click to open.'],
-    [P(src0.x + src0.w - 3, src0.y + 18), 'R', 'List', 'Where the agents keep track of the items. Click to open.'],
+    [P(doc0.x + 3, doc0.y + 18), 'L', 'Notes', 'Everything the agents need to know about the funnel.'],
+    [P(src0.x + src0.w - 3, src0.y + 18), 'R', 'List', 'Where the agents keep track of the items.'],
     [P(work.x + 19, work.y + 12), 'R', 'Agent at work', '+N is what its current run added.'],
-    [P(cx + s1.w / 2 - slope * s1.h * 0.3 - 2, s1.y + s1.h * 0.3), 'R', 'Tank', 'Items at this stage so far, and +N a day. Click the number for its history.'],
+    [P(cx + s0.w / 2 - slope * s0.h * 0.3 - 2, s0.y + s0.h * 0.3), 'R', 'Tank', 'Items at this stage so far, and +N a day. Click the number for its history.'],
     // The bubble bobs; the arrow points where it rests, so the label stays still.
     [P(ask.bubble.x, scene.spot(ask, 'ask').y - 2 + 11), 'L', 'Question', 'An agent waits for your answer. Click it to reply.'],
     [P(late.x + 23, late.y - 10), 'R', 'Silent', 'No word from this agent at work for 20 minutes: check on it.'],
     [P(sleep.x - 1, sleep.y + 1), 'L', 'Asleep', 'Resting until its next run; the timer counts down.'],
     [P(cx - 45, resultsY + 8), 'L', 'Results', 'One per result the goal needs; filled ones are done.'],
-    [P(cx - 23, resultsY + 48), 'L', 'Prediction', 'When the next result is due at the current pace.'],
+    [P(cx + 22, resultsY + 48), 'R', 'Prediction', 'When the next result is due at the current pace.'],
   ].map(([pt, sd, head, text]) => [pt, head, text, sd]);
   // The landing page's labels point at the same places: each as a fraction of the funnel picture.
   if (!labels) {

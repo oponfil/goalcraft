@@ -35,9 +35,9 @@ h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.12; margin: 0 auto 18px; 
 .btn:disabled { opacity: 0.5; cursor: wait; }
 .shot { display: block; margin: 40px auto 0; width: 100%; border: 2px solid var(--border); image-rendering: pixelated; }
 /* The landing page's funnel with labels: the picture in the middle, each label beside it at its part's
-   height with a straight arrow to it, on the left or (.r) on the right. On a phone the labels follow
-   the picture as a list. */
-.guide { --img: 460px; --side: calc(50% - var(--img) / 2); position: relative; margin: 40px auto 0; max-width: 1240px; }
+   height with a straight arrow to it, on the left or (.r) on the right; wider than the page's text,
+   for room beside it. On a phone the labels follow the picture as a list. */
+.guide { --img: min(560px, 44vw); --side: calc(50% - var(--img) / 2); position: relative; width: min(1240px, calc(100vw - 32px)); margin: 40px 0 0 calc(50% - min(620px, 50vw - 16px)); }
 .guide img, .guide canvas.live { display: block; width: var(--img); height: auto; margin: 0 auto; border: 2px solid var(--border); }
 .guide .note { position: absolute; top: calc(var(--y) * 100%); right: calc(var(--side) + var(--img) + 28px); width: calc(var(--side) - 40px); transform: translateY(-13px); text-align: right; font-size: 15px; line-height: 1.35; color: var(--muted); }
 .guide .note b { display: block; color: var(--accent); font-size: 19px; line-height: 1.35; }
@@ -52,7 +52,7 @@ h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.12; margin: 0 auto 18px; 
 .guide .note.up::after { top: auto; bottom: 12px; }
 .guide .note.up::before { top: auto; bottom: 6px; }
 @media (max-width: 720px) {
-  .guide { --img: 100%; }
+  .guide { --img: 100%; width: auto; margin: 40px auto 0; }
   .guide img, .guide canvas.live { margin: 0 auto 16px; max-width: 360px; }
   .guide .note { position: static; width: auto; transform: none; text-align: left; margin: 0 0 12px; }
   .guide .note.up { display: block; transform: none; }
