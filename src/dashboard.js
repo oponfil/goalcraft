@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=d5db7a8d';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=d5db7a8d';
-import { t, lang } from './i18n.js?v=d5db7a8d';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=540513f6';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=540513f6';
+import { t, lang } from './i18n.js?v=540513f6';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -53,14 +53,13 @@ export function mountDashboard(funnels, opts = {}) {
   const saveOrder = () => { try { localStorage.setItem(ORDER_KEY, JSON.stringify(scene.order())); } catch {} };
   loadOrder();
 
-  // The scene has a fixed size, the same on every screen: as many funnels show as fit, the rest are
-  // reached with horizontal scroll. On a phone one funnel fills the width. The viewer's zoom (the
-  // − and + buttons, kept in this browser) scales it.
+  // The scene has a fixed size, the same on every screen, a phone too: 100% is always the same, and
+  // as many funnels show as fit, the rest reached with horizontal scroll. The viewer's zoom (the −
+  // and + buttons, kept in this browser) scales it.
   const BASE = 1.6, ZOOMS = [0.6, 0.7, 0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2], ZOOM_KEY = 'goalcraft-zoom';
   let zoom = 1;
   try { const z = Number(localStorage.getItem(ZOOM_KEY)); if (ZOOMS.includes(z)) zoom = z; } catch {}
-  const baseScale = () => (scroller.clientWidth < 600 ? scroller.clientWidth / CW : BASE);
-  let scale = baseScale() * zoom;
+  let scale = BASE * zoom;
   function layout() {
     if (scene.dpr !== (window.devicePixelRatio || 1)) scene.resize(scale, window.devicePixelRatio || 1);
     scroller.classList.toggle('fits', scene.funnels.length * CW * scale <= scroller.clientWidth);
@@ -84,7 +83,7 @@ export function mountDashboard(funnels, opts = {}) {
     const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / scale, cy = (scroller.scrollTop + scroller.clientHeight / 2) / scale;
     zoom = next;
     try { localStorage.setItem(ZOOM_KEY, String(zoom)); } catch {}
-    scale = baseScale() * zoom;
+    scale = BASE * zoom;
     hidePop(); tip.hidden = true;
     scene.resize(scale, window.devicePixelRatio || 1);
     layout(); buildTitles(); zoomButtons();
