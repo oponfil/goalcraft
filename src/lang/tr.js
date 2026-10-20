@@ -142,7 +142,7 @@ export default {
   'hist.total': (n, a) => `Bu dönemde: +${n} · günde ortalama +${a}`,
   'hist.failed': 'Geçmiş yüklenemedi.',
   'board.usageCost': (c) => `API fiyatıyla ≈${c}`,
-  'board.usageLimit': (p, d) => `${d} günlük limitin ${p}`,
+  'board.usageLimit': (p, d) => (d === 7 ? `haftalık limitin ${p}` : `${d} günlük limitin ${p}`),
   'board.runNow': 'sürüyor',
   'board.supervisorName': (funnel) => `Süpervizör · ${funnel}`,
   'board.supStatus.ok': 'Her şey yolunda',

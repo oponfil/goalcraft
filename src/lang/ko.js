@@ -142,7 +142,7 @@ export default {
   'hist.total': (n, a) => `이 기간: +${n} · 하루 평균 +${a}`,
   'hist.failed': '기록을 불러오지 못했습니다.',
   'board.usageCost': (c) => `API 가격 기준 약 ${c}`,
-  'board.usageLimit': (p, d) => `${d}일 한도의 ${p}`,
+  'board.usageLimit': (p, d) => (d === 7 ? `주간 한도의 ${p}` : `${d}일 한도의 ${p}`),
   'board.runNow': '진행 중',
   'board.supervisorName': (funnel) => `슈퍼바이저 · ${funnel}`,
   'board.supStatus.ok': '모두 순조로움',

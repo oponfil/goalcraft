@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=8d07f18f';
-import vi from './lang/vi.js?v=8d07f18f';
-import ja from './lang/ja.js?v=8d07f18f';
-import pt from './lang/pt.js?v=8d07f18f';
-import tr from './lang/tr.js?v=8d07f18f';
-import ko from './lang/ko.js?v=8d07f18f';
+import es from './lang/es.js?v=85ec3a7f';
+import vi from './lang/vi.js?v=85ec3a7f';
+import ja from './lang/ja.js?v=85ec3a7f';
+import pt from './lang/pt.js?v=85ec3a7f';
+import tr from './lang/tr.js?v=85ec3a7f';
+import ko from './lang/ko.js?v=85ec3a7f';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -347,7 +347,7 @@ const STRINGS = {
   'hist.total': L((n, a) => `In this period: +${n} · +${a} a day on average`, (n, a) => `За период: +${n} · в среднем +${a} в день`, (n, a) => `此期间：+${n} · 平均每天 +${a}`, (n, a) => `ช่วงนี้: +${n} · เฉลี่ยวันละ +${a}`),
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.usageCost': L((c) => `≈${c} at API prices`, (c) => `≈${c} по ценам API`, (c) => `按 API 价格约 ${c}`, (c) => `≈${c} ตามราคา API`),
-  'board.usageLimit': L((p, d) => `${p} of the ${d}-day limit`, (p, d) => `${p} лимита на ${d} дн.`, (p, d) => `${d} 天额度已用 ${p}`, (p, d) => `ใช้ ${p} ของโควตา ${d} วัน`),
+  'board.usageLimit': L((p, d) => (d === 7 ? `${p} of the weekly limit` : `${p} of the ${d}-day limit`), (p, d) => (d === 7 ? `${p} недельного лимита` : `${p} лимита на ${d} дн.`), (p, d) => (d === 7 ? `每周额度已用 ${p}` : `${d} 天额度已用 ${p}`), (p, d) => (d === 7 ? `ใช้ ${p} ของโควตารายสัปดาห์` : `ใช้ ${p} ของโควตา ${d} วัน`)),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),
   // A supervisor that gave itself no name: by its funnel.
   'board.supervisorName': L((funnel) => `Supervisor · ${funnel}`, (funnel) => `Супервайзер · ${funnel}`, (funnel) => `主管 · ${funnel}`, (funnel) => `ผู้ดูแล · ${funnel}`),

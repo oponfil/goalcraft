@@ -143,7 +143,7 @@ export default {
   'hist.total': (n, a) => `この期間: +${n} · 1日平均 +${a}`,
   'hist.failed': '履歴を読み込めませんでした。',
   'board.usageCost': (c) => `API価格で約${c}`,
-  'board.usageLimit': (p, d) => `${d}日間の上限の${p}`,
+  'board.usageLimit': (p, d) => (d === 7 ? `週間上限の${p}` : `${d}日間の上限の${p}`),
   'board.runNow': '実行中',
   'board.supervisorName': (funnel) => `監督 · ${funnel}`,
   'board.supStatus.ok': '順調',

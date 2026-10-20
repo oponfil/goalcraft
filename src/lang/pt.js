@@ -142,7 +142,7 @@ export default {
   'hist.total': (n, a) => `No período: +${n} · +${a} por dia em média`,
   'hist.failed': 'Não foi possível carregar o histórico.',
   'board.usageCost': (c) => `≈${c} a preços da API`,
-  'board.usageLimit': (p, d) => `${p} do limite de ${d} dias`,
+  'board.usageLimit': (p, d) => (d === 7 ? `${p} do limite semanal` : `${p} do limite de ${d} dias`),
   'board.runNow': 'em andamento',
   'board.supervisorName': (funnel) => `Supervisor · ${funnel}`,
   'board.supStatus.ok': 'Tudo certo',
