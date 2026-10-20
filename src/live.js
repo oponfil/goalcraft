@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=c7d9435f';
+import { supabase } from './auth.js?v=a6fb8f4a';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -84,6 +84,10 @@ function kinds(rows) {
   const out = { tokens: rows.reduce((n, r) => n + Number(r.tokens), 0) };
   for (const k of KINDS) out[k] = rows.every(r => r[k] != null) ? rows.reduce((n, r) => n + Number(r[k]), 0) : null;
   out.limit_used = rows.some(r => r.limit_used != null) ? rows.reduce((n, r) => n + Number(r.limit_used ?? 0), 0) : null;
+  // The plan's limit as the app last logged it (Codex): how much of it is used, over how many days.
+  const last = rows.filter(r => r.limit_percent != null).sort((a, b) => Date.parse(b.ended_at) - Date.parse(a.ended_at))[0];
+  out.limit = last ? Number(last.limit_percent) : null;
+  out.limitDays = last?.limit_window_minutes ? Math.round(last.limit_window_minutes / 1440) : null;
   return out;
 }
 
@@ -91,14 +95,11 @@ function kinds(rows) {
 // the plan's limit as its app last logged it (Codex).
 function dayUsage(rows) {
   if (!rows.length) return null;
-  const last = rows.filter(r => r.limit_percent != null).sort((a, b) => Date.parse(b.ended_at) - Date.parse(a.ended_at))[0];
   return {
     runs: rows.length,
     ...kinds(rows),
     cost: rows.every(r => r.cost_usd != null) ? rows.reduce((n, r) => n + Number(r.cost_usd), 0) : null,
     app: rows[0].app,
-    limit: last ? Number(last.limit_percent) : null,
-    limitDays: last?.limit_window_minutes ? Math.round(last.limit_window_minutes / 1440) : null,
   };
 }
 
@@ -144,7 +145,7 @@ export async function runs(a, limit = 10) {
   // Each run's tokens: every stretch the wake script counted goes to the one run it started in (the
   // latest run started by then, a couple of minutes' slack for the agent's first signal).
   const from = data[data.length - 1].started_at;
-  const { data: used } = await supabase.from('agent_usage').select('started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used')
+  const { data: used } = await supabase.from('agent_usage').select('started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
     .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from);
   if (!used?.length) return data;
   const pad = 2 * 60e3, mine = data.map(() => []);

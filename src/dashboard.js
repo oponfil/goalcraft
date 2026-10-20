@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c7d9435f';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c7d9435f';
-import { t, lang } from './i18n.js?v=c7d9435f';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=a6fb8f4a';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=a6fb8f4a';
+import { t, lang } from './i18n.js?v=a6fb8f4a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -272,6 +272,7 @@ export function mountDashboard(funnels, opts = {}) {
     u.output_tokens != null && t('board.tokOut', fmtTokens(u.output_tokens)),
     t('board.tokTotal', fmtTokens(u.tokens)),
     u.limit_used != null && t('board.limitUsed', fmtPercent(u.limit_used)),
+    u.limit != null && t('board.limitNow', fmtPercent(u.limit), u.limitDays),
   ].filter(Boolean).join('\n');
   const supStatus = s => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
 

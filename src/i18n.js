@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=c7d9435f';
-import vi from './lang/vi.js?v=c7d9435f';
-import ja from './lang/ja.js?v=c7d9435f';
-import pt from './lang/pt.js?v=c7d9435f';
-import tr from './lang/tr.js?v=c7d9435f';
-import ko from './lang/ko.js?v=c7d9435f';
+import es from './lang/es.js?v=a6fb8f4a';
+import vi from './lang/vi.js?v=a6fb8f4a';
+import ja from './lang/ja.js?v=a6fb8f4a';
+import pt from './lang/pt.js?v=a6fb8f4a';
+import tr from './lang/tr.js?v=a6fb8f4a';
+import ko from './lang/ko.js?v=a6fb8f4a';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -328,6 +328,7 @@ const STRINGS = {
   'board.tokOut': L((n) => `Output: ${n}`, (n) => `Исходящие: ${n}`, (n) => `输出：${n}`, (n) => `เอาต์พุต: ${n}`),
   'board.tokTotal': L((n) => `Total: ${n} tokens`, (n) => `Всего: ${n} токенов`, (n) => `合计：${n} 个 token`, (n) => `รวม: ${n} โทเค็น`),
   'board.limitUsed': L((p) => `Limit used by this: ${p}`, (p) => `Израсходовано лимита: ${p}`, (p) => `占用额度：${p}`, (p) => `ใช้โควตาไป: ${p}`),
+  'board.limitNow': L((p, d) => `The ${d}-day limit is now ${p} used`, (p, d) => `Лимит на ${d} дн. сейчас израсходован на ${p}`, (p, d) => `${d} 天额度目前已用 ${p}`, (p, d) => `ตอนนี้ใช้โควตา ${d} วันไป ${p}`),
   'board.usageCost': L((c) => `≈${c} at API prices`, (c) => `≈${c} по ценам API`, (c) => `按 API 价格约 ${c}`, (c) => `≈${c} ตามราคา API`),
   'board.usageLimit': L((p, d) => `${p} of the ${d}-day limit`, (p, d) => `${p} лимита на ${d} дн.`, (p, d) => `${d} 天额度已用 ${p}`, (p, d) => `ใช้ ${p} ของโควตา ${d} วัน`),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),
