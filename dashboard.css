@@ -164,7 +164,10 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop details.runs summary { cursor: pointer; color: var(--muted); }
 #pop details.runs summary:hover { color: var(--text); }
 #pop .runs-list { margin-top: 6px; max-height: 220px; overflow-y: auto; }
-#pop .run-row { display: grid; grid-template-columns: auto auto 1fr; gap: 10px; padding: 3px 0; }
+/* A run's tokens, at the end of its row, as the wake script counted them. */
+#pop .run-row .tok { color: var(--muted); white-space: nowrap; }
+#pop .pop-note.usage { color: var(--muted); }
+#pop .run-row { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; padding: 3px 0; }
 #pop .run-row .at, #pop .run-row .took { color: var(--muted); white-space: nowrap; }
 .pop-msg { color: var(--alert); margin-top: 6px; }
 .pop-msg.ok { color: var(--muted); }

@@ -3,6 +3,10 @@
 // on their computer (a Claude app session or a Codex thread) with a short note to check Goalcraft.
 //
 //   GET /wake   Authorization: Bearer <wake key>   → { wake: [{ agent, funnel_id, funnel, reasons, app, session }] }
+//   GET /wake?agents=1   → { agents: [{ agent, funnel_id, app, session }] }: the agents on this computer whose
+//                          token use the script reads (nobody is woken or marked)
+//   POST /wake { usage: [{ funnel_id, agent, run_key, app, model, started_at, ended_at, tokens, new_tokens,
+//                cost_usd, limit_percent, limit_window_minutes }] }   → { saved }: what their runs used
 //
 // An agent is woken once for each reason: a message it has not read (from the person, or for a
 // worker from its supervisor), an answer to its question while it sleeps, for a supervisor a worker's
@@ -34,6 +38,35 @@ function session(chat: string | null): { app: string, session: string } | null {
   return null
 }
 
+// What the script read from the agents' session files: one row per run, upserted by its key. Only
+// for the key owner's own funnels; numbers only, nothing from the conversations.
+async function saveUsage(user: string, body: any) {
+  const rows = Array.isArray(body?.usage) ? body.usage.slice(0, 500) : null
+  if (!rows) return json({ error: 'bad_body' }, 400)
+  const { data: funnels, error } = await admin.from('funnels').select('id, key').eq('user_id', user)
+  if (error) return json({ error: 'failed' }, 500)
+  const id = new Map((funnels ?? []).map((f: any) => [f.key, f.id]))
+  const num = (v: unknown, max: number) => typeof v === 'number' && isFinite(v) && v >= 0 && v <= max ? v : null
+  const time = (v: unknown) => typeof v === 'string' && !isNaN(Date.parse(v)) ? new Date(v).toISOString() : null
+  const str = (v: unknown, max: number) => typeof v === 'string' && v.length > 0 && v.length <= max ? v : null
+  const ok = rows.flatMap((r: any) => {
+    const funnel_id = id.get(r?.funnel_id), agent = str(r?.agent, 64), run_key = str(r?.run_key, 200)
+    const started_at = time(r?.started_at), ended_at = time(r?.ended_at)
+    if (!funnel_id || !agent || !run_key || !started_at || !ended_at || !['claude', 'codex'].includes(r?.app)) return []
+    return [{
+      user_id: user, funnel_id, agent, run_key, app: r.app, model: str(r.model, 64), started_at, ended_at,
+      tokens: Math.round(num(r.tokens, 1e12) ?? 0), new_tokens: Math.round(num(r.new_tokens, 1e12) ?? 0),
+      cost_usd: num(r.cost_usd, 1e6), limit_percent: num(r.limit_percent, 100),
+      limit_window_minutes: num(r.limit_window_minutes, 1e6), updated_at: new Date().toISOString(),
+    }]
+  })
+  if (ok.length) {
+    const { error: e } = await admin.from('agent_usage').upsert(ok, { onConflict: 'funnel_id,agent,run_key' })
+    if (e) return json({ error: 'failed' }, 500)
+  }
+  return json({ saved: ok.length })
+}
+
 Deno.serve(async (req) => {
   const key = (req.headers.get('authorization') ?? '').replace(/^Bearer /, '').trim()
   if (!key) return json({ error: 'no_key' }, 401)
@@ -42,7 +75,18 @@ Deno.serve(async (req) => {
   const user = owner.user_id, now = Date.now(), iso = (t: number) => new Date(t).toISOString()
   await admin.from('wake_keys').update({ last_used_at: iso(now) }).eq('user_id', user)
   // ?check=1: the script only checks its key (when it is installed); nobody is woken or marked.
-  if (new URL(req.url).searchParams.has('check')) return json({ ok: true })
+  const params = new URL(req.url).searchParams
+  if (params.has('check')) return json({ ok: true })
+  if (req.method === 'POST') return saveUsage(user, await req.json().catch(() => null))
+  if (params.has('agents')) {
+    const { data, error } = await admin.from('presence').select('agent, chat_url, funnels (key)')
+      .eq('user_id', user).gte('updated_at', iso(now - 7 * 24 * 3600e3))
+    if (error) return json({ error: 'failed' }, 500)
+    return json({ agents: (data ?? []).flatMap((p: any) => {
+      const s = session(p.chat_url)
+      return s ? [{ agent: p.agent, funnel_id: p.funnels?.key, ...s }] : []
+    }) })
+  }
 
   const [presence, messages, answers, wakes, replies] = await Promise.all([
     admin.from('presence').select('funnel_id, agent, state, next_run_at, chat_url, updated_at, funnels (key, title)')

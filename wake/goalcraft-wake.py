@@ -10,10 +10,12 @@ Goalcraft: a Claude app session (Claude Code) through `claude -p --resume`, a Co
     python3 goalcraft-wake.py install <key>   save the key and keep the script running (macOS)
     python3 goalcraft-wake.py uninstall       stop it and remove it from the login items
     python3 goalcraft-wake.py once            one check, then exit (to try it)
+    python3 goalcraft-wake.py usage           read and send the agents' token use now, and print it
     python3 goalcraft-wake.py run             the loop itself (what install starts)
 
 The key comes from the Goalcraft MCP tool create_wake_key (your agent calls it and runs install for you).
-It only lets the script ask whom to wake.
+It only lets the script ask whom to wake, and send what the agents' runs used in tokens (read from
+their session files here: numbers only, nothing from the conversations).
 Standard library only; the log is ~/.goalcraft/wake.log.
 """
 import glob
@@ -81,15 +83,35 @@ def note(item):
             f'When done, set your state as usual (sleep with next_run_at, or clear_agent).')
 
 
+def app_sessions():
+    """The Claude app's sessions on this computer (Claude Code in the app, scheduled tasks included)."""
+    out = []
+    for f in glob.glob(str(SESSIONS / '*' / '*' / 'local_*.json')):
+        try:
+            out.append(json.loads(pathlib.Path(f).read_text()))
+        except Exception:
+            pass
+    return out
+
+
+def app_session(session):
+    """A Claude app session by the id in the agent's chat link: local_<app session id>. An agent may
+    give its Claude Code session id there instead (local_<cliSessionId>), so that is looked up too."""
+    files = glob.glob(str(SESSIONS / '*' / '*' / f'{session}.json'))
+    if files:
+        return json.loads(pathlib.Path(files[0]).read_text())
+    cli = session.removeprefix('local_')
+    return next((s for s in app_sessions() if s.get('cliSessionId') == cli), None)
+
+
 def claude_command(item):
     """`claude -p --resume` for a Claude app session: its local_ id maps to the Claude Code session it runs."""
     claude = find('claude')
     if not claude:
         return None, 'claude command not found (install Claude Code and sign in with `claude`)'
-    files = glob.glob(str(SESSIONS / '*' / '*' / f'{item["session"]}.json'))
-    if not files:
+    s = app_session(item['session'])
+    if not s:
         return None, f'no Claude app session {item["session"]} on this computer'
-    s = json.loads(pathlib.Path(files[0]).read_text())
     cmd = [claude, '-p', '--resume', s['cliSessionId'], '--allowedTools', *GOALCRAFT_TOOLS]
     if s.get('permissionMode') in ('acceptEdits', 'bypassPermissions', 'plan'):
         cmd += ['--permission-mode', s['permissionMode']]
@@ -141,6 +163,186 @@ def wake(item):
     log(f'waking {who}')
 
 
+# Token use. The agents don't know what they spend, but their apps log it on this computer: every
+# model call in a Claude Code transcript (~/.claude/projects/*/<session>.jsonl), Codex's running
+# totals and plan limit in its rollout files (~/.codex/sessions/…). Every few minutes the script sums
+# them per run and sends Goalcraft the numbers only, nothing from the conversations.
+USAGE_EVERY = 5 * 60
+USAGE_DAYS = 2      # runs ended this recently are (re)sent
+RUN_GAP = 15 * 60   # a pause this long in one session starts a new run
+PROJECTS = HOME / '.claude' / 'projects'
+CODEX_SESSIONS = HOME / '.codex' / 'sessions'
+# API prices in $ per million tokens (input, output, cache read); cache writes cost 1.25x input for
+# 5 minutes and 2x for an hour. Longest matching prefix wins; other models get no cost.
+PRICES = {
+    'claude-fable-5-1': (10, 50, 0.25), 'claude-fable-5': (10, 50, 1.0), 'claude-mythos': (10, 50, 1.0),
+    'claude-opus-5-5': (4, 20, 0.2), 'claude-opus-5': (5, 25, 0.5), 'claude-opus-4': (5, 25, 0.5),
+    'claude-sonnet-5': (2, 10, 0.2), 'claude-sonnet-4': (3, 15, 0.3),
+    'claude-haiku-5': (0.1, 0.5, 0.01), 'claude-haiku-4': (1, 5, 0.1),
+}
+
+
+def price(model):
+    hits = [k for k in PRICES if model and model.startswith(k)]
+    return PRICES[max(hits, key=len)] if hits else None
+
+
+def when(ts):
+    try:
+        return time.mktime(time.strptime(ts[:19], '%Y-%m-%dT%H:%M:%S')) - time.timezone
+    except Exception:
+        return None
+
+
+def iso(t):
+    return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(t))
+
+
+def split_runs(points):
+    """[(time, …)] sorted → runs: lists of points with no pause longer than RUN_GAP inside."""
+    runs = []
+    for p in points:
+        if runs and p[0] - runs[-1][-1][0] <= RUN_GAP:
+            runs[-1].append(p)
+        else:
+            runs.append([p])
+    return runs
+
+
+def claude_usage(item, sessions):
+    """Runs of a Claude agent: its own session, or every session of its scheduled task (each run of a
+    scheduled task is a new session)."""
+    s = app_session(item['session'])
+    if not s:
+        return []
+    task = s.get('scheduledTaskId')
+    group = [x for x in sessions if task and x.get('scheduledTaskId') == task] or [s]
+    since = time.time() - USAGE_DAYS * 86400
+    out = []
+    for x in group:
+        cli = x.get('cliSessionId')
+        for f in glob.glob(str(PROJECTS / '*' / f'{cli}.jsonl')) if cli else []:
+            if os.path.getmtime(f) < since:
+                continue
+            seen, points = set(), []
+            with open(f, errors='ignore') as fh:
+                for line in fh:
+                    if '"usage"' not in line:
+                        continue
+                    try:
+                        d = json.loads(line)
+                    except Exception:
+                        continue
+                    m = d.get('message')
+                    if not isinstance(m, dict) or not isinstance(m.get('usage'), dict) or m.get('id') in seen:
+                        continue
+                    t = when(d.get('timestamp') or '')
+                    if t is None:
+                        continue
+                    seen.add(m.get('id'))
+                    points.append((t, m.get('model'), m['usage']))
+            points.sort(key=lambda p: p[0])
+            for run in split_runs(points):
+                if run[-1][0] < since:
+                    continue
+                tokens = new = 0
+                cost, models = 0.0, {}
+                for _, model, u in run:
+                    fresh, read, out_ = u.get('input_tokens', 0), u.get('cache_read_input_tokens', 0), u.get('output_tokens', 0)
+                    write = u.get('cache_creation_input_tokens', 0)
+                    hour = (u.get('cache_creation') or {}).get('ephemeral_1h_input_tokens', 0)
+                    tokens += fresh + write + read + out_
+                    new += fresh + write + out_
+                    models[model] = models.get(model, 0) + 1
+                    pr = price(model)
+                    if model == '<synthetic>':  # Claude Code's own notes, not a model call
+                        pass
+                    elif pr is None or cost is None:
+                        cost = None
+                    else:
+                        cost += (fresh * pr[0] + out_ * pr[1] + read * pr[2] + hour * pr[0] * 2 + (write - hour) * pr[0] * 1.25) / 1e6
+                out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'claude',
+                            'run_key': f'{cli}:{int(run[0][0])}', 'model': max(models, key=models.get),
+                            'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), 'tokens': tokens, 'new_tokens': new,
+                            'cost_usd': round(cost, 4) if cost is not None else None})
+    return out
+
+
+def codex_usage(item):
+    """Runs of a Codex thread from its rollout file: the running token totals, and the plan's limit
+    as Codex last saw it."""
+    files = glob.glob(str(CODEX_SESSIONS / '*' / '*' / '*' / f'rollout-*{item["session"]}.jsonl'))
+    since = time.time() - USAGE_DAYS * 86400
+    out = []
+    for f in files:
+        if os.path.getmtime(f) < since:
+            continue
+        points = []
+        with open(f, errors='ignore') as fh:
+            for line in fh:
+                if '"token_count"' not in line:
+                    continue
+                try:
+                    d = json.loads(line)
+                except Exception:
+                    continue
+                pl = d.get('payload') or {}
+                total = (pl.get('info') or {}).get('total_token_usage')
+                t = when(d.get('timestamp') or '')
+                if pl.get('type') == 'token_count' and total and t is not None:
+                    points.append((t, total, (pl.get('rate_limits') or {}).get('primary') or {}))
+        before = {}
+        for run in split_runs(points):
+            end = run[-1][1]
+            diff = {k: end.get(k, 0) - before.get(k, 0) for k in ('input_tokens', 'cached_input_tokens', 'output_tokens', 'total_tokens')}
+            before = end
+            if run[-1][0] < since:
+                continue
+            limit = run[-1][2]
+            out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'codex',
+                        'run_key': f'{item["session"]}:{int(run[0][0])}', 'model': None,
+                        'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]),
+                        'tokens': max(0, diff['total_tokens']),
+                        'new_tokens': max(0, diff['input_tokens'] - diff['cached_input_tokens'] + diff['output_tokens']),
+                        'cost_usd': None, 'limit_percent': limit.get('used_percent'),
+                        'limit_window_minutes': limit.get('window_minutes')})
+    return out
+
+
+def report_usage(key, show=False):
+    """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
+    req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1'})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            agents = json.load(r).get('agents', [])
+    except Exception as e:
+        log(f'usage: could not list agents: {e}')
+        return 0
+    sessions = app_sessions()
+    rows = []
+    for item in agents:
+        try:
+            rows += claude_usage(item, sessions) if item['app'] == 'claude' else codex_usage(item)
+        except Exception as e:
+            log(f'usage: {item["agent"]} in {item["funnel_id"]}: {e}')
+    if show:
+        for r in rows:
+            cost = f' ≈${r["cost_usd"]:.2f}' if r.get('cost_usd') is not None else ''
+            limit = f' limit {r["limit_percent"]}%' if r.get('limit_percent') is not None else ''
+            print(f'{r["funnel_id"]:>14} {r["agent"]:<18} {r["started_at"]} {r["tokens"] / 1e6:7.2f}M tokens{cost}{limit}')
+    saved = 0
+    for i in range(0, len(rows), 400):
+        body = json.dumps({'usage': rows[i:i + 400]}).encode()
+        req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={
+            'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1', 'Content-Type': 'application/json'})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                saved += json.load(r).get('saved', 0)
+        except Exception as e:
+            log(f'usage: could not send: {e}')
+    return saved
+
+
 def check(key, wake_them=True):
     req = urllib.request.Request(ENDPOINT, headers={'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1'})
     try:
@@ -180,10 +382,14 @@ def key_or_exit():
 def run():
     key = key_or_exit()
     log('started')
+    counted = 0
     while True:
         if check(key) == 401:
             log('the key was replaced or removed: stopping. Ask your agent to set up the wake script again (create_wake_key).')
             return
+        if time.time() - counted > USAGE_EVERY:
+            counted = time.time()
+            threading.Thread(target=report_usage, args=(key,), daemon=True).start()
         time.sleep(EVERY)
 
 
@@ -238,6 +444,8 @@ if __name__ == '__main__':
         uninstall()
     elif cmd == 'run':
         run()
+    elif cmd == 'usage':
+        print(f'sent {report_usage(key_or_exit(), show=True)} runs to Goalcraft')
     elif cmd == 'once':
         print('ok' if check(key_or_exit()) == 200 else 'failed: see ~/.goalcraft/wake.log')
         time.sleep(1)

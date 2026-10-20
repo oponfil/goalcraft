@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=ecd506b9';
+import { supabase } from './auth.js?v=d344de2b';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -18,7 +18,7 @@ function flowOf(reports, now) {
 
 // Rows from the database → the funnels the scene draws (same shape as the demo in src/data.js).
 // MCP zones start at 0 above the first stage; the scene's start at -1.
-function toScene(f, reports, now) {
+function toScene(f, reports, now, usage = []) {
   const stages = [...f.stages].sort((a, b) => a.position - b.position);
   const series = key => reports.filter(r => r.funnel_id === f.id && r.stage_key === key);
   return {
@@ -36,14 +36,14 @@ function toScene(f, reports, now) {
     manualFill: stages.map(s => (s.fill_percent == null ? null : Number(s.fill_percent) / 100)),
     cubes: f.results,
     goal: { total: f.goal_total, every: Number(f.goal_every_days) },
-    workers: f.presence.filter(p => p.zone != null).map(p => agentOf(f, p, now)),
+    workers: f.presence.filter(p => p.zone != null).map(p => agentOf(f, p, now, usage)),
     // The supervisor (no zone): on the platform at the top, with what its last run found.
-    supervisor: f.presence.filter(p => p.zone == null).map(p => ({ ...agentOf(f, p, now), status: p.status, summary: p.summary }))[0] ?? null,
+    supervisor: f.presence.filter(p => p.zone == null).map(p => ({ ...agentOf(f, p, now, usage), status: p.status, summary: p.summary }))[0] ?? null,
   };
 }
 
 // One agent's presence → what the scene draws by it.
-function agentOf(f, p, now) {
+function agentOf(f, p, now, usage = []) {
       // The agent's unanswered questions, oldest first. An agent asking stands and waits for the
       // answers; one that went to sleep keeps them in a bubble and picks them up on its next run.
       // Once all are answered, an asking agent is shown back at work.
@@ -70,14 +70,32 @@ function agentOf(f, p, now) {
             .map(m => ({ id: 'm:' + m.id, question: null, answer: m.text, reply: m.reply, at: m.replied_at })),
         ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)),
         chat: p.chat_url,
+        // Its token use over the last day, as the person's wake script read it from the agent's own
+        // session files (null: not known, e.g. a web chat).
+        usage: dayUsage(usage.filter(u => u.funnel_id === f.id && u.agent === p.agent)),
         // What this run added (the last run's, while the agent sleeps); null = not known.
         added: p.run_added,
       };
 }
 
+// The last day's runs of one agent added up: tokens, cost at API prices (when every run has one) and
+// the plan's limit as its app last logged it (Codex).
+function dayUsage(rows) {
+  if (!rows.length) return null;
+  const last = rows.filter(r => r.limit_percent != null).sort((a, b) => Date.parse(b.ended_at) - Date.parse(a.ended_at))[0];
+  return {
+    runs: rows.length,
+    tokens: rows.reduce((n, r) => n + Number(r.tokens), 0),
+    cost: rows.every(r => r.cost_usd != null) ? rows.reduce((n, r) => n + Number(r.cost_usd), 0) : null,
+    app: rows[0].app,
+    limit: last ? Number(last.limit_percent) : null,
+    limitDays: last?.limit_window_minutes ? Math.round(last.limit_window_minutes / 1440) : null,
+  };
+}
+
 export async function loadFunnels() {
   const now = Date.now();
-  const [funnels, reports] = await Promise.all([
+  const [funnels, reports, usage] = await Promise.all([
     supabase.from('funnels')
       .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_every_days, results, output_flow_per_day,
         stages (key, position, label, count, fill_percent, flow_per_day),
@@ -89,10 +107,14 @@ export async function loadFunnels() {
       .select('funnel_id, stage_key, value, at')
       .gte('at', new Date(now - WINDOW_DAYS * DAY).toISOString())
       .order('at'),
+    supabase.from('agent_usage')
+      .select('funnel_id, agent, app, tokens, cost_usd, limit_percent, limit_window_minutes, ended_at')
+      .gte('ended_at', new Date(now - DAY).toISOString()),
   ]);
   if (funnels.error) throw funnels.error;
   if (reports.error) throw reports.error;
-  return funnels.data.map(f => toScene(f, reports.data, now));
+  // Token use is extra: without it (say, before the table exists) the board still loads.
+  return funnels.data.map(f => toScene(f, reports.data, now, usage.error ? [] : usage.data));
 }
 
 export async function answer(questionId, text) {
@@ -109,7 +131,20 @@ export async function runs(a, limit = 10) {
     .eq('funnel_id', a.f.id).eq('agent', a.agent)
     .order('started_at', { ascending: false }).limit(limit);
   if (error) throw error;
-  return data;
+  if (!data.length) return data;
+  // Each run's tokens: every stretch the wake script counted goes to the one run it started in (the
+  // latest run started by then, a couple of minutes' slack for the agent's first signal).
+  const from = data[data.length - 1].started_at;
+  const { data: used } = await supabase.from('agent_usage').select('started_at, ended_at, tokens, cost_usd')
+    .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from);
+  if (!used?.length) return data;
+  const pad = 2 * 60e3, mine = data.map(() => []);
+  for (const u of used) {
+    const i = data.findIndex(r => Date.parse(r.started_at) - pad <= Date.parse(u.started_at));
+    if (i >= 0 && (!data[i].ended_at || Date.parse(u.started_at) <= Date.parse(data[i].ended_at) + pad)) mine[i].push(u);
+  }
+  return data.map((r, i) => mine[i].length ? { ...r, tokens: mine[i].reduce((n, u) => n + Number(u.tokens), 0),
+    cost: mine[i].every(u => u.cost_usd != null) ? mine[i].reduce((n, u) => n + Number(u.cost_usd), 0) : null } : r);
 }
 
 // The person wrote to an agent from its card; the agent reads it through MCP (get_messages).

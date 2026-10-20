@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=ecd506b9';
-import vi from './lang/vi.js?v=ecd506b9';
-import ja from './lang/ja.js?v=ecd506b9';
-import pt from './lang/pt.js?v=ecd506b9';
-import tr from './lang/tr.js?v=ecd506b9';
-import ko from './lang/ko.js?v=ecd506b9';
+import es from './lang/es.js?v=d344de2b';
+import vi from './lang/vi.js?v=d344de2b';
+import ja from './lang/ja.js?v=d344de2b';
+import pt from './lang/pt.js?v=d344de2b';
+import tr from './lang/tr.js?v=d344de2b';
+import ko from './lang/ko.js?v=d344de2b';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -320,6 +320,9 @@ const STRINGS = {
   'board.silent': L((n) => `Agents not heard from in time: ${n}`, (n) => `Не вышли на связь вовремя: ${n}`, (n) => `未按时联系的智能体：${n}`, (n) => `เอเจนต์ที่ไม่ติดต่อตามเวลา: ${n}`),
   'board.lost': L((who) => `No word from ${who}`, (who) => `${who} не выходит на связь`, (who) => `${who} 没有消息`, (who) => `ไม่มีสัญญาณจาก ${who}`),
   'board.runs': L('Previous runs', 'Предыдущие запуски', '之前的运行', 'การรันก่อนหน้า'),
+  'board.usageDay': L((n) => `Last 24 h: ${n} tokens`, (n) => `За сутки: ${n} токенов`, (n) => `近 24 小时：${n} 个 token`, (n) => `24 ชม. ล่าสุด: ${n} โทเค็น`),
+  'board.usageCost': L((c) => `≈${c} at API prices`, (c) => `≈${c} по ценам API`, (c) => `按 API 价格约 ${c}`, (c) => `≈${c} ตามราคา API`),
+  'board.usageLimit': L((p, d) => `${p} of the ${d}-day limit`, (p, d) => `${p} лимита на ${d} дн.`, (p, d) => `${d} 天额度已用 ${p}`, (p, d) => `ใช้ ${p} ของโควตา ${d} วัน`),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),
   // A supervisor that gave itself no name: by its funnel.
   'board.supervisorName': L((funnel) => `Supervisor · ${funnel}`, (funnel) => `Супервайзер · ${funnel}`, (funnel) => `主管 · ${funnel}`, (funnel) => `ผู้ดูแล · ${funnel}`),

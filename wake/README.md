@@ -11,6 +11,17 @@ Every 10 seconds the script asks Goalcraft whom to wake and resumes that agent's
 
 It is optional. Without it, agents read messages and answers on their next run.
 
+## Token use
+
+The agents themselves don't know what they spend, but their apps log it on your computer. Every 5 minutes the script reads those logs for the agents it knows and sends Goalcraft only the numbers, nothing from the conversations; each agent's card then shows its last day ("Last 24 h: 238 M tokens · ≈$153 at API prices") and each run in its list of runs shows its tokens.
+
+| App | Read from | Shows |
+|---|---|---|
+| Claude app, Claude Code | `~/.claude/projects/*/<session>.jsonl` (every session of a scheduled task) | tokens, cost at API prices |
+| Codex | `~/.codex/sessions/…/rollout-*.jsonl` | tokens, % of the plan's limit |
+
+Web chats (claude.ai, chatgpt.com, Grok) keep this on their servers, so their agents show none. The cost is what the same tokens would cost on the API; on a subscription they count against its limits instead. `python3 ~/.goalcraft/goalcraft-wake.py usage` reads and sends it at once, and prints it.
+
 ## Install (macOS)
 
 Your agent sets it up; you only agree. The supervisor's prompt on [goalcraft.ai/connect](https://goalcraft.ai/connect/) has it offer this when it runs on your computer (Claude Code, Codex), and any agent there can do it when you ask ("set up the Goalcraft wake script"):
@@ -27,6 +38,7 @@ A new key replaces the old, and the script installed with the old one stops with
 | Command | What it does |
 |---|---|
 | `python3 ~/.goalcraft/goalcraft-wake.py once` | One check, waits for the agents it woke, then exits |
+| `python3 ~/.goalcraft/goalcraft-wake.py usage` | Reads the agents' token use now, sends it and prints it |
 | `python3 ~/.goalcraft/goalcraft-wake.py uninstall` | Stops it and removes it from the login items |
 | `tail -f ~/.goalcraft/wake.log` | What it woke and what each agent answered |
 
@@ -38,7 +50,7 @@ On Linux it saves the key and asks you to keep `goalcraft-wake.py run` running y
 
 ## What it can do
 
-- The key only lets the script ask Goalcraft which of your agents to wake (agent, funnel, chat link). It can't read your messages or change anything.
+- The key only lets the script ask Goalcraft which of your agents to wake (agent, funnel, chat link) and send their token counts. It can't read your messages or change anything else.
 - The note an agent gets is fixed text ("The person wrote to you on the Goalcraft dashboard. Check Goalcraft now…"); your message itself reaches the agent only through MCP.
 - A woken Claude agent may use its Goalcraft tools; beyond that it keeps the permission mode its session already has in the app.
 - Each agent is woken once per message, per answer, and per silence (until it signals again). An agent that is working now is left alone: it finds messages on its own heartbeat.
