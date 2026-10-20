@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=78e60bcb';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=78e60bcb';
-import { themeOf } from './themes.js?v=78e60bcb';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=78e60bcb';
+import { agentInfo, plural } from './data.js?v=121bfe7a';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=121bfe7a';
+import { themeOf } from './themes.js?v=121bfe7a';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=121bfe7a';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -13,6 +13,8 @@ const ZW = 164, TOP = 48, ZH = 45, LH = 46, MAX_STAGES = 5;
 // The supervisor's platform: a small deck on top of the pipe; the supervisor walks from one end to
 // the other and looks down from each.
 const DECK_HALF = 28, DECK_Y = TOP;
+// The plank is a little shorter than the walk: the supervisor's feet reach its ends.
+const PLANK_HALF = 23;
 // The funnel's notes (left) and its list (right) hang in the air beside the platform's ends, DOC_W
 // wide each, their bottoms a little above its floor.
 const DOC_W = 18, GUIDE_X = -DECK_HALF - 5 - DOC_W, SHEET_X = DECK_HALF + 6, DOC_Y = DECK_Y - 25;
@@ -248,7 +250,7 @@ export class Scene {
   deck(c, x0, theme) {
     const R = (col, ...r) => { c.fillStyle = col; c.fillRect(...r); };
     const cx = x0 + CW / 2, y = DECK_Y, under = shade(theme.frame, 0.55);
-    R(under, cx - DECK_HALF, y + 1, DECK_HALF * 2 + 1, 2.5); R(theme.frame, cx - DECK_HALF, y, DECK_HALF * 2 + 1, 1.5);
+    R(under, cx - PLANK_HALF, y + 1, PLANK_HALF * 2 + 1, 2.5); R(theme.frame, cx - PLANK_HALF, y, PLANK_HALF * 2 + 1, 1.5);
   }
 
   // A funnel whose agents keep its list behind a link: a spreadsheet file (folded corner, white
@@ -289,6 +291,8 @@ export class Scene {
   }
 
   update(dt) {
+    // Time only runs forward: a frame timed oddly (a hidden page, say) never takes items back.
+    dt = Math.max(0, dt);
     this.t += dt;
     const t = this.t;
     for (const a of this.agents) {
@@ -328,7 +332,7 @@ export class Scene {
         const busy = this.agents.some(a => a.f === f && a.zone === i - 1 && a.state === 'work');
         f.acc[i] += fl * (busy ? 1 : 1 / 3) * dt / DAY_SECONDS;
         let k = Math.floor(f.acc[i]);
-        if (!k) continue;
+        if (k <= 0) continue;
         f.acc[i] -= k;
         if (i === n) f.cubes += k; else f.stages[i].count += k;
         // Results past the goal add rows: the scene grows down to fit them.
@@ -389,9 +393,10 @@ export class Scene {
       }
     });
     for (const a of this.agents) this.drawAgent(c, a);
+    this.funnels.forEach((f, fi) => { if (!f.supervisor) this.emptyChair(c, this.cx(fi), themeOf(f)); });
     if (this.live) this.funnels.forEach((f, fi) => {
-      // An empty platform: a click on either side of the pipe, between the documents, tells how to appoint one.
-      if (!f.supervisor) for (const x of [this.cx(fi) - DECK_HALF, this.cx(fi) + 6]) this.hits.push({ x, y: DECK_Y - 22, w: DECK_HALF - 6, h: 28, type: 'nosup', f });
+      // An empty platform: a click on its chair or plank tells how to appoint one.
+      if (!f.supervisor) this.hits.push({ x: this.cx(fi) - PLANK_HALF, y: DECK_Y - 24, w: PLANK_HALF * 2, h: 28, type: 'nosup', f });
     });
     for (const s of this.sparks) { c.fillStyle = s.col; c.fillRect(s.x, s.y, 2, 2); }
     if (this.dropAt !== null) {
@@ -465,6 +470,18 @@ export class Scene {
     }
     this.hits.push({ x: R ? p.x - 14 : p.x - 2, y: p.y - 4, w: 36, h: 34, type: 'agent', a });
     a.noteAt = { x: p.x + 10, y: p.y - 4 };
+  }
+
+  // A platform with no supervisor yet: an empty director's chair waits on it. A click on it (or the
+  // plank) tells how to appoint one.
+  emptyChair(c, cx, theme) {
+    const R = (col, ...r) => { c.fillStyle = col; c.fillRect(...r); };
+    const y = DECK_Y, wood = shade(theme.frame, 0.8), cloth = '#B5413A';
+    R(wood, cx - 6, y - 9, 1.5, 9); R(wood, cx + 4.5, y - 9, 1.5, 9);
+    R(cloth, cx - 6, y - 10, 12, 2.5);
+    R(wood, cx - 6, y - 20, 1.5, 11); R(wood, cx + 4.5, y - 20, 1.5, 11);
+    R(cloth, cx - 6, y - 19, 12, 4);
+    for (let i = 0; i < 9; i++) { R(wood, cx - 5 + i * 1.1, y - 1 - i, 1.2, 1.2); R(wood, cx + 4 - i * 1.1, y - 1 - i, 1.2, 1.2); }
   }
 
   // The supervisor on its platform: asleep lying at its left end, asking with the same red bubble as
