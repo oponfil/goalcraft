@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=d05af6c0';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=d05af6c0';
-import { t, lang } from './i18n.js?v=d05af6c0';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=a143d292';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=a143d292';
+import { t, lang } from './i18n.js?v=a143d292';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -392,6 +392,9 @@ export function mountDashboard(funnels, opts = {}) {
     pop.style.top = Math.max(8, Math.min(window.innerHeight - ph - 8, e.clientY + 14)) + 'px';
   }
   function hidePop() { pop.hidden = true; }
+  // A link in the card (Appoint a supervisor, Open in Claude…) takes the person elsewhere: the card
+  // closes, so it isn't still open when they come back.
+  pop.addEventListener('click', e => { if (e.target.closest('a[href]')) hidePop(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') hidePop(); });
   document.addEventListener('pointerdown', e => {
     if (!pop.hidden && !pop.contains(e.target) && e.target !== canvas) hidePop();
