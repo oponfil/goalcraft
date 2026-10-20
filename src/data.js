@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=2e771ed5';
+import { lang } from './i18n.js?v=2b68eb0c';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -69,7 +69,7 @@ export const FUNNELS = [
       { count: 14, forms: ['interview', 'interviews'] },
       { count: 4, forms: ['final round', 'final rounds'] },
     ],
-    flows: [8, 4, 1.6, 0.8, 0.2, 1 / 21],
+    flows: [8, 2.5, 1, 0.5, 0.15, 1 / 21],
     cubes: 1,
     goal: { total: 5, every: 21 },
     // The supervisor on the platform: what its last run found.
@@ -193,7 +193,7 @@ export const FUNNELS = [
       { count: 3, forms: ['second date', 'second dates'] },
       { count: 1, forms: ['sleepover', 'sleepovers'] },
     ],
-    flows: [8, 3, 0.5, 0.2, 0.08, 1 / 60],
+    flows: [8, 1.5, 0.5, 0.2, 0.08, 1 / 60],
     cubes: 0,
     goal: { total: 1, every: 30 },
     // The supervisor on the platform: what its last run found.
@@ -311,7 +311,7 @@ export const FUNNELS = [
       { count: 6, forms: ['booked', 'booked'] },
       { count: 4, forms: ['recorded', 'recorded'] },
     ],
-    flows: [7, 3, 0.8, 0.3, 0.2, 1 / 7],
+    flows: [7, 1.5, 0.8, 0.3, 0.2, 1 / 7],
     cubes: 2,
     goal: { total: 10, every: 7 },
     // The supervisor on the platform: what its last run found.

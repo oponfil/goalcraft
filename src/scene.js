@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=2e771ed5';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=2e771ed5';
-import { themeOf } from './themes.js?v=2e771ed5';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=2e771ed5';
+import { agentInfo, plural } from './data.js?v=2b68eb0c';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=2b68eb0c';
+import { themeOf } from './themes.js?v=2b68eb0c';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=2b68eb0c';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -18,6 +18,8 @@ const PLANK_HALF = 23;
 // A tank holds one piece per item, up to what fits. Every theme's piece fits the same square cell, so
 // a tank holds as many in every theme.
 const CELL = 6;
+// Seconds a tank takes to fill to its count when the board first shows.
+const FIRST_FILL = 4;
 const sameSize = P => ({ w: CELL, h: CELL, draw(c, x, y, ...rest) {
   const k = Math.min(CELL / P.w, CELL / P.h);
   c.save(); c.translate(x + (CELL - P.w * k) / 2, y + (CELL - P.h * k)); c.scale(k, k); P.draw(c, 0, 0, ...rest); c.restore();
@@ -678,7 +680,9 @@ export class Scene {
     for (const w of widths) { if (target <= 0) break; target -= w; want++; }
     if (count > 0 && !want) want = 1;
     if (h.shown > want) { h.shown = want; h.falling = []; }
-    if (h.shown + h.falling.length < want && t >= h.next) { h.falling.push({ born: t }); h.next = t + 0.08; }
+    h.step ??= Math.min(0.08, (FIRST_FILL - 0.4) / Math.max(1, want));
+    while (h.shown + h.falling.length < want && t >= h.next) { h.falling.push({ born: t }); h.next = Math.max(h.next, t - h.step) + h.step; }
+    if (h.shown + h.falling.length >= want) h.step = 0.08;
     h.falling = h.falling.filter(d => { if (t - d.born < 0.4) return true; h.shown++; return false; });
     if (h.shown > 0) {
       c.save(); c.beginPath();
@@ -713,10 +717,14 @@ export class Scene {
     }
     const t = this.t, want = Math.min(h.cells.length, f.stages[j].count);
     if (h.shown > want) { h.shown = want; h.falling = []; }
-    if (h.shown + h.falling.length < want && t >= h.next) {
+    // The first fill takes FIRST_FILL seconds whatever the count, so every tank fills together on
+    // load; later items drop one by one.
+    h.step ??= Math.min(0.05, (FIRST_FILL - 0.45) / Math.max(1, want));
+    while (h.shown + h.falling.length < want && t >= h.next) {
       h.falling.push({ cell: h.cells[h.shown + h.falling.length], born: t });
-      h.next = t + 0.05;
+      h.next = Math.max(h.next, t - h.step) + h.step;
     }
+    if (h.shown + h.falling.length >= want) h.step = 0.05;
     h.falling = h.falling.filter(d => {
       if (t - d.born < 0.45) return true;
       h.shown++; return false;
