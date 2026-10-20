@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=7a4be6fb';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=7a4be6fb';
-import { themeOf } from './themes.js?v=7a4be6fb';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=7a4be6fb';
+import { agentInfo, plural } from './data.js?v=2e771ed5';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, line, P, MINER_H } from './sprites.js?v=2e771ed5';
+import { themeOf } from './themes.js?v=2e771ed5';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=2e771ed5';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -650,8 +650,8 @@ export class Scene {
 
   // The lab's tanks hold a liquid: its level rises a row per drop, each drop falling from the pipe
   // in the colour of the stage's liquid; kept across refreshes like the heaps.
-  // How many pieces each row of a tank holds, bottom row first: the heap's grid of CELL squares,
-  // which the lab's liquid follows too, so a full tank means the same count in every theme.
+  // How many pieces each row of a tank holds, bottom row first: the heap's grid of CELL squares.
+  // Their sum is what fills a tank, the lab's liquid too, so a full tank is the same count everywhere.
   pieceRows(j, n) {
     const rows = [], count = Math.floor((LH - 3) / CELL);
     for (let r = 0; r < count; r++) {
@@ -667,16 +667,16 @@ export class Scene {
     const n = f.stages.length, rows = LH - 2, key = `${f.id ?? f.title}|${j}`, t = this.t;
     let h = this.heaps.get(key);
     if (!h) { h = { shown: 0, falling: [], next: 0 }; this.heaps.set(key, h); }
-    // The liquid stands as high as the pieces would for this count: through each row of the grid in
-    // turn, so the tank is full at the same count as a heap of pieces.
-    const count = f.stages[j].count, grid = this.pieceRows(j, n);
-    let left = count, level = 0;
-    for (const fit of grid) {
-      if (left <= 0) break;
-      level += Math.min(1, left / fit) * CELL; left -= fit;
-    }
-    const full = count >= grid.reduce((a, b) => a + b, 0);
-    const want = full ? rows : Math.round(level) || (count > 0 ? 1 : 0);
+    // The liquid covers the share of the tank's area that the count is of what a heap of pieces would
+    // fill it with (full at the same count), rising row by row from the bottom: the rows are wider
+    // higher up, so it rises more slowly there.
+    const count = f.stages[j].count, cap = this.pieceRows(j, n).reduce((a, b) => a + b, 0);
+    const widths = [];
+    for (let r = LH - 2; r >= 1; r--) widths.push(tankHalf(j, n, r) * 2 - 2);
+    const area = widths.reduce((a, b) => a + b, 0);
+    let target = Math.min(1, count / cap) * area, want = 0;
+    for (const w of widths) { if (target <= 0) break; target -= w; want++; }
+    if (count > 0 && !want) want = 1;
     if (h.shown > want) { h.shown = want; h.falling = []; }
     if (h.shown + h.falling.length < want && t >= h.next) { h.falling.push({ born: t }); h.next = t + 0.08; }
     h.falling = h.falling.filter(d => { if (t - d.born < 0.4) return true; h.shown++; return false; });
