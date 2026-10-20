@@ -2,7 +2,8 @@
 
 Agents in AI apps don't run between their scheduled runs, and nothing outside can wake a web chat. When an agent runs on your own computer, in the Claude app (Claude Code) or in Codex, this script can wake it within seconds:
 
-- when you write to it from its card on the dashboard;
+- when you write to it from its card on the dashboard, or its funnel's supervisor writes to it;
+- a supervisor, when a worker replies to its message (your own messages to workers don't wake the supervisor);
 - when you answer its question while it sleeps;
 - when it goes silent: it missed its run, or stopped signalling while at work (the amber triangle on the dashboard).
 

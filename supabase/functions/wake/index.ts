@@ -4,8 +4,9 @@
 //
 //   GET /wake   Authorization: Bearer <wake key>   → { wake: [{ agent, funnel_id, funnel, reasons, app, session }] }
 //
-// An agent is woken once for each reason: a message from the person it has not read, an answer to
-// its question while it sleeps, or a silence (it missed its run, or stopped signalling at work) since
+// An agent is woken once for each reason: a message it has not read (from the person, or for a
+// worker from its supervisor), an answer to its question while it sleeps, for a supervisor a worker's
+// reply to its message, or a silence (it missed its run, or stopped signalling at work) since
 // its last signal. An agent at work that signalled lately is left alone: it reads messages on its
 // heartbeat and takes answers while it waits. Only agents whose chat is a link the script can resume
 // are listed; each listing marks what it wakes for, so the next one does not repeat it.
@@ -43,7 +44,7 @@ Deno.serve(async (req) => {
   // ?check=1: the script only checks its key (when it is installed); nobody is woken or marked.
   if (new URL(req.url).searchParams.has('check')) return json({ ok: true })
 
-  const [presence, messages, answers, wakes] = await Promise.all([
+  const [presence, messages, answers, wakes, replies] = await Promise.all([
     admin.from('presence').select('funnel_id, agent, state, next_run_at, chat_url, updated_at, funnels (key, title)')
       .eq('user_id', user).gte('updated_at', iso(now - 7 * 24 * 3600e3)),
     admin.from('agent_messages').select('id, funnel_id, agent').eq('user_id', user)
@@ -51,8 +52,11 @@ Deno.serve(async (req) => {
     admin.from('questions').select('id, funnel_id, agent, chat_url').eq('user_id', user)
       .not('answered_at', 'is', null).is('replied_at', null).is('woken_at', null).gte('answered_at', iso(now - FRESH)),
     admin.from('agent_wakes').select('funnel_id, agent, signal_at'),
+    // A worker's reply to what the supervisor wrote to it: the supervisor wakes to read it.
+    admin.from('agent_messages').select('id, funnel_id, from_agent').eq('user_id', user).not('from_agent', 'is', null)
+      .not('replied_at', 'is', null).is('reply_read_at', null).is('reply_woken_at', null).gte('replied_at', iso(now - FRESH)),
   ])
-  if (presence.error || messages.error || answers.error || wakes.error) return json({ error: 'failed' }, 500)
+  if (presence.error || messages.error || answers.error || wakes.error || replies.error) return json({ error: 'failed' }, 500)
   const wokeAfter = new Map((wakes.data ?? []).map((w: any) => [`${w.funnel_id}|${w.agent}`, Date.parse(w.signal_at)]))
 
   const wake = new Map<string, any>()
@@ -68,7 +72,7 @@ Deno.serve(async (req) => {
   const at = new Map((presence.data ?? []).map((p: any) => [`${p.funnel_id}|${p.agent}`, p]))
   // At work and heard from lately: it is running and finds messages and answers itself.
   const busy = (p: any) => p.state !== 'sleep' && now - Date.parse(p.updated_at) < SILENT
-  const woke = { messages: [] as string[], answers: [] as string[], silent: [] as any[] }
+  const woke = { messages: [] as string[], answers: [] as string[], replies: [] as string[], silent: [] as any[] }
 
   for (const m of messages.data ?? []) {
     const p = at.get(`${m.funnel_id}|${m.agent}`)
@@ -77,6 +81,10 @@ Deno.serve(async (req) => {
   for (const q of answers.data ?? []) {
     const p = at.get(`${q.funnel_id}|${q.agent}`)
     if (p && !busy(p) && add(p, 'answer', q.chat_url)) woke.answers.push(q.id)
+  }
+  for (const m of replies.data ?? []) {
+    const p = at.get(`${m.funnel_id}|${m.from_agent}`)
+    if (p && !busy(p) && add(p, 'reply', null)) woke.replies.push(m.id)
   }
   for (const p of presence.data ?? []) {
     const overdue = p.state === 'sleep' && p.next_run_at && now - Date.parse(p.next_run_at) > SILENT
@@ -88,6 +96,7 @@ Deno.serve(async (req) => {
   const t = iso(now)
   if (woke.messages.length) await admin.from('agent_messages').update({ woken_at: t }).in('id', woke.messages)
   if (woke.answers.length) await admin.from('questions').update({ woken_at: t }).in('id', woke.answers)
+  if (woke.replies.length) await admin.from('agent_messages').update({ reply_woken_at: t }).in('id', woke.replies)
   if (woke.silent.length) await admin.from('agent_wakes').upsert(
     woke.silent.map(p => ({ funnel_id: p.funnel_id, agent: p.agent, signal_at: p.updated_at, woken_at: t })), { onConflict: 'funnel_id,agent' })
   return json({ wake: [...wake.values()] })

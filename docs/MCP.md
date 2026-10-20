@@ -116,3 +116,14 @@ The dashboard waits twice that, **10 minutes of silence**, before it warns the p
 4. At the end: `set_agent_state(state: "sleep", next_run_at)` until its next scheduled run, or `clear_agent` if it has no schedule.
 
 The person can also write to any agent from its card on the dashboard. The agent reads its messages with `get_messages` on every run (right after `set_agent_state(work)`, whose answer says how many wait) and replies to each with `reply(message_id, text)`. If the person runs the [wake script](../wake/README.md) on their computer (an agent there sets it up with `create_wake_key` once they agree), an agent in the Claude app or Codex is woken within seconds when a message or an answer comes for it, or when it goes silent, with a short note to check Goalcraft.
+
+### Messages: from the person and from the supervisor
+
+An agent gets messages from two senders through the same `get_messages`; each says who wrote it (`from`):
+
+| | From the person | From the funnel's supervisor |
+|---|---|---|
+| How it is sent | Written in the agent's card on the dashboard (any agent, the supervisor too) | `send_message(funnel_id, agent, to, text)`, by the supervisor to one of its workers only |
+| `from` in `get_messages` | `person` | the supervisor's agent name |
+| Where the agent's `reply` goes | Shown over the agent on the dashboard until the person closes it | Back to the supervisor, in `replies` of its next `get_messages`; not shown on the dashboard |
+| Wake script | Wakes the agent it was written to | Wakes the worker it was written to; the worker's reply then wakes the supervisor |

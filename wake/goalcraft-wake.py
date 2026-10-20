@@ -46,7 +46,8 @@ GOALCRAFT_TOOLS = ['mcp__claude_ai_Goalcraft', 'mcp__goalcraft', 'mcp__goalagent
 RUN_LIMIT = 30 * 60  # a woken run that takes longer is stopped
 
 WHY = {
-    'message': 'The person wrote to you on the Goalcraft dashboard.',
+    'message': 'Someone wrote to you in Goalcraft (the person from the dashboard, or your funnel\'s supervisor).',
+    'reply': 'A worker agent replied to your message in Goalcraft.',
     'answer': 'The person answered your question on the Goalcraft dashboard.',
     'overdue': 'You missed your scheduled run: Goalcraft has not heard from you since.',
     'silent': 'Goalcraft has not heard from you for over 10 minutes while you were at work.',
