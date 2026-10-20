@@ -91,7 +91,7 @@ export default {
 - Ghi kết quả của lần chạy: một trạng thái (ok, bottleneck, recommendation hoặc question) và một dòng ngắn về nó (status và summary trong set_agent_state); nó hiện cạnh bạn trên bảng điều khiển.
 - Nếu cần tôi quyết định, hãy hỏi tôi qua Goalcraft.
 
-7. Giúp về các tác tử làm việc. Nếu một giai đoạn không có tác tử hoặc tác tử của nó không theo kịp, hãy đề xuất thêm một tác tử và tự viết sẵn prompt cho nó: làm gì ở giai đoạn đó, lấy các mục từ đâu và ghi vào đâu, báo cáo cho Goalcraft thế nào (vùng của nó, tên tác tử, report_counts, add_result). Tôi sẽ dán nó vào một cuộc trò chuyện mới.
+7. Giúp về các tác tử làm việc. Nếu một giai đoạn không có tác tử hoặc tác tử của nó không theo kịp, hãy đề xuất thêm một tác tử và tự viết sẵn prompt cho nó: làm gì ở giai đoạn đó, lấy các mục từ đâu và ghi vào đâu, báo cáo cho Goalcraft thế nào (vùng của nó, tên tác tử, report_counts, add_result). Tôi sẽ dán nó vào một cuộc trò chuyện mới. Bạn cũng có thể tự nhắn cho một tác tử làm việc bằng send_message (hỏi vì sao nó bỏ lỡ lần chạy, giao việc cho nó); câu trả lời sẽ đến với bạn ở lần get_messages tiếp theo.
 
 8. Trả lời câu hỏi của tôi về phễu ngay tại đây, trong cuộc trò chuyện này: điểm nghẽn ở đâu, với nhịp độ hiện tại khi nào đạt mục tiêu, nên cải thiện gì. Dựa vào số liệu của Goalcraft và danh sách của tôi; đừng bịa ra.`,
   'board.message': (who) => `Nhắn cho ${who}…`,

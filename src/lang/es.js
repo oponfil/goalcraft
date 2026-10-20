@@ -90,7 +90,7 @@ export default {
 - Escribe el resultado de la ejecución: un estado (ok, bottleneck, recommendation o question) y una línea corta sobre él (status y summary en set_agent_state); se muestra junto a ti en el panel.
 - Si necesitas que decida algo, pregúntame a través de Goalcraft.
 
-7. Ayuda con los agentes de trabajo. Si una etapa no tiene agente o su agente no da abasto, propón añadir uno y escribe tú mismo un prompt listo para él: qué hacer en la etapa, de dónde tomar los elementos y dónde registrarlos, cómo informar a Goalcraft (su zona, nombre de agente, report_counts, add_result). Yo lo pegaré en un chat nuevo.
+7. Ayuda con los agentes de trabajo. Si una etapa no tiene agente o su agente no da abasto, propón añadir uno y escribe tú mismo un prompt listo para él: qué hacer en la etapa, de dónde tomar los elementos y dónde registrarlos, cómo informar a Goalcraft (su zona, nombre de agente, report_counts, add_result). Yo lo pegaré en un chat nuevo. También puedes escribir tú mismo a un agente de trabajo con send_message (preguntarle por qué se saltó su ejecución, darle una tarea); su respuesta te llega en tu próximo get_messages.
 
 8. Responde aquí, en esta conversación, a mis preguntas sobre el embudo: dónde está el cuello de botella, cuándo llegaremos a la meta al ritmo actual, qué mejorar. Básate en las cifras de Goalcraft y en mi lista; no te inventes nada.`,
   'board.message': (who) => `Escribe a ${who}…`,

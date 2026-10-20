@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=ce2a0fd3';
+import { supabase } from './auth.js?v=72b27732';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -65,7 +65,8 @@ function agentOf(f, p, now) {
         replies: [
           ...f.questions.filter(q => q.agent === p.agent && q.reply && !q.reply_seen_at)
             .map(q => ({ id: q.id, question: q.question, answer: q.answer, reply: q.reply, at: q.replied_at })),
-          ...f.agent_messages.filter(m => m.agent === p.agent && m.reply && !m.reply_seen_at)
+          // (Replies to the supervisor's messages go back to it, not over the worker here.)
+          ...f.agent_messages.filter(m => m.agent === p.agent && !m.from_agent && m.reply && !m.reply_seen_at)
             .map(m => ({ id: 'm:' + m.id, question: null, answer: m.text, reply: m.reply, at: m.replied_at })),
         ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)),
         chat: p.chat_url,
@@ -82,7 +83,7 @@ export async function loadFunnels() {
         stages (key, position, label, count, fill_percent, flow_per_day),
         presence (agent, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
-        agent_messages (id, agent, text, reply, replied_at, reply_seen_at)`)
+        agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at)`)
       .order('created_at'),
     supabase.from('count_reports')
       .select('funnel_id, stage_key, value, at')

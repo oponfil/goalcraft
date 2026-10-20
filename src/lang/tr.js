@@ -90,7 +90,7 @@ export default {
 - Çalışmanın sonucunu yaz: bir durum (ok, bottleneck, recommendation ya da question) ve onunla ilgili kısa bir satır (set_agent_state’te status ve summary); panelde yanında görünür.
 - Benim kararıma ihtiyacın varsa bana Goalcraft üzerinden sor.
 
-7. Çalışan ajanlarla ilgili yardım et. Bir aşamada ajan yoksa ya da ajanı yetişemiyorsa, bir tane eklemeyi öner ve onun için hazır bir istemi kendin yaz: aşamada ne yapacağı, öğeleri nereden alıp nereye kaydedeceği, Goalcraft’a nasıl rapor vereceği (bölgesi, ajan adı, report_counts, add_result). Ben onu yeni bir sohbete yapıştırırım.
+7. Çalışan ajanlarla ilgili yardım et. Bir aşamada ajan yoksa ya da ajanı yetişemiyorsa, bir tane eklemeyi öner ve onun için hazır bir istemi kendin yaz: aşamada ne yapacağı, öğeleri nereden alıp nereye kaydedeceği, Goalcraft’a nasıl rapor vereceği (bölgesi, ajan adı, report_counts, add_result). Ben onu yeni bir sohbete yapıştırırım. Çalışan bir ajana send_message ile kendin de yazabilirsin (çalışmasını neden kaçırdığını sor, ona görev ver); cevabı bir sonraki get_messages çağrında gelir.
 
 8. Huniyle ilgili sorularımı burada, bu sohbette cevapla: darboğaz nerede, bu hızla hedefe ne zaman ulaşırız, neyi iyileştirmeli. Goalcraft’ın sayılarına ve benim listeme dayan; bir şey uydurma.`,
   'board.message': (who) => `${who} için mesaj yaz…`,

@@ -27,7 +27,7 @@ Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when 
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not.
 On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer: while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next); if you need more from the person, ask a new question instead. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation, question) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
-Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions. On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns.
+Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and a funnel's supervisor can write to its workers (send_message). On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns.
 Your name: the dashboard and emails show you by your model's name (Claude, ChatGPT…) unless you give your own short name with set_agent_state(name); give one when the person asks you to rename yourself.
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
@@ -346,18 +346,47 @@ function server(db: Db, caller: Caller) {
 
   s.registerTool('get_messages', {
     title: 'Get your messages',
-    description: 'What the person wrote to you from the dashboard and you have not read yet, oldest first; reading marks them read. Reply to each in one short line with reply(message_id).',
+    description: 'What was written to you and you have not read yet, oldest first: by the person from the dashboard, or by your funnel\'s supervisor (from). Reading marks them read. Reply to each in one short line with reply(message_id). A supervisor also gets the replies to what it sent with send_message (replies).',
     inputSchema: req({
       agent,
       funnel_id: funnelId.optional().describe('Only this funnel; leave out for all your funnels'),
     }),
     annotations: { title: 'Get your messages', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, async (a) => {
-    let q = db.from('agent_messages').select('id, text, sent_at, funnels (key)').eq('agent', a.agent).is('read_at', null).order('sent_at')
-    if (a.funnel_id) q = q.eq('funnel_id', (await funnelRow(db, a.funnel_id)).id)
+    const fid = a.funnel_id ? (await funnelRow(db, a.funnel_id)).id : null, now = new Date().toISOString()
+    let q = db.from('agent_messages').select('id, text, sent_at, from_agent, funnels (key)').eq('agent', a.agent).is('read_at', null).order('sent_at')
+    if (fid) q = q.eq('funnel_id', fid)
     const rows = check(await q) as any[]
-    if (rows.length) check(await db.from('agent_messages').update({ read_at: new Date().toISOString() }).in('id', rows.map(r => r.id)))
-    return text({ messages: rows.map(r => ({ message_id: r.id, funnel_id: r.funnels?.key, text: r.text, sent_at: r.sent_at })) })
+    if (rows.length) check(await db.from('agent_messages').update({ read_at: now }).in('id', rows.map(r => r.id)))
+    // Replies to what this agent sent to others (a supervisor to its workers), not read yet.
+    let rq = db.from('agent_messages').select('id, agent, text, reply, replied_at, funnels (key)').eq('from_agent', a.agent)
+      .not('replied_at', 'is', null).is('reply_read_at', null).order('replied_at')
+    if (fid) rq = rq.eq('funnel_id', fid)
+    const replies = check(await rq) as any[]
+    if (replies.length) check(await db.from('agent_messages').update({ reply_read_at: now }).in('id', replies.map(r => r.id)))
+    return text({
+      messages: rows.map(r => ({ message_id: r.id, funnel_id: r.funnels?.key, from: r.from_agent ?? 'person', text: r.text, sent_at: r.sent_at })),
+      replies: replies.map(r => ({ message_id: r.id, funnel_id: r.funnels?.key, agent: r.agent, you_wrote: r.text, reply: r.reply, replied_at: r.replied_at })),
+    })
+  })
+
+  s.registerTool('send_message', {
+    title: 'Write to a worker agent',
+    description: 'For a funnel\'s supervisor: write to one of its worker agents, for example to ask why it missed its run or to give it a task. The worker reads it with get_messages (from your name) and replies in one line; you get the reply on your own next get_messages (replies). If the person runs the wake script, a worker on their computer wakes for it within seconds.',
+    inputSchema: req({
+      funnel_id: funnelId,
+      agent: agent.describe('You, the funnel\'s supervisor'),
+      to: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,31}$/).describe('The worker agent to write to, as it appears in list_funnels'),
+      text: z.string().min(1).max(2000).describe('The message, in the person\'s language'),
+    }),
+    annotations: { title: 'Write to a worker agent', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  }, async (a) => {
+    const f = await funnelRow(db, a.funnel_id)
+    const at = check(await db.from('presence').select('agent, zone').eq('funnel_id', f.id)) as any[]
+    if (!at.some(p => p.agent === a.agent && p.zone == null)) fail(`Only the funnel's supervisor writes to its agents, and "${a.agent}" is not the supervisor of ${a.funnel_id}`)
+    if (!at.some(p => p.agent === a.to && p.zone != null)) fail(`No worker agent "${a.to}" in ${a.funnel_id}. Agents there: ${at.filter(p => p.zone != null).map(p => p.agent).join(', ') || 'none'}`)
+    const m = check(await db.from('agent_messages').insert({ funnel_id: f.id, agent: a.to, from_agent: a.agent, text: a.text }).select('id').single()) as { id: string }
+    return text({ sent: m.id, to: a.to })
   })
 
   s.registerTool('reply', {

@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=ce2a0fd3';
-import vi from './lang/vi.js?v=ce2a0fd3';
-import ja from './lang/ja.js?v=ce2a0fd3';
-import pt from './lang/pt.js?v=ce2a0fd3';
-import tr from './lang/tr.js?v=ce2a0fd3';
-import ko from './lang/ko.js?v=ce2a0fd3';
+import es from './lang/es.js?v=72b27732';
+import vi from './lang/vi.js?v=72b27732';
+import ja from './lang/ja.js?v=72b27732';
+import pt from './lang/pt.js?v=72b27732';
+import tr from './lang/tr.js?v=72b27732';
+import ko from './lang/ko.js?v=72b27732';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -193,7 +193,7 @@ const STRINGS = {
 - Write the run's outcome: a status (ok, bottleneck, recommendation or question) and one short line about it (status and summary in set_agent_state); it shows by you on the dashboard.
 - If you need my decision, ask me through Goalcraft.
 
-7. Help with worker agents. If a stage has no agent or its agent isn't coping, suggest adding one and write a ready prompt for it yourself: what to do at the stage, where to take items from and where to record them, how to report to Goalcraft (its zone, agent name, report_counts, add_result). I'll paste it into a new chat.
+7. Help with worker agents. If a stage has no agent or its agent isn't coping, suggest adding one and write a ready prompt for it yourself: what to do at the stage, where to take items from and where to record them, how to report to Goalcraft (its zone, agent name, report_counts, add_result). I'll paste it into a new chat. You can also write to a worker yourself with send_message (ask why it missed its run, give it a task); its reply comes back on your next get_messages.
 
 8. Answer my questions about the funnel here, in this conversation: where the bottleneck is, when we reach the goal at the current pace, what to improve. Rely on Goalcraft's numbers and my list; don't make things up.`,
     (url) => `Ты — супервайзер моей цели в Goalcraft (goalcraft.ai). Goalcraft показывает цель как воронку: этапы сверху вниз, результат внизу, а на этапах работают ИИ-агенты. Ты стоишь над воронкой: следишь за ней, отвечаешь на мои вопросы о ней и помогаешь её улучшать. Сам работу этапов не делаешь — это задача рабочих агентов.
@@ -221,7 +221,7 @@ const STRINGS = {
 - Запиши итог прогона: статус (ok, bottleneck, recommendation или question) и одну короткую строку о нём (status и summary в set_agent_state) — он виден у тебя на дашборде.
 - Если нужно моё решение — спроси меня через Goalcraft.
 
-7. Помогай с рабочими агентами. Если на этапе нет агента или он не справляется — предложи добавить агента и сам напиши для него готовый промпт: что делать на этапе, откуда брать и куда записывать, как отчитываться в Goalcraft (его зона, имя агента, report_counts, add_result). Я вставлю его в новый чат.
+7. Помогай с рабочими агентами. Если на этапе нет агента или он не справляется — предложи добавить агента и сам напиши для него готовый промпт: что делать на этапе, откуда брать и куда записывать, как отчитываться в Goalcraft (его зона, имя агента, report_counts, add_result). Я вставлю его в новый чат. Ты можешь и сам написать рабочему агенту через send_message (спросить, почему он пропустил запуск, дать задание); его ответ придёт тебе в следующем get_messages.
 
 8. Отвечай на мои вопросы о воронке здесь, в этом разговоре: где узкое место, когда дойдём до цели при текущем темпе, что улучшить. Опирайся на числа Goalcraft и мой список, не выдумывай.`,
     (url) => `你是我在 Goalcraft（goalcraft.ai）中某个目标的主管。Goalcraft 把目标显示为漏斗：阶段从上到下，结果在底部，AI 智能体在各个阶段工作。你站在漏斗之上：盯着它，回答我关于它的问题，帮我改进它。阶段里的工作你自己不做，那是工作智能体的事。
@@ -249,7 +249,7 @@ const STRINGS = {
 - 写下这次运行的结论：一个状态（ok、bottleneck、recommendation 或 question）和一行简短说明（set_agent_state 中的 status 和 summary）；它会显示在看板上你的旁边。
 - 如果需要我做决定，就通过 Goalcraft 问我。
 
-7. 帮忙安排工作智能体。如果某个阶段没有智能体，或它的智能体应付不过来，就建议添加一个，并亲自为它写好提示词：在这个阶段做什么，从哪里取条目、记录到哪里，如何向 Goalcraft 汇报（它的区域、智能体名称、report_counts、add_result）。我会把它粘贴到新的对话里。
+7. 帮忙安排工作智能体。如果某个阶段没有智能体，或它的智能体应付不过来，就建议添加一个，并亲自为它写好提示词：在这个阶段做什么，从哪里取条目、记录到哪里，如何向 Goalcraft 汇报（它的区域、智能体名称、report_counts、add_result）。我会把它粘贴到新的对话里。你也可以用 send_message 直接给工作智能体写信（问它为什么错过运行，给它布置任务）；它的回复会在你下一次 get_messages 时收到。
 
 8. 就在这个对话里回答我关于漏斗的问题：瓶颈在哪里，按目前的节奏何时达成目标，可以改进什么。以 Goalcraft 的数字和我的清单为依据，不要编造。`,
     (url) => `คุณคือผู้ดูแลเป้าหมายของฉันใน Goalcraft (goalcraft.ai) Goalcraft แสดงเป้าหมายเป็นกรวย: ขั้นตอนจากบนลงล่าง ผลลัพธ์อยู่ด้านล่าง และมีเอเจนต์ AI ทำงานในแต่ละขั้น คุณยืนอยู่เหนือกรวย: คอยดูมัน ตอบคำถามของฉันเกี่ยวกับมัน และช่วยปรับปรุงมัน คุณไม่ทำงานในขั้นตอนเอง นั่นเป็นหน้าที่ของเอเจนต์ทำงาน
@@ -277,7 +277,7 @@ const STRINGS = {
 - เขียนผลของรอบนี้: สถานะ (ok, bottleneck, recommendation หรือ question) และหนึ่งบรรทัดสั้นๆ อธิบาย (status และ summary ใน set_agent_state) ซึ่งจะแสดงข้างคุณบนแดชบอร์ด
 - ถ้าต้องให้ฉันตัดสินใจ ให้ถามฉันผ่าน Goalcraft
 
-7. ช่วยเรื่องเอเจนต์ทำงาน ถ้าขั้นไหนไม่มีเอเจนต์หรือเอเจนต์ทำไม่ทัน ให้เสนอเพิ่มเอเจนต์และเขียนพรอมต์สำเร็จรูปให้มันเอง: ต้องทำอะไรในขั้นนั้น เอารายการมาจากไหนและบันทึกไว้ที่ไหน รายงานต่อ Goalcraft อย่างไร (โซนของมัน ชื่อเอเจนต์ report_counts, add_result) ฉันจะวางมันในแชตใหม่
+7. ช่วยเรื่องเอเจนต์ทำงาน ถ้าขั้นไหนไม่มีเอเจนต์หรือเอเจนต์ทำไม่ทัน ให้เสนอเพิ่มเอเจนต์และเขียนพรอมต์สำเร็จรูปให้มันเอง: ต้องทำอะไรในขั้นนั้น เอารายการมาจากไหนและบันทึกไว้ที่ไหน รายงานต่อ Goalcraft อย่างไร (โซนของมัน ชื่อเอเจนต์ report_counts, add_result) ฉันจะวางมันในแชตใหม่ คุณยังเขียนถึงเอเจนต์ทำงานเองได้ด้วย send_message (ถามว่าทำไมพลาดรอบทำงาน มอบงานให้) คำตอบจะมาถึงคุณใน get_messages ครั้งถัดไป
 
 8. ตอบคำถามของฉันเกี่ยวกับกรวยที่นี่ ในบทสนทนานี้: คอขวดอยู่ตรงไหน จะถึงเป้าหมายเมื่อไรด้วยจังหวะปัจจุบัน ควรปรับปรุงอะไร ใช้ตัวเลขของ Goalcraft และรายการของฉันเป็นหลัก อย่าแต่งขึ้นเอง`),
   'connect.prompt': L(
