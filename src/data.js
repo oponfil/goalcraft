@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=99c4aedc';
+import { lang } from './i18n.js?v=3a120dbf';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -87,6 +87,36 @@ export const FUNNELS = [
       { agent: 'mistral', zone: 2, state: 'work' },
       { agent: 'qwen', zone: 3, state: 'work' },
       { agent: 'claude', zone: 4, state: 'work' },
+    ],
+  },
+  {
+    title: 'Dating',
+    theme: 'love',
+    result: ['relationship', 'relationships'],
+    stages: [
+      { count: 180, forms: ['match', 'matches'] },
+      { count: 64, forms: ['conversation', 'conversations'] },
+      { count: 9, forms: ['first date', 'first dates'] },
+      { count: 3, forms: ['second date', 'second dates'] },
+      { count: 1, forms: ['sleepover', 'sleepovers'] },
+    ],
+    flows: [8, 1.5, 0.5, 0.2, 0.08, 1 / 60],
+    cubes: 0,
+    goal: { total: 1, every: 30 },
+    // The supervisor on the platform: what its last run found.
+    supervisor: { agent: 'chatgpt', state: 'work', status: 'ok', summary: 'on pace for the goal' },
+    workers: [
+      { agent: 'kimi', zone: -1, state: 'work' },
+      { agent: 'claude', zone: 0, state: 'work' },
+      { agent: 'qwen', zone: 0, state: 'sleep', wakeIn: 15 },
+      {
+        agent: 'grok', zone: 1, state: 'ask',
+        question: 'Alex suggested Saturday at 7pm at the rooftop bar. Confirm the date?',
+      },
+      { agent: 'chatgpt', zone: 2, state: 'sleep', wakeIn: 9 * 3600 },
+      { agent: 'gemini', zone: 2, state: 'work' },
+      { agent: 'deepseek', zone: 3, state: 'work' },
+      { agent: 'mistral', zone: 4, state: 'work' },
     ],
   },
   {
@@ -180,36 +210,6 @@ export const FUNNELS = [
       { agent: 'mistral', zone: 2, state: 'work' },
       { agent: 'deepseek', zone: 3, state: 'work' },
       { agent: 'qwen', zone: 4, state: 'work' },
-    ],
-  },
-  {
-    title: 'Dating',
-    theme: 'love',
-    result: ['relationship', 'relationships'],
-    stages: [
-      { count: 180, forms: ['match', 'matches'] },
-      { count: 64, forms: ['conversation', 'conversations'] },
-      { count: 9, forms: ['first date', 'first dates'] },
-      { count: 3, forms: ['second date', 'second dates'] },
-      { count: 1, forms: ['sleepover', 'sleepovers'] },
-    ],
-    flows: [8, 1.5, 0.5, 0.2, 0.08, 1 / 60],
-    cubes: 0,
-    goal: { total: 1, every: 30 },
-    // The supervisor on the platform: what its last run found.
-    supervisor: { agent: 'chatgpt', state: 'work', status: 'ok', summary: 'on pace for the goal' },
-    workers: [
-      { agent: 'kimi', zone: -1, state: 'work' },
-      { agent: 'claude', zone: 0, state: 'work' },
-      { agent: 'qwen', zone: 0, state: 'sleep', wakeIn: 15 },
-      {
-        agent: 'grok', zone: 1, state: 'ask',
-        question: 'Alex suggested Saturday at 7pm at the rooftop bar. Confirm the date?',
-      },
-      { agent: 'chatgpt', zone: 2, state: 'sleep', wakeIn: 9 * 3600 },
-      { agent: 'gemini', zone: 2, state: 'work' },
-      { agent: 'deepseek', zone: 3, state: 'work' },
-      { agent: 'mistral', zone: 4, state: 'work' },
     ],
   },
   {
