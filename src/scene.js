@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=a143d292';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=a143d292';
-import { themeOf } from './themes.js?v=a143d292';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=a143d292';
+import { agentInfo, plural } from './data.js?v=ecd506b9';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=ecd506b9';
+import { themeOf } from './themes.js?v=ecd506b9';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=ecd506b9';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -449,12 +449,14 @@ export class Scene {
       const p = this.spot(a, 'work');
       drawStanding(c, Math.round(a.x / P) * P, p.y, a.agent, info.color, Math.floor(t * 7), a.to === 'rest' ? a.side === 'L' : a.side === 'R', false, outfit);
       this.hits.push({ x: a.x - 2, y: p.y - 2, w: 24, h: 32, type: 'agent', a });
+      a.noteAt = { x: Math.round(a.x / P) * P + 10, y: p.y + (HEAD_TOP[outfit] ?? 1) - 1 };
       return;
     }
     if (a.state === 'ask') {
       const p = this.spot(a, 'ask');
       const R = a.side === 'R';
       drawStanding(c, p.x, p.y, a.agent, info.color, -1, R, false, outfit);
+      a.noteAt = { x: p.x + 10, y: p.y + (HEAD_TOP[outfit] ?? 1) - 1 };
       const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
       a.bubble = { x: R ? p.x + 11 * P : p.x - 9 * P - extra, y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
       drawBubble(c, a.bubble.x, a.bubble.y, a.questions.length, a.bubble.x > p.x);

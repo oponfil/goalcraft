@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=a143d292';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=a143d292';
-import { t, lang } from './i18n.js?v=a143d292';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=ecd506b9';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=ecd506b9';
+import { t, lang } from './i18n.js?v=ecd506b9';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -129,7 +129,7 @@ export function mountDashboard(funnels, opts = {}) {
     const r = canvas.getBoundingClientRect(), box = scroller.getBoundingClientRect(), seen = new Set();
     for (const a of scene.agents) {
       const reply = a.replies?.[a.replies.length - 1];
-      if (!reply || !a.noteAt || a.questions.length) continue;
+      if (!reply || !a.noteAt) continue;
       const key = reply.id;
       seen.add(key);
       let el = notes.get(key);
