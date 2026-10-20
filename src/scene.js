@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=e4c48041';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=e4c48041';
-import { themeOf } from './themes.js?v=e4c48041';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=e4c48041';
+import { agentInfo, plural } from './data.js?v=72efdfc4';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=72efdfc4';
+import { themeOf } from './themes.js?v=72efdfc4';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=72efdfc4';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -577,11 +577,15 @@ export class Scene {
       warn(a, fmtDuration(this.silence(a)), p.x + 10, p.y - 4);
     }
     // A number in the middle with its flow written small at its top right, like an exponent.
+    // Returns the box they take, for a click on them.
     const withFlow = (num, flow, x, y, size, color, flowColor) => {
       g.font = `700 ${size * S}px ${FONT}`;
       const w = g.measureText(num).width / S;
       T(num, x, y, size, color, 'center', 700);
       if (flow) T(flow, x + w / 2 + 1, y - size * 0.42, size * 0.55, flowColor, 'left', 700);
+      g.font = `700 ${size * 0.55 * S}px ${FONT}`;
+      const fw = flow ? g.measureText(flow).width / S + 1 : 0;
+      return { x: x - w / 2 - 2, y: y - size * 0.95, w: w + fw + 4, h: size * 1.5 };
     };
     this.funnels.forEach((f, fi) => {
       const cx = this.cx(fi), n = f.stages.length;
@@ -589,7 +593,10 @@ export class Scene {
         // The number is the same size in every tank, in its middle; at its top right, how fast the
         // tank fills (the flow of the zone above it). What the tank holds shows on hover.
         const num = fmtCount(s.count), flow = fmtFlow(f.flows[j] ?? 0);
-        shadowed(() => withFlow(num, flow, cx, tankTop(j) + LH / 2, 15, '#FFFFFF', f.flows[j] ? '#9FE870' : STALLED));
+        let box;
+        shadowed(() => { box = withFlow(num, flow, cx, tankTop(j) + LH / 2, 15, '#FFFFFF', f.flows[j] ? '#9FE870' : STALLED); });
+        // The number and its flow open the stage's history.
+        if (box) this.hits.push({ ...box, type: 'count', fi, j });
       });
       const pr = project(f);
       const ry = flasksY(n) + Math.ceil(slots(f) / PER_ROW) * 22 + 8;

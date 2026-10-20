@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=e4c48041';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=e4c48041';
-import { t, lang } from './i18n.js?v=e4c48041';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=72efdfc4';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=72efdfc4';
+import { t, lang } from './i18n.js?v=72efdfc4';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -214,10 +214,16 @@ export function mountDashboard(funnels, opts = {}) {
       let n = period;
       if (!n) n = data.since ? Math.max(1, Math.round((today - new Date(data.since + 'T12:00')) / 864e5) + 1) : 1;
       const days = Array.from({ length: n }, (_, i) => new Date(today - (n - 1 - i) * 864e5));
-      const vals = days.map(d => data.days[key(d)] || 0), max = Math.max(1, ...vals), sum = vals.reduce((a, b) => a + b, 0);
+      const vals = days.map(d => data.days[key(d)] || 0), sum = vals.reduce((a, b) => a + b, 0);
+      // The y axis: round steps (1, 2 or 5 times a power of ten), three or four lines up to the top.
+      const top0 = Math.max(1, ...vals), unit = Math.max(1, 10 ** Math.floor(Math.log10(top0 / 3)));
+      const step = [1, 2, 5, 10].map(m => m * unit).find(v => top0 / v <= 4), max = Math.ceil(top0 / step) * step;
+      const ticks = Array.from({ length: max / step + 1 }, (_, i) => i * step);
       body.innerHTML = `<div class="hist-periods">${PERIODS.map(p => `<button type="button" data-p="${p}" class="${p === period ? 'on' : ''}">${esc(p ? t('hist.days', p) : t('hist.all'))}</button>`).join('')}</div>
         <p class="pop-note">${esc(t('hist.total', fmtCount(sum), avgFmt.format(sum / n)))}</p>
-        <div class="hist-bars">${days.map((d, i) => `<span data-tip="${esc(`${day.format(d)}: +${fmtCount(vals[i])}`)}"><i style="height:${vals[i] ? Math.max(3, (vals[i] / max) * 100) : 0}%"></i></span>`).join('')}</div>
+        <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(fmtCount(v))}</span>`).join('')}</div>
+          <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}
+            <div class="hist-bars">${days.map((d, i) => `<span data-tip="${esc(`${day.format(d)}: +${fmtCount(vals[i])}`)}"><i style="height:${vals[i] ? Math.max(1.5, (vals[i] / max) * 100) : 0}%"></i></span>`).join('')}</div></div></div>
         <div class="hist-axis"><span>${esc(short.format(days[0]))}</span><span>${esc(short.format(days[n - 1]))}</span></div>`;
       body.querySelectorAll('.hist-periods button').forEach(b => b.addEventListener('click', ev => {
         ev.stopPropagation();
@@ -276,10 +282,10 @@ export function mountDashboard(funnels, opts = {}) {
 
   canvas.addEventListener('pointermove', e => {
     const h = scene.hitTest(...toLogical(e));
-    canvas.style.cursor = h && (h.type !== 'stage' || opts.history) ? 'pointer' : 'default';
+    canvas.style.cursor = h && h.type !== 'stage' && (h.type !== 'count' || opts.history) ? 'pointer' : 'default';
     // A tank shows only its number and flow; what it holds pops up on hover. The sheet on top says
     // where the list it opens is kept.
-    if (!['stage', 'source', 'guide'].includes(h?.type) || e.pointerType === 'touch') return (tip.hidden = true);
+    if (!['stage', 'count', 'source', 'guide'].includes(h?.type) || e.pointerType === 'touch') return (tip.hidden = true);
     showTip(e, h);
   });
   let tipTimer;
@@ -310,11 +316,10 @@ export function mountDashboard(funnels, opts = {}) {
   canvas.addEventListener('click', e => {
     const h = scene.hitTest(...toLogical(e));
     if (!h) return hidePop();
-    // A tank opens its history: how much it grew each day. Without one (no history given), a tap
-    // shows what it holds for a moment, as on a phone with no hover.
-    if (h.type === 'stage') {
-      tip.hidden = true;
-      if (opts.history) return showHistory(e, scene.funnels[h.fi], h.j);
+    // A tank's number and its +N open its history: how much it grew each day.
+    if (h.type === 'count' && opts.history) { tip.hidden = true; return showHistory(e, scene.funnels[h.fi], h.j); }
+    // A tap elsewhere on a tank shows what it holds for a moment, as on a phone with no hover.
+    if (h.type === 'stage' || h.type === 'count') {
       hidePop(); showTip(e, h);
       clearTimeout(tipTimer); tipTimer = setTimeout(() => { tip.hidden = true; }, 2000);
       return;

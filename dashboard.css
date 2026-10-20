@@ -371,8 +371,15 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop .hist-periods button { background: none; border: 0; color: var(--muted); font: 500 13px var(--font); padding: 4px 10px; cursor: pointer; }
 #pop .hist-periods button + button { border-left: 2px solid var(--border); }
 #pop .hist-periods button.on { background: #3A322B; color: var(--text); }
-#pop .hist-bars { display: flex; align-items: flex-end; gap: 1px; height: 120px; width: 100%; margin-top: 8px; border-bottom: 2px solid var(--border); }
+/* The chart: the y axis's numbers on the left, its lines across the plot behind the bars. */
+#pop .hist-chart { display: flex; gap: 6px; margin-top: 10px; }
+#pop .hist-y { position: relative; width: 28px; height: 120px; flex: none; }
+#pop .hist-y span { position: absolute; right: 0; transform: translateY(50%); font-size: 11px; line-height: 1; color: var(--muted); }
+#pop .hist-plot { position: relative; flex: 1; height: 120px; }
+#pop .hist-plot b { position: absolute; left: 0; right: 0; height: 1px; background: rgba(244, 237, 225, 0.12); }
+#pop .hist-plot b:first-child { background: var(--border); height: 2px; }
+#pop .hist-bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 1px; }
 #pop .hist-bars span { flex: 1; height: 100%; display: flex; align-items: flex-end; cursor: default; }
 #pop .hist-bars span:hover { background: rgba(255, 255, 255, 0.06); }
 #pop .hist-bars i { display: block; width: 100%; background: #9FE870; }
-#pop .hist-axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
+#pop .hist-axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin: 4px 0 0 34px; }
