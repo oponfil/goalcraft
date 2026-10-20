@@ -1,12 +1,12 @@
 // Renders the README pictures (agents sheet, theme samples, the board) and the link preview card from the same drawing code as
 // the dashboard and saves them through serve.py: open http://localhost:5173/tools/render-docs.html
 // (always in English: the page adds ?lang=en to itself).
-import { AGENTS, FUNNELS } from '../src/data.js?v=021c2932';
-import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=021c2932';
-import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=021c2932';
+import { AGENTS, FUNNELS } from '../src/data.js?v=7b91c735';
+import { Scene, CW, drawWork, TOOL_PERIOD } from '../src/scene.js?v=7b91c735';
+import { guideScene, guideHeight, drawGuide, TH } from '../src/guide.js?v=7b91c735';
 import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
-import { THEMES } from '../src/themes.js?v=021c2932';
-import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=021c2932';
+import { THEMES } from '../src/themes.js?v=7b91c735';
+import { drawStanding, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin } from '../src/sprites.js?v=7b91c735';
 
 const FONT = 'Rubik, system-ui, sans-serif';
 

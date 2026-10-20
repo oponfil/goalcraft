@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=021c2932';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=021c2932';
-import { t, lang } from './i18n.js?v=021c2932';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=7b91c735';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=7b91c735';
+import { t, lang } from './i18n.js?v=7b91c735';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -253,7 +253,7 @@ export function mountDashboard(funnels, opts = {}) {
   const fmtTokens = n => compact.format(n);
   const money = [0, 2].map(d => new Intl.NumberFormat(lang, { minimumFractionDigits: d, maximumFractionDigits: d }));
   const fmtCost = n => '$' + money[n >= 10 ? 0 : 1].format(n);
-  const fmtPercent = n => new Intl.NumberFormat(lang, { maximumFractionDigits: 0 }).format(n) + '%';
+  const fmtPercent = n => new Intl.NumberFormat(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n) + '%';
   // A question to the person shows only one way, as the "!" with the question itself; an older run
   // that ended on status "question" (no longer a status) shows no status.
   // Usage of several runs added up (the demo's last day).
@@ -266,13 +266,13 @@ export function mountDashboard(funnels, opts = {}) {
   };
   // The hover text for a cost: the tokens behind it by kind, the total, and how much of the plan's
   // limit it took (Codex).
-  const usageTip = u => [
+  const usageTip = (u, limit) => [
     u.input_tokens != null && t('board.tokNew', fmtTokens(u.input_tokens)),
     u.cache_read_tokens != null && t('board.tokCacheRead', fmtTokens(u.cache_read_tokens)),
     u.cache_write_tokens > 0 && t('board.tokCacheWrite', fmtTokens(u.cache_write_tokens)),
     u.output_tokens != null && t('board.tokOut', fmtTokens(u.output_tokens)),
     t('board.tokTotal', fmtTokens(u.tokens)),
-    u.limit_used != null && t('board.usageLimit', fmtPercent(u.limit_used), u.limitDays),
+    limit != null && t('board.usageLimit', limit, u.limitDays),
   ].filter(Boolean).join('\n');
   const supStatus = s => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
 
@@ -360,23 +360,25 @@ export function mountDashboard(funnels, opts = {}) {
       try {
         const rows = await opts.runs(a);
         const st = a.f.stages, when = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
-        // What it spent, in money: the last day (the wake script's count; in the demo, the listed runs
-        // of the last day) and each run at API prices, and for Codex how much of the plan's limit it
-        // took. Hovering one shows its tokens by kind.
+        // What it spent, in money only: the last day (the wake script's count; in the demo, the listed
+        // runs of the last day) and each run at API prices. Hovering one shows its tokens by kind
+        // and, for Codex, its share of the plan's limit. Codex logs the limit in whole percent, so a
+        // run's share is the day's limit spread over its runs by their cost, to a tenth.
         const day = rows.filter(r => r.usage && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 864e5);
         const u = a.usage || (day.length ? sumUsage(day.map(r => r.usage)) : null);
-        const spent = u ? `<p class="pop-note usage" data-tip="${esc(usageTip(u))}">${esc(t('board.usageDay', [
-          u.cost != null ? t('board.usageCost', fmtCost(u.cost)) : t('board.tokens', fmtTokens(u.tokens)),
-          u.limit_used != null ? t('board.usageLimit', fmtPercent(u.limit_used), u.limitDays) : ''].filter(Boolean).join(' · ')))}</p>` : '';
+        const perDollar = u?.limit_used != null && u.cost > 0 ? u.limit_used / u.cost : null;
+        const runLimit = ru => perDollar != null && ru.cost != null ? '≈' + fmtPercent(ru.cost * perDollar)
+          : ru.limit_used != null ? fmtPercent(ru.limit_used) : null;
+        const spent = u ? `<p class="pop-note usage" data-tip="${esc(usageTip(u, u.limit_used != null ? fmtPercent(u.limit_used) : null))}">${esc(t('board.usageDay',
+          u.cost != null ? t('board.usageCost', fmtCost(u.cost)) : t('board.tokens', fmtTokens(u.tokens))))}</p>` : '';
         box.querySelector('.runs-day').innerHTML = spent;
         list.innerHTML = (rows.length ? rows.map(r => {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
           // A supervisor's run says what it found; a worker's run, what it added.
           const what = a.sup ? `<span>${r.status ? supStatus(r.status) : ''}</span>`
             : `<span><b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}</span>`;
-          const ru = r.usage, tok = ru ? `<span class="tok" data-tip="${esc(usageTip(ru))}">${esc([
-            ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)),
-            ru.limit_used != null ? '+' + fmtPercent(ru.limit_used) : ''].filter(Boolean).join(' · '))}</span>` : '';
+          const ru = r.usage, tok = ru ? `<span class="tok" data-tip="${esc(usageTip(ru, runLimit(ru)))}">${esc(
+            ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)))}</span>` : '';
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
             ${what}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
