@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=e6c3a0c8';
-import vi from './lang/vi.js?v=e6c3a0c8';
-import ja from './lang/ja.js?v=e6c3a0c8';
-import pt from './lang/pt.js?v=e6c3a0c8';
-import tr from './lang/tr.js?v=e6c3a0c8';
-import ko from './lang/ko.js?v=e6c3a0c8';
+import es from './lang/es.js?v=d5db7a8d';
+import vi from './lang/vi.js?v=d5db7a8d';
+import ja from './lang/ja.js?v=d5db7a8d';
+import pt from './lang/pt.js?v=d5db7a8d';
+import tr from './lang/tr.js?v=d5db7a8d';
+import ko from './lang/ko.js?v=d5db7a8d';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -191,6 +191,7 @@ const STRINGS = {
 - Check the worker agents: who has been silent too long, who missed a run, who is waiting for my answer.
 - Find the bottleneck: the stage with the lowest conversion or no movement, and any lag behind the goal's pace.
 - Record the run's outcome in Goalcraft: a status (all good, bottleneck or recommendation) and one short line about it; it shows by you on the dashboard.
+- Keep my to-do list for this funnel in Goalcraft: the things only I can do (a test task, a form, a reply to a recruiter), most urgent first; remove what no longer matters and mark what is done. Only you keep it; I just read it.
 - If you need my decision, ask me through Goalcraft.
 
 7. Help with worker agents. If a stage has no agent or its agent isn't coping, suggest adding one and write a ready prompt for it yourself: what to do at the stage, where to take items from and where to record them, and that it reports its work to Goalcraft at its stage. I'll paste it into a new chat. You can also write to a worker yourself through Goalcraft (ask why it missed its run, give it a task); its reply comes back to you.
@@ -219,6 +220,7 @@ const STRINGS = {
 - Проверь рабочих агентов: кто давно молчит, кто проспал запуск, кто ждёт моего ответа.
 - Найди узкое место: этап с самой низкой конверсией или без движения, отставание от темпа цели.
 - Запиши итог прогона в Goalcraft: статус (всё в порядке, узкое место или рекомендация) и одну короткую строку о нём — он виден у тебя на дашборде.
+- Веди в Goalcraft список моих дел по этой воронке: то, что могу сделать только я (тестовое задание, анкета, ответ рекрутеру), от самого срочного; убирай неактуальное и отмечай сделанное. Ведёшь его только ты, я только смотрю.
 - Если нужно моё решение — спроси меня через Goalcraft.
 
 7. Помогай с рабочими агентами. Если на этапе нет агента или он не справляется — предложи добавить агента и сам напиши для него готовый промпт: что делать на этапе, откуда брать и куда записывать, и что о своей работе он отчитывается в Goalcraft на своём этапе. Я вставлю его в новый чат. Ты можешь и сам написать рабочему агенту через Goalcraft (спросить, почему он пропустил запуск, дать задание); его ответ придёт тебе.
@@ -247,6 +249,7 @@ const STRINGS = {
 - 检查工作智能体：谁沉默太久，谁错过了运行，谁在等我的回答。
 - 找出瓶颈：转化率最低或没有进展的阶段，以及落后于目标节奏的地方。
 - 在 Goalcraft 里记下这次运行的结论：一个状态（一切正常、瓶颈或建议）和一行简短说明；它会显示在看板上你的旁边。
+- 在 Goalcraft 里维护这个漏斗的我的待办：只有我能做的事（笔试作业、表格、回复招聘人员），最紧急的在前；删掉不再相关的，标记已完成的。只有你维护它，我只看。
 - 如果需要我做决定，就通过 Goalcraft 问我。
 
 7. 帮忙安排工作智能体。如果某个阶段没有智能体，或它的智能体应付不过来，就建议添加一个，并亲自为它写好提示词：在这个阶段做什么，从哪里取条目、记录到哪里，以及它要在自己的阶段向 Goalcraft 汇报工作。我会把它粘贴到新的对话里。你也可以通过 Goalcraft 直接给工作智能体写信（问它为什么错过运行，给它布置任务）；它的回复会回到你这里。
@@ -275,6 +278,7 @@ const STRINGS = {
 - ตรวจเอเจนต์ทำงาน: ใครเงียบไปนาน ใครพลาดรอบทำงาน ใครรอคำตอบจากฉัน
 - หาคอขวด: ขั้นที่อัตราการแปลงต่ำสุดหรือไม่มีความเคลื่อนไหว และการตามหลังจังหวะของเป้าหมาย
 - บันทึกผลของรอบนี้ใน Goalcraft: สถานะ (ทุกอย่างเรียบร้อย คอขวด หรือคำแนะนำ) และหนึ่งบรรทัดสั้นๆ อธิบาย ซึ่งจะแสดงข้างคุณบนแดชบอร์ด
+- ดูแลรายการงานของฉันสำหรับกรวยนี้ใน Goalcraft: สิ่งที่มีแค่ฉันทำได้ (แบบทดสอบ แบบฟอร์ม การตอบผู้สรรหา) เรียงจากเร่งด่วนที่สุด ลบสิ่งที่ไม่เกี่ยวแล้ว และทำเครื่องหมายสิ่งที่เสร็จ มีแค่คุณที่ดูแล ฉันแค่ดู
 - ถ้าต้องให้ฉันตัดสินใจ ให้ถามฉันผ่าน Goalcraft
 
 7. ช่วยเรื่องเอเจนต์ทำงาน ถ้าขั้นไหนไม่มีเอเจนต์หรือเอเจนต์ทำไม่ทัน ให้เสนอเพิ่มเอเจนต์และเขียนพรอมต์สำเร็จรูปให้มันเอง: ต้องทำอะไรในขั้นนั้น เอารายการมาจากไหนและบันทึกไว้ที่ไหน และให้รายงานงานของมันต่อ Goalcraft ในขั้นของมัน ฉันจะวางมันในแชตใหม่ คุณยังเขียนถึงเอเจนต์ทำงานเองได้ผ่าน Goalcraft (ถามว่าทำไมพลาดรอบทำงาน มอบงานให้) คำตอบจะกลับมาหาคุณ
@@ -327,6 +331,14 @@ const STRINGS = {
   'board.tokCacheWrite': L((n) => `Written to cache: ${n}`, (n) => `Запись в кэш: ${n}`, (n) => `写入缓存：${n}`, (n) => `เขียนลงแคช: ${n}`),
   'board.tokOut': L((n) => `Output: ${n}`, (n) => `Исходящие: ${n}`, (n) => `输出：${n}`, (n) => `เอาต์พุต: ${n}`),
   'board.tokTotal': L((n) => `Total: ${n} tokens`, (n) => `Всего: ${n} токенов`, (n) => `合计：${n} 个 token`, (n) => `รวม: ${n} โทเค็น`),
+  'tasks.button': L('Tasks', 'Дела', '待办', 'งาน'),
+  'tasks.count': L((n) => `Your tasks from the supervisor: ${n}`, (n) => `Ваших дел от супервайзера: ${n}`, (n) => `主管给你的待办：${n}`, (n) => `งานของคุณจากผู้ดูแล: ${n}`),
+  'tasks.title': L((f) => `Your tasks: ${f}`, (f) => `Ваши дела: ${f}`, (f) => `你的待办：${f}`, (f) => `งานของคุณ: ${f}`),
+  'tasks.allTitle': L('Your tasks', 'Ваши дела', '你的待办', 'งานของคุณ'),
+  'tasks.due': L((w) => `by ${w}`, (w) => `до ${w}`, (w) => `截止 ${w}`, (w) => `ภายใน ${w}`),
+  'tasks.overdue': L((w) => `overdue: was due ${w}`, (w) => `просрочено: срок был ${w}`, (w) => `已逾期：截止于 ${w}`, (w) => `เลยกำหนด: ครบกำหนด ${w}`),
+  'tasks.open': L('Open', 'Открыть', '打开', 'เปิด'),
+  'tasks.note': L('The supervisor keeps this list: it adds tasks, orders them by urgency and marks them done.', 'Список ведёт супервайзер: добавляет дела, расставляет их по срочности и отмечает сделанные.', '这份清单由主管维护：它添加待办、按紧急程度排序，并标记已完成的。', 'ผู้ดูแลเป็นผู้จัดการรายการนี้: เพิ่มงาน เรียงตามความเร่งด่วน และทำเครื่องหมายงานที่เสร็จแล้ว'),
   'board.usageCost': L((c) => `≈${c} at API prices`, (c) => `≈${c} по ценам API`, (c) => `按 API 价格约 ${c}`, (c) => `≈${c} ตามราคา API`),
   'board.usageLimit': L((p, d) => `${p} of the ${d}-day limit`, (p, d) => `${p} лимита на ${d} дн.`, (p, d) => `${d} 天额度已用 ${p}`, (p, d) => `ใช้ ${p} ของโควตา ${d} วัน`),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),

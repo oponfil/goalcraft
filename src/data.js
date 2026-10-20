@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=e6c3a0c8';
+import { lang } from './i18n.js?v=d5db7a8d';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -58,6 +58,12 @@ export const SUP_RUNS = ['ok', 'ok', 'ok', 'recommendation', 'bottleneck'];
 export const FUNNELS = [
   {
     title: 'Job Search',
+    // The person's tasks its supervisor keeps, most urgent first (dueIn: hours from now).
+    tasks: [
+      { title: 'Confirm the interview time with Vertical Aerospace', detail: 'Pick one of the three slots in the recruiter\'s email.', url: 'https://mail.google.com', dueIn: 5 },
+      { title: 'Do the take-home task for Seven AI', detail: 'About two hours; the brief is in your email.', url: 'https://mail.google.com', dueIn: 30 },
+      { title: 'Update your LinkedIn headline', detail: 'Recruiters search for “AI product manager”.', url: 'https://www.linkedin.com' },
+    ],
     source_url: 'https://docs.google.com/spreadsheets',
     guide_url: 'https://docs.google.com/document',
     theme: 'mine',
@@ -152,6 +158,9 @@ export const FUNNELS = [
   },
   {
     title: 'Bug Bounty',
+    tasks: [
+      { title: 'Verify your identity on HackerOne', detail: 'Payouts wait until you do.', url: 'https://hackerone.com' },
+    ],
     theme: 'code',
     result: ['paid bounty', 'paid bounties'],
     stages: [
@@ -182,6 +191,10 @@ export const FUNNELS = [
   },
   {
     title: 'Fundraising',
+    tasks: [
+      { title: 'Send the data room link to the lead investor', detail: 'They asked for it after the first call.', dueIn: -3 },
+      { title: 'Record a two-minute product demo', detail: 'Investors ask for it in almost every reply.' },
+    ],
     source_url: 'https://airtable.com',
     guide_url: 'https://www.notion.so',
     theme: 'money',
@@ -334,6 +347,18 @@ export const FUNNELS = [
 // Korean. Russian names have three forms [1, 2-4, 5+], Spanish and Portuguese two [1, many]; Chinese,
 // Thai, Vietnamese, Japanese, Turkish (a noun after a number stays singular) and Korean have one.
 const DEMO = {
+  'Confirm the interview time with Vertical Aerospace': ['Подтвердить время интервью с Vertical Aerospace', '确认与 Vertical Aerospace 的面试时间', 'ยืนยันเวลาสัมภาษณ์กับ Vertical Aerospace', 'Confirmar la hora de la entrevista con Vertical Aerospace', 'Xác nhận giờ phỏng vấn với Vertical Aerospace', 'Vertical Aerospace との面接時間を確定する', 'Confirmar o horário da entrevista com a Vertical Aerospace', 'Vertical Aerospace ile mülakat saatini onayla', 'Vertical Aerospace 면접 시간 확정하기'],
+  "Pick one of the three slots in the recruiter's email.": ['Выберите одно из трёх окон в письме рекрутера.', '在招聘人员的邮件里从三个时段中选一个。', 'เลือกหนึ่งในสามช่วงเวลาในอีเมลของผู้สรรหา', 'Elige uno de los tres horarios del correo del reclutador.', 'Chọn một trong ba khung giờ trong email của nhà tuyển dụng.', 'リクルーターのメールにある3つの枠から1つを選んでください。', 'Escolha um dos três horários no e-mail do recrutador.', 'İşe alım uzmanının e-postasındaki üç saatten birini seç.', '리크루터 메일에 있는 세 가지 시간 중 하나를 고르세요.'],
+  'Do the take-home task for Seven AI': ['Сделать тестовое задание для Seven AI', '完成 Seven AI 的笔试作业', 'ทำแบบทดสอบที่บ้านของ Seven AI', 'Hacer la prueba técnica de Seven AI', 'Làm bài kiểm tra tại nhà cho Seven AI', 'Seven AI の課題を仕上げる', 'Fazer o teste prático da Seven AI', 'Seven AI için ev ödevini yap', 'Seven AI 과제 수행하기'],
+  'About two hours; the brief is in your email.': ['Часа на два; задание у вас в почте.', '大约两小时；题目在你的邮箱里。', 'ราวสองชั่วโมง โจทย์อยู่ในอีเมลของคุณ', 'Unas dos horas; el enunciado está en tu correo.', 'Khoảng hai giờ; đề bài trong email của bạn.', '約2時間。課題の内容はメールにあります。', 'Cerca de duas horas; o enunciado está no seu e-mail.', 'Yaklaşık iki saat; görev e-postanda.', '두 시간 정도 걸려요. 과제 설명은 메일에 있어요.'],
+  'Update your LinkedIn headline': ['Обновить заголовок в LinkedIn', '更新 LinkedIn 标题', 'อัปเดตหัวข้อโปรไฟล์ LinkedIn', 'Actualizar el titular de LinkedIn', 'Cập nhật tiêu đề LinkedIn', 'LinkedIn の見出しを更新する', 'Atualizar o título do LinkedIn', 'LinkedIn başlığını güncelle', 'LinkedIn 헤드라인 업데이트하기'],
+  'Recruiters search for “AI product manager”.': ['Рекрутеры ищут «AI product manager».', '招聘人员搜索的是“AI product manager”。', 'ผู้สรรหาค้นหาคำว่า “AI product manager”', 'Los reclutadores buscan «AI product manager».', 'Nhà tuyển dụng tìm “AI product manager”.', 'リクルーターは「AI product manager」で検索しています。', 'Os recrutadores buscam “AI product manager”.', 'İşe alımcılar “AI product manager” diye arıyor.', '리크루터들은 “AI product manager”로 검색해요.'],
+  'Send the data room link to the lead investor': ['Отправить ссылку на data room ведущему инвестору', '把数据室链接发给领投方', 'ส่งลิงก์ data room ให้นักลงทุนหลัก', 'Enviar el enlace del data room al inversor líder', 'Gửi đường dẫn data room cho nhà đầu tư dẫn dắt', 'リード投資家にデータルームのリンクを送る', 'Enviar o link do data room ao investidor líder', 'Veri odası bağlantısını lider yatırımcıya gönder', '리드 투자자에게 데이터룸 링크 보내기'],
+  'They asked for it after the first call.': ['Просили после первого созвона.', '第一次通话后他们要过。', 'เขาขอไว้หลังคุยครั้งแรก', 'Lo pidieron tras la primera llamada.', 'Họ đã xin sau cuộc gọi đầu tiên.', '最初の通話のあとに頼まれました。', 'Pediram depois da primeira call.', 'İlk görüşmeden sonra istediler.', '첫 통화 후에 요청했어요.'],
+  'Record a two-minute product demo': ['Записать двухминутное демо продукта', '录一段两分钟的产品演示', 'อัดวิดีโอเดโมผลิตภัณฑ์สองนาที', 'Grabar una demo del producto de dos minutos', 'Quay bản demo sản phẩm hai phút', '2分間の製品デモを録画する', 'Gravar uma demo de dois minutos do produto', 'İki dakikalık ürün demosu kaydet', '2분짜리 제품 데모 녹화하기'],
+  'Investors ask for it in almost every reply.': ['Инвесторы просят его почти в каждом ответе.', '几乎每封回复里投资人都在要。', 'นักลงทุนขอแทบทุกครั้งที่ตอบกลับ', 'Los inversores lo piden en casi cada respuesta.', 'Nhà đầu tư hỏi nó trong gần như mọi phản hồi.', 'ほぼすべての返信で投資家から求められています。', 'Os investidores pedem em quase toda resposta.', 'Yatırımcılar neredeyse her yanıtta bunu istiyor.', '투자자들이 거의 모든 답장에서 요청해요.'],
+  'Verify your identity on HackerOne': ['Подтвердить личность на HackerOne', '在 HackerOne 上完成身份验证', 'ยืนยันตัวตนบน HackerOne', 'Verificar tu identidad en HackerOne', 'Xác minh danh tính trên HackerOne', 'HackerOne で本人確認をする', 'Verificar sua identidade no HackerOne', 'HackerOne’da kimliğini doğrula', 'HackerOne에서 본인 인증하기'],
+  'Payouts wait until you do.': ['Выплаты ждут, пока вы это не сделаете.', '完成之前奖金不会发放。', 'การจ่ายเงินจะรอจนกว่าคุณจะยืนยัน', 'Los pagos esperan hasta que lo hagas.', 'Tiền thưởng sẽ chờ đến khi bạn làm xong.', '完了するまで報酬の支払いは保留されます。', 'Os pagamentos aguardam até você fazer isso.', 'Sen yapana kadar ödemeler bekliyor.', '인증하기 전까지 지급이 보류돼요.'],
   'Post the next video on YouTube or TikTok first?': ['Следующее видео сначала на YouTube или в TikTok?', '下一个视频先发 YouTube 还是 TikTok？', 'คลิปถัดไปลง YouTube หรือ TikTok ก่อน?', '¿Publico el próximo vídeo primero en YouTube o en TikTok?', 'Video tiếp theo đăng YouTube hay TikTok trước?', '次の動画はYouTubeとTikTok、どちらを先に？', 'Posto o próximo vídeo primeiro no YouTube ou no TikTok?', 'Sonraki videoyu önce YouTube’a mı TikTok’a mı koyayım?', '다음 영상을 YouTube와 TikTok 중 어디에 먼저 올릴까요?'],
   'TikTok first': ['Сначала TikTok', '先发 TikTok', 'TikTok ก่อน', 'Primero TikTok', 'TikTok trước', 'TikTokを先に', 'Primeiro no TikTok', 'Önce TikTok', 'TikTok 먼저'],
   'Got it: posting to TikTok first.': ['Понял: сначала публикую в TikTok.', '明白：先发到 TikTok。', 'รับทราบ: ลง TikTok ก่อน', 'Entendido: primero publico en TikTok.', 'Đã rõ: đăng lên TikTok trước.', '了解：まずTikTokに投稿します。', 'Entendi: posto primeiro no TikTok.', 'Anladım: önce TikTok’a koyuyorum.', '알겠습니다: TikTok에 먼저 올릴게요.'],
@@ -419,12 +444,16 @@ if (COL != null) for (const f of FUNNELS) {
   f.title = tr(f.title);
   f.result = trForms(f.result);
   for (const st of f.stages) st.forms = trForms(st.forms);
+  for (const x of f.tasks || []) { x.title = tr(x.title); if (x.detail) x.detail = tr(x.detail); }
   if (f.supervisor) { if (f.supervisor.summary) f.supervisor.summary = tr(f.supervisor.summary); if (f.supervisor.question) f.supervisor.question = tr(f.supervisor.question); }
   for (const w of f.workers) {
     if (w.question) w.question = tr(w.question);
     for (const r of w.replies || []) { r.question = tr(r.question); r.answer = tr(r.answer); r.reply = tr(r.reply); }
   }
 }
+
+// Demo only: tasks' deadlines, as hours from when the page opens.
+for (const f of FUNNELS) for (const x of f.tasks || []) if (x.dueIn != null) x.due_at = new Date(Date.now() + x.dueIn * 3600e3).toISOString();
 
 // Demo only: start each stage with a count that matches the funnel's conversion, so the tanks
 // are consistent with the results so far. A stage holds enough for the results already out plus

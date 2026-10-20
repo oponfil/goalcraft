@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=e6c3a0c8';
+import { supabase } from './auth.js?v=d5db7a8d';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -24,6 +24,9 @@ function toScene(f, reports, now, usage = []) {
   return {
     id: f.id,
     title: f.title,
+    // The person's tasks, most urgent first, as the supervisor keeps them; done ones are gone.
+    tasks: (f.person_tasks || []).filter(x => !x.done_at).sort((a, b) => a.position - b.position)
+      .map(({ id, title, detail, url, due_at }) => ({ id, title, detail, url, due_at })),
     theme: f.theme,
     result: f.result,
     source_url: f.source_url,
@@ -111,7 +114,8 @@ export async function loadFunnels() {
         stages (key, position, label, count, fill_percent, flow_per_day),
         presence (agent, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
-        agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at)`)
+        agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),
+        person_tasks (id, position, title, detail, url, due_at, done_at)`)
       .order('created_at'),
     supabase.from('count_reports')
       .select('funnel_id, stage_key, value, at')
@@ -185,7 +189,7 @@ export function watch(onChange) {
   let timer;
   const kick = () => { clearTimeout(timer); timer = setTimeout(onChange, 400); };
   const channel = supabase.channel('my-funnels');
-  for (const table of ['funnels', 'stages', 'presence', 'questions', 'agent_messages']) {
+  for (const table of ['funnels', 'stages', 'presence', 'questions', 'agent_messages', 'person_tasks']) {
     channel.on('postgres_changes', { event: '*', schema: 'public', table }, kick);
   }
   channel.subscribe();

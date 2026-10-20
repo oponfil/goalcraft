@@ -88,6 +88,7 @@ export default {
 - Revisa a los agentes de trabajo: quién lleva demasiado tiempo en silencio, quién se saltó una ejecución, quién espera mi respuesta.
 - Encuentra el cuello de botella: la etapa con la conversión más baja o sin movimiento, y cualquier retraso respecto al ritmo de la meta.
 - Registra el resultado de la ejecución en Goalcraft: un estado (todo bien, cuello de botella o recomendación) y una línea corta sobre él; se muestra junto a ti en el panel.
+- Lleva en Goalcraft mi lista de tareas de este embudo: lo que solo yo puedo hacer (una prueba, un formulario, responder a un reclutador), de lo más urgente a lo menos; quita lo que ya no importa y marca lo hecho. Solo tú la llevas; yo solo la miro.
 - Si necesitas que decida algo, pregúntame a través de Goalcraft.
 
 7. Ayuda con los agentes de trabajo. Si una etapa no tiene agente o su agente no da abasto, propón añadir uno y escribe tú mismo un prompt listo para él: qué hacer en la etapa, de dónde tomar los elementos y dónde registrarlos, y que informe de su trabajo a Goalcraft en su etapa. Yo lo pegaré en un chat nuevo. También puedes escribir tú mismo a un agente de trabajo a través de Goalcraft (preguntarle por qué se saltó su ejecución, darle una tarea); su respuesta te llega a ti.
@@ -125,6 +126,14 @@ export default {
   'board.tokCacheWrite': (n) => `Escrito en caché: ${n}`,
   'board.tokOut': (n) => `Salida: ${n}`,
   'board.tokTotal': (n) => `Total: ${n} tokens`,
+  'tasks.button': 'Tareas',
+  'tasks.count': (n) => `Tus tareas del supervisor: ${n}`,
+  'tasks.title': (f) => `Tus tareas: ${f}`,
+  'tasks.allTitle': 'Tus tareas',
+  'tasks.due': (w) => `antes del ${w}`,
+  'tasks.overdue': (w) => `vencida: era para el ${w}`,
+  'tasks.open': 'Abrir',
+  'tasks.note': 'El supervisor lleva esta lista: añade tareas, las ordena por urgencia y marca las hechas.',
   'board.usageCost': (c) => `≈${c} a precios de la API`,
   'board.usageLimit': (p, d) => `${p} del límite de ${d} días`,
   'board.runNow': 'en curso',

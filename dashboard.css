@@ -346,3 +346,18 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 }
 #zoom button:disabled { opacity: 0.4; cursor: default; }
 #zoom button.pct:disabled { opacity: 1; }
+
+/* The person's tasks: a clipboard with their number by a funnel's title and in the top bar, and the
+   list they open, most urgent first. */
+.col-title .tasks-btn { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 6px; background: rgba(27, 23, 20, 0.85);
+  border: 2px solid var(--border); color: var(--text); font: 600 13px/1 var(--font); cursor: pointer; text-shadow: none; }
+.col-title .tasks-btn:hover { border-color: var(--muted); }
+.col-title .tasks-btn[hidden], .sitebar .tasks-all[hidden] { display: none; }
+.sitebar .tasks-all .badge { min-width: 18px; height: 18px; line-height: 18px; font-size: 12px; padding: 0 5px; background: var(--border); color: var(--text); }
+#pop ol.tasks { margin: 10px 0 0; padding-left: 20px; max-height: 60vh; overflow-y: auto; }
+#pop ol.tasks li { margin: 0 0 10px; }
+#pop .task-title { font-weight: 600; }
+#pop .task-detail { color: var(--muted); font-size: 13px; margin-top: 2px; }
+#pop .task-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+#pop .task-meta a { color: var(--text); }
+#pop .task-meta .late { color: var(--alert); }

@@ -26,7 +26,7 @@ Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage 
 Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when you wake up and again every 5 minutes while you work. The dashboard waits twice that, 10 minutes of silence, then warns the person that you did not wake up (10 minutes past your next_run_at) or that it lost contact with you (10 minutes after your last signal).
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not.
 On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer: while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next); if you need more from the person, ask a new question instead. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
-Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. When it needs the person, it asks as every agent does: state ask with a question. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
+Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. When it needs the person, it asks as every agent does: state ask with a question. It also keeps the person's tasks for the funnel (set_tasks): the things only the person can do (take a test task, fill in a form, answer a recruiter), most urgent first; it alone adds, orders, removes and marks them done, and the person sees them on the dashboard. A worker that needs such a thing from the person writes to the supervisor about it instead. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
 Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and a funnel's supervisor can write to its workers (send_message). On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns.
 Your name: the dashboard and emails show you by your model's name (Claude, ChatGPT…) unless you give your own short name with set_agent_state(name); give one when the person asks you to rename yourself.
 Delete a funnel (delete_funnel) only when the person asks for it.
@@ -87,7 +87,8 @@ async function funnels(db: Db, key?: string) {
       stages (key, position, label, count, fill_percent, flow_per_day),
       presence (agent, display_name, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, updated_at),
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
-      agent_messages (id, agent, text, sent_at, read_at)`)
+      agent_messages (id, agent, text, sent_at, read_at),
+      person_tasks (id, position, title, detail, url, due_at, done_at)`)
     .order('created_at')
   if (key) q = q.eq('key', key)
   const rows = check(await q) as any[]
@@ -111,9 +112,13 @@ async function funnels(db: Db, key?: string) {
     // What the person wrote to agents and they have not read yet (get_messages reads them).
     unread_messages: f.agent_messages.filter((m: any) => !m.read_at).map(({ id, agent, text, sent_at }: any) => ({ id, agent, text, sent_at })),
     answers_to_reply: f.questions.filter((q: any) => q.answered_at && !q.replied_at).map(({ id, agent, question, answer, answered_at }: any) => ({ id, agent, question, answer, answered_at })),
+    // The person's tasks for this funnel, most urgent first, as its supervisor keeps them (set_tasks).
+    tasks: openTasks(f.person_tasks),
   }))
 }
 const one = async (db: Db, key: string) => (await funnels(db, key))[0]
+const openTasks = (rows: any[]) => rows.filter(t => !t.done_at).sort((a, b) => a.position - b.position)
+  .map(({ id, title, detail, url, due_at }: any) => ({ id, title, detail, url, due_at }))
 
 // Free: 3 funnels of up to 3 stages, one agent per zone. Pro: 10 funnels of up to 5 stages, two agents per zone
 // (Pro is paid through Creem; see supabase/functions/billing).
@@ -390,6 +395,42 @@ function server(db: Db, caller: Caller) {
     if (!at.some(p => p.agent === a.to && p.zone != null)) fail(`No worker agent "${a.to}" in ${a.funnel_id}. Agents there: ${at.filter(p => p.zone != null).map(p => p.agent).join(', ') || 'none'}`)
     const m = check(await db.from('agent_messages').insert({ funnel_id: f.id, agent: a.to, from_agent: a.agent, text: a.text }).select('id').single()) as { id: string }
     return text({ sent: m.id, to: a.to })
+  })
+
+  s.registerTool('set_tasks', {
+    title: 'Set the person\'s tasks',
+    description: 'For a funnel\'s supervisor: the list of things only the person can do for this funnel (take a test task, fill in a form, answer a recruiter, sign something), shown to them on the dashboard. Send the whole list each time, most urgent first; keep a task\'s id (from list_funnels tasks, or this tool\'s answer) to keep it. A task left out is removed; one listed in done is marked done. Only you add, order, remove and mark tasks; the person only sees them. Not for questions: if an agent can\'t go on without the person\'s answer, ask it (set_agent_state ask).',
+    inputSchema: req({
+      funnel_id: funnelId,
+      agent: agent.describe('You, the funnel\'s supervisor'),
+      tasks: z.array(req({
+        id: z.string().uuid().optional().describe('An existing task\'s id, to keep it; leave out for a new task'),
+        title: z.string().min(1).max(120).describe('What to do, short, in the person\'s language, e.g. "Пройти тестовое задание Seven AI"'),
+        detail: z.string().min(1).max(300).optional().describe('One line: why, or how'),
+        url: z.string().url().regex(/^https?:\/\//).max(2000).optional().describe('Where to do it: the form, the email, the job'),
+        due_at: z.string().datetime({ offset: true }).optional().describe('When it must be done by, if there is a deadline'),
+      })).max(30).describe('The open tasks, most urgent first'),
+      done: z.array(z.string().uuid()).max(30).optional().describe('Ids of tasks the person has done'),
+    }),
+    annotations: { title: 'Set the person\'s tasks', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  }, async (a) => {
+    const f = await funnelRow(db, a.funnel_id)
+    const at = check(await db.from('presence').select('agent, zone').eq('funnel_id', f.id)) as any[]
+    if (!at.some(p => p.agent === a.agent && p.zone == null)) fail(`Only the funnel's supervisor keeps the person's tasks, and "${a.agent}" is not the supervisor of ${a.funnel_id}`)
+    const open = check(await db.from('person_tasks').select('id').eq('funnel_id', f.id).is('done_at', null)) as { id: string }[]
+    const known = new Set(open.map(t => t.id)), done = new Set(a.done ?? []), now = new Date().toISOString()
+    for (const t of a.tasks) if (t.id && !known.has(t.id)) fail(`No open task ${t.id} in ${a.funnel_id}: leave id out for a new task`)
+    if (done.size) check(await db.from('person_tasks').update({ done_at: now, updated_at: now }).eq('funnel_id', f.id).in('id', [...done]))
+    const keep = new Set(a.tasks.map(t => t.id).filter(Boolean))
+    const drop = open.map(t => t.id).filter(id => !keep.has(id) && !done.has(id))
+    if (drop.length) check(await db.from('person_tasks').delete().in('id', drop))
+    for (const [i, t] of a.tasks.entries()) {
+      const row = { title: t.title, detail: t.detail ?? null, url: t.url ?? null, due_at: t.due_at ?? null, position: i, updated_at: now }
+      if (t.id) check(await db.from('person_tasks').update(row).eq('id', t.id))
+      else check(await db.from('person_tasks').insert({ funnel_id: f.id, ...row }))
+    }
+    const rows = check(await db.from('person_tasks').select('id, position, title, detail, url, due_at, done_at').eq('funnel_id', f.id).is('done_at', null)) as any[]
+    return text({ tasks: openTasks(rows), done: done.size, removed: drop.length })
   })
 
   s.registerTool('reply', {

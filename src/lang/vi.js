@@ -89,6 +89,7 @@ export default {
 - Kiểm tra các tác tử làm việc: ai im lặng quá lâu, ai bỏ lỡ lần chạy, ai đang chờ câu trả lời của tôi.
 - Tìm điểm nghẽn: giai đoạn có tỷ lệ chuyển đổi thấp nhất hoặc không có chuyển động, và chỗ chậm hơn nhịp độ của mục tiêu.
 - Ghi kết quả của lần chạy vào Goalcraft: một trạng thái (mọi thứ ổn, điểm nghẽn hoặc khuyến nghị) và một dòng ngắn về nó; nó hiện cạnh bạn trên bảng điều khiển.
+- Quản lý danh sách việc của tôi cho phễu này trong Goalcraft: những việc chỉ tôi làm được (bài kiểm tra, biểu mẫu, trả lời nhà tuyển dụng), việc gấp nhất trước; bỏ việc không còn cần và đánh dấu việc đã xong. Chỉ bạn quản lý, tôi chỉ xem.
 - Nếu cần tôi quyết định, hãy hỏi tôi qua Goalcraft.
 
 7. Giúp về các tác tử làm việc. Nếu một giai đoạn không có tác tử hoặc tác tử của nó không theo kịp, hãy đề xuất thêm một tác tử và tự viết sẵn prompt cho nó: làm gì ở giai đoạn đó, lấy các mục từ đâu và ghi vào đâu, và báo cáo công việc của nó cho Goalcraft ở giai đoạn của nó. Tôi sẽ dán nó vào một cuộc trò chuyện mới. Bạn cũng có thể tự nhắn cho một tác tử làm việc qua Goalcraft (hỏi vì sao nó bỏ lỡ lần chạy, giao việc cho nó); câu trả lời sẽ quay về bạn.
@@ -126,6 +127,14 @@ export default {
   'board.tokCacheWrite': (n) => `Ghi vào bộ nhớ đệm: ${n}`,
   'board.tokOut': (n) => `Đầu ra: ${n}`,
   'board.tokTotal': (n) => `Tổng: ${n} token`,
+  'tasks.button': 'Việc cần làm',
+  'tasks.count': (n) => `Việc của bạn từ người giám sát: ${n}`,
+  'tasks.title': (f) => `Việc của bạn: ${f}`,
+  'tasks.allTitle': 'Việc của bạn',
+  'tasks.due': (w) => `trước ${w}`,
+  'tasks.overdue': (w) => `quá hạn: hạn là ${w}`,
+  'tasks.open': 'Mở',
+  'tasks.note': 'Người giám sát quản lý danh sách này: thêm việc, sắp xếp theo mức khẩn cấp và đánh dấu việc đã xong.',
   'board.usageCost': (c) => `≈${c} theo giá API`,
   'board.usageLimit': (p, d) => `${p} hạn mức ${d} ngày`,
   'board.runNow': 'đang chạy',
