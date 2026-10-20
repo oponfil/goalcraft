@@ -143,8 +143,10 @@ function server(db: Db, caller: Caller) {
     version: '0.1.0',
     websiteUrl: 'https://goalcraft.ai',
     icons: [
-      { src: 'https://goalcraft.ai/favicon.svg', mimeType: 'image/svg+xml', sizes: ['any'] },
+      // PNG first: some clients don't show SVG icons.
       { src: 'https://goalcraft.ai/apple-touch-icon.png', mimeType: 'image/png', sizes: ['180x180'] },
+      { src: 'https://goalcraft.ai/favicon.png', mimeType: 'image/png', sizes: ['32x32'] },
+      { src: 'https://goalcraft.ai/favicon.svg', mimeType: 'image/svg+xml', sizes: ['any'] },
     ],
   }, { instructions: INSTRUCTIONS })
 
