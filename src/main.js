@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=7b91c735';
-import { mountDashboard } from './dashboard.js?v=7b91c735';
-import { t } from './i18n.js?v=7b91c735';
+import { FUNNELS, SUP_RUNS } from './data.js?v=057f1a5e';
+import { mountDashboard } from './dashboard.js?v=057f1a5e';
+import { t } from './i18n.js?v=057f1a5e';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -47,22 +47,23 @@ function demoRuns(a) {
   return withTokens(a, rows, r);
 }
 
-// Made-up token use, as the wake script reads it on the person's computer, priced as there: Claude
-// (Claude Code, Opus 5.5) and ChatGPT (Codex, GPT-6.1 Sol, with its plan's weekly limit). Other agents
-// run in web chats, whose use nobody outside can read, so they show none.
+// Made-up token use, so the demo shows what an agent's runs cost: every agent, priced roughly as its
+// model is on its API ($ per million tokens: input, input from the cache, cache writes, output), and
+// for ChatGPT (Codex) its share of the plan's weekly limit too.
+const DEMO_PRICES = {
+  claude: [4, 0.2, 8, 20], chatgpt: [2, 0.1, 0, 10], gemini: [2, 0.2, 0, 12], grok: [3, 0.3, 0, 15],
+  deepseek: [0.3, 0.03, 0, 1.1], kimi: [0.6, 0.15, 0, 2.5], qwen: [0.4, 0.08, 0, 1.6],
+  mistral: [0.5, 0.05, 0, 1.5], perplexity: [1, 0.1, 0, 1], hermes: [0.5, 0.05, 0, 1.5],
+};
 function withTokens(a, rows, r) {
-  if (a.agent !== 'claude' && a.agent !== 'chatgpt') return rows;
-  const claude = a.agent === 'claude';
-  let limit = 6 + r() * 20;
+  const pr = DEMO_PRICES[a.agent] || DEMO_PRICES.gemini, codex = a.agent === 'chatgpt';
   return rows.map(row => {
     const minutes = ((row.ended_at ? Date.parse(row.ended_at) : Date.now()) - Date.parse(row.started_at)) / 60e3;
     const tokens = Math.round(Math.max(0.4, minutes) * (0.25 + r() * 0.35) * 1e6);
-    const read = Math.round(tokens * (claude ? 0.955 : 0.93)), output = Math.round(tokens * (0.008 + r() * 0.01));
-    const write = claude ? Math.round(tokens * 0.025) : 0, input = tokens - read - output - write;
-    const cost = claude ? (input * 4 + read * 0.2 + write * 8 + output * 20) / 1e6 : (input * 2 + read * 0.1 + output * 10) / 1e6;
-    const took = claude ? null : Math.round(Math.max(0, minutes / 15));
-    limit = Math.max(1, limit - (took ?? 0));
+    const read = Math.round(tokens * (0.93 + r() * 0.03)), output = Math.round(tokens * (0.008 + r() * 0.01));
+    const write = pr[2] ? Math.round(tokens * 0.025) : 0, input = tokens - read - output - write;
+    const cost = (input * pr[0] + read * pr[1] + write * pr[2] + output * pr[3]) / 1e6;
     return { ...row, usage: { tokens, input_tokens: input, cache_read_tokens: read, cache_write_tokens: write, output_tokens: output,
-      cost, limit_used: took, ...(!claude && { limit: Math.round(limit), limitDays: 7 }) } };
+      cost, limit_used: codex ? cost * 0.9 : null, limitDays: codex ? 7 : null } };
   });
 }
