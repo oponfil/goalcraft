@@ -142,6 +142,7 @@ export default {
   'hist.all': 'Tất cả',
   'hist.total': (n, a) => `Trong kỳ: +${n} · trung bình +${a} mỗi ngày`,
   'hist.failed': 'Không tải được lịch sử.',
+  'board.moreQuestions': (n) => `Thêm ${n} câu hỏi`,
   'board.usageCost': (c) => `≈${c} theo giá API`,
   'board.usageLimit': (p, d) => (d === 7 ? `${p} hạn mức tuần` : `${p} hạn mức ${d} ngày`),
   'board.runNow': 'đang chạy',

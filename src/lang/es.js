@@ -141,6 +141,7 @@ export default {
   'hist.all': 'Todo',
   'hist.total': (n, a) => `En este periodo: +${n} · +${a} al día de media`,
   'hist.failed': 'No se pudo cargar el historial.',
+  'board.moreQuestions': (n) => `${n} preguntas más`,
   'board.usageCost': (c) => `≈${c} a precios de la API`,
   'board.usageLimit': (p, d) => (d === 7 ? `${p} del límite semanal` : `${p} del límite de ${d} días`),
   'board.runNow': 'en curso',

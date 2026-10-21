@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=84397053';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=84397053';
-import { t, lang } from './i18n.js?v=84397053';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=56f30831';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=56f30831';
+import { t, lang } from './i18n.js?v=56f30831';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -406,10 +406,15 @@ export function mountDashboard(funnels, opts = {}) {
         const link = chatLink(info, url);
         return link ? `<a class="btn" href="${esc(link)}" ${opens(link, webOf(url, info))}>${esc(t('board.open', info.product || info.name))}</a>` : '';
       };
-      const asks = a.questions.map(q => `<div class="ask" data-qid="${esc(q.id)}"><p>${esc(q.question)}</p>${opts.onAnswer
+      // The first question (the one asked first) shows with its answer box; the rest fold under
+      // "N more questions" and open with their own boxes.
+      const askHtml = q => `<div class="ask" data-qid="${esc(q.id)}"><p>${esc(q.question)}</p>${opts.onAnswer
         ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
           <div class="ask-buttons"><button class="btn primary send" style="${paint}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
-          <div class="pop-msg"></div>` : ''}</div>`).join('');
+          <div class="pop-msg"></div>` : ''}</div>`;
+      const [first, ...rest] = a.questions;
+      const asks = (first ? askHtml(first) : '') + (rest.length
+        ? `<details class="more-asks"><summary>${esc(t('board.moreQuestions', rest.length))}</summary>${rest.map(askHtml).join('')}</details>` : '');
       const reply = opts.onAnswer ? ''
         : `<a class="btn primary" style="${paint}" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.replyIn', info.product || info.name))}</a>`;
       // Standing, the agent is waiting and takes the answer at once; asleep, only on its next run.
@@ -508,6 +513,13 @@ export function mountDashboard(funnels, opts = {}) {
         const asked = a.questions.find(q => q.id === block.dataset.qid)?.question;
         a.questions = a.questions.filter(q => q.id !== block.dataset.qid);
         block.remove();
+        // The next folded question comes up in its place; the fold counts what is left.
+        const more = pop.querySelector('.more-asks');
+        if (more && ![...pop.querySelectorAll('.ask')].some(x => !x.closest('.more-asks'))) more.before(more.querySelector('.ask'));
+        if (more) {
+          const left = more.querySelectorAll('.ask').length;
+          if (!left) more.remove(); else more.querySelector('summary').textContent = t('board.moreQuestions', left);
+        }
         // The demo has no agent to reply: a moment later it answers back as a real one would.
         if (!opts.live) setTimeout(() => { a.replies = [...(a.replies || []), { id: 'demo-' + Date.now(), question: asked, answer: text, reply: t('demo.reply') }]; }, 1200);
         if (a.questions.length) return pop.querySelector('.answer')?.focus();
