@@ -94,7 +94,7 @@ export default {
 - Verifique os agentes de trabalho: quem está em silêncio há muito tempo, quem perdeu uma execução, quem espera minha resposta.
 - Encontre o gargalo: a etapa com a menor conversão ou sem movimento, e qualquer atraso em relação ao ritmo da meta.
 - Registre o resultado da execução no Goalcraft: um status (tudo certo, gargalo ou recomendação) e uma linha curta sobre ele; ele aparece ao seu lado no painel.
-- Mantenha no Goalcraft minha lista de tarefas deste funil: o que só eu posso fazer (um teste, um formulário, responder a um recrutador), da mais urgente à menos; tire o que não importa mais e marque o que foi feito. Só você cuida dela; eu só vejo.
+- Mantenha no Goalcraft minha lista de tarefas deste funil: o que só eu posso fazer (um teste, um formulário, responder a um recrutador), da mais urgente à menos; tire o que não importa mais e marque o que foi feito.
 - Se precisar de uma decisão minha, pergunte pelo Goalcraft.
 
 7. Ajude com os agentes de trabalho. Se uma etapa não tiver agente ou o agente dela não estiver dando conta, proponha adicionar um e escreva você mesmo um prompt pronto para ele: o que fazer na etapa, de onde pegar os itens e onde registrá-los, e que ele reporte o trabalho ao Goalcraft na etapa dele. Eu vou colar em um chat novo. Você também pode escrever direto para um agente de trabalho pelo Goalcraft (perguntar por que perdeu a execução, passar uma tarefa); a resposta volta para você.

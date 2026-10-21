@@ -1,9 +1,9 @@
 // The pricing page: "Get Pro" opens the Polar checkout. Signed in, the person's plan is marked
 // "Your plan": on Pro the button shows the plan and opens the subscription settings (or nothing to
 // manage for Pro granted without paying), and "Start free" goes; on Free, Pro stays the upgrade.
-import { supabase } from './auth.js?v=d07dba31';
-import { account, openBilling } from './billing.js?v=d07dba31';
-import { t, lang } from './i18n.js?v=d07dba31';
+import { supabase } from './auth.js?v=ec473b9c';
+import { account, openBilling } from './billing.js?v=ec473b9c';
+import { t, lang } from './i18n.js?v=ec473b9c';
 
 const button = document.getElementById('get-pro');
 const note = document.getElementById('billing-note');

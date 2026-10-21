@@ -94,7 +94,7 @@ export default {
 - Çalışan ajanları kontrol et: kim çok uzun süredir sessiz, kim bir çalışmayı kaçırdı, kim cevabımı bekliyor.
 - Darboğazı bul: dönüşümü en düşük ya da hareketsiz aşama ve hedefin hızının gerisinde kalınan yer.
 - Çalışmanın sonucunu Goalcraft’a yaz: bir durum (her şey yolunda, darboğaz ya da öneri) ve onunla ilgili kısa bir satır; panelde yanında görünür.
-- Bu huni için yapılacaklar listemi Goalcraft’ta tut: yalnızca benim yapabileceklerim (ev ödevi, form, işe alımcıya yanıt), en acilden başlayarak; artık önemsiz olanı kaldır, yapılanı işaretle. Listeyi yalnızca sen tutarsın, ben sadece bakarım.
+- Bu huni için yapılacaklar listemi Goalcraft’ta tut: yalnızca benim yapabileceklerim (ev ödevi, form, işe alımcıya yanıt), en acilden başlayarak; artık önemsiz olanı kaldır, yapılanı işaretle.
 - Benim kararıma ihtiyacın varsa bana Goalcraft üzerinden sor.
 
 7. Çalışan ajanlarla ilgili yardım et. Bir aşamada ajan yoksa ya da ajanı yetişemiyorsa, bir tane eklemeyi öner ve onun için hazır bir istemi kendin yaz: aşamada ne yapacağı, öğeleri nereden alıp nereye kaydedeceği ve işini kendi aşamasında Goalcraft’a bildireceği. Ben onu yeni bir sohbete yapıştırırım. Çalışan bir ajana Goalcraft üzerinden kendin de yazabilirsin (çalışmasını neden kaçırdığını sor, ona görev ver); cevabı sana döner.

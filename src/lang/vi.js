@@ -95,7 +95,7 @@ export default {
 - Kiểm tra các tác tử làm việc: ai im lặng quá lâu, ai bỏ lỡ lần chạy, ai đang chờ câu trả lời của tôi.
 - Tìm điểm nghẽn: giai đoạn có tỷ lệ chuyển đổi thấp nhất hoặc không có chuyển động, và chỗ chậm hơn nhịp độ của mục tiêu.
 - Ghi kết quả của lần chạy vào Goalcraft: một trạng thái (mọi thứ ổn, điểm nghẽn hoặc khuyến nghị) và một dòng ngắn về nó; nó hiện cạnh bạn trên bảng điều khiển.
-- Quản lý danh sách việc của tôi cho phễu này trong Goalcraft: những việc chỉ tôi làm được (bài kiểm tra, biểu mẫu, trả lời nhà tuyển dụng), việc gấp nhất trước; bỏ việc không còn cần và đánh dấu việc đã xong. Chỉ bạn quản lý, tôi chỉ xem.
+- Quản lý danh sách việc của tôi cho phễu này trong Goalcraft: những việc chỉ tôi làm được (bài kiểm tra, biểu mẫu, trả lời nhà tuyển dụng), việc gấp nhất trước; bỏ việc không còn cần và đánh dấu việc đã xong.
 - Nếu cần tôi quyết định, hãy hỏi tôi qua Goalcraft.
 
 7. Giúp về các tác tử làm việc. Nếu một giai đoạn không có tác tử hoặc tác tử của nó không theo kịp, hãy đề xuất thêm một tác tử và tự viết sẵn prompt cho nó: làm gì ở giai đoạn đó, lấy các mục từ đâu và ghi vào đâu, và báo cáo công việc của nó cho Goalcraft ở giai đoạn của nó. Tôi sẽ dán nó vào một cuộc trò chuyện mới. Bạn cũng có thể tự nhắn cho một tác tử làm việc qua Goalcraft (hỏi vì sao nó bỏ lỡ lần chạy, giao việc cho nó); câu trả lời sẽ quay về bạn.
