@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=ec473b9c';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=ec473b9c';
-import { themeOf } from './themes.js?v=ec473b9c';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=ec473b9c';
+import { agentInfo, plural } from './data.js?v=6cbe2523';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=6cbe2523';
+import { themeOf } from './themes.js?v=6cbe2523';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=6cbe2523';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -9,7 +9,7 @@ import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=ec473b9c';
 export const CW = 200;
 // ZH: the height of a work zone between two tanks, the same as from the supervisor's platform down to
 // the first tank.
-const ZW = 164, TOP = 48, ZH = 45, LH = 46, MAX_STAGES = 5;
+const ZW = 164, TOP = 48, ZH = 45, LH = 40, MAX_STAGES = 5;
 // The supervisor's platform: a small deck on top of the pipe; the supervisor walks from one end to
 // the other and looks down from each.
 const DECK_HALF = 28, DECK_Y = TOP;
