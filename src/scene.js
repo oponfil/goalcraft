@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=6f234feb';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=6f234feb';
-import { themeOf } from './themes.js?v=6f234feb';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=6f234feb';
+import { agentInfo, plural } from './data.js?v=25a9af42';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=25a9af42';
+import { themeOf } from './themes.js?v=25a9af42';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=25a9af42';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -652,9 +652,8 @@ export class Scene {
       warn(a, fmtDuration(this.silence(a)), p.x + 10, p.y - 4);
     }
     // A number in the middle with its flow written small at its top right, like an exponent.
-    // The two together are centred on (x, y), across and up and down: the number sits a little
-    // left and low of the middle, so with its flow the whole is in the middle. Returns the box they
-    // take, for a click on them.
+    // The number is centred across on x; up and down the two together are centred on y, so the
+    // number sits a little low. Returns the box they take, for a click on them.
     const withFlow = (num, flow, x, y, size, color, flowColor) => {
       g.font = `700 ${size * S}px ${FONT}`;
       const w = g.measureText(num).width / S;
@@ -662,7 +661,7 @@ export class Scene {
       const fw = flow ? g.measureText(flow).width / S + 1 : 0;
       // The number's capitals span about 0.7 of its size around its line; the flow's top reaches
       // 0.42 + 0.19 above it.
-      const nx = x - fw / 2, ny = flow ? y + size * 0.13 : y;
+      const nx = x, ny = flow ? y + size * 0.13 : y;
       T(num, nx, ny, size, color, 'center', 700);
       if (flow) T(flow, nx + w / 2 + 1, ny - size * 0.42, size * 0.55, flowColor, 'left', 700);
       return { x: nx - w / 2 - 2, y: ny - size * 0.95, w: w + fw + 4, h: size * 1.5 };
