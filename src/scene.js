@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=25a9af42';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=25a9af42';
-import { themeOf } from './themes.js?v=25a9af42';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=25a9af42';
+import { agentInfo, plural } from './data.js?v=e1130aec';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=e1130aec';
+import { themeOf } from './themes.js?v=e1130aec';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=e1130aec';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -61,30 +61,41 @@ function rowsFit(half, lh) {
 }
 // A funnel's geometry. Fixed (the usual view): every tank LH tall at its place. Growing (the
 // person's choice in the profile menu): each tank just tall enough for what it holds, at least
-// MIN_ROWS rows so its number fits and at most MAX_ROWS, as wide at top and bottom as a fixed one; the tanks stack under
-// one another, so a tank that grows pushes everything below it down.
+// MIN_ROWS rows so its number fits and at most MAX_ROWS. In both, the tanks' sides lie on two
+// straight lines, from 184 wide at the top of the first tank to 26 at the bottom of the last, and a
+// tank that grows pushes everything below it down.
 const MIN_ROWS = 3, MAX_ROWS = 40;  // 40 rows: about five fixed tanks tall; past that a tank is full
-// What a growing tank of a given height holds, worked out once per funnel size, tank and height.
+// What a growing tank holds at a given height and place on its funnel's lines, worked out once.
 const capacities = new Map();
-const capacity = (n, j, h, half) => {
-  const key = `${n}|${j}|${h}`;
+const capacity = (key, half, h) => {
   if (!capacities.has(key)) capacities.set(key, rowsFit(half, h).reduce((x, y) => x + y, 0));
   return capacities.get(key);
 };
+// Half the width of a funnel at y units below the first tank's top, the funnel span units tall.
+const lineHalf = (y, span) => Math.round(92 - 79 * y / span);
 function geometry(f, grow) {
   const n = f.stages.length;
-  const half = (j, lh, r) => {
-    if (!grow) return tankHalf(j, n, r);
-    const a = tankHalf(j, n, 0), b = tankHalf(j, n, LH - 1);
-    return Math.round(a + (b - a) * r / Math.max(1, lh - 1));
+  let lh = f.stages.map(() => (grow ? MIN_ROWS * CELL + 3 : LH));
+  // Where each tank starts below the first one's top, and how tall the whole funnel is.
+  const place = hs => {
+    const at = []; let y = 0;
+    for (const h of hs) { at.push(y); y += h + ZH; }
+    return { at, span: y - ZH - 1 };
   };
-  const lh = f.stages.map((s, j) => {
-    if (!grow) return LH;
-    for (let rows = MIN_ROWS; ; rows++) {
-      const h = rows * CELL + 3;
-      if (rows >= MAX_ROWS || capacity(n, j, h, r => half(j, h, r)) >= s.count) return h;
-    }
-  });
+  // Heights and widths depend on each other: lay the funnel out again until the heights settle.
+  for (let pass = 0; grow && pass < 8; pass++) {
+    const { at, span } = place(lh);
+    const next = f.stages.map((s, j) => {
+      for (let rows = MIN_ROWS; ; rows++) {
+        const h = rows * CELL + 3, half = r => lineHalf(at[j] + r, span);
+        if (rows >= MAX_ROWS || capacity(`${at[j]}|${span}|${h}`, half, h) >= s.count) return h;
+      }
+    });
+    if (next.join() === lh.join()) break;
+    lh = next;
+  }
+  const { at, span } = place(lh);
+  const half = (j, h, r) => (grow ? lineHalf(at[j] + r, span) : tankHalf(j, n, r));
   const tops = [];
   for (let j = 0, y = TOP + ZH; j < n; j++) { tops.push(y); y += lh[j] + ZH; }
   const g = {
