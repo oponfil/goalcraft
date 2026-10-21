@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=0b7c89a6';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=0b7c89a6';
-import { themeOf } from './themes.js?v=0b7c89a6';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=0b7c89a6';
+import { agentInfo, plural } from './data.js?v=56dad7ea';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=56dad7ea';
+import { themeOf } from './themes.js?v=56dad7ea';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=56dad7ea';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -238,7 +238,8 @@ export class Scene {
   }
 
   // Switch between fixed and growing tanks (the profile menu's choice).
-  setGrow(grow) { this.grow = grow; this.regeo(true); }
+  // A switch of look starts the tanks over: they empty and fill up to their counts, as when the board opens.
+  setGrow(grow) { this.grow = grow; this.heaps.clear(); this.regeo(true); }
   // Growing tanks: when a tank needs another row (or one less), lay its funnel out again; the scene
   // grows or shrinks to fit, and the heaps keep what they hold.
   regeo(force = false, only = null) {
@@ -247,8 +248,6 @@ export class Scene {
       const g = geometry(f, this.grow);
       if (!force && g.key === f.geo.key) continue;
       f.geo = g; changed = true;
-      // After a switch of look the tanks fill up to their counts quickly, as when the board opens.
-      if (force) for (let j = 0; j < f.stages.length; j++) { const h = this.heaps.get(`${f.id ?? f.title}|${j}`); if (h) delete h.step; }
     }
     if (!changed) return;
     this.H = sceneHeight(this.funnels);
