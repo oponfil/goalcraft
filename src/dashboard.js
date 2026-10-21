@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=56f30831';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=56f30831';
-import { t, lang } from './i18n.js?v=56f30831';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c422246d';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c422246d';
+import { t, lang } from './i18n.js?v=c422246d';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -104,7 +104,7 @@ export function mountDashboard(funnels, opts = {}) {
   });
   // Drawn once the fonts are in: then the loading pickaxe goes (see .loader in dashboard.css).
   const ready = () => requestAnimationFrame(() => document.body.classList.add('ready'));
-  if (document.fonts) document.fonts.ready.then(() => { scene.resize(scale, window.devicePixelRatio || 1); ready(); });
+  if (document.fonts) document.fonts.ready.then(() => { scene.resize(scale, window.devicePixelRatio || 1); ready(); fitNames(); });
   else ready();
   layout();
 
@@ -119,7 +119,20 @@ export function mountDashboard(funnels, opts = {}) {
     track.querySelectorAll('.col-title').forEach(el => {
       el.style.backgroundImage = `url(${scene.titleStrip(+el.dataset.fi, h).toDataURL()})`;
     });
+    fitNames();
   }
+  // A long name wraps to two lines; its box then spans the whole column and pushes the badges to the
+  // edges. Shrink it to its longest line, so the name stays centred with the badges beside it.
+  function fitNames() {
+    track.querySelectorAll('.col-title .name').forEach(name => {
+      name.style.width = '';
+      const range = document.createRange(); range.selectNodeContents(name);
+      const lines = [...range.getClientRects()];
+      if (new Set(lines.map(r => Math.round(r.top))).size < 2) return;
+      name.style.width = Math.ceil(Math.max(...lines.map(r => r.width))) + 1 + 'px';
+    });
+  }
+  let badgesShown = '';
   function syncTitles() {
     track.style.transform = `translateX(${canvas.getBoundingClientRect().left - track.parentElement.getBoundingClientRect().left}px)`;
     track.querySelectorAll('.col-title').forEach(el => {
@@ -137,6 +150,9 @@ export function mountDashboard(funnels, opts = {}) {
       tb.lastChild.textContent = k;
       tb.title = k ? t('tasks.count', k) : '';
     });
+    // Badges that come or go change the room the names have: fit them again.
+    const now = [...track.querySelectorAll('.col-title .badge, .col-title .tasks-btn')].map(b => b.hidden ? '-' : b.textContent).join('|');
+    if (now !== badgesShown) { badgesShown = now; fitNames(); }
   }
   buildTitles();
 

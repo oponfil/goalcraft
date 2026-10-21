@@ -57,6 +57,7 @@ body {
   text-shadow: 0 1px 0 #000, 0 0 6px rgba(0, 0, 0, 0.8);
 }
 #titles-track.dragging .col-title { cursor: grabbing; }
+.col-title .name { text-align: center; line-height: 1.2; }
 .badge.warn { background: #F2A33C; color: #1B1714; }
 .badge {
   min-width: 20px;
