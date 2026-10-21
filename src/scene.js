@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=6cbe2523';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=6cbe2523';
-import { themeOf } from './themes.js?v=6cbe2523';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=6cbe2523';
+import { agentInfo, plural } from './data.js?v=0b7c89a6';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=0b7c89a6';
+import { themeOf } from './themes.js?v=0b7c89a6';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=0b7c89a6';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -64,7 +64,7 @@ function rowsFit(half, lh) {
 // MIN_ROWS rows so its number fits and at most MAX_ROWS. In both, the tanks' sides lie on two
 // straight lines, from 184 wide at the top of the first tank to 26 at the bottom of the last, and a
 // tank that grows pushes everything below it down.
-const MIN_ROWS = 3, MAX_ROWS = 40;  // 40 rows: about five fixed tanks tall; past that a tank is full
+const MIN_ROWS = 3, MAX_ROWS = 30;  // 30 rows: about five fixed tanks tall; past that a tank is full
 // What a growing tank holds at a given height and place on its funnel's lines, worked out once.
 const capacities = new Map();
 const capacity = (key, half, h) => {

@@ -136,6 +136,9 @@ body {
 .pop-title { padding-right: 24px; }
 .pop-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .pop-sub { color: var(--muted); margin-top: 4px; }
+.pop-title .state-icon { display: inline-flex; flex: none; }
+.state-icon.sleep { color: #8FA8FF; }
+.state-icon.work { color: #9FE870; }
 #pop .pop-note { color: var(--muted); font-size: 13px; margin: -4px 0 12px; }
 #pop .pop-note.warn { color: #F2A33C; margin-top: 4px; }
 .pop-sub .run, .run-row .run { color: #9FE870; }

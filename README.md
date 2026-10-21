@@ -41,17 +41,17 @@ A tank's height is counted in rows of pieces, one row being one piece tall; ever
 | Look (profile menu) | Height of a tank | Fills |
 |---|---|---|
 | Fixed (the default, the switch off) | 6 rows, every tank | up to its count, then stays full |
-| Growing (the switch on) | as many rows as its count needs: at least 3 (so its number fits), at most 40 | the lab's liquid by its count while the tank is at its smallest; once it has grown, to the top |
+| Growing (the switch on) | as many rows as its count needs: at least 3 (so its number fits), at most 30 | the lab's liquid by its count while the tank is at its smallest; once it has grown, to the top |
 
 The tanks' sides lie on two straight lines in both looks, from 184 units wide at the top of the first tank to 26 at the bottom of the last, so a tank's width, and what a row holds, depends on where it is. How many a tank holds, for a funnel of five stages:
 
-| Tank | Fixed (6 rows) | Growing at 3 rows | Growing at 40 rows |
+| Tank | Fixed (6 rows) | Growing at 3 rows | Growing, all at 30 rows |
 |---|---|---|---|
-| 1st (top) | 169 | about 85 | 1,121 |
-| 2nd | 134 | | 887 |
-| 3rd | 99 | | 655 |
-| 4th | 64 | | 422 |
-| 5th (bottom) | 29 | about 15 | 189 |
+| 1st (top) | 169 | about 85 | 820 |
+| 2nd | 134 | | 658 |
+| 3rd | 99 | | 492 |
+| 4th | 64 | | 328 |
+| 5th (bottom) | 29 | about 15 | 163 |
 
 When the board opens, every tank fills to its count in about 4 seconds, however many pieces it holds.
 

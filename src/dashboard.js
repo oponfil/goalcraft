@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=6cbe2523';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=6cbe2523';
-import { t, lang, tankView } from './i18n.js?v=6cbe2523';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=0b7c89a6';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=0b7c89a6';
+import { t, lang, tankView } from './i18n.js?v=0b7c89a6';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -13,6 +13,11 @@ const opens = (url, web) => (/^https?:/.test(url) ? 'target="_blank" rel="noopen
 // No app on this computer: the app link does nothing and the page keeps the focus, so after a
 // moment the web chat opens instead.
 // A clipboard: the person's tasks.
+// An agent's state on its card, as an icon beside its name: a moon while it sleeps, a bolt while it works.
+const STATE_ICONS = {
+  'board.resting': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>',
+  'board.working': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M13.5 2 5 13.5h6L10 22l9-12h-6.5z"/></svg>',
+};
 const TASKS_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>';
 
 function openApp(e) {
@@ -455,7 +460,10 @@ export function mountDashboard(funnels, opts = {}) {
         <div class="ask-buttons"><button class="btn primary send-message" style="${paint}">${esc(t('board.sendMessage'))}</button>${chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : ''}</div>
         <div class="pop-msg"></div></div>`
       : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : '';
-    return `<div class="pop-title">${t(state, who)}</div>
+    const title = STATE_ICONS[state]
+      ? `${who}<span class="state-icon ${state === 'board.resting' ? 'sleep' : 'work'}" role="img" title="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
+      : t(state, who);
+    return `<div class="pop-title">${title}</div>
       <div class="pop-sub">${where}</div>${wakes}${missed}${lost}
       ${write}${history}`;
   }
