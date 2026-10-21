@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=3c52ade3';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=3c52ade3';
-import { themeOf } from './themes.js?v=3c52ade3';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=3c52ade3';
+import { agentInfo, plural } from './data.js?v=6a12e515';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=6a12e515';
+import { themeOf } from './themes.js?v=6a12e515';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=6a12e515';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -766,7 +766,8 @@ export class Scene {
     const widths = [];
     for (let r = rows; r >= 1; r--) widths.push(g.half(j, r) * 2 - 2);
     const area = widths.reduce((a, b) => a + b, 0);
-    let target = Math.min(1, count / cap) * area, want = 0;
+    // Growing tanks are as tall as what they hold, so their liquid fills them to the top.
+    let target = (this.grow && count > 0 ? 1 : Math.min(1, count / cap)) * area, want = 0;
     for (const w of widths) { if (target <= 0) break; target -= w; want++; }
     if (count > 0 && !want) want = 1;
     if (h.shown > want) { h.shown = want; h.falling = []; }
