@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=c422246d';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=c422246d';
-import { themeOf } from './themes.js?v=c422246d';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=c422246d';
+import { agentInfo, plural } from './data.js?v=0bbc1bb9';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=0bbc1bb9';
+import { themeOf } from './themes.js?v=0bbc1bb9';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=0bbc1bb9';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -36,7 +36,7 @@ const flasksY = n => zoneTop(n - 1) + ZH + 9;
 export const H = flasksY(MAX_STAGES) + 50;
 // Tall enough for the longest column: its tanks, the rows of result items and the four lines under them.
 export const sceneHeight = funnels => Math.max(H, ...funnels.map(f =>
-  flasksY(f.stages.length) + Math.ceil(slots(f) / PER_ROW) * 22 + 52));
+  f.geo.flasksY() + Math.ceil(slots(f) / PER_ROW) * 22 + 52));
 // Result items under a funnel: one per result the goal needs, and more once agents go past it.
 const slots = f => Math.max(f.goal?.total || 0, f.cubes || 0);
 // The tanks make one funnel: their sides lie on two straight lines, from 184 wide at the top of the
@@ -47,6 +47,59 @@ const tankHalf = (j, n, r) => {
   return Math.round(92 - 79 * y / span);
 };
 const tankW = (j, n) => tankHalf(j, n, 0) * 2;
+// How many pieces each row of a tank lh tall holds, bottom row first, its half width at row r given
+// by half(r): the heap's grid of CELL squares.
+function rowsFit(half, lh) {
+  const rows = [], count = Math.floor((lh - 3) / CELL);
+  for (let r = 0; r < count; r++) {
+    const hw = half(Math.max(1, Math.round(lh - 2 - (r + 1) * CELL))) - 1.5, k = Math.floor((hw * 2) / CELL);
+    let fit = 0;
+    for (let i = 0; i < k; i++) if (-(k * CELL) / 2 + i * CELL + (r % 2 ? CELL / 4 : 0) + CELL <= hw) fit++;
+    rows.push(fit);
+  }
+  return rows;
+}
+// A funnel's geometry. Fixed (the usual view): every tank LH tall at its place. Growing (the
+// person's choice in the profile menu): each tank just tall enough for what it holds, at least
+// MIN_ROWS rows so its number fits and at most MAX_ROWS, as wide at top and bottom as a fixed one; the tanks stack under
+// one another, so a tank that grows pushes everything below it down.
+const MIN_ROWS = 3, MAX_ROWS = 40;  // 40 rows: about five fixed tanks tall; past that a tank is full
+// What a growing tank of a given height holds, worked out once per funnel size, tank and height.
+const capacities = new Map();
+const capacity = (n, j, h, half) => {
+  const key = `${n}|${j}|${h}`;
+  if (!capacities.has(key)) capacities.set(key, rowsFit(half, h).reduce((x, y) => x + y, 0));
+  return capacities.get(key);
+};
+function geometry(f, grow) {
+  const n = f.stages.length;
+  const half = (j, lh, r) => {
+    if (!grow) return tankHalf(j, n, r);
+    const a = tankHalf(j, n, 0), b = tankHalf(j, n, LH - 1);
+    return Math.round(a + (b - a) * r / Math.max(1, lh - 1));
+  };
+  const lh = f.stages.map((s, j) => {
+    if (!grow) return LH;
+    for (let rows = MIN_ROWS; ; rows++) {
+      const h = rows * CELL + 3;
+      if (rows >= MAX_ROWS || capacity(n, j, h, r => half(j, h, r)) >= s.count) return h;
+    }
+  });
+  const tops = [];
+  for (let j = 0, y = TOP + ZH; j < n; j++) { tops.push(y); y += lh[j] + ZH; }
+  const g = {
+    key: lh.join(','),
+    lh: j => lh[j],
+    tankTop: j => tops[j],
+    zoneTop: k => (k < 0 ? TOP : tops[k] + lh[k]),
+    half: (j, r) => half(j, lh[j], r),
+  };
+  g.tankW = j => g.half(j, 0) * 2;
+  g.flasksY = () => g.zoneTop(n - 1) + ZH + 9;
+  g.plateTop = k => g.zoneTop(k) + ZH - PLATE_H;
+  g.outPlateTop = k => g.plateTop(k) - OUT_LIFT;
+  return g;
+}
 // The work piece in each zone (ore rock, flower bed…) sits on the pipe right above the tank below;
 // agents stand on the tank's top edge as on a floor.
 const PLATE_H = 11;
@@ -76,11 +129,13 @@ function rng(seed) {
 
 export class Scene {
   // live: the agents report counts and states; nothing is simulated, agents keep their state.
-  constructor(canvas, funnels, { live = false, sides = null, heaps = null } = {}) {
+  constructor(canvas, funnels, { live = false, sides = null, heaps = null, grow = false } = {}) {
     this.live = live;
+    this.grow = grow;
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.funnels = funnels.map(f => ({ ...f, stages: f.stages.map(s => ({ ...s })) }));
+    for (const f of this.funnels) f.geo = geometry(f, grow);
     this.H = sceneHeight(this.funnels);
     this.lo = document.createElement('canvas');
     this.lctx = this.lo.getContext('2d');
@@ -165,10 +220,28 @@ export class Scene {
     }
         // Agents stand level with the bottom of the plate, also in the output zone where it is lifted.
     const out = a.zone === a.f.stages.length - 1;
-    const cx = this.cx(this.fi(a.f)), floor = zoneTop(a.zone) + ZH - (out ? OUT_LIFT : 0), R = a.side === 'R';
+    const cx = this.cx(this.fi(a.f)), floor = a.f.geo.zoneTop(a.zone) + ZH - (out ? OUT_LIFT : 0), R = a.side === 'R';
     if (kind === 'work') return { x: R ? cx + 18 : cx - 38, y: floor - MINER_H };
     if (kind === 'ask') return { x: R ? cx + 26 : cx - 46, y: floor - MINER_H };
     return { x: R ? cx + 52 : cx - 66, y: floor - 10 * P };
+  }
+
+  // Switch between fixed and growing tanks (the profile menu's choice).
+  setGrow(grow) { this.grow = grow; this.regeo(true); }
+  // Growing tanks: when a tank needs another row (or one less), lay its funnel out again; the scene
+  // grows or shrinks to fit, and the heaps keep what they hold.
+  regeo(force = false, only = null) {
+    let changed = force;
+    for (const f of only ? [only] : this.funnels) {
+      const g = geometry(f, this.grow);
+      if (!force && g.key === f.geo.key) continue;
+      f.geo = g; changed = true;
+      // After a switch of look the tanks fill up to their counts quickly, as when the board opens.
+      if (force) for (let j = 0; j < f.stages.length; j++) { const h = this.heaps.get(`${f.id ?? f.title}|${j}`); if (h) delete h.step; }
+    }
+    if (!changed) return;
+    this.H = sceneHeight(this.funnels);
+    if (this.scale) this.resize(this.scale, this.dpr);
   }
 
   resize(scale, dpr) {
@@ -207,11 +280,11 @@ export class Scene {
     c.setTransform(RES, 0, 0, RES, 0, 0);
     c.fillStyle = '#1B1714'; c.fillRect(0, 0, w, this.H);
     this.funnels.forEach((f, fi) => {
-      const cx = this.cx(fi), n = f.stages.length, theme = themeOf(f);
+      const cx = this.cx(fi), n = f.stages.length, theme = themeOf(f), g = f.geo;
       theme.backdrop(c, fi * CW, CW, this.H, r);
       for (let k = -1; k < n; k++) {
         // No room around a zone: agents work in the open, on top of the tank below.
-        const y = zoneTop(k);
+        const y = g.zoneTop(k);
         // The pipe runs from the tank above (or the platform on top) down to the tank below.
         this.pipe(c, cx, k < 0 ? y + 4 : y, y + ZH, theme);
         // On top: the pipe goes on up to the supervisor's platform, with the funnel's documents on it.
@@ -225,11 +298,11 @@ export class Scene {
       f.stages.forEach((s, j) => {
         // A thin outline: full top and bottom rows, one pixel down each side; inside, the theme's
         // dark ground.
-        const y = tankTop(j);
-        for (let r = 0; r < LH; r++) {
-          const h = tankHalf(j, n, r);
+        const y = g.tankTop(j), lh = g.lh(j);
+        for (let r = 0; r < lh; r++) {
+          const h = g.half(j, r);
           c.fillStyle = theme.frame;
-          if (r === 0 || r === LH - 1) c.fillRect(cx - h, y + r, h * 2, 1);
+          if (r === 0 || r === lh - 1) c.fillRect(cx - h, y + r, h * 2, 1);
           else {
             c.fillRect(cx - h, y + r, 1, 1); c.fillRect(cx + h - 1, y + r, 1, 1);
             c.fillStyle = theme.tankBg; c.fillRect(cx - h + 1, y + r, h * 2 - 2, 1);
@@ -237,8 +310,8 @@ export class Scene {
         }
       });
       // Below the last tank the pipe just ends; results drip out of it.
-      c.fillStyle = theme.pipe[0]; c.fillRect(cx - 4, zoneTop(n - 1) + ZH, 9, 3);
-      c.fillStyle = theme.pipe[1]; c.fillRect(cx - 2, zoneTop(n - 1) + ZH, 5, 2);
+      c.fillStyle = theme.pipe[0]; c.fillRect(cx - 4, g.zoneTop(n - 1) + ZH, 9, 3);
+      c.fillStyle = theme.pipe[1]; c.fillRect(cx - 2, g.zoneTop(n - 1) + ZH, 5, 2);
     });
   }
 
@@ -346,6 +419,8 @@ export class Scene {
         if (i === n) f.cubes += k; else f.stages[i].count += k;
         // Results past the goal add rows: the scene grows down to fit them.
         if (i === n && this.scale && sceneHeight(this.funnels) > this.H) { this.H = sceneHeight(this.funnels); this.resize(this.scale, this.dpr); }
+        // Growing tanks: a tank that needs another row makes its funnel taller.
+        if (i < n && this.grow) this.regeo(false, f);
         // Credit the items to an agent at work in the zone that feeds this stage.
         const crew = this.agents.filter(a => a.f === f && a.zone === i - 1 && a.state === 'work');
         if (crew.length) crew[Math.floor(Math.random() * crew.length)].added += k;
@@ -353,7 +428,7 @@ export class Scene {
       }
       for (let i = 0; i <= n; i++) {
         if (!f.pending[i] || t - f.lastShown[i] < 1) continue;
-        const pos = i === n ? { x: cx + 86, y: flasksY(n) + 8 } : { x: cx + tankW(i, n) / 2 - 12, y: tankTop(i) + 10 };
+        const pos = i === n ? { x: cx + 86, y: f.geo.flasksY() + 8 } : { x: cx + f.geo.tankW(i) / 2 - 12, y: f.geo.tankTop(i) + 10 };
         this.floaters.push({ ...pos, born: t, text: '+' + fmtCount(f.pending[i]) });
         f.pending[i] = 0; f.lastShown[i] = t;
       }
@@ -369,25 +444,25 @@ export class Scene {
     this.funnels.forEach((f, fi) => {
       if (f.source_url) this.hits.push(this.sourceHit(fi));
       if (f.guide_url) this.hits.push(this.guideHit(fi));
-      const cx = this.cx(fi), n = f.stages.length, theme = themeOf(f);
+      const cx = this.cx(fi), n = f.stages.length, theme = themeOf(f), g = f.geo;
       for (let k = -1; k < n; k++) {
-        const y = zoneTop(k), fl = f.flows[k + 1];
+        const y = g.zoneTop(k), fl = f.flows[k + 1];
         // Below the last tank the drops run a little past the pipe's end, dripping out of it.
         this.drops(c, cx, y + 4, y + ZH + (k === n - 1 ? 9 : 0), fl, fi * 3 + k);
         // The plate in each zone is what the agents work on; only the output zone's has text
         // on it: when the next result is due.
-        theme.plate(c, cx - 13, k === n - 1 ? outPlateTop(k) : plateTop(k), 26, PLATE_H);
+        theme.plate(c, cx - 13, k === n - 1 ? g.outPlateTop(k) : g.plateTop(k), 26, PLATE_H);
       }
       const pr = project(f);
       f.stages.forEach((s, j) => {
-        const lw = tankW(j, n), x = cx - lw / 2, y = tankTop(j);
+        const lw = g.tankW(j), x = cx - lw / 2, y = g.tankTop(j);
         // What the tank holds rises with the share of what is needed here for the whole goal: a heap
         // of pieces (ore, flowers, coins, hearts, bits) dropped in one by one, or in the lab a liquid
         // that lies flat. A stage with items always shows a little.
-        const rows = LH - 2, share = s.count > 0 ? Math.min(1, Math.max(pr.fill[j] ?? 0, 0.02)) : 0;
+        const share = s.count > 0 ? Math.min(1, Math.max(pr.fill[j] ?? 0, 0.02)) : 0;
         if (theme.piece) this.drawHeap(c, f, fi, j, cx, y, share, theme);
         else this.drawLiquid(c, f, fi, j, cx, x, lw, y, share, theme);
-        this.hits.push({ x, y, w: lw, h: LH, type: 'stage', fi, j });
+        this.hits.push({ x, y, w: lw, h: g.lh(j), type: 'stage', fi, j });
       });
       // One result item per result the goal needs (chests, flasks, pots…): filled ones are done,
       // empty ones are still to come. Past the goal, new results keep adding rows.
@@ -397,7 +472,7 @@ export class Scene {
         const empty = i >= f.cubes;
         // Empty chests, flasks, pots and chips are faded so done results stand out.
         if (empty) c.globalAlpha = theme.emptyAlpha ?? 1;
-        theme.result(c, Math.round(cx - (inRow * 18 - 2) / 2 + col * 18), flasksY(n) + row * 22, empty);
+        theme.result(c, Math.round(cx - (inRow * 18 - 2) / 2 + col * 18), g.flasksY() + row * 22, empty);
         c.globalAlpha = 1;
       }
     });
@@ -536,7 +611,7 @@ export class Scene {
     // side it stands.
     const ex = w.facesLeft ? p.x + 6 : p.x + 14, ey = p.y + 8, cx = this.cx(this.fi(a.f)), n = a.f.stages.length;
     const look = (x, y) => Math.atan2(y - ey, x - ex);
-    const top = look(cx, zoneTop(-1) - 16), bottom = look(w.facesLeft ? cx + 28 : cx - 28, zoneTop(n - 1) + ZH - 14);
+    const top = look(cx, a.f.geo.zoneTop(-1) - 16), bottom = look(w.facesLeft ? cx + 28 : cx - 28, a.f.geo.zoneTop(n - 1) + ZH - 14);
     const k = 0.5 - 0.5 * Math.cos(t * 0.9 + a.phase * 9);
     drawSpyglass(c, ex, ey, top + (bottom - top) * k);
     this.hits.push({ x: p.x - 2, y: p.y - 4, w: 34, h: 34, type: 'agent', a });
@@ -594,12 +669,12 @@ export class Scene {
         // tank fills (the flow of the zone above it). What the tank holds shows on hover.
         const num = fmtCount(s.count), flow = fmtFlow(f.flows[j] ?? 0);
         let box;
-        shadowed(() => { box = withFlow(num, flow, cx, tankTop(j) + LH / 2, 15, '#FFFFFF', f.flows[j] ? '#9FE870' : STALLED); });
+        shadowed(() => { box = withFlow(num, flow, cx, f.geo.tankTop(j) + f.geo.lh(j) / 2, 15, '#FFFFFF', f.flows[j] ? '#9FE870' : STALLED); });
         // The number and its flow open the stage's history.
         if (box) this.hits.push({ ...box, type: 'count', fi, j });
       });
       const pr = project(f);
-      const ry = flasksY(n) + Math.ceil(slots(f) / PER_ROW) * 22 + 8;
+      const ry = f.geo.flasksY() + Math.ceil(slots(f) / PER_ROW) * 22 + 8;
       // Under the results, one thing per line: how many and what they are ("7 offers"), when the next
       // one is due (coloured by pace against the goal), and the goal: how many more, in how long.
       const num = String(f.cubes), name = ' ' + plural(f.cubes, f.result);
@@ -663,27 +738,18 @@ export class Scene {
   // in the colour of the stage's liquid; kept across refreshes like the heaps.
   // How many pieces each row of a tank holds, bottom row first: the heap's grid of CELL squares.
   // Their sum is what fills a tank, the lab's liquid too, so a full tank is the same count everywhere.
-  pieceRows(j, n) {
-    const rows = [], count = Math.floor((LH - 3) / CELL);
-    for (let r = 0; r < count; r++) {
-      const hw = tankHalf(j, n, Math.max(1, Math.round(LH - 2 - (r + 1) * CELL))) - 1.5, k = Math.floor((hw * 2) / CELL);
-      let fit = 0;
-      for (let i = 0; i < k; i++) if (-(k * CELL) / 2 + i * CELL + (r % 2 ? CELL / 4 : 0) + CELL <= hw) fit++;
-      rows.push(fit);
-    }
-    return rows;
-  }
+  pieceRows(f, j) { return rowsFit(r => f.geo.half(j, r), f.geo.lh(j)); }
 
   drawLiquid(c, f, fi, j, cx, x, lw, y, share, theme) {
-    const n = f.stages.length, rows = LH - 2, key = `${f.id ?? f.title}|${j}`, t = this.t;
+    const n = f.stages.length, g = f.geo, rows = g.lh(j) - 2, key = `${f.id ?? f.title}|${j}`, t = this.t;
     let h = this.heaps.get(key);
     if (!h) { h = { shown: 0, falling: [], next: 0 }; this.heaps.set(key, h); }
     // The liquid covers the share of the tank's area that the count is of what a heap of pieces would
     // fill it with (full at the same count), rising row by row from the bottom: the rows are wider
     // higher up, so it rises more slowly there.
-    const count = f.stages[j].count, cap = this.pieceRows(j, n).reduce((a, b) => a + b, 0);
+    const count = f.stages[j].count, cap = this.pieceRows(f, j).reduce((a, b) => a + b, 0);
     const widths = [];
-    for (let r = LH - 2; r >= 1; r--) widths.push(tankHalf(j, n, r) * 2 - 2);
+    for (let r = rows; r >= 1; r--) widths.push(g.half(j, r) * 2 - 2);
     const area = widths.reduce((a, b) => a + b, 0);
     let target = Math.min(1, count / cap) * area, want = 0;
     for (const w of widths) { if (target <= 0) break; target -= w; want++; }
@@ -695,7 +761,7 @@ export class Scene {
     h.falling = h.falling.filter(d => { if (t - d.born < 0.4) return true; h.shown++; return false; });
     if (h.shown > 0) {
       c.save(); c.beginPath();
-      for (let r = rows - h.shown; r < rows; r++) { const hw = tankHalf(j, n, r + 1) - 1; c.rect(cx - hw, y + 1 + r, hw * 2, 1); }
+      for (let r = rows - h.shown; r < rows; r++) { const hw = g.half(j, r + 1) - 1; c.rect(cx - hw, y + 1 + r, hw * 2, 1); }
       // Plain liquid up to its level: the tank's lighter top band is drawn above the clip, out of sight.
       const top = y + 1 + rows - h.shown;
       c.clip(); theme.tank(c, x - 20, top - 2, lw + 40, h.shown + 2, j, n, t, fi * 97 + j * 13 + 5); c.restore();
@@ -709,12 +775,14 @@ export class Scene {
   // pile up into a mound; as many cells are taken as the share of what the goal needs. Pieces join
   // one at a time, each falling from the pipe to its cell (also on load, so the heap builds up).
   drawHeap(c, f, fi, j, cx, y, share, theme) {
-    const n = f.stages.length, P = sameSize(theme.piece), key = `${f.id ?? f.title}|${j}`;
+    const n = f.stages.length, P = sameSize(theme.piece), key = `${f.id ?? f.title}|${j}`, g = f.geo, lh = g.lh(j);
     let h = this.heaps.get(key);
-    if (!h) {
-      const cells = [], rows = Math.floor((LH - 3) / P.h);
+    // The cells are laid out for the tank's size and place: again when a growing tank changes, its
+    // pieces kept.
+    if (!h || !h.cells || h.lh !== lh || h.y !== y) {
+      const cells = [], rows = Math.floor((lh - 3) / P.h);
       for (let r = 0; r < rows; r++) {
-        const top = y + LH - 2 - (r + 1) * P.h, hw = tankHalf(j, n, Math.max(1, Math.round(top - y))) - 1.5;
+        const top = y + lh - 2 - (r + 1) * P.h, hw = g.half(j, Math.max(1, Math.round(top - y))) - 1.5;
         const k = Math.floor((hw * 2) / P.w);
         for (let i = 0; i < k; i++) {
           const px = cx - (k * P.w) / 2 + i * P.w + (r % 2 ? P.w / 4 : 0), off = Math.abs(px + P.w / 2 - cx) / P.w;
@@ -723,7 +791,8 @@ export class Scene {
         }
       }
       cells.sort((a, b) => a.score - b.score);
-      h = { cells, shown: 0, falling: [], next: 0 };
+      // Pieces in the air land at once in the new layout.
+      h = h ? Object.assign(h, { cells, lh, y, shown: h.shown + h.falling.length, falling: [] }) : { cells, lh, y, shown: 0, falling: [], next: 0 };
       this.heaps.set(key, h);
     }
     const t = this.t, want = Math.min(h.cells.length, f.stages[j].count);
@@ -740,7 +809,21 @@ export class Scene {
       if (t - d.born < 0.45) return true;
       h.shown++; return false;
     });
-    for (let i = 0; i < h.shown; i++) P.draw(c, Math.round(h.cells[i].x * 2) / 2, Math.round(h.cells[i].y * 2) / 2, j, n, i);
+    // Landed pieces are drawn once, into the heap's own layer; each frame only copies it. A tank
+    // can hold thousands, too many to draw again every frame.
+    const half0 = g.half(j, 0), bx = cx - half0 - 1, bw = half0 * 2 + 2, layerKey = `${lh}|${y}|${bx}`;
+    if (!h.layer || h.layerKey !== layerKey || h.drawn > h.shown) {
+      h.layer ??= document.createElement('canvas');
+      h.layer.width = bw * RES; h.layer.height = lh * RES;
+      h.layerKey = layerKey; h.drawn = 0;
+    }
+    if (h.drawn < h.shown) {
+      const lc = h.layer.getContext('2d');
+      lc.setTransform(RES, 0, 0, RES, -bx * RES, -y * RES);
+      for (let i = h.drawn; i < h.shown; i++) P.draw(lc, Math.round(h.cells[i].x * 2) / 2, Math.round(h.cells[i].y * 2) / 2, j, n, i);
+      h.drawn = h.shown;
+    }
+    c.drawImage(h.layer, bx, y, bw, lh);
     for (const d of h.falling) {
       const q = (t - d.born) / 0.45, sx = cx - P.w / 2, sy = y - 2;
       P.draw(c, Math.round((sx + (d.cell.x - sx) * q) * 2) / 2, Math.round((sy + (d.cell.y - sy) * q * q) * 2) / 2, j, n, h.cells.indexOf(d.cell));

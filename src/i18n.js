@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=c422246d';
-import vi from './lang/vi.js?v=c422246d';
-import ja from './lang/ja.js?v=c422246d';
-import pt from './lang/pt.js?v=c422246d';
-import tr from './lang/tr.js?v=c422246d';
-import ko from './lang/ko.js?v=c422246d';
+import es from './lang/es.js?v=0bbc1bb9';
+import vi from './lang/vi.js?v=0bbc1bb9';
+import ja from './lang/ja.js?v=0bbc1bb9';
+import pt from './lang/pt.js?v=0bbc1bb9';
+import tr from './lang/tr.js?v=0bbc1bb9';
+import ko from './lang/ko.js?v=0bbc1bb9';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -71,6 +71,24 @@ export function setFlowUnit(unit, { remote = true } = {}) {
   flowUnit = unit;
   try { localStorage.setItem(FLOW_KEY, unit); } catch {}
   if (remote && saveFlowRemote) saveFlowRemote(unit).catch(() => {});
+}
+
+// The tanks' look: fixed (all the same size, filling up) or growing (each as tall as what it holds).
+// Kept like the flow unit: in this browser, and in the account once signed in. The board listens
+// for the change.
+const TANKS_KEY = 'goalcraft-tanks';
+export const TANK_VIEWS = ['fixed', 'grow'];
+let tanksPicked = null;
+try { tanksPicked = localStorage.getItem(TANKS_KEY); } catch {}
+export let tankView = TANK_VIEWS.includes(tanksPicked) ? tanksPicked : 'fixed';
+let saveTanksRemote = null;
+export const onTanksSaved = fn => { saveTanksRemote = fn; };
+export function setTankView(view, { remote = true } = {}) {
+  if (!TANK_VIEWS.includes(view) || view === tankView) return;
+  tankView = view;
+  try { localStorage.setItem(TANKS_KEY, view); } catch {}
+  if (remote && saveTanksRemote) saveTanksRemote(view).catch(() => {});
+  window.dispatchEvent(new CustomEvent('goalcraft-tanks', { detail: view }));
 }
 
 const L = (en, ru, zh, th) => ({ en, ru, zh, th });
@@ -347,6 +365,9 @@ const STRINGS = {
   'hist.total': L((n, a) => `In this period: +${n} · +${a} a day on average`, (n, a) => `За период: +${n} · в среднем +${a} в день`, (n, a) => `此期间：+${n} · 平均每天 +${a}`, (n, a) => `ช่วงนี้: +${n} · เฉลี่ยวันละ +${a}`),
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.moreQuestions': L((n) => `${n} more questions`, (n) => `Ещё вопросов: ${n}`, (n) => `还有 ${n} 个问题`, (n) => `อีก ${n} คำถาม`),
+  'nav.tanks': L('Tanks', 'Баки', '储罐', 'ถัง'),
+  'tanks.fixed': L('Fixed', 'Обычные', '固定', 'คงที่'),
+  'tanks.grow': L('Grow with items', 'Растут с количеством', '随数量增长', 'ขยายตามจำนวน'),
   'board.usageCost': L((c) => `≈${c} at API prices`, (c) => `≈${c} по ценам API`, (c) => `按 API 价格约 ${c}`, (c) => `≈${c} ตามราคา API`),
   'board.usageLimit': L((p, d) => (d === 7 ? `${p} of the weekly limit` : `${p} of the ${d}-day limit`), (p, d) => (d === 7 ? `${p} недельного лимита` : `${p} лимита на ${d} дн.`), (p, d) => (d === 7 ? `每周额度已用 ${p}` : `${d} 天额度已用 ${p}`), (p, d) => (d === 7 ? `ใช้ ${p} ของโควตารายสัปดาห์` : `ใช้ ${p} ของโควตา ${d} วัน`)),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),

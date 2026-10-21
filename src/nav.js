@@ -2,9 +2,9 @@
 // profile button (the Google photo, or a plain silhouette) whose menu holds the rarely used
 // settings: the language, email when an agent asks, and signing out. A signed-in person's language
 // is kept in their account too.
-import { account, openBilling } from './billing.js?v=c422246d';
-import { supabase, siteUrl } from './auth.js?v=c422246d';
-import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved } from './i18n.js?v=c422246d';
+import { account, openBilling } from './billing.js?v=0bbc1bb9';
+import { supabase, siteUrl } from './auth.js?v=0bbc1bb9';
+import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved, TANK_VIEWS, tankView, setTankView, onTanksSaved } from './i18n.js?v=0bbc1bb9';
 
 // The profile button's picture for people without a Google photo.
 const SILHOUETTE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5z"/></svg>';
@@ -40,6 +40,8 @@ if (session) {
   // The flow unit follows the account, which every change is written to.
   onFlowSaved(unit => supabase.auth.updateUser({ data: { flow_unit: unit } }));
   setFlowUnit(session.user.user_metadata?.flow_unit, { remote: false });
+  onTanksSaved(view => supabase.auth.updateUser({ data: { tank_view: view } }));
+  setTankView(session.user.user_metadata?.tank_view, { remote: false });
 }
 
 if (signin && session) {
@@ -82,6 +84,15 @@ if (signin && session) {
   flowPick.addEventListener('change', () => setFlowUnit(flowPick.value));
   flowRow.append(document.createTextNode(t('nav.flow')), flowPick);
 
+  // The tanks' look on every funnel: fixed, or growing with what they hold.
+  const tanksRow = document.createElement('label');
+  tanksRow.className = 'row';
+  const tanksPick = document.createElement('select');
+  tanksPick.className = 'lang';
+  for (const v of TANK_VIEWS) tanksPick.add(new Option(t(`tanks.${v}`), v, false, v === tankView));
+  tanksPick.addEventListener('change', () => setTankView(tanksPick.value));
+  tanksRow.append(document.createTextNode(t('nav.tanks')), tanksPick);
+
   // Email when an agent asks a question, kept in the account so the MCP server sees it.
   const notify = document.createElement('label');
   notify.className = 'row check';
@@ -101,6 +112,7 @@ if (signin && session) {
     if (!m) return;
     if (!box.disabled) box.checked = !!m.notify_email;
     if (FLOW_UNITS.includes(m.flow_unit)) { setFlowUnit(m.flow_unit, { remote: false }); flowPick.value = m.flow_unit; }
+    if (TANK_VIEWS.includes(m.tank_view)) { setTankView(m.tank_view, { remote: false }); tanksPick.value = m.tank_view; }
   });
 
   // The plan: Free with a way up to Pro, or Pro with its end date and, when paid, the
@@ -135,7 +147,7 @@ if (signin && session) {
     location.replace(siteUrl(''));
   });
 
-  menu.append(email, planRow, langRow, flowRow, notify, out);
+  menu.append(email, planRow, langRow, flowRow, tanksRow, notify, out);
   profile.append(button, menu);
   signin.after(profile);
 

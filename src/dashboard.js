@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c422246d';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c422246d';
-import { t, lang } from './i18n.js?v=c422246d';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=0bbc1bb9';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=0bbc1bb9';
+import { t, lang, tankView } from './i18n.js?v=0bbc1bb9';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -43,7 +43,7 @@ export function mountDashboard(funnels, opts = {}) {
   pop.addEventListener('click', openApp);
   const tip = document.createElement('div');
   tip.id = 'tip'; tip.hidden = true; document.body.append(tip);
-  let scene = new Scene(canvas, funnels, { live: opts.live });
+  let scene = new Scene(canvas, funnels, { live: opts.live, grow: tankView === 'grow' });
 
   // Funnel order is the viewer's own arrangement, kept in this browser only.
   const ORDER_KEY = opts.orderKey || 'goalcraft-order';
@@ -65,6 +65,8 @@ export function mountDashboard(funnels, opts = {}) {
     scroller.classList.toggle('fits', scene.funnels.length * CW * scale <= scroller.clientWidth);
   }
   window.addEventListener('resize', layout);
+  // The tanks' look picked in the profile menu: fixed or growing with what they hold.
+  window.addEventListener('goalcraft-tanks', e => { scene.setGrow(e.detail === 'grow'); layout(); });
 
   // Zoom, in the top bar next to the logo: − 100% +; a click on the percentage goes back to 100%.
   // The point at the middle of the view stays in the middle.
@@ -578,7 +580,7 @@ export function mountDashboard(funnels, opts = {}) {
     // New data from the agents: rebuild the scene, keep the viewer's order and scroll.
     setFunnels(next) {
       if (!pop.hidden && pop.contains(document.activeElement)) return false; // typing an answer
-      scene = new Scene(canvas, next, { live: opts.live, sides: scene.sides, heaps: scene.heaps });
+      scene = new Scene(canvas, next, { live: opts.live, sides: scene.sides, heaps: scene.heaps, grow: scene.grow });
       loadOrder();
       scene.resize(scale, window.devicePixelRatio || 1);
       layout();
