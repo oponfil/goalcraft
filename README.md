@@ -22,7 +22,7 @@ Copy the prompt from [goalcraft.ai/connect](https://goalcraft.ai/connect/) into 
 | A clipboard with a number left of the funnel's title | Your tasks: what only you can do for this funnel (a test task, a form, a reply to a recruiter), most urgent first, with a deadline (red once past) and a link. Its supervisor keeps the list: it adds tasks, orders them and marks them done; you only see it. Click the clipboard for the list. Unlike a question, a task doesn't hold the agents up |
 | Empty platform | The funnel has no supervisor yet; click it for how to appoint one |
 | Documents on the platform | On the left, the funnel's notes: one document (a Google Doc, a Notion page…) with everything its supervisor and workers need to know, which the supervisor keeps where you chose and every agent reads at the start of a run. On the right, the funnel's list (Google Sheets, Notion, Airtable…). Either shows only when the funnel has its link; hover for where it is kept, click to open it |
-| Tank, its number and the small `+N` by it | How many items have reached this stage (cumulative) and how many it gains per day (average over the last 7 days; an agent can set it; `+0` until there are two reports to compare). Per hour, day or week, the same on every funnel: pick it under Flows in the profile menu (per day until then); the unit is not written. The tanks make one funnel: their sides lie on two straight lines, cut by the gaps between them. What a tank holds piles up from the bottom, one piece per item (each new one drops in from the pipe; when the board opens, every tank fills to its count in about 4 seconds), until the tank is full: pieces are the same size in every theme, so a 5-stage funnel's tanks hold about 198, 156, 116, 74 and 34 from top to bottom. The lab's liquid stands as high as such a heap would, full at the same count. In the profile menu, the switch "Tanks grow with items" (off by default) makes each tank just as tall as what it holds (at least three rows, at most forty), so a busy stage stands out. Hover a tank for its name. Click its number (or the `+N`) for its history: a bar per day of how much it grew, over 7, 30 or 90 days (each once the stage has that much history) or all of it, with the period's total and daily average |
+| Tank, its number and the small `+N` by it | How many items have reached this stage (cumulative) and how many it gains per day (average over the last 7 days; an agent can set it; `+0` until there are two reports to compare). Per hour, day or week, the same on every funnel: pick it under Flows in the profile menu (per day until then); the unit is not written. The tanks make one funnel: their sides lie on two straight lines, cut by the gaps between them. What a tank holds piles up from the bottom, one piece per item (each new one drops in from the pipe; when the board opens, every tank fills to its count in about 4 seconds), until the tank is full: pieces are the same size in every theme, so a 5-stage funnel's tanks hold about 198, 156, 116, 74 and 34 from top to bottom. The lab's liquid stands as high as such a heap would, full at the same count. In the profile menu, the switch "Tanks grow with items" makes each tank as tall as what it holds (see [Tank sizes](#tank-sizes)). Hover a tank for its name. Click its number (or the `+N`) for its history: a bar per day of how much it grew, over 7, 30 or 90 days (each once the stage has that much history) or all of it, with the period's total and daily average |
 | Agent with a tool | Working on that step |
 | Agent lying with a timer | Waiting for its next scheduled run |
 | Agent lying under an amber triangle with `2 h` | Did not wake up on time: its run was due more than 10 minutes ago and it has not reported since (agents report `work` first thing in a run; the same 10 minutes of silence as for an agent at work). Click it (or the triangle) for when it was last heard from, and check on the agent. An amber badge by the funnel's title counts its agents under a triangle |
@@ -33,6 +33,27 @@ Copy the prompt from [goalcraft.ai/connect](https://goalcraft.ai/connect/) into 
 | `+N` by an agent | What its current run added (its last run's while it sleeps). Click the agent and open "Previous runs" for its last 10 runs: the time each started (no date: runs are frequent), how long it took, what it added and what it cost at API prices; on top, its last day's cost (and, for Codex, its share of the plan's limit). Hover a cost for its tokens by kind. The costs come from the [wake script](wake/README.md#token-use), which reads them from the agent's app on your computer (Claude Code, Codex); agents in web chats show none |
 | `− 100% +` by the logo | Zoom: 100% is the same size on every screen, a phone too, and the choice is kept in this browser. When the top bar doesn't fit in one line (a phone, a narrow window), it shows the logo's mark alone and just `−` `+` |
 | Bottom zone and items | Results so far in one line ("7 offers"), when the next one is due, and the goal: how many are still to add and how long that takes at the goal's pace, in the unit picked for flows (`goal: +23 in 46d` when flows are per day) |
+
+## Tank sizes
+
+A tank's height is counted in rows of pieces, one row being one piece tall; every theme's piece is the same size, so a tank holds as many in every theme. The lab's tanks hold a liquid instead, measured the same way: full at the count a heap would fill.
+
+| Look (profile menu) | Height of a tank | Fills |
+|---|---|---|
+| Fixed (the default, the switch off) | 7 rows, every tank | up to its count, then stays full |
+| Growing (the switch on) | as many rows as its count needs: at least 3 (so its number fits), at most 40 | the lab's liquid by its count while the tank is at its smallest; once it has grown, to the top |
+
+The tanks' sides lie on two straight lines in both looks, from 184 units wide at the top of the first tank to 26 at the bottom of the last, so a tank's width, and what a row holds, depends on where it is. How many a tank holds, for a funnel of five stages:
+
+| Tank | Fixed (7 rows) | Growing at 3 rows | Growing at 40 rows |
+|---|---|---|---|
+| 1st (top) | 198 | about 85 | 1,121 |
+| 2nd | 156 | | 887 |
+| 3rd | 116 | | 655 |
+| 4th | 74 | | 422 |
+| 5th (bottom) | 34 | about 15 | 189 |
+
+When the board opens, every tank fills to its count in about 4 seconds, however many pieces it holds.
 
 ## Themes
 

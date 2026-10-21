@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=82ececd5';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=82ececd5';
-import { t, lang, tankView } from './i18n.js?v=82ececd5';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=d07dba31';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=d07dba31';
+import { t, lang, tankView } from './i18n.js?v=d07dba31';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -556,6 +556,13 @@ export function mountDashboard(funnels, opts = {}) {
     pop.style.top = Math.max(8, Math.min(window.innerHeight - ph - 8, e.clientY + 14)) + 'px';
   }
   function hidePop() { pop.hidden = true; tip.hidden = true; }
+  // A card grows after it opens (its runs, a chart, folded questions): it moves up as much as it
+  // needs to stay whole on the screen.
+  new ResizeObserver(() => {
+    if (pop.hidden) return;
+    const top = parseFloat(pop.style.top) || 0, h = pop.offsetHeight;
+    if (top + h > window.innerHeight - 8) pop.style.top = Math.max(8, window.innerHeight - h - 8) + 'px';
+  }).observe(pop);
   // A cost in the card shows its tokens by kind on hover, in the board's tooltip.
   pop.addEventListener('pointermove', e => {
     const el = e.target.closest('[data-tip]');

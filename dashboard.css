@@ -105,6 +105,9 @@ body {
   position: fixed;
   z-index: 10;
   width: min(360px, calc(100vw - 16px));  /* wide enough for both answer buttons side by side, also in Russian */
+  /* Never taller than the window: a long card scrolls inside. */
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
   background: var(--panel);
   border: 2px solid var(--border);
   padding: 12px 14px;
