@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=3eedd027';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=3eedd027';
-import { themeOf } from './themes.js?v=3eedd027';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=3eedd027';
+import { agentInfo, plural } from './data.js?v=82ececd5';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=82ececd5';
+import { themeOf } from './themes.js?v=82ececd5';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=82ececd5';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -774,7 +774,10 @@ export class Scene {
     if (count > 0 && !want) want = 1;
     if (h.shown > want) { h.shown = want; h.falling = []; }
     h.step ??= (FIRST_FILL - 0.4) / Math.max(1, want);
-    while (h.shown + h.falling.length < want && t >= h.next) { h.falling.push({ born: t }); h.next = Math.max(h.next, t - h.step) + h.step; }
+    // As many drops a frame as the time since the last one holds (catching up at most 0.1 s), so a
+    // big tank still fills in FIRST_FILL seconds.
+    h.next = Math.max(h.next, t - 0.1);
+    while (h.shown + h.falling.length < want && t >= h.next) { h.falling.push({ born: t }); h.next += h.step; }
     if (h.shown + h.falling.length >= want) h.step = 0.08;
     h.falling = h.falling.filter(d => { if (t - d.born < 0.4) return true; h.shown++; return false; });
     if (h.shown > 0) {
@@ -818,9 +821,12 @@ export class Scene {
     // The first fill takes FIRST_FILL seconds whatever the count, so every tank fills together on
     // load; later items drop one by one.
     h.step ??= (FIRST_FILL - 0.45) / Math.max(1, want);
+    // As many pieces a frame as the time since the last one holds (catching up at most 0.1 s), so a
+    // big tank still fills in FIRST_FILL seconds.
+    h.next = Math.max(h.next, t - 0.1);
     while (h.shown + h.falling.length < want && t >= h.next) {
       h.falling.push({ cell: h.cells[h.shown + h.falling.length], born: t });
-      h.next = Math.max(h.next, t - h.step) + h.step;
+      h.next += h.step;
     }
     if (h.shown + h.falling.length >= want) h.step = 0.05;
     h.falling = h.falling.filter(d => {
