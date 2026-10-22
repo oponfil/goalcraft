@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=dd69168e';
+import { lang } from './i18n.js?v=4cafe93b';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -85,7 +85,12 @@ export const FUNNELS = [
       { agent: 'perplexity', zone: -1, state: 'work' },
       {
         agent: 'claude', zone: 0, state: 'ask',
-        question: 'The form asks for a salary expectation. Send the application with $120k?',
+        // Three open questions: the card shows the first, the rest folded under it.
+        questions: [
+          { id: 'demo-claude-salary', question: 'The form asks for a salary expectation. Send the application with $120k?' },
+          { id: 'demo-claude-call', question: 'A recruiter offers a call on Thursday at 3pm. Accept it?' },
+          { id: 'demo-claude-german', question: 'One job wants a cover letter in German. Write it, or skip this job?' },
+        ],
       },
       { agent: 'gemini', zone: 0, state: 'work' },
       { agent: 'grok', zone: 1, state: 'sleep', wakeIn: 12 },
@@ -411,6 +416,8 @@ const DEMO = {
   'submitted': [['отправлена', 'отправлены', 'отправлено'], '已投稿', 'ส่งแล้ว', ['enviado', 'enviados'], 'đã nộp', '投稿済み', ['submetido', 'submetidos'], 'gönderildi', '투고됨'],
   'under review': [['на рецензии', 'на рецензии', 'на рецензии'], '审稿中', 'อยู่ระหว่างพิจารณา', ['en revisión', 'en revisión'], 'đang phản biện', '査読中', ['em revisão', 'em revisão'], 'hakem incelemesinde', '심사 중'],
   'The form asks for a salary expectation. Send the application with $120k?': ['В форме спрашивают ожидаемую зарплату. Отправить отклик с $120k?', '表单要求填写期望薪资。用 12 万美元提交申请吗？', 'แบบฟอร์มถามเงินเดือนที่คาดหวัง ส่งใบสมัครด้วย $120k ไหม?', 'El formulario pide una expectativa salarial. ¿Envío la postulación con $120k?', 'Biểu mẫu hỏi mức lương mong muốn. Gửi hồ sơ với $120k nhé?', 'フォームで希望年収を聞かれています。12万ドルで応募しますか？', 'O formulário pede a pretensão salarial. Envio a candidatura com $120k?', 'Form maaş beklentisi soruyor. Başvuruyu $120k ile göndereyim mi?', '양식에서 희망 연봉을 묻습니다. $120k로 지원할까요?'],
+  'A recruiter offers a call on Thursday at 3pm. Accept it?': ['Рекрутер предлагает созвон в четверг в 15:00. Согласиться?', '招聘人员约周四下午 3 点通话。接受吗？', 'รีครูทเตอร์เสนอโทรคุยวันพฤหัสบดี 15:00 ตกลงไหม?', 'Un reclutador propone una llamada el jueves a las 15:00. ¿La acepto?', 'Một nhà tuyển dụng hẹn gọi vào thứ Năm lúc 15:00. Đồng ý nhé?', 'リクルーターから木曜15時に通話の提案があります。受けますか？', 'Um recrutador propõe uma chamada na quinta às 15h. Aceito?', 'Bir işe alımcı perşembe 15:00 için görüşme öneriyor. Kabul edeyim mi?', '리크루터가 목요일 오후 3시에 통화를 제안했습니다. 수락할까요?'],
+  'One job wants a cover letter in German. Write it, or skip this job?': ['Одна вакансия просит сопроводительное письмо на немецком. Написать или пропустить вакансию?', '有个职位要求德语求职信。写一封，还是跳过这个职位？', 'งานหนึ่งต้องการจดหมายสมัครงานภาษาเยอรมัน เขียนเลย หรือข้ามงานนี้?', 'Una oferta pide una carta de presentación en alemán. ¿La escribo o descarto la oferta?', 'Một vị trí cần thư xin việc bằng tiếng Đức. Viết, hay bỏ qua vị trí này?', 'ある求人がドイツ語のカバーレターを求めています。書きますか、それとも見送りますか？', 'Uma vaga pede carta de apresentação em alemão. Escrevo ou pulo esta vaga?', 'Bir ilan Almanca ön yazı istiyor. Yazayım mı, yoksa bu ilanı geçeyim mi?', '한 공고가 독일어 자기소개서를 요구합니다. 작성할까요, 아니면 이 공고는 건너뛸까요?'],
   'This finding looks close to a public report from March. Submit it anyway?': ['Эта находка похожа на публичный отчёт из марта. Всё равно отправить?', '这个发现和三月的一份公开报告很像。仍然提交吗？', 'สิ่งที่พบนี้คล้ายรายงานสาธารณะเมื่อเดือนมีนาคม ส่งต่อไหม?', 'Este hallazgo se parece a un informe público de marzo. ¿Lo envío igualmente?', 'Phát hiện này gần giống một báo cáo công khai hồi tháng Ba. Vẫn gửi chứ?', 'この発見は3月の公開報告に似ています。それでも提出しますか？', 'Este achado parece um relatório público de março. Envio mesmo assim?', 'Bu bulgu mart ayındaki herkese açık bir rapora benziyor. Yine de göndereyim mi?', '이 발견은 3월에 공개된 리포트와 비슷해 보입니다. 그래도 제출할까요?'],
   'Hiring': ['Найм', '招聘', 'จ้างงาน', 'Contratación', 'Tuyển dụng', '採用', 'Contratação', 'İşe alım', '채용'],
   'hire': [['сотрудник', 'сотрудника', 'сотрудников'], '录用', 'คนที่จ้างแล้ว', ['contratación', 'contrataciones'], 'người được tuyển', '採用', ['contratação', 'contratações'], 'işe alınan', '채용'],
@@ -448,6 +455,7 @@ if (COL != null) for (const f of FUNNELS) {
   if (f.supervisor) { if (f.supervisor.summary) f.supervisor.summary = tr(f.supervisor.summary); if (f.supervisor.question) f.supervisor.question = tr(f.supervisor.question); }
   for (const w of f.workers) {
     if (w.question) w.question = tr(w.question);
+    for (const q of w.questions || []) q.question = tr(q.question);
     for (const r of w.replies || []) { r.question = tr(r.question); r.answer = tr(r.answer); r.reply = tr(r.reply); }
   }
 }
