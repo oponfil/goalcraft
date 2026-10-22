@@ -2,9 +2,9 @@
 // profile button (the Google photo, or a plain silhouette) whose menu holds the rarely used
 // settings: the language, email when an agent asks, and signing out. A signed-in person's language
 // is kept in their account too.
-import { account, openBilling } from './billing.js?v=2bcafede';
-import { supabase, siteUrl } from './auth.js?v=2bcafede';
-import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved, TANK_VIEWS, tankView, setTankView, onTanksSaved } from './i18n.js?v=2bcafede';
+import { account, openBilling } from './billing.js?v=74967a09';
+import { supabase, siteUrl } from './auth.js?v=74967a09';
+import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved, TANK_VIEWS, tankView, setTankView, onTanksSaved } from './i18n.js?v=74967a09';
 
 // The profile button's picture for people without a Google photo.
 const SILHOUETTE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5z"/></svg>';
@@ -82,6 +82,7 @@ if (signin && session) {
   flowPick.className = 'lang';
   for (const u of FLOW_UNITS) flowPick.add(new Option(t(`flow.${u}`), u, false, u === flowUnit));
   flowPick.addEventListener('change', () => setFlowUnit(flowPick.value));
+  window.addEventListener('goalcraft-flow', e => { flowPick.value = e.detail; });
   flowRow.append(document.createTextNode(t('nav.flow')), flowPick);
 
   // The tanks' look on every funnel: a switch, off for fixed tanks (the default), on for tanks that

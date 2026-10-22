@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2bcafede';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2bcafede';
-import { t, lang, tankView, flowUnit } from './i18n.js?v=2bcafede';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=74967a09';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=74967a09';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=74967a09';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -241,20 +241,25 @@ export function mountDashboard(funnels, opts = {}) {
     try { data = await opts.history(f, j); } catch { pop.querySelector('.hist-body').innerHTML = `<p class="pop-note">${esc(t('hist.failed'))}</p>`; return; }
     const body = pop.querySelector('.hist-body');
     if (!body) return;
-    const u = flowUnit;
-    const fmt = u === 'h' ? new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    // The flow unit can change while the chart is open (its own switch, the profile menu): the bars
+    // are summed again.
+    let u, fmt, short, all, sums, periods, period;
+    const prepare = () => {
+    u = flowUnit;
+    fmt = u === 'h' ? new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
       : new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short' });
-    const short = new Intl.DateTimeFormat(lang, u === 'h' ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' });
-    const avgFmt = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
+    short = new Intl.DateTimeFormat(lang, u === 'h' ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' });
     // Every bar from the first report to now. A period shows only when there is more history than
     // it holds; all of it always shows.
-    const all = [];
+    all = [];
     for (let d = barStart(u, data.since ?? Date.now()), end = Date.now(); d <= end; d = nextBar(u, d)) all.push(d);
-    const sums = new Map(all.map(d => [d.getTime(), 0]));
+    sums = new Map(all.map(d => [d.getTime(), 0]));
     for (const [at, n] of data.adds) { const k = barStart(u, at).getTime(); if (sums.has(k)) sums.set(k, sums.get(k) + n); }
-    const periods = PERIODS[u].filter(p => !p || all.length > p);
-    let period = PERIODS[u][1];
+    periods = PERIODS[u].filter(p => !p || all.length > p);
+    period = PERIODS[u][1];
     try { const p = localStorage.getItem(periodKey(u)); if (p !== null && PERIODS[u].includes(Number(p))) period = Number(p); } catch {}
+    };
+    const avgFmt = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
     const draw = () => {
       // The bars of the period, oldest first, up to now; the average is over these bars.
       const shown = periods.includes(period) ? period : 0;
@@ -265,20 +270,30 @@ export function mountDashboard(funnels, opts = {}) {
       const step = [1, 2, 5, 10].map(m => m * unit).find(v => top0 / v <= 4), max = Math.ceil(top0 / step) * step;
       const ticks = Array.from({ length: max / step + 1 }, (_, i) => i * step);
       const when = d => u === 'w' ? `${short.format(d)} – ${short.format(new Date(nextBar(u, d) - 864e5))}` : fmt.format(d);
-      body.innerHTML = `${periods.length > 1 ? `<div class="hist-periods">${periods.map(p => `<button type="button" data-p="${p}" class="${p === shown ? 'on' : ''}">${esc(periodLabel(u, p))}</button>`).join('')}</div>` : ''}
+      // Hour, day or week: the same switch as Flows in the profile menu, for the whole board.
+      const units = `<div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}">${esc(t('flow.' + x))}</button>`).join('')}</div>`;
+      body.innerHTML = `${units}${periods.length > 1 ? `<div class="hist-periods">${periods.map(p => `<button type="button" data-p="${p}" class="${p === shown ? 'on' : ''}">${esc(periodLabel(u, p))}</button>`).join('')}</div>` : ''}
         <p class="pop-note">${esc(t('hist.total', fmtCount(sum), avgFmt.format(sum / n), t('flow.' + u)))}</p>
         <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(fmtCount(v))}</span>`).join('')}</div>
           <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}
             <div class="hist-bars${n > 60 ? ' dense' : ''}">${bars.map((d, i) => `<span data-tip="${esc(`${when(d)}: +${fmtCount(vals[i])}`)}"><i style="height:${vals[i] ? Math.max(1.5, (vals[i] / max) * 100) : 0}%"></i></span>`).join('')}</div></div></div>
         <div class="hist-axis"><span>${esc(short.format(bars[0]))}</span><span>${esc(short.format(bars[n - 1]))}</span></div>`;
-      body.querySelectorAll('.hist-periods button').forEach(b => b.addEventListener('click', ev => {
+      body.querySelectorAll('.hist-units button').forEach(b => b.addEventListener('click', ev => {
+        ev.stopPropagation();
+        setFlowUnit(b.dataset.u);
+      }));
+      body.querySelectorAll('.hist-periods:not(.hist-units) button').forEach(b => b.addEventListener('click', ev => {
         ev.stopPropagation();
         period = Number(b.dataset.p);
         try { localStorage.setItem(periodKey(u), String(period)); } catch {}
         draw();
       }));
     };
+    prepare();
     draw();
+    // Redrawn in the new unit, from here or from the profile menu, while this chart is open.
+    const onUnit = () => { if (!body.isConnected) return window.removeEventListener('goalcraft-flow', onUnit); prepare(); draw(); };
+    window.addEventListener('goalcraft-flow', onUnit);
   }
 
   // The person's tasks for a funnel, by its title. Only the supervisor adds, orders and marks them

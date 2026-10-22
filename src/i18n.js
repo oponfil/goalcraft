@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=2bcafede';
-import vi from './lang/vi.js?v=2bcafede';
-import ja from './lang/ja.js?v=2bcafede';
-import pt from './lang/pt.js?v=2bcafede';
-import tr from './lang/tr.js?v=2bcafede';
-import ko from './lang/ko.js?v=2bcafede';
+import es from './lang/es.js?v=74967a09';
+import vi from './lang/vi.js?v=74967a09';
+import ja from './lang/ja.js?v=74967a09';
+import pt from './lang/pt.js?v=74967a09';
+import tr from './lang/tr.js?v=74967a09';
+import ko from './lang/ko.js?v=74967a09';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -71,6 +71,8 @@ export function setFlowUnit(unit, { remote = true } = {}) {
   flowUnit = unit;
   try { localStorage.setItem(FLOW_KEY, unit); } catch {}
   if (remote && saveFlowRemote) saveFlowRemote(unit).catch(() => {});
+  // The profile menu and the open chart follow, wherever it was changed.
+  window.dispatchEvent(new CustomEvent('goalcraft-flow', { detail: unit }));
 }
 
 // The tanks' look: fixed (all the same size, filling up) or growing (each as tall as what it holds).
