@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=9650445e';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=9650445e';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9650445e';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=d6775fb8';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=d6775fb8';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=d6775fb8';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -118,7 +118,13 @@ export function mountDashboard(funnels, opts = {}) {
   // Sticky header: one title per funnel column, kept aligned with the scene while it scrolls.
   // A red badge shows how many questions in that funnel wait for you, an amber one how many of its
   // agents have not been heard from in time (the warning triangles).
+  // Rebuilt only when the titles themselves change (order, names, zoom): new data from the agents
+  // every few seconds keeps the same buttons, so a click on one is never lost mid-press (Safari).
+  let titlesBuilt = '';
   function buildTitles() {
+    const built = [scale, track.parentElement.clientHeight, ...scene.funnels.map(f => `${f.id ?? ''}:${f.title}:${f.theme ?? ''}`)].join('|');
+    if (built === titlesBuilt) return;
+    titlesBuilt = built; badgesShown = '';
     track.innerHTML = scene.funnels.map((f, fi) =>
       `<div class="col-title" data-fi="${fi}" style="left:${fi * CW * scale}px;width:${CW * scale}px">
         <button type="button" class="tasks-btn" hidden>${TASKS_ICON}<span></span></button><span class="name">${esc(f.title)}</span><span class="badge" hidden></span><span class="badge warn" hidden></span></div>`).join('');
@@ -140,22 +146,25 @@ export function mountDashboard(funnels, opts = {}) {
     });
   }
   let badgesShown = '';
+  // Written only when different: the board calls this every frame, and rewriting the buttons under
+  // the pointer that often makes Safari drop clicks on them.
+  const put = (el, key, v) => { if (el[key] !== v) el[key] = v; };
   function syncTitles() {
-    track.style.transform = `translateX(${canvas.getBoundingClientRect().left - track.parentElement.getBoundingClientRect().left}px)`;
+    put(track.style, 'transform', `translateX(${canvas.getBoundingClientRect().left - track.parentElement.getBoundingClientRect().left}px)`);
     track.querySelectorAll('.col-title').forEach(el => {
       const f = scene.funnels[+el.dataset.fi], n = scene.waitingFor(f), badge = el.querySelector('.badge:not(.warn)');
-      badge.hidden = !n;
-      badge.textContent = n;
-      badge.title = n ? t('board.waiting', n) : '';
+      put(badge, 'hidden', !n);
+      put(badge, 'textContent', String(n));
+      put(badge, 'title', n ? t('board.waiting', n) : '');
       const s = scene.silentIn(f), warn = el.querySelector('.badge.warn');
-      warn.hidden = !s;
-      warn.textContent = s;
-      warn.title = s ? t('board.silent', s) : '';
+      put(warn, 'hidden', !s);
+      put(warn, 'textContent', String(s));
+      put(warn, 'title', s ? t('board.silent', s) : '');
       // The person's tasks the supervisor keeps for this funnel: how many, opening the list.
       const k = f.tasks?.length || 0, tb = el.querySelector('.tasks-btn');
-      tb.hidden = !k;
-      tb.lastChild.textContent = k;
-      tb.title = k ? t('tasks.count', k) : '';
+      put(tb, 'hidden', !k);
+      put(tb.lastChild, 'textContent', String(k));
+      put(tb, 'title', k ? t('tasks.count', k) : '');
     });
     // Badges that come or go change the room the names have: fit them again.
     const now = [...track.querySelectorAll('.col-title .badge, .col-title .tasks-btn')].map(b => b.hidden ? '-' : b.textContent).join('|');
