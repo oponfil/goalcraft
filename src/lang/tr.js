@@ -140,6 +140,7 @@ export default {
   'hist.days': (n) => `${n} gün`,
   'hist.all': 'Tümü',
   'hist.total': (n, a) => `Bu dönemde: +${n} · günde ortalama +${a}`,
+  'hist.perDay': (n) => `günlük ${n}`,
   'hist.failed': 'Geçmiş yüklenemedi.',
   'board.moreQuestions': (n) => `${n} soru daha`,
   'nav.tanksGrow': 'Tanklar öğeyle büyür',

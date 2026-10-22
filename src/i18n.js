@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=529979e5';
-import vi from './lang/vi.js?v=529979e5';
-import ja from './lang/ja.js?v=529979e5';
-import pt from './lang/pt.js?v=529979e5';
-import tr from './lang/tr.js?v=529979e5';
-import ko from './lang/ko.js?v=529979e5';
+import es from './lang/es.js?v=897a3672';
+import vi from './lang/vi.js?v=897a3672';
+import ja from './lang/ja.js?v=897a3672';
+import pt from './lang/pt.js?v=897a3672';
+import tr from './lang/tr.js?v=897a3672';
+import ko from './lang/ko.js?v=897a3672';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -363,6 +363,7 @@ const STRINGS = {
   'hist.days': L((n) => `${n} days`, (n) => `${n} дн.`, (n) => `${n} 天`, (n) => `${n} วัน`),
   'hist.all': L('All', 'Всё', '全部', 'ทั้งหมด'),
   'hist.total': L((n, a) => `In this period: +${n} · +${a} a day on average`, (n, a) => `За период: +${n} · в среднем +${a} в день`, (n, a) => `此期间：+${n} · 平均每天 +${a}`, (n, a) => `ช่วงนี้: +${n} · เฉลี่ยวันละ +${a}`),
+  'hist.perDay': L((n) => `${n} per day`, (n) => `${n} за день`, (n) => `每天${n}`, (n) => `${n}ต่อวัน`),
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.moreQuestions': L((n) => `${n} more question${n === 1 ? '' : 's'}`, (n) => `Ещё вопросов: ${n}`, (n) => `还有 ${n} 个问题`, (n) => `อีก ${n} คำถาม`),
   'nav.tanksGrow': L('Tanks grow with items', 'Баки растут с количеством', '储罐随数量增长', 'ถังขยายตามจำนวน'),

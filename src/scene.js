@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=529979e5';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=529979e5';
-import { themeOf } from './themes.js?v=529979e5';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=529979e5';
+import { agentInfo, plural } from './data.js?v=897a3672';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=897a3672';
+import { themeOf } from './themes.js?v=897a3672';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=897a3672';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -388,6 +388,13 @@ export class Scene {
     this.t += dt;
     const t = this.t;
     for (const a of this.agents) {
+      // A demo supervisor asleep on a timer wakes when it runs out, checks the funnel for a few
+      // seconds where it stands and falls asleep again for as long.
+      if (a.sup && !this.live && typeof a.keep === 'number') {
+        if (a.state === 'sleep' && t >= a.wakeAt) { a.state = 'work'; a.workUntil = t + 6 + a.rand() * 6; }
+        else if (a.state === 'work' && t >= a.workUntil) { a.state = 'sleep'; a.wakeAt = t + a.keep; a.workUntil = null; }
+        continue;
+      }
       if (a.keep && a.state === 'sleep' && t >= a.wakeAt) a.wakeAt = t + a.keep;
       if (a.state === 'sleep' && t >= a.wakeAt && !this.live && !a.stuck) { a.state = 'walk'; a.to = 'work'; a.x = this.spot(a, 'rest').x; }
       if (a.state === 'work' && a.workUntil && t >= a.workUntil) { a.state = 'walk'; a.to = 'rest'; a.x = this.spot(a, 'work').x; }

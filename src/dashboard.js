@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=529979e5';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=529979e5';
-import { t, lang, tankView } from './i18n.js?v=529979e5';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=897a3672';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=897a3672';
+import { t, lang, tankView } from './i18n.js?v=897a3672';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -221,8 +221,8 @@ export function mountDashboard(funnels, opts = {}) {
   let period = 30;
   try { const p = localStorage.getItem('goalcraft-period'); if (p !== null && PERIODS.includes(Number(p))) period = Number(p); } catch {}
   async function showHistory(e, f, j) {
-    const st = f.stages[j], name = plural(2, st.forms);
-    showPop(e, `<div class="pop-title">${esc(f.title)}: ${esc(name)}</div><div class="hist-body"><p class="pop-note">…</p></div>`);
+    const st = f.stages[j], name = plural(5, st.forms);  // as the tank's tooltip: "found jobs", "найденных вакансий"
+    showPop(e, `<div class="pop-title">${esc(f.title)}: ${esc(t('hist.perDay', name))}</div><div class="hist-body"><p class="pop-note">…</p></div>`);
     let data;
     try { data = await opts.history(f, j); } catch { pop.querySelector('.hist-body').innerHTML = `<p class="pop-note">${esc(t('hist.failed'))}</p>`; return; }
     const body = pop.querySelector('.hist-body');

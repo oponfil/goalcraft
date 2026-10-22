@@ -140,6 +140,7 @@ export default {
   'hist.days': (n) => `${n} días`,
   'hist.all': 'Todo',
   'hist.total': (n, a) => `En este periodo: +${n} · +${a} al día de media`,
+  'hist.perDay': (n) => `${n} por día`,
   'hist.failed': 'No se pudo cargar el historial.',
   'board.moreQuestions': (n) => `${n} pregunta${n === 1 ? '' : 's'} más`,
   'nav.tanksGrow': 'Los tanques crecen con los elementos',

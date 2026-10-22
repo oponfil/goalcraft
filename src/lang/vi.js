@@ -141,6 +141,7 @@ export default {
   'hist.days': (n) => `${n} ngày`,
   'hist.all': 'Tất cả',
   'hist.total': (n, a) => `Trong kỳ: +${n} · trung bình +${a} mỗi ngày`,
+  'hist.perDay': (n) => `${n} mỗi ngày`,
   'hist.failed': 'Không tải được lịch sử.',
   'board.moreQuestions': (n) => `Thêm ${n} câu hỏi`,
   'nav.tanksGrow': 'Bể lớn theo số mục',

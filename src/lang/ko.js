@@ -140,6 +140,7 @@ export default {
   'hist.days': (n) => `${n}일`,
   'hist.all': '전체',
   'hist.total': (n, a) => `이 기간: +${n} · 하루 평균 +${a}`,
+  'hist.perDay': (n) => `일별 ${n}`,
   'hist.failed': '기록을 불러오지 못했습니다.',
   'board.moreQuestions': (n) => `질문 ${n}개 더`,
   'nav.tanksGrow': '탱크가 개수에 따라 커짐',
