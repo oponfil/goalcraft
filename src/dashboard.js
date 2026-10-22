@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=56dad7ea';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=56dad7ea';
-import { t, lang, tankView } from './i18n.js?v=56dad7ea';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=74eb4dc1';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=74eb4dc1';
+import { t, lang, tankView } from './i18n.js?v=74eb4dc1';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -80,11 +80,11 @@ export function mountDashboard(funnels, opts = {}) {
   zoomBox.innerHTML = `<button type="button" data-d="-1" aria-label="${esc(t('board.zoomOut'))}" title="${esc(t('board.zoomOut'))}">−</button><button type="button" class="pct" data-d="0"></button><button type="button" data-d="1" aria-label="${esc(t('board.zoomIn'))}" title="${esc(t('board.zoomIn'))}">+</button>`;
   document.querySelector('.sitebar .logo').after(zoomBox);
   // The bar in one line: compact (the logo's mark, − + only) when it doesn't fit, tighter still if
-  // it doesn't fit then either. Checked when the window or the bar's text changes.
+  // it doesn't fit then either, and at the tightest (a 320px phone) only the sign-in or profile link. Checked when the window or the bar's text changes.
   const bar = document.querySelector('.sitebar');
   const fitBar = () => {
-    bar.classList.remove('compact', 'tight');
-    for (const level of ['compact', 'tight']) {
+    bar.classList.remove('compact', 'tight', 'tightest');
+    for (const level of ['compact', 'tight', 'tightest']) {
       if (bar.scrollWidth <= bar.clientWidth + 1) break;
       bar.classList.add(level);
     }
@@ -355,6 +355,7 @@ export function mountDashboard(funnels, opts = {}) {
     // The sheets on top open the funnel's list straight away.
     if (h.type === 'source' || h.type === 'guide') { hidePop(); return window.open(h.url, '_blank', 'noopener'); }
     showPop(e, content(h));
+    popAgent = h.type === 'agent' ? { a: h.a, named: h.a.shownName } : null;
     bindRuns(h.a);
     if (h.type === 'ask' && opts.onAnswer) bindAnswer(h.a);
     if (h.type === 'agent' && opts.onMessage) bindMessage(h.a);
@@ -401,7 +402,7 @@ export function mountDashboard(funnels, opts = {}) {
     // when the app isn't on this computer.
     const own = a.chat || info.chat, web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);
     // Its own name when it gave one; else a supervisor goes by its funnel, a worker by its model.
-    const named = a.name || (a.sup ? t('board.supervisorName', f.title) : info.name), who = esc(named);
+    const named = a.shownName = a.name || (a.sup ? t('board.supervisorName', f.title) : info.name), who = esc(named);
     // The step it works on, with what this run added (the last run's while it sleeps) to the items
     // it works into: "Job Search: jobs found → +4 applied". The supervisor watches the whole funnel:
     // what its last run found instead ("All good", "Bottleneck: …").
@@ -451,19 +452,13 @@ export function mountDashboard(funnels, opts = {}) {
     // Asleep on time: when it wakes up.
     const left = scene.sleepLeft(a);
     const wakes = a.state === 'sleep' && !scene.overdue(a) && left > 0 ? `<p class="pop-note">${esc(t('board.wakesIn', fmtDuration(left)))}</p>` : '';
-    const state = scene.overdue(a) ? 'board.overdue' : scene.lost(a) ? 'board.lost' : a.state === 'sleep' ? 'board.resting'
-      : a.state === 'walk' ? (a.to === 'work' ? 'board.starting' : 'board.finished')
-        : 'board.working';
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
         <div class="ask-buttons"><button class="btn primary send-message" style="${paint}">${esc(t('board.sendMessage'))}</button>${chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : ''}</div>
         <div class="pop-msg"></div></div>`
       : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : '';
-    const title = STATE_ICONS[state]
-      ? `${who}<span class="state-icon ${state === 'board.resting' ? 'sleep' : 'work'}" role="img" title="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
-      : t(state, who);
-    return `<div class="pop-title">${title}</div>
+    return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
       <div class="pop-sub">${where}</div>${wakes}${missed}${lost}
       ${write}${history}`;
   }
@@ -555,6 +550,27 @@ export function mountDashboard(funnels, opts = {}) {
     });
   }
 
+  // What an agent is doing now, and the card's title that says it: its name with a moon or a bolt
+  // while it sleeps or works, in words otherwise (starting or finishing a shift, overdue, silent).
+  const agentState = a => scene.overdue(a) ? 'board.overdue' : scene.lost(a) ? 'board.lost' : a.state === 'sleep' ? 'board.resting'
+    : a.state === 'walk' ? (a.to === 'work' ? 'board.starting' : 'board.finished')
+      : 'board.working';
+  function agentTitle(a, named) {
+    const state = agentState(a), who = esc(named);
+    return STATE_ICONS[state]
+      ? `${who}<span class="state-icon ${state === 'board.resting' ? 'sleep' : 'work'}" role="img" title="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
+      : t(state, who);
+  }
+  // An open agent's card follows it: when it falls asleep or starts work, the title changes too.
+  let popAgent = null;
+  setInterval(() => {
+    const el = !pop.hidden && popAgent && pop.querySelector('.pop-title[data-state]');
+    if (el && el.dataset.state !== agentState(popAgent.a)) {
+      el.dataset.state = agentState(popAgent.a);
+      el.innerHTML = agentTitle(popAgent.a, popAgent.named);
+    }
+  }, 500);
+
   function showPop(e, html) {
     pop.innerHTML = `<button class="close" aria-label="${esc(t('board.close'))}">×</button>` + html;
     pop.querySelector('.close').addEventListener('click', hidePop);
@@ -564,13 +580,16 @@ export function mountDashboard(funnels, opts = {}) {
     pop.style.top = Math.max(8, Math.min(window.innerHeight - ph - 8, e.clientY + 14)) + 'px';
   }
   function hidePop() { pop.hidden = true; tip.hidden = true; }
-  // A card grows after it opens (its runs, a chart, folded questions): it moves up as much as it
-  // needs to stay whole on the screen.
-  new ResizeObserver(() => {
+  // A card grows after it opens (its runs, a chart, folded questions), or the window shrinks: it
+  // moves up and left as much as it needs to stay whole on the screen.
+  const keepPop = () => {
     if (pop.hidden) return;
-    const top = parseFloat(pop.style.top) || 0, h = pop.offsetHeight;
+    const top = parseFloat(pop.style.top) || 0, left = parseFloat(pop.style.left) || 0, h = pop.offsetHeight, w = pop.offsetWidth;
     if (top + h > window.innerHeight - 8) pop.style.top = Math.max(8, window.innerHeight - h - 8) + 'px';
-  }).observe(pop);
+    if (left + w > window.innerWidth - 8) pop.style.left = Math.max(8, window.innerWidth - w - 8) + 'px';
+  };
+  new ResizeObserver(keepPop).observe(pop);
+  window.addEventListener('resize', keepPop);
   // A cost in the card shows its tokens by kind on hover, in the board's tooltip.
   pop.addEventListener('pointermove', e => {
     const el = e.target.closest('[data-tip]');

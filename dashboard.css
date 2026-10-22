@@ -355,6 +355,7 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
   #zoom { margin-left: 12px; } #zoom button.pct { display: none; }
 }
 .sitebar.tight .links .wide { display: none; }
+.sitebar.tightest .links > a:not(.signin) { display: none; }
 #zoom button:disabled { opacity: 0.4; cursor: default; }
 #zoom button.pct:disabled { opacity: 1; }
 
