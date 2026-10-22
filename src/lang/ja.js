@@ -112,7 +112,7 @@ export default {
   'app.failed': '更新できませんでした',
   'app.refresh': '更新',
   'app.refreshTitle': '今すぐ更新',
-  'units': { s: '秒', m: '分', h: '時', d: '日', w: '週' },
+  'units': { s: '秒', m: '分', h: '時間', d: '日', w: '週間' },
   'demo.clock': (d) => `デモ · ${d}日目`,
   'demo.reply': '了解しました、ありがとうございます。その方針で続けます。',
   'demo.clockTitle': 'デモでは時間が速く進みます：2秒で1日',

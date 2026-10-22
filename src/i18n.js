@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=897a3672';
-import vi from './lang/vi.js?v=897a3672';
-import ja from './lang/ja.js?v=897a3672';
-import pt from './lang/pt.js?v=897a3672';
-import tr from './lang/tr.js?v=897a3672';
-import ko from './lang/ko.js?v=897a3672';
+import es from './lang/es.js?v=815947eb';
+import vi from './lang/vi.js?v=815947eb';
+import ja from './lang/ja.js?v=815947eb';
+import pt from './lang/pt.js?v=815947eb';
+import tr from './lang/tr.js?v=815947eb';
+import ko from './lang/ko.js?v=815947eb';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };

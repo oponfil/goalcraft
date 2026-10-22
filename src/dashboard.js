@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=897a3672';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=897a3672';
-import { t, lang, tankView } from './i18n.js?v=897a3672';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=815947eb';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=815947eb';
+import { t, lang, tankView } from './i18n.js?v=815947eb';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -323,7 +323,7 @@ export function mountDashboard(funnels, opts = {}) {
     else if (h.type === 'guide') tip.textContent = t('board.guide', sheetPlace(h.url));
     else {
       const s = scene.funnels[h.fi].stages[h.j], label = plural(s.count, s.forms);
-      tip.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+      tip.textContent = label.charAt(0).toLocaleUpperCase(lang) + label.slice(1);  // Turkish: i → İ
     }
     tip.hidden = false;
     tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, e.clientX + 14)) + 'px';
