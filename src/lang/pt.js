@@ -141,7 +141,7 @@ export default {
   'hist.all': 'Tudo',
   'hist.total': (n, a) => `No período: +${n} · +${a} por dia em média`,
   'hist.failed': 'Não foi possível carregar o histórico.',
-  'board.moreQuestions': (n) => `Mais ${n} perguntas`,
+  'board.moreQuestions': (n) => `Mais ${n} pergunta${n === 1 ? '' : 's'}`,
   'nav.tanksGrow': 'Tanques crescem com os itens',
   'board.usageCost': (c) => `≈${c} a preços da API`,
   'board.usageLimit': (p, d) => (d === 7 ? `${p} do limite semanal` : `${p} do limite de ${d} dias`),
