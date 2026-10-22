@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=4cafe93b';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=4cafe93b';
-import { t, lang, tankView } from './i18n.js?v=4cafe93b';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=529979e5';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=529979e5';
+import { t, lang, tankView } from './i18n.js?v=529979e5';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -449,9 +449,7 @@ export function mountDashboard(funnels, opts = {}) {
         ${asleep && !missed ? `<p class="pop-note">${esc(t('board.nextRun', when))}</p>` : ''}${missed}${asks}${reply}${history}`;
     }
     const lost = scene.lost(a) ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.silence(a))))}</p>` : '';
-    // Asleep on time: when it wakes up.
-    const left = scene.sleepLeft(a);
-    const wakes = a.state === 'sleep' && !scene.overdue(a) && left > 0 ? `<p class="pop-note">${esc(t('board.wakesIn', fmtDuration(left)))}</p>` : '';
+    const wake = wakesText(a), wakes = `<p class="pop-note wakes"${wake ? '' : ' hidden'}>${esc(wake)}</p>`;
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
@@ -561,14 +559,23 @@ export function mountDashboard(funnels, opts = {}) {
       ? `${who}<span class="state-icon ${state === 'board.resting' ? 'sleep' : 'work'}" role="img" title="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
       : t(state, who);
   }
-  // An open agent's card follows it: when it falls asleep or starts work, the title changes too.
+  // Asleep on time: when it wakes up.
+  const wakesText = a => {
+    const left = scene.sleepLeft(a);
+    return a.state === 'sleep' && !scene.overdue(a) && left > 0 ? t('board.wakesIn', fmtDuration(left)) : '';
+  };
+  // An open agent's card follows it: when it falls asleep or starts work, the title changes too,
+  // and the time to its wake-up counts down.
   let popAgent = null;
   setInterval(() => {
     const el = !pop.hidden && popAgent && pop.querySelector('.pop-title[data-state]');
-    if (el && el.dataset.state !== agentState(popAgent.a)) {
+    if (!el) return;
+    if (el.dataset.state !== agentState(popAgent.a)) {
       el.dataset.state = agentState(popAgent.a);
       el.innerHTML = agentTitle(popAgent.a, popAgent.named);
     }
+    const note = pop.querySelector('.pop-note.wakes'), wake = wakesText(popAgent.a);
+    if (note && note.textContent !== wake) { note.textContent = wake; note.hidden = !wake; }
   }, 500);
 
   function showPop(e, html) {
