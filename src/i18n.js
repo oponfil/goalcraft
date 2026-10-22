@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=815947eb';
-import vi from './lang/vi.js?v=815947eb';
-import ja from './lang/ja.js?v=815947eb';
-import pt from './lang/pt.js?v=815947eb';
-import tr from './lang/tr.js?v=815947eb';
-import ko from './lang/ko.js?v=815947eb';
+import es from './lang/es.js?v=2bcafede';
+import vi from './lang/vi.js?v=2bcafede';
+import ja from './lang/ja.js?v=2bcafede';
+import pt from './lang/pt.js?v=2bcafede';
+import tr from './lang/tr.js?v=2bcafede';
+import ko from './lang/ko.js?v=2bcafede';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -362,8 +362,8 @@ const STRINGS = {
   'tasks.open': L('Open', 'Открыть', '打开', 'เปิด'),
   'hist.days': L((n) => `${n} days`, (n) => `${n} дн.`, (n) => `${n} 天`, (n) => `${n} วัน`),
   'hist.all': L('All', 'Всё', '全部', 'ทั้งหมด'),
-  'hist.total': L((n, a) => `In this period: +${n} · +${a} a day on average`, (n, a) => `За период: +${n} · в среднем +${a} в день`, (n, a) => `此期间：+${n} · 平均每天 +${a}`, (n, a) => `ช่วงนี้: +${n} · เฉลี่ยวันละ +${a}`),
-  'hist.perDay': L((n) => `${n} per day`, (n) => `${n} за день`, (n) => `每天${n}`, (n) => `${n}ต่อวัน`),
+  'hist.total': L((n, a, per) => `In this period: +${n} · +${a} ${per} on average`, (n, a, per) => `За период: +${n} · в среднем +${a} ${per}`, (n, a, per) => `此期间：+${n} · 平均${per} +${a}`, (n, a, per) => `ช่วงนี้: +${n} · เฉลี่ย +${a} ${per}`),
+  'hist.weeks': L((n) => `${n} weeks`, (n) => `${n} нед.`, (n) => `${n} 周`, (n) => `${n} สัปดาห์`),
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.moreQuestions': L((n) => `${n} more question${n === 1 ? '' : 's'}`, (n) => `Ещё вопросов: ${n}`, (n) => `还有 ${n} 个问题`, (n) => `อีก ${n} คำถาม`),
   'nav.tanksGrow': L('Tanks grow with items', 'Баки растут с количеством', '储罐随数量增长', 'ถังขยายตามจำนวน'),

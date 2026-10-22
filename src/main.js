@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=815947eb';
-import { mountDashboard } from './dashboard.js?v=815947eb';
-import { t } from './i18n.js?v=815947eb';
+import { FUNNELS, SUP_RUNS } from './data.js?v=2bcafede';
+import { mountDashboard } from './dashboard.js?v=2bcafede';
+import { t } from './i18n.js?v=2bcafede';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -12,18 +12,25 @@ mountDashboard(FUNNELS, {
   history: demoHistory,
 });
 
-// Made-up daily growth of a stage for its card, the same each time: about its flow per day, more
-// on weekdays, over the last 120 days.
+// Made-up growth of a stage for its card, the same each time: about its flow per day, more on
+// weekdays, over the last 120 days, each day's items spread over its waking hours.
 async function demoHistory(f, j) {
   let seed = [...f.title + j].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 11);
   const r = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
-  const flow = f.flows[j] || 0.3, days = {};
+  const flow = f.flows[j] || 0.3, adds = [], now = Date.now();
   for (let i = 119; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 864e5), weekend = d.getDay() === 0 || d.getDay() === 6;
+    const d = new Date(now - i * 864e5), weekend = d.getDay() === 0 || d.getDay() === 6;
     const v = flow * (weekend ? 0.4 : 1.2) * (0.3 + r() * 1.4) * Math.min(1, (130 - i) / 60);
-    days[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`] = Math.floor(v) + (r() < v % 1 ? 1 : 0);
+    const n = Math.floor(v) + (r() < v % 1 ? 1 : 0);
+    d.setHours(0, 0, 0, 0);
+    for (let k = 0; k < n; k++) {
+      const at = d.getTime() + (8 + r() * 15) * 3600e3;
+      if (at <= now) adds.push([at, 1]);
+    }
   }
-  return { days, since: Object.keys(days)[0] };
+  adds.sort((a, b) => a[0] - b[0]);
+  const start = new Date(now - 119 * 864e5); start.setHours(0, 0, 0, 0);
+  return { adds, since: start.getTime() };
 }
 
 // Made-up last runs for an agent's card, the same each time for the same agent: a run every 6-12

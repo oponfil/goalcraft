@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=815947eb';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=815947eb';
-import { t, lang, tankView } from './i18n.js?v=815947eb';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2bcafede';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2bcafede';
+import { t, lang, tankView, flowUnit } from './i18n.js?v=2bcafede';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -215,48 +215,66 @@ export function mountDashboard(funnels, opts = {}) {
     return [(e.clientX - r.left) / scene.scale, (e.clientY - r.top) / scene.scale];
   }
 
-  // A stage's history: bars of how much it grew each day over a period the person picks (7, 30, 90
-  // days or all of it), with the period's total and daily average; hovering a bar shows its day.
-  const PERIODS = [7, 30, 90, 0];
-  let period = 30;
-  try { const p = localStorage.getItem('goalcraft-period'); if (p !== null && PERIODS.includes(Number(p))) period = Number(p); } catch {}
+  // A stage's history: bars of how much it grew each hour, day or week (the person's flow unit) over
+  // a period they pick, with the period's total and average; hovering a bar shows its time.
+  const PERIODS = { h: [24, 72, 168, 0], d: [7, 30, 90, 0], w: [8, 26, 52, 0] };
+  const periodLabel = (u, p) => !p ? t('hist.all') : u === 'h' ? t('hist.days', p / 24) : u === 'w' ? t('hist.weeks', p) : t('hist.days', p);
+  // Where a bar starts: the hour, the day (local midnight) or the week (Monday) a moment falls in,
+  // and the start of the next one.
+  const barStart = (u, ms) => {
+    const d = new Date(ms);
+    if (u === 'h') { d.setMinutes(0, 0, 0); return d; }
+    d.setHours(0, 0, 0, 0);
+    if (u === 'w') d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    return d;
+  };
+  const nextBar = (u, d) => {
+    const n = new Date(d);
+    if (u === 'h') n.setHours(n.getHours() + 1); else n.setDate(n.getDate() + (u === 'w' ? 7 : 1));
+    return n;
+  };
+  const periodKey = u => `goalcraft-period-${u}`;
   async function showHistory(e, f, j) {
     const st = f.stages[j], name = plural(5, st.forms);  // as the tank's tooltip: "found jobs", "найденных вакансий"
-    showPop(e, `<div class="pop-title">${esc(f.title)}: ${esc(t('hist.perDay', name))}</div><div class="hist-body"><p class="pop-note">…</p></div>`);
+    showPop(e, `<div class="pop-title">${esc(f.title)}: ${esc(name)}</div><div class="hist-body"><p class="pop-note">…</p></div>`);
     let data;
     try { data = await opts.history(f, j); } catch { pop.querySelector('.hist-body').innerHTML = `<p class="pop-note">${esc(t('hist.failed'))}</p>`; return; }
     const body = pop.querySelector('.hist-body');
     if (!body) return;
-    const day = new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short' });
-    const short = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short' });
-    const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const u = flowUnit;
+    const fmt = u === 'h' ? new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+      : new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short' });
+    const short = new Intl.DateTimeFormat(lang, u === 'h' ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' });
     const avgFmt = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
-    // The days the stage has a history for, from its first report to today. A period shows only
-    // when there is more history than it holds; all of it always shows.
-    const today = new Date(); today.setHours(12, 0, 0, 0);
-    const known = data.since ? Math.max(1, Math.round((today - new Date(data.since + 'T12:00')) / 864e5) + 1) : 1;
-    const periods = PERIODS.filter(p => !p || known > p);
+    // Every bar from the first report to now. A period shows only when there is more history than
+    // it holds; all of it always shows.
+    const all = [];
+    for (let d = barStart(u, data.since ?? Date.now()), end = Date.now(); d <= end; d = nextBar(u, d)) all.push(d);
+    const sums = new Map(all.map(d => [d.getTime(), 0]));
+    for (const [at, n] of data.adds) { const k = barStart(u, at).getTime(); if (sums.has(k)) sums.set(k, sums.get(k) + n); }
+    const periods = PERIODS[u].filter(p => !p || all.length > p);
+    let period = PERIODS[u][1];
+    try { const p = localStorage.getItem(periodKey(u)); if (p !== null && PERIODS[u].includes(Number(p))) period = Number(p); } catch {}
     const draw = () => {
-      // The days of the period, oldest first, up to today; all of it starts at the first report. The
-      // daily average is over these days.
+      // The bars of the period, oldest first, up to now; the average is over these bars.
       const shown = periods.includes(period) ? period : 0;
-      const n = shown || known;
-      const days = Array.from({ length: n }, (_, i) => new Date(today - (n - 1 - i) * 864e5));
-      const vals = days.map(d => data.days[key(d)] || 0), sum = vals.reduce((a, b) => a + b, 0);
+      const bars = shown ? all.slice(-shown) : all, n = bars.length;
+      const vals = bars.map(d => sums.get(d.getTime())), sum = vals.reduce((a, b) => a + b, 0);
       // The y axis: round steps (1, 2 or 5 times a power of ten), three or four lines up to the top.
       const top0 = Math.max(1, ...vals), unit = Math.max(1, 10 ** Math.floor(Math.log10(top0 / 3)));
       const step = [1, 2, 5, 10].map(m => m * unit).find(v => top0 / v <= 4), max = Math.ceil(top0 / step) * step;
       const ticks = Array.from({ length: max / step + 1 }, (_, i) => i * step);
-      body.innerHTML = `${periods.length > 1 ? `<div class="hist-periods">${periods.map(p => `<button type="button" data-p="${p}" class="${p === shown ? 'on' : ''}">${esc(p ? t('hist.days', p) : t('hist.all'))}</button>`).join('')}</div>` : ''}
-        <p class="pop-note">${esc(t('hist.total', fmtCount(sum), avgFmt.format(sum / n)))}</p>
+      const when = d => u === 'w' ? `${short.format(d)} – ${short.format(new Date(nextBar(u, d) - 864e5))}` : fmt.format(d);
+      body.innerHTML = `${periods.length > 1 ? `<div class="hist-periods">${periods.map(p => `<button type="button" data-p="${p}" class="${p === shown ? 'on' : ''}">${esc(periodLabel(u, p))}</button>`).join('')}</div>` : ''}
+        <p class="pop-note">${esc(t('hist.total', fmtCount(sum), avgFmt.format(sum / n), t('flow.' + u)))}</p>
         <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(fmtCount(v))}</span>`).join('')}</div>
           <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}
-            <div class="hist-bars">${days.map((d, i) => `<span data-tip="${esc(`${day.format(d)}: +${fmtCount(vals[i])}`)}"><i style="height:${vals[i] ? Math.max(1.5, (vals[i] / max) * 100) : 0}%"></i></span>`).join('')}</div></div></div>
-        <div class="hist-axis"><span>${esc(short.format(days[0]))}</span><span>${esc(short.format(days[n - 1]))}</span></div>`;
+            <div class="hist-bars${n > 60 ? ' dense' : ''}">${bars.map((d, i) => `<span data-tip="${esc(`${when(d)}: +${fmtCount(vals[i])}`)}"><i style="height:${vals[i] ? Math.max(1.5, (vals[i] / max) * 100) : 0}%"></i></span>`).join('')}</div></div></div>
+        <div class="hist-axis"><span>${esc(short.format(bars[0]))}</span><span>${esc(short.format(bars[n - 1]))}</span></div>`;
       body.querySelectorAll('.hist-periods button').forEach(b => b.addEventListener('click', ev => {
         ev.stopPropagation();
         period = Number(b.dataset.p);
-        try { localStorage.setItem('goalcraft-period', String(period)); } catch {}
+        try { localStorage.setItem(periodKey(u), String(period)); } catch {}
         draw();
       }));
     };

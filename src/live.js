@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=815947eb';
+import { supabase } from './auth.js?v=2bcafede';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -188,14 +188,11 @@ export async function history(f, j) {
     return key == null ? q.is('stage_key', null) : q.eq('stage_key', key);
   });
   if (error) throw error;
-  const days = {};
-  for (let i = 1; i < data.length; i++) {
-    const d = localDay(new Date(data[i].at));
-    days[d] = (days[d] || 0) + Math.max(0, data[i].value - data[i - 1].value);
-  }
-  return { days, since: data.length ? localDay(new Date(data[0].at)) : null };
+  // What each report added and when; the chart sums them by hour, day or week.
+  const adds = [];
+  for (let i = 1; i < data.length; i++) adds.push([Date.parse(data[i].at), Math.max(0, data[i].value - data[i - 1].value)]);
+  return { adds, since: data.length ? Date.parse(data[0].at) : null };
 }
-export const localDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 // The person wrote to an agent from its card; the agent reads it through MCP (get_messages).
 export async function sendMessage(a, text) {
