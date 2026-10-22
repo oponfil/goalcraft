@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=9175d7e7';
-import vi from './lang/vi.js?v=9175d7e7';
-import ja from './lang/ja.js?v=9175d7e7';
-import pt from './lang/pt.js?v=9175d7e7';
-import tr from './lang/tr.js?v=9175d7e7';
-import ko from './lang/ko.js?v=9175d7e7';
+import es from './lang/es.js?v=9650445e';
+import vi from './lang/vi.js?v=9650445e';
+import ja from './lang/ja.js?v=9650445e';
+import pt from './lang/pt.js?v=9650445e';
+import tr from './lang/tr.js?v=9650445e';
+import ko from './lang/ko.js?v=9650445e';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -362,7 +362,7 @@ const STRINGS = {
   'tasks.due': L((w) => `by ${w}`, (w) => `до ${w}`, (w) => `截止 ${w}`, (w) => `ภายใน ${w}`),
   'tasks.overdue': L((w) => `overdue: was due ${w}`, (w) => `просрочено: срок был ${w}`, (w) => `已逾期：截止于 ${w}`, (w) => `เลยกำหนด: ครบกำหนด ${w}`),
   'tasks.open': L('Open', 'Открыть', '打开', 'เปิด'),
-  'hist.days': L((n) => `${n} days`, (n) => `${n} дн.`, (n) => `${n} 天`, (n) => `${n} วัน`),
+  'hist.days': L((n) => `${n} day${n === 1 ? '' : 's'}`, (n) => `${n} дн.`, (n) => `${n} 天`, (n) => `${n} วัน`),
   'hist.all': L('All', 'Всё', '全部', 'ทั้งหมด'),
   'hist.total': L((n, a, per) => `In this period: +${n} · +${a} ${per} on average`, (n, a, per) => `За период: +${n} · в среднем +${a} ${per}`, (n, a, per) => `此期间：+${n} · 平均${per} +${a}`, (n, a, per) => `ช่วงนี้: +${n} · เฉลี่ย +${a} ${per}`),
   'hist.weeks': L((n) => `${n} weeks`, (n) => `${n} нед.`, (n) => `${n} 周`, (n) => `${n} สัปดาห์`),

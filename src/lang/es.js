@@ -137,7 +137,7 @@ export default {
   'tasks.due': (w) => `antes del ${w}`,
   'tasks.overdue': (w) => `vencida: era para el ${w}`,
   'tasks.open': 'Abrir',
-  'hist.days': (n) => `${n} días`,
+  'hist.days': (n) => `${n} día${n === 1 ? '' : 's'}`,
   'hist.all': 'Todo',
   'hist.total': (n, a, per) => `En este periodo: +${n} · +${a} ${per} de media`,
   'hist.weeks': (n) => `${n} semanas`,
