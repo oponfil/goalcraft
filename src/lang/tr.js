@@ -82,7 +82,7 @@ export default {
 - huninin listesi (ondan geçen öğeler) ve notları (huni hakkında her şeyi içeren tek bir belge) nerede tutulacak: hangi serviste, örneğin Google E-Tablolar ve Google Dokümanlar ya da Notion. Tek bir bağlayıcı yetsin diye ikisini aynı serviste tutmayı öner. Bir yerde zaten listem varsa onu kullan. O servise erişebildiğini kontrol et; erişemiyorsan burada bağlamamı iste ve bekle;
 - huniyi ne sıklıkla kontrol etmelisin (varsayılan olarak günde bir kez).
 
-3. Huniyi oluştur ya da güncelle. Goalcraft’ta bu hedef için zaten bir huni varsa onunla çalış, hiçbir şeyi kopyalama. Aşamalarını, sonucunu, hedefini (kaç sonuç ve hangi hızla) ve görünümünü ayarla, süpervizör yerini al ve kendine huniye göre benim dilimde kısa bir ad ver (örneğin "İş arama süpervizörü"); istersem adını değiştir. Listeyi ve notları kararlaştırdığımız yerde oluştur (ya da elimde olanları kullan) ve iki bağlantıyı da Goalcraft’a bağla. Notlar, senin ve çalışan ajanların bu huni hakkında bilmesi gereken her şeyi içerir: hedef, aşamalar, listenin yeri, her aşamada nasıl çalışılacağı ve nasıl rapor verileceği; çalışan ajanlar için yazdığın istemler her çalışmanın başında notları okumalarını söylesin. Sonra sonucu bana tek bir mesajda göster.
+3. Huniyi oluştur ya da güncelle. Goalcraft’ta bu hedef için zaten bir huni varsa onunla çalış, hiçbir şeyi kopyalama. Aşamalarını, sonucunu, hedefini (hangi tarihe kadar kaç sonuç) ve görünümünü ayarla, süpervizör yerini al ve kendine huniye göre benim dilimde kısa bir ad ver (örneğin "İş arama süpervizörü"); istersem adını değiştir. Listeyi ve notları kararlaştırdığımız yerde oluştur (ya da elimde olanları kullan) ve iki bağlantıyı da Goalcraft’a bağla. Notlar, senin ve çalışan ajanların bu huni hakkında bilmesi gereken her şeyi içerir: hedef, aşamalar, listenin yeri, her aşamada nasıl çalışılacağı ve nasıl rapor verileceği; çalışan ajanlar için yazdığın istemler her çalışmanın başında notları okumalarını söylesin. Sonra sonucu bana tek bir mesajda göster.
 
 4. Kendini düzenli hâle getir. Seni nasıl uyandırmam gerektiğini bana sor: uygulama seni burada uyandırabiliyorsa bu aynı sohbette (konuşmayı hatırlarsın ama zamanlayıcı yalnızca sohbet açıkken çalışır) ya da ayrı bir zamanlanmış görev olarak (her seferinde yeni bir sohbet, ama güvenilir). Uygulamada hiç zamanlama yoksa bana söyle.
 
@@ -173,6 +173,8 @@ export default {
   'board.zoomIn': 'Yakınlaştır',
   'board.goalReached': 'hedefe ulaşıldı ✓',
   'board.goal': (total, time) => `hedef: ${time} içinde +${total}`,
+  'board.goalLate': (total, time) => `hedef: +${total}, süre ${time} önce doldu`,
+  'board.goalNoDate': (total) => `hedef: +${total}`,
   'board.next': (eta) => `sıradaki ${eta}`,
 
   'pricing.current': 'Planınız',

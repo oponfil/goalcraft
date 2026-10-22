@@ -83,7 +83,7 @@ export default {
 - lưu danh sách của phễu (những gì đi qua nó) và ghi chú của phễu (một tài liệu chứa mọi điều về phễu) ở đâu: dịch vụ nào, ví dụ Google Sheets và Google Docs, hoặc Notion. Hãy đề xuất để cả hai trong cùng một dịch vụ, để một trình kết nối là đủ. Nếu tôi đã có danh sách ở đâu đó, hãy dùng nó. Kiểm tra bạn truy cập được dịch vụ đó; nếu không, hãy nhờ tôi kết nối nó ở đây và chờ;
 - bạn nên kiểm tra phễu bao lâu một lần (mặc định mỗi ngày một lần).
 
-3. Tạo hoặc cập nhật phễu. Nếu Goalcraft đã có phễu cho mục tiêu này, hãy làm việc với nó và đừng tạo trùng. Thiết lập các giai đoạn, kết quả, mục tiêu (cần bao nhiêu kết quả và nhịp độ) và giao diện của nó, nhận vị trí giám sát của nó và tự đặt cho mình một tên ngắn bằng ngôn ngữ của tôi theo phễu (ví dụ "Giám sát tìm việc"); nếu tôi yêu cầu, hãy đổi tên. Tạo danh sách và ghi chú ở nơi chúng ta đã thống nhất (hoặc dùng cái tôi đã có) và gắn cả hai liên kết trong Goalcraft. Ghi chú chứa mọi điều bạn và các tác tử làm việc cần biết về phễu này: mục tiêu, các giai đoạn, danh sách ở đâu, làm từng giai đoạn thế nào và báo cáo ra sao; các prompt bạn viết cho tác tử làm việc phải bảo chúng đọc ghi chú khi bắt đầu mỗi lần chạy. Rồi cho tôi xem kết quả trong một tin nhắn.
+3. Tạo hoặc cập nhật phễu. Nếu Goalcraft đã có phễu cho mục tiêu này, hãy làm việc với nó và đừng tạo trùng. Thiết lập các giai đoạn, kết quả, mục tiêu (cần bao nhiêu kết quả trước ngày nào) và giao diện của nó, nhận vị trí giám sát của nó và tự đặt cho mình một tên ngắn bằng ngôn ngữ của tôi theo phễu (ví dụ "Giám sát tìm việc"); nếu tôi yêu cầu, hãy đổi tên. Tạo danh sách và ghi chú ở nơi chúng ta đã thống nhất (hoặc dùng cái tôi đã có) và gắn cả hai liên kết trong Goalcraft. Ghi chú chứa mọi điều bạn và các tác tử làm việc cần biết về phễu này: mục tiêu, các giai đoạn, danh sách ở đâu, làm từng giai đoạn thế nào và báo cáo ra sao; các prompt bạn viết cho tác tử làm việc phải bảo chúng đọc ghi chú khi bắt đầu mỗi lần chạy. Rồi cho tôi xem kết quả trong một tin nhắn.
 
 4. Làm cho mình chạy đều đặn. Hỏi tôi nên đánh thức bạn thế nào: ngay trong cuộc trò chuyện này, nếu ứng dụng đánh thức được bạn ở đây (bạn nhớ cuộc trò chuyện, nhưng bộ hẹn giờ chỉ sống khi cuộc trò chuyện còn mở), hoặc bằng một tác vụ theo lịch riêng (mỗi lần một cuộc trò chuyện mới, nhưng đáng tin cậy). Nếu ứng dụng hoàn toàn không hỗ trợ lịch, hãy nói với tôi.
 
@@ -174,6 +174,8 @@ export default {
   'board.zoomIn': 'Phóng to',
   'board.goalReached': 'đã đạt mục tiêu ✓',
   'board.goal': (total, time) => `mục tiêu: +${total} trong ${time}`,
+  'board.goalLate': (total, time) => `mục tiêu: +${total}, đã quá hạn ${time}`,
+  'board.goalNoDate': (total) => `mục tiêu: +${total}`,
   'board.next': (eta) => `tiếp theo ${eta}`,
 
   'pricing.current': 'Gói của bạn',

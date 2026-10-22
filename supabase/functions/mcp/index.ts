@@ -21,7 +21,7 @@ const agent = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,31}$/)
   .describe('Who you are: claude, chatgpt, grok, gemini, deepseek, kimi, qwen, mistral, perplexity, hermes, or another lowercase name. Several agents of one kind in a funnel add a suffix: claude-search, claude-apply (shown as Claude with its logo)')
 
 const INSTRUCTIONS = `Goalcraft shows the person their goals as funnels and the agents working them.
-A funnel is one goal (e.g. "Job Search") with 2-5 stages top to bottom (jobs found → applied → interview → final round) and a result at the bottom (offer).
+A funnel is one goal (e.g. "Job Search") with 2-5 stages top to bottom (jobs found → applied → interview → final round) and a result at the bottom (offer); its goal is how many results by when (goal_total by goal_due).
 Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage k, zone n (below the last stage) turns the last stage into results. At most two agents per zone on Pro, one on the free plan.
 Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when you wake up and again every 5 minutes while you work. The dashboard waits twice that, 10 minutes of silence, then warns the person that you did not wake up (10 minutes past your next_run_at) or that it lost contact with you (10 minutes after your last signal).
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not.
@@ -84,7 +84,7 @@ const endRun = (db: Db, funnelId: string, agent: string) => openRun(db, funnelId
 // What the person sees, in the shape the tools take.
 async function funnels(db: Db, key?: string) {
   let q = db.from('funnels')
-    .select(`key, title, theme, source_url, guide_url, result, goal_total, goal_every_days, results, output_flow_per_day, updated_at,
+    .select(`key, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day, updated_at,
       stages (key, position, label, count, fill_percent, flow_per_day),
       presence (agent, display_name, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, updated_at),
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
@@ -100,7 +100,7 @@ async function funnels(db: Db, key?: string) {
     source_url: f.source_url,
     guide_url: f.guide_url,
     result: f.result,
-    goal: { total: f.goal_total, every_days: f.goal_every_days },
+    goal: { total: f.goal_total, due: f.goal_due },
     results: f.results,
     stages: f.stages.sort((a: any, b: any) => a.position - b.position)
       .map(({ key, label, count, fill_percent, flow_per_day }: any) => ({ key, label, count, fill_percent, flow_per_day })),
@@ -171,7 +171,8 @@ function server(db: Db, caller: Caller) {
       title: z.string().min(1).max(60).describe('Column title, e.g. "Job Search"'),
       result: forms.describe('Name of one result: [singular, plural], e.g. ["offer", "offers"]; Russian: [1, 2-4, 5+]; Spanish, Portuguese: [singular, plural]; Chinese, Japanese, Korean, Thai, Vietnamese, Turkish and other languages without plural forms after a number: one form'),
       goal_total: z.number().int().min(1).max(100).describe('How many results the goal needs (1-100)'),
-      goal_every_days: z.number().positive().max(3650).describe('Pace: one result every N days'),
+      goal_due: z.string().refine(v => !isNaN(Date.parse(v)), 'an ISO date or date-time').optional().describe('By when the goal should be reached, as the person said it: a date-time with their UTC offset, e.g. "2026-12-31T18:00:00+07:00", or a date, e.g. "2026-12-31" (the end of that day in UTC). The dashboard counts down to it. Leaving it out keeps the one set before'),
+      goal_every_days: z.number().positive().max(3650).optional().describe('Old way to set the goal, as a pace (one result every N days): only when no goal_due is given and the funnel has no date yet; the date then becomes now plus the results still missing at that pace'),
       source_url: z.string().url().regex(/^https?:\/\//).nullable().optional().describe('Link to the table or list with this funnel\'s items (Google Sheet, Notion, Airtable…). Give it whenever the list opens by a URL; null removes it, leaving it out keeps it'),
       guide_url: z.string().url().regex(/^https?:\/\//).nullable().optional().describe('Link to the funnel\'s guide: one document with everything its supervisor and workers need to know (the goal, the stages, where the list is, how to work and report). Keep it where the person chose, best in the same service as the list (a Google Doc with a Google Sheet), so one connector reads both. null removes it, leaving it out keeps it'),
       theme: z.enum(THEMES).optional().describe('Look: mine (miners, ore), lab (chemists, flasks), garden (gardeners, flowers), love (cupids, hearts), code (hackers, chips), money (bankers, coins, banknotes, gold bars, bitcoins), forge (smiths, ingots, swords, shields, crowns), bakery (bakers, bread, pizza, croissants, doughnuts, pastries), blocks (block-headed heroes in diamond armour with swords, blocks, diamonds). Default mine'),
@@ -192,9 +193,20 @@ function server(db: Db, caller: Caller) {
       const known = new Set(((have as any)?.stages ?? []).map((s: { key: string }) => s.key))
       if (keys.some(k => !known.has(k))) fail(`The ${p.plan} plan has up to ${p.max_stages} stages per funnel. Merge some stages, or the person can upgrade to Pro for up to 5.`)
     }
+    // The goal's date: as given (a bare date is the end of that day, UTC), or from the old pace.
+    let due: string | undefined
+    if (a.goal_due) due = new Date(/^\d{4}-\d{2}-\d{2}$/.test(a.goal_due) ? a.goal_due + 'T23:59:59Z' : a.goal_due).toISOString()
+    else if (a.goal_every_days) {
+      // Only for a funnel with no date yet: an agent sending its old pace every run would otherwise
+      // move the date on each time.
+      const { data: had } = await db.from('funnels').select('results, goal_due').eq('key', a.id).maybeSingle()
+      if (!(had as any)?.goal_due) due = new Date(Date.now() + Math.max(0, a.goal_total - ((had as any)?.results ?? 0)) * a.goal_every_days * 864e5).toISOString()
+    }
     const f = check(await db.from('funnels').upsert({
       key: a.id, title: a.title, result: a.result, theme: a.theme ?? 'mine',
-      goal_total: a.goal_total, goal_every_days: a.goal_every_days,
+      goal_total: a.goal_total,
+      ...(due !== undefined && { goal_due: due }),
+      ...(a.goal_every_days !== undefined && { goal_every_days: a.goal_every_days }),
       ...(a.source_url !== undefined && { source_url: a.source_url }),
       ...(a.guide_url !== undefined && { guide_url: a.guide_url }),
     }, { onConflict: 'user_id,key' }).select('id').single()) as { id: string }

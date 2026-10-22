@@ -82,7 +82,7 @@ export default {
 - onde guardar a lista do funil (o que passa por ele) e as notas do funil (um documento com tudo sobre ele): em qual serviço, por exemplo Planilhas e Documentos Google, ou Notion. Proponha manter os dois no mesmo serviço, para que um conector baste. Se eu já tiver uma lista em algum lugar, use-a. Confira se você consegue acessar esse serviço; se não, peça que eu o conecte aqui e espere;
 - com que frequência você deve verificar o funil (uma vez por dia por padrão).
 
-3. Crie ou atualize o funil. Se o Goalcraft já tiver um funil para esta meta, trabalhe com ele e não duplique nada. Defina as etapas, o resultado, a meta (quantos resultados e em que ritmo) e a aparência, ocupe o lugar de supervisor dele e dê a si mesmo um nome curto no meu idioma, de acordo com o funil (por exemplo, "Supervisor da busca de emprego"); se eu pedir, mude de nome. Crie a lista e as notas onde combinamos (ou use as que eu já tenho) e vincule os dois links no Goalcraft. As notas reúnem tudo o que você e os agentes de trabalho precisam saber sobre o funil: a meta, as etapas, onde fica a lista, como trabalhar cada etapa e como reportar; os prompts que você escrever para os agentes de trabalho devem pedir que leiam as notas no início de cada execução. Depois me mostre o resultado em uma única mensagem.
+3. Crie ou atualize o funil. Se o Goalcraft já tiver um funil para esta meta, trabalhe com ele e não duplique nada. Defina as etapas, o resultado, a meta (quantos resultados e até que data) e a aparência, ocupe o lugar de supervisor dele e dê a si mesmo um nome curto no meu idioma, de acordo com o funil (por exemplo, "Supervisor da busca de emprego"); se eu pedir, mude de nome. Crie a lista e as notas onde combinamos (ou use as que eu já tenho) e vincule os dois links no Goalcraft. As notas reúnem tudo o que você e os agentes de trabalho precisam saber sobre o funil: a meta, as etapas, onde fica a lista, como trabalhar cada etapa e como reportar; os prompts que você escrever para os agentes de trabalho devem pedir que leiam as notas no início de cada execução. Depois me mostre o resultado em uma única mensagem.
 
 4. Torne-se regular. Pergunte como devo acordar você: neste mesmo chat, se o aplicativo conseguir acordar você aqui (você lembra a conversa, mas o temporizador só vive enquanto o chat está aberto), ou como uma tarefa agendada separada (um chat novo a cada vez, mas confiável). Se o aplicativo não tiver agendamento nenhum, me diga.
 
@@ -173,6 +173,8 @@ export default {
   'board.zoomIn': 'Aumentar',
   'board.goalReached': 'meta alcançada ✓',
   'board.goal': (total, time) => `meta: +${total} em ${time}`,
+  'board.goalLate': (total, time) => `meta: +${total}, prazo vencido há ${time}`,
+  'board.goalNoDate': (total) => `meta: +${total}`,
   'board.next': (eta) => `próximo ${eta}`,
 
   'pricing.current': 'Seu plano',

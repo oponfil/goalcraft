@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=d6775fb8';
+import { lang } from './i18n.js?v=a12c2388';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -460,6 +460,10 @@ if (COL != null) for (const f of FUNNELS) {
     for (const r of w.replies || []) { r.question = tr(r.question); r.answer = tr(r.answer); r.reply = tr(r.reply); }
   }
 }
+
+// Demo only: the goal's date, in demo days from when the page opens: the results still missing,
+// one per goal.every days.
+for (const f of FUNNELS) f.goal.dueIn ??= Math.max(0, f.goal.total - (f.cubes || 0)) * f.goal.every;
 
 // Demo only: tasks' deadlines, as hours from when the page opens.
 for (const f of FUNNELS) for (const x of f.tasks || []) if (x.dueIn != null) x.due_at = new Date(Date.now() + x.dueIn * 3600e3).toISOString();

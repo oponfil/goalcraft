@@ -82,7 +82,7 @@ export default {
 - dónde guardar la lista del embudo (lo que avanza por él) y sus notas (un documento con todo sobre el embudo): en qué servicio, por ejemplo Hojas de cálculo y Documentos de Google, o Notion. Propón guardar ambos en el mismo servicio, para que baste un conector. Si ya tengo una lista en algún sitio, úsala. Comprueba que puedes acceder a ese servicio; si no, pídeme que lo conecte aquí y espera;
 - cada cuánto debes revisar el embudo (una vez al día por defecto).
 
-3. Crea o actualiza el embudo. Si Goalcraft ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Define sus etapas, resultado, meta (cuántos resultados y a qué ritmo) y aspecto, ocupa el puesto de su supervisor y ponte un nombre corto en mi idioma según el embudo (por ejemplo, «Supervisor de búsqueda de empleo»); si te lo pido, cámbiatelo. Crea la lista y las notas donde acordamos (o usa las que ya tengo) y enlaza ambas en Goalcraft. Las notas recogen todo lo que tú y los agentes de trabajo necesitáis saber del embudo: la meta, las etapas, dónde está la lista, cómo trabajar cada etapa y cómo informar; los prompts que escribas para los agentes de trabajo les dicen que lean las notas al empezar cada ejecución. Después muéstrame el resultado en un solo mensaje.
+3. Crea o actualiza el embudo. Si Goalcraft ya tiene un embudo para esta meta, trabaja con él y no dupliques nada. Define sus etapas, resultado, meta (cuántos resultados y para qué fecha) y aspecto, ocupa el puesto de su supervisor y ponte un nombre corto en mi idioma según el embudo (por ejemplo, «Supervisor de búsqueda de empleo»); si te lo pido, cámbiatelo. Crea la lista y las notas donde acordamos (o usa las que ya tengo) y enlaza ambas en Goalcraft. Las notas recogen todo lo que tú y los agentes de trabajo necesitáis saber del embudo: la meta, las etapas, dónde está la lista, cómo trabajar cada etapa y cómo informar; los prompts que escribas para los agentes de trabajo les dicen que lean las notas al empezar cada ejecución. Después muéstrame el resultado en un solo mensaje.
 
 4. Hazte regular. Pregúntame cómo despertarte: en este mismo chat, si la aplicación puede despertarte aquí (recuerdas la conversación, pero el temporizador solo vive mientras el chat está abierto), o como una tarea programada aparte (cada vez un chat nuevo, pero fiable). Si la aplicación no permite programar nada, dímelo.
 
@@ -173,6 +173,8 @@ export default {
   'board.zoomIn': 'Acercar',
   'board.goalReached': 'meta alcanzada ✓',
   'board.goal': (total, time) => `meta: +${total} en ${time}`,
+  'board.goalLate': (total, time) => `meta: +${total}, vencida hace ${time}`,
+  'board.goalNoDate': (total) => `meta: +${total}`,
   'board.next': (eta) => `próximo ${eta}`,
 
   'pricing.current': 'Tu plan',

@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=d6775fb8';
-import vi from './lang/vi.js?v=d6775fb8';
-import ja from './lang/ja.js?v=d6775fb8';
-import pt from './lang/pt.js?v=d6775fb8';
-import tr from './lang/tr.js?v=d6775fb8';
-import ko from './lang/ko.js?v=d6775fb8';
+import es from './lang/es.js?v=a12c2388';
+import vi from './lang/vi.js?v=a12c2388';
+import ja from './lang/ja.js?v=a12c2388';
+import pt from './lang/pt.js?v=a12c2388';
+import tr from './lang/tr.js?v=a12c2388';
+import ko from './lang/ko.js?v=a12c2388';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -205,7 +205,7 @@ const STRINGS = {
 - where to keep the funnel's list (the items moving through it) and its notes (one document with everything about the funnel): in which service, for example Google Sheets and Google Docs, or Notion. Suggest keeping both in one service, so one connector reads both. If I already keep a list somewhere, use it. Check that you can reach that service; if not, ask me to connect it here and wait;
 - how often you should check the funnel (once a day by default).
 
-3. Create or update the funnel. If Goalcraft already has a funnel for this goal, work with it and duplicate nothing. Set up its stages, result, goal (how many results and the pace) and look, and take the supervisor's place over it with a short name in my language after the funnel (for example "Job Search supervisor"); if I ask, rename yourself. Create the list and the notes where we agreed (or use the ones I already have) and link both in Goalcraft. The notes hold everything about this funnel for you and the worker agents: the goal, the stages, where the list is, how to work each stage and how to report; the prompts you write for worker agents tell them to read the notes at the start of every run. Then show me the result in one message.
+3. Create or update the funnel. If Goalcraft already has a funnel for this goal, work with it and duplicate nothing. Set up its stages, result, goal (how many results by what date) and look, and take the supervisor's place over it with a short name in my language after the funnel (for example "Job Search supervisor"); if I ask, rename yourself. Create the list and the notes where we agreed (or use the ones I already have) and link both in Goalcraft. The notes hold everything about this funnel for you and the worker agents: the goal, the stages, where the list is, how to work each stage and how to report; the prompts you write for worker agents tell them to read the notes at the start of every run. Then show me the result in one message.
 
 4. Make yourself regular. Ask me how you should be woken: in this same chat, if this app can wake you here (you remember our conversation, but the timer lives only while the chat is open), or as a separate scheduled task (a new chat each time, but reliable). If the app has no scheduling at all, tell me.
 
@@ -234,7 +234,7 @@ const STRINGS = {
 - где хранить список воронки (то, что по ней движется) и её заметки (один документ со всем, что нужно знать о воронке): в каком сервисе, например Google Таблицы и Google Документы или Notion. Предложи держать и то и другое в одном сервисе, чтобы хватало одного коннектора. Если список у меня уже где-то есть — используй его. Проверь, что у тебя есть доступ к этому сервису; если нет — попроси меня подключить его здесь и подожди;
 - как часто тебе проверять воронку (по умолчанию — раз в день).
 
-3. Создай или обнови воронку. Если в Goalcraft уже есть воронка этой цели — работай с ней, ничего не дублируй. Задай её этапы, результат, цель (сколько результатов и темп) и оформление, займи место её супервайзера и дай себе короткое имя на моём языке по воронке (например, «Супервайзер поиска работы»); если я попрошу — переименуйся. Создай список и заметки там, где мы договорились (или возьми те, что у меня уже есть), и привяжи обе ссылки в Goalcraft. В заметках — всё, что нужно знать о воронке тебе и рабочим агентам: цель, этапы, где список, как работать на каждом этапе и как отчитываться; в промптах для рабочих агентов пиши, чтобы они читали заметки в начале каждого запуска. Затем покажи мне итог одним сообщением.
+3. Создай или обнови воронку. Если в Goalcraft уже есть воронка этой цели — работай с ней, ничего не дублируй. Задай её этапы, результат, цель (сколько результатов и к какой дате) и оформление, займи место её супервайзера и дай себе короткое имя на моём языке по воронке (например, «Супервайзер поиска работы»); если я попрошу — переименуйся. Создай список и заметки там, где мы договорились (или возьми те, что у меня уже есть), и привяжи обе ссылки в Goalcraft. В заметках — всё, что нужно знать о воронке тебе и рабочим агентам: цель, этапы, где список, как работать на каждом этапе и как отчитываться; в промптах для рабочих агентов пиши, чтобы они читали заметки в начале каждого запуска. Затем покажи мне итог одним сообщением.
 
 4. Сделай себя регулярным. Спроси меня, как тебя будить: в этом же чате, если приложение умеет будить тебя здесь (ты помнишь разговор, но таймер живёт, пока открыт чат), или отдельной задачей по расписанию (каждый раз новый чат, зато надёжно). Если приложение вообще не умеет расписание, скажи мне.
 
@@ -263,7 +263,7 @@ const STRINGS = {
 - 漏斗的清单（在漏斗里流动的条目）和笔记（一份写着关于漏斗一切的文档）放在哪里：用哪个服务，例如 Google 表格和 Google 文档，或者 Notion。建议两者放在同一个服务里，这样一个连接器就能读取。如果我已经在某处有清单，就用它。确认你能访问这个服务；如果不能，请我在这里把它连接上，然后等待；
 - 你应该多久检查一次漏斗（默认每天一次）。
 
-3. 创建或更新漏斗。如果 Goalcraft 里已经有这个目标的漏斗，就用它，不要重复创建。设定它的阶段、结果、目标（需要多少个结果和节奏）和外观，占据它的主管位置，并用我的语言按漏斗给自己起一个简短的名字（例如“求职主管”）；如果我要求，就改名。在我们商定的地方创建清单和笔记（或使用我已有的），并在 Goalcraft 里关联这两个链接。笔记里写清你和工作智能体需要知道的关于这个漏斗的一切：目标、阶段、清单在哪里、每个阶段怎么做、如何汇报；你给工作智能体写的提示词里要让它们在每次运行开始时先读笔记。然后用一条消息告诉我结果。
+3. 创建或更新漏斗。如果 Goalcraft 里已经有这个目标的漏斗，就用它，不要重复创建。设定它的阶段、结果、目标（在什么日期前需要多少个结果）和外观，占据它的主管位置，并用我的语言按漏斗给自己起一个简短的名字（例如“求职主管”）；如果我要求，就改名。在我们商定的地方创建清单和笔记（或使用我已有的），并在 Goalcraft 里关联这两个链接。笔记里写清你和工作智能体需要知道的关于这个漏斗的一切：目标、阶段、清单在哪里、每个阶段怎么做、如何汇报；你给工作智能体写的提示词里要让它们在每次运行开始时先读笔记。然后用一条消息告诉我结果。
 
 4. 让自己定期运行。问我该如何唤醒你：如果这个应用能在本对话中唤醒你，就在这个对话里（你记得我们的对话，但计时器只在对话打开时有效）；或者作为单独的定时任务（每次都是新对话，但可靠）。如果应用完全不支持定时，告诉我。
 
@@ -292,7 +292,7 @@ const STRINGS = {
 - จะเก็บรายการของกรวย (สิ่งที่เคลื่อนผ่าน) และโน้ตของกรวย (เอกสารเดียวที่มีทุกอย่างเกี่ยวกับกรวย) ไว้ที่ไหน: ในบริการใด เช่น Google Sheets กับ Google Docs หรือ Notion เสนอให้เก็บทั้งสองไว้ในบริการเดียวกัน เพื่อให้ใช้ตัวเชื่อมต่อเดียวพอ ถ้าฉันมีรายการอยู่แล้วที่ไหนสักแห่ง ให้ใช้อันนั้น ตรวจว่าคุณเข้าถึงบริการนั้นได้ ถ้าไม่ได้ ให้ขอให้ฉันเชื่อมต่อที่นี่แล้วรอ;
 - ควรตรวจกรวยบ่อยแค่ไหน (ค่าเริ่มต้นวันละครั้ง)
 
-3. สร้างหรืออัปเดตกรวย ถ้าใน Goalcraft มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ตั้งค่าขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการและจังหวะ) และหน้าตาของมัน เข้ารับตำแหน่งผู้ดูแลกรวยนี้ และตั้งชื่อสั้นๆ ให้ตัวเองเป็นภาษาของฉันตามกรวย (เช่น "ผู้ดูแลหางาน") ถ้าฉันขอ ให้เปลี่ยนชื่อ สร้างรายการและโน้ตในที่ที่เราตกลงกัน (หรือใช้ของที่ฉันมีอยู่แล้ว) และผูกลิงก์ทั้งสองไว้ใน Goalcraft โน้ตมีทุกอย่างเกี่ยวกับกรวยนี้สำหรับคุณและเอเจนต์ทำงาน: เป้าหมาย ขั้นตอน รายการอยู่ที่ไหน ทำงานแต่ละขั้นอย่างไร และรายงานอย่างไร พรอมต์ที่คุณเขียนให้เอเจนต์ทำงานต้องบอกให้อ่านโน้ตตอนเริ่มทุกรอบ แล้วสรุปผลให้ฉันในข้อความเดียว
+3. สร้างหรืออัปเดตกรวย ถ้าใน Goalcraft มีกรวยของเป้าหมายนี้อยู่แล้ว ให้ใช้กรวยนั้น อย่าสร้างซ้ำ ตั้งค่าขั้นตอน ผลลัพธ์ เป้าหมาย (ต้องการผลลัพธ์กี่รายการภายในวันไหน) และหน้าตาของมัน เข้ารับตำแหน่งผู้ดูแลกรวยนี้ และตั้งชื่อสั้นๆ ให้ตัวเองเป็นภาษาของฉันตามกรวย (เช่น "ผู้ดูแลหางาน") ถ้าฉันขอ ให้เปลี่ยนชื่อ สร้างรายการและโน้ตในที่ที่เราตกลงกัน (หรือใช้ของที่ฉันมีอยู่แล้ว) และผูกลิงก์ทั้งสองไว้ใน Goalcraft โน้ตมีทุกอย่างเกี่ยวกับกรวยนี้สำหรับคุณและเอเจนต์ทำงาน: เป้าหมาย ขั้นตอน รายการอยู่ที่ไหน ทำงานแต่ละขั้นอย่างไร และรายงานอย่างไร พรอมต์ที่คุณเขียนให้เอเจนต์ทำงานต้องบอกให้อ่านโน้ตตอนเริ่มทุกรอบ แล้วสรุปผลให้ฉันในข้อความเดียว
 
 4. ทำให้ตัวเองทำงานเป็นประจำ ถามฉันว่าจะให้ปลุกคุณอย่างไร: ในแชตนี้ ถ้าแอปปลุกคุณที่นี่ได้ (คุณจำบทสนทนาได้ แต่ตัวจับเวลาทำงานเฉพาะตอนที่แชตเปิดอยู่) หรือเป็นงานตามกำหนดเวลาแยกต่างหาก (เป็นแชตใหม่ทุกครั้ง แต่เชื่อถือได้) ถ้าแอปตั้งเวลาไม่ได้เลย ให้บอกฉัน
 
@@ -403,6 +403,8 @@ const STRINGS = {
   'board.zoomIn': L('Zoom in', 'Крупнее', '放大', 'ขยาย'),
   'board.goalReached': L('goal reached ✓', 'цель достигнута ✓', '目标已达成 ✓', 'ถึงเป้าหมายแล้ว ✓'),
   'board.goal': L((total, time) => `goal: +${total} in ${time}`, (total, time) => `цель: +${total} за ${time}`, (total, time) => `目标：${time} 内 +${total}`, (total, time) => `เป้าหมาย: +${total} ใน ${time}`),
+  'board.goalLate': L((total, time) => `goal: +${total}, ${time} past the date`, (total, time) => `цель: +${total}, срок прошёл ${time} назад`, (total, time) => `目标：+${total}，已超期 ${time}`, (total, time) => `เป้าหมาย: +${total} เลยกำหนดมา ${time}`),
+  'board.goalNoDate': L((total) => `goal: +${total}`, (total) => `цель: +${total}`, (total) => `目标：+${total}`, (total) => `เป้าหมาย: +${total}`),
   'board.next': L((eta) => `next ${eta}`, (eta) => `следующий ${eta}`, (eta) => `下一个 ${eta}`, (eta) => `ถัดไป ${eta}`),
 
   // Pricing

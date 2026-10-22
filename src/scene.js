@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=d6775fb8';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=d6775fb8';
-import { themeOf } from './themes.js?v=d6775fb8';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=d6775fb8';
+import { agentInfo, plural } from './data.js?v=a12c2388';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=a12c2388';
+import { themeOf } from './themes.js?v=a12c2388';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=a12c2388';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -470,7 +470,7 @@ export class Scene {
         // on it: when the next result is due.
         theme.plate(c, cx - 13, k === n - 1 ? g.outPlateTop(k) : g.plateTop(k), 26, PLATE_H);
       }
-      const pr = project(f);
+      const pr = project(f, this.daysLeft(f));
       f.stages.forEach((s, j) => {
         const lw = g.tankW(j), x = cx - lw / 2, y = g.tankTop(j);
         // What the tank holds rises with the share of what is needed here for the whole goal: a heap
@@ -694,7 +694,7 @@ export class Scene {
         // The number and its flow open the stage's history.
         if (box) this.hits.push({ ...box, type: 'count', fi, j });
       });
-      const pr = project(f);
+      const dl = this.daysLeft(f), pr = project(f, dl);
       const ry = f.geo.flasksY() + Math.ceil(slots(f) / PER_ROW) * 22 + 8;
       // Under the results, one thing per line: how many and what they are ("7 offers"), when the next
       // one is due (coloured by pace against the goal), and the goal: how many more, in how long.
@@ -707,9 +707,13 @@ export class Scene {
       if (f.cubes >= f.goal.total) T(tr('board.goalReached'), cx, ry + 18, 8, '#3CF27A', 'center', 700);
       else {
         T(tr('board.next', fmtEta(pr.eta)), cx, ry + 18, 7.5, pr.out == null ? '#B8AE9F' : statusColor(pr.out), 'center', 700);
-        // The goal as what is still to add and how long that takes at the goal's pace.
+        // The goal as what is still to add and the time left to its date, counting down; past the
+        // date, how late it is.
         const left = f.goal.total - f.cubes;
-        T(tr('board.goal', left, fmtInUnit(left * f.goal.every)), cx, ry + 29, 7.5, '#B8AE9F', 'center', 500);
+        const span = d => (d >= 1 ? fmtInUnit(d) : fmtDuration(d * 86400));
+        if (dl == null) T(tr('board.goalNoDate', left), cx, ry + 29, 7.5, '#B8AE9F', 'center', 500);
+        else if (dl > 0) T(tr('board.goal', left, span(dl)), cx, ry + 29, 7.5, '#B8AE9F', 'center', 500);
+        else T(tr('board.goalLate', left, span(-dl)), cx, ry + 29, 7.5, '#FF8A7A', 'center', 500);
       }
     });
     for (const a of this.agents) {
@@ -864,6 +868,12 @@ export class Scene {
   // A sleeping agent that should have run more than 10 minutes ago and has not reported since (an
   // agent says set_agent_state(work) first thing in a run). Only a sign to check on it: its
   // schedule may have slipped, or it may have stopped.
+  // Days until the funnel's goal date (negative once it has passed): the person's own clock, or the
+  // demo's days.
+  daysLeft(f) {
+    if (this.live) return f.goal?.due ? (f.goal.due - Date.now()) / 864e5 : null;
+    return f.goal?.dueIn != null ? f.goal.dueIn - this.days : null;
+  }
   overdue(a) { return (this.live || a.stuck) && a.state === 'sleep' && a.wakeAt != null && this.t - a.wakeAt > SILENT; }
   // Seconds since the agent last said anything (live, and the demo's stuck agents).
   silence(a) { return (this.live || a.stuck) && a.seenAgo != null ? this.t + a.seenAgo : 0; }
@@ -886,12 +896,12 @@ export class Scene {
 // items that reached a stage, the share that reached the next one (the results for the last
 // stage). Where a stage or the next one is still at 0 the conversion is unknown and a default of
 // 30% stands in, so every tank shows a level from the first report.
-// Pace of a zone: what its flow brings by the goal's date (when the remaining results are due at
-// one per goal.every days) ÷ what the tank still misses; 1 is just in time. Only the output zone's
+// Pace of a zone: what its flow brings by the goal's date (days left until it) ÷ what the tank
+// still misses; 1 is just in time. Only the output zone's
 // is shown, as the colour of the "next" line. A flow nobody reported counts as 0.
 const DEFAULT_CONVERSION = 0.3;
-function project(f) {
-  const st = f.stages, n = st.length, every = f.goal?.every, total = f.goal?.total, fl = f.flows.map(v => v ?? 0);
+function project(f, daysLeft) {
+  const st = f.stages, n = st.length, total = f.goal?.total, fl = f.flows.map(v => v ?? 0);
   const next = j => (j + 1 < n ? st[j + 1].count : f.cubes);
   const conv = st.map((s, j) => (s.count > 0 && next(j) > 0 ? Math.min(1, next(j) / s.count) : DEFAULT_CONVERSION));
   const need = st.map((s, j) => {
@@ -902,7 +912,7 @@ function project(f) {
   });
   // A reading an agent set by hand wins over the computed one.
   const fill = st.map((s, j) => f.manualFill?.[j] ?? (need[j] ? Math.min(1, s.count / need[j]) : null));
-  const days = total > 0 && every > 0 ? Math.max(0, total - f.cubes) * every : null;
+  const days = total > 0 && daysLeft != null ? Math.max(0, daysLeft) : null;
   const reading = (flow, i) => {
     const want = i < n ? need[i] : total, have = i < n ? st[i].count : f.cubes;
     if (days == null || !want) return 0;

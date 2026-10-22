@@ -32,7 +32,7 @@ Copy the prompt from [goalcraft.ai/connect](https://goalcraft.ai/connect/) into 
 | Agent with a red `!` | Waiting for you; click to read the question and answer it. One `!` per open question (`!!` for two, up to four; from five, the number: `5!`), each answered on its own. Lying with a `!` bubble: it asked, then went to sleep, and takes your answer on its next run. The red badge in the header counts them |
 | `+N` by an agent | What its current run added (its last run's while it sleeps). Click the agent and open "Previous runs" for its last 10 runs: the time each started (no date: runs are frequent), how long it took, what it added and what it cost at API prices; on top, its last day's cost (and, for Codex, its share of the plan's limit). Hover a cost for its tokens by kind. The costs come from the [wake script](wake/README.md#token-use), which reads them from the agent's app on your computer (Claude Code, Codex); agents in web chats show none |
 | `− 100% +` by the logo | Zoom: 100% is the same size on every screen, a phone too, and the choice is kept in this browser. When the top bar doesn't fit in one line (a phone, a narrow window), it shows the logo's mark alone and just `−` `+` |
-| Bottom zone and items | Results so far in one line ("7 offers"), when the next one is due, and the goal: how many are still to add and how long that takes at the goal's pace, in the unit picked for flows (`goal: +23 in 46d` when flows are per day) |
+| Bottom zone and items | Results so far in one line ("7 offers"), when the next one is due, and the goal: how many are still to add and the time left to its date, counting down in the unit picked for flows (`goal: +23 in 46d` when flows are per day); past the date, how late it is, in red |
 
 ## Tank sizes
 
