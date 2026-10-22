@@ -376,7 +376,9 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 /* A stage's history: period buttons, then a bar per day in the pop's accent, the first and last day
    under them. */
 #pop .hist-periods { display: inline-flex; border: 2px solid var(--border); margin: 10px 0 4px; }
-#pop .hist-units { margin-right: 8px; }  /* hour, day or week, then the period, side by side when they fit */
+#pop .hist-controls { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0 4px; }
+#pop .hist-controls .hist-periods { margin: 0; }
+#pop .hist-units button { padding: 4px 8px; }  /* one letter each: ч д н */
 #pop .hist-periods button { background: none; border: 0; color: var(--muted); font: 500 13px var(--font); padding: 4px 10px; cursor: pointer; }
 #pop .hist-periods button + button { border-left: 2px solid var(--border); }
 #pop .hist-periods button.on { background: #3A322B; color: var(--text); }
