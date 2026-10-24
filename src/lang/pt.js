@@ -125,7 +125,7 @@ export default {
   'board.silent': (n) => `Agentes sem notícias a tempo: ${n}`,
   'board.lost': (who) => `${who} não dá sinal`,
   'board.runs': 'Execuções anteriores',
-  'board.usageDay': (n) => `Últimas 24 h: ${n}`,
+  'board.usageDay': (n) => `Últimos 7 dias: ${n}`,
   'board.tokens': (n) => `${n} tokens`,
   'board.tokNew': (n) => `Entrada nova: ${n}`,
   'board.tokCacheRead': (n) => `Entrada do cache: ${n}`,

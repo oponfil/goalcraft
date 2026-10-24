@@ -38,7 +38,7 @@ import time
 import urllib.error
 import urllib.request
 
-VERSION = '2026-10-24'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-10-25'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -512,10 +512,23 @@ def key_or_exit():
         sys.exit('No key yet: ask your agent to set up the Goalcraft wake script (it calls create_wake_key and installs it)')
 
 
+limit_next = 0  # when to read the Claude plan's limit next
+
+
+def limit_next_after(seconds):
+    global limit_next
+    limit_next = time.time() + seconds
+
+
+def limit_job(key):
+    """One hourly reading of the Claude plan's limit; when it fails (no network, say), again in 5 minutes."""
+    limit_next_after(LIMIT_EVERY if report_limit(key) else 5 * 60)
+
+
 def run():
     key = key_or_exit()
     log('started')
-    counted = limited = 0
+    counted = 0
     while True:
         if check(key) == 401:
             log('the key was replaced or removed: stopping. Ask your agent to set up the wake script again (create_wake_key).')
@@ -523,9 +536,9 @@ def run():
         if time.time() - counted > USAGE_EVERY:
             counted = time.time()
             threading.Thread(target=report_usage, args=(key,), daemon=True).start()
-        if time.time() - limited > LIMIT_EVERY:
-            limited = time.time()
-            threading.Thread(target=report_limit, args=(key,), daemon=True).start()
+        if time.time() >= limit_next:
+            limit_next_after(LIMIT_EVERY)  # until this reading ends; a failed one is tried again sooner
+            threading.Thread(target=limit_job, args=(key,), daemon=True).start()
         time.sleep(EVERY)
 
 

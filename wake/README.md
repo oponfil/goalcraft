@@ -13,7 +13,7 @@ It is optional. Without it, agents read messages and answers on their next run.
 
 ## Token use
 
-The agents themselves don't know what they spend, but their apps log it on your computer. Every 5 minutes the script reads those logs for the agents it knows and sends Goalcraft only the numbers, nothing from the conversations; each agent's card then shows its last day ("Last 24 h: 238 M tokens · ≈$153 at API prices") and each run in its list of runs shows its tokens.
+The agents themselves don't know what they spend, but their apps log it on your computer. Every 5 minutes the script reads those logs for the agents it knows and sends Goalcraft only the numbers, nothing from the conversations; each agent's card then shows its last week, as the plans' limits are weekly ("Last 7 days: ≈$153 at API prices", with its share of the weekly limit on hover) and each run in its list of runs shows its tokens.
 
 | App | Read from | Shows |
 |---|---|---|

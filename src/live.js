@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=69ae49b5';
+import { supabase } from './auth.js?v=548f4e8e';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -85,7 +85,7 @@ function agentOf(f, p, now, usage = []) {
             .map(m => ({ id: 'm:' + m.id, question: null, answer: m.text, reply: m.reply, at: m.replied_at })),
         ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)),
         chat: p.chat_url,
-        // Its token use over the last day, as the person's wake script read it from the agent's own
+        // Its token use over the last week (the plans' limits are weekly), as the person's wake script read it from the agent's own
         // session files (null: not known, e.g. a web chat).
         usage: dayUsage(usage.filter(u => u.funnel_id === f.id && u.agent === p.agent)),
         // What this run added (the last run's, while the agent sleeps); null = not known.
@@ -106,7 +106,7 @@ function kinds(rows) {
   return out;
 }
 
-// The last day's runs of one agent added up: tokens, cost at API prices (when every run has one) and
+// The last week's runs of one agent added up: tokens, cost at API prices (when every run has one) and
 // the plan's limit as its app last logged it (Codex).
 function dayUsage(rows) {
   if (!rows.length) return null;
@@ -160,7 +160,7 @@ export async function loadFunnels() {
       .order('at').order('id')),
     supabase.from('agent_usage')
       .select('funnel_id, agent, app, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at')
-      .gte('ended_at', new Date(now - DAY).toISOString()),
+      .gte('ended_at', new Date(now - 7 * DAY).toISOString()),
   ]);
   if (funnels.error) throw funnels.error;
   if (reports.error) throw reports.error;

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=69ae49b5';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=69ae49b5';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=69ae49b5';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=548f4e8e';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=548f4e8e';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=548f4e8e';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -507,7 +507,7 @@ export function mountDashboard(funnels, opts = {}) {
   const fmtPercent = n => new Intl.NumberFormat(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n) + '%';
   // A question to the person shows only one way, as the "!" with the question itself; an older run
   // that ended on status "question" (no longer a status) shows no status.
-  // Usage of several runs added up (the demo's last day).
+  // Usage of several runs added up (the demo's last week).
   const sumUsage = list => {
     const out = {};
     for (const k of ['tokens', 'input_tokens', 'cache_read_tokens', 'cache_write_tokens', 'output_tokens', 'cost', 'limit_used'])
@@ -611,11 +611,11 @@ export function mountDashboard(funnels, opts = {}) {
       try {
         const rows = await opts.runs(a);
         const st = a.f.stages, when = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
-        // What it spent, in money: the last day (the wake script's count; in the demo, the listed runs
-        // of the last day) and each run at API prices. Hovering one shows its tokens by kind and its
+        // What it spent, in money: the last week, as the plans' limits are weekly (the wake script's
+        // count; in the demo, the listed runs of the last week) and each run at API prices. Hovering one shows its tokens by kind and its
         // share of the plan's limit: as Codex logged it, or for Claude its cost at the measured rate. Codex logs the limit in whole percent, so a
         // run's share is the day's limit spread over its runs by their cost, to a tenth.
-        const day = rows.filter(r => r.usage && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 864e5);
+        const day = rows.filter(r => r.usage && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 7 * 864e5);
         const u = a.usage || (day.length ? sumUsage(day.map(r => r.usage)) : null);
         const perDollar = u?.limit_used != null && u.cost > 0 ? u.limit_used / u.cost : null;
         const runLimit = ru => perDollar != null && ru.cost != null ? '≈' + fmtPercent(ru.cost * perDollar)

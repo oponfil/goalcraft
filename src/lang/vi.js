@@ -126,7 +126,7 @@ export default {
   'board.silent': (n) => `Tác tử không liên lạc đúng hạn: ${n}`,
   'board.lost': (who) => `Không có tín hiệu từ ${who}`,
   'board.runs': 'Các lần chạy trước',
-  'board.usageDay': (n) => `24 giờ qua: ${n}`,
+  'board.usageDay': (n) => `7 ngày qua: ${n}`,
   'board.tokens': (n) => `${n} token`,
   'board.tokNew': (n) => `Đầu vào mới: ${n}`,
   'board.tokCacheRead': (n) => `Đầu vào từ bộ nhớ đệm: ${n}`,

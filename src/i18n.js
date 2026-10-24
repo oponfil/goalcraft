@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=69ae49b5';
-import vi from './lang/vi.js?v=69ae49b5';
-import ja from './lang/ja.js?v=69ae49b5';
-import pt from './lang/pt.js?v=69ae49b5';
-import tr from './lang/tr.js?v=69ae49b5';
-import ko from './lang/ko.js?v=69ae49b5';
+import es from './lang/es.js?v=548f4e8e';
+import vi from './lang/vi.js?v=548f4e8e';
+import ja from './lang/ja.js?v=548f4e8e';
+import pt from './lang/pt.js?v=548f4e8e';
+import tr from './lang/tr.js?v=548f4e8e';
+import ko from './lang/ko.js?v=548f4e8e';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -350,7 +350,7 @@ const STRINGS = {
   'board.silent': L((n) => `Agents not heard from in time: ${n}`, (n) => `Не вышли на связь вовремя: ${n}`, (n) => `未按时联系的智能体：${n}`, (n) => `เอเจนต์ที่ไม่ติดต่อตามเวลา: ${n}`),
   'board.lost': L((who) => `No word from ${who}`, (who) => `${who} не выходит на связь`, (who) => `${who} 没有消息`, (who) => `ไม่มีสัญญาณจาก ${who}`),
   'board.runs': L('Previous runs', 'Предыдущие запуски', '之前的运行', 'การรันก่อนหน้า'),
-  'board.usageDay': L((n) => `Last 24 h: ${n}`, (n) => `За сутки: ${n}`, (n) => `近 24 小时：${n}`, (n) => `24 ชม. ล่าสุด: ${n}`),
+  'board.usageDay': L((n) => `Last 7 days: ${n}`, (n) => `За неделю: ${n}`, (n) => `近 7 天：${n}`, (n) => `7 วันล่าสุด: ${n}`),
   'board.tokens': L((n) => `${n} tokens`, (n) => `${n} токенов`, (n) => `${n} 个 token`, (n) => `${n} โทเค็น`),
   'board.tokNew': L((n) => `New input: ${n}`, (n) => `Новые входящие: ${n}`, (n) => `新输入：${n}`, (n) => `อินพุตใหม่: ${n}`),
   'board.tokCacheRead': L((n) => `Input from cache: ${n}`, (n) => `Входящие из кэша: ${n}`, (n) => `缓存读取：${n}`, (n) => `อินพุตจากแคช: ${n}`),
