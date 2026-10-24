@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=ebd31f61';
+import { supabase } from './auth.js?v=fbab5950';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -127,6 +127,10 @@ let limits = {};
 // Claude gives whole percents: wait until enough has been spent for the rate to mean something;
 // Antigravity's are exact.
 const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3 } };
+// Antigravity has a quota per group of models (as its settings show): Gemini 4 Argon, the other
+// Gemini models, Claude and GPT. A run counts against its model's.
+const quotaOf = model => { const m = (model || '').toLowerCase(); return m.startsWith('gemini-4-argon') ? 'gemini-4-argon' : m.startsWith('gemini') ? 'gemini' : 'claude-gpt'; };
+const limitKey = r => (r.app === 'antigravity' ? `antigravity:${quotaOf(r.model)}` : r.app);
 function limitRate(rows, min) {
   let pct = 0, usd = 0;
   for (let i = 1; i < rows.length; i++) {
@@ -140,7 +144,7 @@ function limitRate(rows, min) {
 }
 // A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged.
 const withLimit = r => {
-  const l = limits[r.app];
+  const l = limits[limitKey(r)];
   return r.limit_used == null && r.cost_usd != null && l?.perDollar != null
     ? { ...r, limit_used: Number(r.cost_usd) * l.perDollar, limit_percent: l.week, limit_window_minutes: 7 * 1440 }
     : r;
@@ -148,9 +152,12 @@ const withLimit = r => {
 
 export async function loadFunnels() {
   const now = Date.now();
-  const readings = await supabase.from('limit_readings').select('app, at, week_percent, week_resets_at, cost_usd')
+  const readings = await supabase.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, cost_usd')
     .gte('at', new Date(now - 8 * DAY).toISOString()).order('at');
-  if (!readings.error) limits = Object.fromEntries(Object.keys(LIMIT_MIN).map(app => [app, limitRate(readings.data.filter(r => r.app === app), LIMIT_MIN[app])]));
+  if (!readings.error) {
+    const keys = [...new Set(readings.data.map(r => (r.quota ? `${r.app}:${r.quota}` : r.app)))];
+    limits = Object.fromEntries(keys.map(k => [k, limitRate(readings.data.filter(r => (r.quota ? `${r.app}:${r.quota}` : r.app) === k), LIMIT_MIN[k.split(':')[0]])]));
+  }
   const [funnels, reports, usage] = await Promise.all([
     supabase.from('funnels')
       .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day,
@@ -166,7 +173,7 @@ export async function loadFunnels() {
       .order('at').order('id')),
     // A week of runs is more than one page of rows (1000): read them all.
     all(() => supabase.from('agent_usage')
-      .select('funnel_id, agent, app, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at')
+      .select('funnel_id, agent, app, model, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at')
       .gte('ended_at', new Date(now - 7 * DAY).toISOString()).order('ended_at').order('agent').order('run_key')),
   ]);
   if (funnels.error) throw funnels.error;
@@ -186,7 +193,7 @@ export async function answer(questionId, text) {
 // at API prices and its share of the plan's limit (Codex as logged; Claude at the measured rate).
 export async function spending(from) {
   const { data, error } = await all(() => supabase.from('agent_usage')
-    .select('funnel_id, agent, app, started_at, cost_usd, limit_used')
+    .select('funnel_id, agent, app, model, started_at, cost_usd, limit_used')
     .gte('started_at', new Date(from).toISOString()).order('started_at'));
   if (error) throw error;
   return data.map(withLimit).map(r => ({ funnel: r.funnel_id, agent: r.agent, app: r.app, at: Date.parse(r.started_at),
@@ -204,7 +211,7 @@ export async function runs(a, limit = 10) {
   // Each run's tokens: every stretch the wake script counted goes to the one run it overlaps most
   // (a few minutes' slack for the agent's first and last signal).
   const from = data[data.length - 1].started_at;
-  const { data: usedRows } = await supabase.from('agent_usage').select('app, started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
+  const { data: usedRows } = await supabase.from('agent_usage').select('app, model, started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
     .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from);
   const used = usedRows?.map(withLimit);
   if (!used?.length) return data;

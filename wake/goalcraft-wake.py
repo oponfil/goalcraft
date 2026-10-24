@@ -408,21 +408,30 @@ def antigravity_server():
     return None
 
 
+def quota_of(name):
+    """Which of Antigravity's quotas a model counts against, by its label ("Gemini 4 Argon (Medium)") or
+    by the model a call logged ("gemini-4-argon-trial"): Gemini 4 Argon has its own, the other Gemini
+    models share one, Claude and GPT share one."""
+    n = name.lower().replace(' ', '-')
+    return 'gemini-4-argon' if n.startswith('gemini-4-argon') else 'gemini' if n.startswith('gemini') else 'claude-gpt'
+
+
 def antigravity_cost(since, until):
-    """What every Antigravity conversation here cost at API prices between two moments."""
-    total = 0.0
+    """What every Antigravity conversation here cost at API prices between two moments, by quota."""
+    total = {}
     for f in glob.glob(str(ANTIGRAVITY / '*.db')):
         if os.path.getmtime(f) < since:
             continue
         for t, model, u in antigravity_calls(f):
             if since < t <= until:
-                total += gemini_cost(model, u) or 0.0
+                q = quota_of(model)
+                total[q] = total.get(q, 0.0) + (gemini_cost(model, u) or 0.0)
     return total
 
 
 def report_antigravity_limit(key, show=False):
-    """Read how much of Antigravity's Gemini quota is used (the most used Gemini model's, as the app shows
-    it) and send it to Goalcraft, with what every Antigravity conversation cost since the reading before."""
+    """Read how much of each of Antigravity's quotas is used (as its app shows them, per group of models)
+    and send the weekly ones to Goalcraft, each with what its models cost here since the reading before."""
     import ssl
     server = antigravity_server()
     if not server:
@@ -443,21 +452,30 @@ def report_antigravity_limit(key, show=False):
     if not status:
         log('limit: Antigravity is running but did not answer')
         return False
-    gemini = [c.get('quotaInfo') or {} for c in ((status.get('userStatus') or {}).get('cascadeModelConfigData') or {}).get('clientModelConfigs', [])
-              if str(c.get('label', '')).lower().startswith('gemini') and (c.get('quotaInfo') or {}).get('remainingFraction') is not None]
-    if not gemini:
-        log('limit: no Gemini quota in Antigravity')
-        return False
-    q = min(gemini, key=lambda x: x['remainingFraction'])
+    # Each quota as its models show it: the window that binds now. Only a weekly one (resetting more
+    # than a day ahead) is sent: the board spreads it over a week of runs.
+    quotas = {}
+    for c in ((status.get('userStatus') or {}).get('cascadeModelConfigData') or {}).get('clientModelConfigs', []):
+        qi = c.get('quotaInfo') or {}
+        if qi.get('remainingFraction') is not None and qi.get('resetTime'):
+            quotas.setdefault(quota_of(str(c.get('label', ''))), qi)
     now = time.time()
     before = limit_state().get('antigravity_at')
-    cost = round(antigravity_cost(before, now), 4) if before else None
-    row = {'app': 'antigravity', 'at': iso(now), 'week_percent': round((1 - q['remainingFraction']) * 100, 2),
-           'week_resets_at': q.get('resetTime'), 'cost_usd': cost}
-    if show:
-        print(f'Antigravity (Gemini): {row["week_percent"]}% used (resets {row["week_resets_at"]})'
-              + (f', Antigravity since the last reading ≈${cost:.2f}' if cost is not None else ''))
-    req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={
+    costs = antigravity_cost(before, now) if before else {}
+    rows = []
+    for q, qi in quotas.items():
+        resets = when(qi['resetTime'])
+        weekly = resets is not None and resets - now > 86400
+        if show:
+            print(f'Antigravity {q}: {round((1 - qi["remainingFraction"]) * 100, 2)}% used, resets {qi["resetTime"]}'
+                  + ('' if weekly else ' (a short window: not sent)') + (f', since the last reading ≈${costs.get(q, 0):.2f}' if before else ''))
+        if weekly:
+            rows.append({'app': 'antigravity', 'quota': q, 'at': iso(now), 'week_percent': round((1 - qi['remainingFraction']) * 100, 2),
+                         'week_resets_at': qi['resetTime'], 'cost_usd': round(costs.get(q, 0.0), 4) if before else None})
+    if not rows:
+        save_limit_state(antigravity_at=now)
+        return True
+    req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': rows}).encode(), method='POST', headers={
         'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
