@@ -104,7 +104,9 @@ Deno.serve(async (req) => {
   const { data: owner } = await admin.from('wake_keys').select('user_id').eq('key_hash', await sha256(key)).maybeSingle()
   if (!owner) return json({ error: 'bad_key' }, 401)
   const user = owner.user_id, now = Date.now(), iso = (t: number) => new Date(t).toISOString()
-  await admin.from('wake_keys').update({ last_used_at: iso(now) }).eq('user_id', user)
+  // The script's version, from its User-Agent ("goalcraft-wake/2026-10-24"); older ones say "1".
+  const version = /^goalcraft-wake\/([\w.-]{1,20})$/.exec(req.headers.get('user-agent') ?? '')?.[1] ?? null
+  await admin.from('wake_keys').update({ last_used_at: iso(now), script_version: version }).eq('user_id', user)
   // ?check=1: the script only checks its key (when it is installed); nobody is woken or marked.
   const params = new URL(req.url).searchParams
   if (params.has('check')) return json({ ok: true })

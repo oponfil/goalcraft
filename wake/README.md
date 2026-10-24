@@ -35,6 +35,16 @@ The agents' command-line tools must be signed in once: `claude` (Claude Code) an
 
 A new key replaces the old, and the script installed with the old one stops with a note in its log.
 
+## Updates
+
+The script never updates itself: what runs on your computer changes only when you (or your agent, with your OK) put a new version there. Its version is the day it came out (`python3 ~/.goalcraft/goalcraft-wake.py version`, e.g. `2026-10-24`), and it tells Goalcraft that version with every request. Your agents see it in `list_funnels` as `wake_script`: the version you run, the latest on goalcraft.ai, whether the script is running, and the command that updates it — the same download, then a restart; your key stays:
+
+```bash
+curl -fsSL https://goalcraft.ai/wake/goalcraft-wake.py -o ~/.goalcraft/goalcraft-wake.py && launchctl kickstart -k gui/$(id -u)/ai.goalcraft.wake
+```
+
+A funnel's supervisor tells you once when a newer version is out or the script has stopped, and on your computer updates it if you agree. Versions from before 24 October 2026 show as `1`.
+
 ## Use
 
 | Command | What it does |

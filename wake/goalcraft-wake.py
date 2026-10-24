@@ -13,6 +13,11 @@ Goalcraft: a Claude app session (Claude Code) through `claude -p --resume`, a Co
     python3 goalcraft-wake.py usage           read and send the agents' token use now, and print it
     python3 goalcraft-wake.py limit           read and send the Claude plan's limit now, and print it
     python3 goalcraft-wake.py run             the loop itself (what install starts)
+    python3 goalcraft-wake.py version         print this script's version
+
+The script never updates itself. It tells Goalcraft its version with every request, so an agent sees
+in list_funnels (wake_script) when a newer one is out, and can update it with your OK: the same
+download, then a restart (your key stays).
 
 The key comes from the Goalcraft MCP tool create_wake_key (your agent calls it and runs install for you).
 It only lets the script ask whom to wake, and send what the agents' runs used in tokens (read from
@@ -33,7 +38,9 @@ import time
 import urllib.error
 import urllib.request
 
+VERSION = '2026-10-24'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
+AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
 HOME = pathlib.Path.home()
 DIR = HOME / '.goalcraft'
@@ -332,7 +339,7 @@ def report_limit(key, show=False):
         log('limit: no valid Claude Code sign-in in the keychain; skipped')
         return False
     req = urllib.request.Request('https://api.anthropic.com/api/oauth/usage', headers={
-        'Authorization': f'Bearer {token}', 'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': 'goalcraft-wake/1'})
+        'Authorization': f'Bearer {token}', 'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': AGENT})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             u = json.load(r)
@@ -356,7 +363,7 @@ def report_limit(key, show=False):
               + (f', local sessions since the last reading ≈${cost:.2f}' if cost is not None else ''))
     body = json.dumps({'limits': [row]}).encode()
     req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={
-        'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1', 'Content-Type': 'application/json'})
+        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             json.load(r)
@@ -433,7 +440,7 @@ def codex_usage(item):
 
 def report_usage(key, show=False):
     """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
-    req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1'})
+    req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             agents = json.load(r).get('agents', [])
@@ -460,7 +467,7 @@ def report_usage(key, show=False):
     for i in range(0, len(rows), 400):
         body = json.dumps({'usage': rows[i:i + 400], **({'replace_from': since} if i == 0 else {})}).encode()
         req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={
-            'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1', 'Content-Type': 'application/json'})
+            'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 saved += json.load(r).get('saved', 0)
@@ -470,7 +477,7 @@ def report_usage(key, show=False):
 
 
 def check(key, wake_them=True):
-    req = urllib.request.Request(ENDPOINT, headers={'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1'})
+    req = urllib.request.Request(ENDPOINT, headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             items = json.load(r).get('wake', [])
@@ -488,7 +495,7 @@ def check(key, wake_them=True):
 
 def verify(key):
     """Whether Goalcraft knows the key, without asking whom to wake (that would mark them as woken)."""
-    req = urllib.request.Request(ENDPOINT + '?check=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1'})
+    req = urllib.request.Request(ENDPOINT + '?check=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             return r.status
@@ -575,6 +582,8 @@ if __name__ == '__main__':
         run()
     elif cmd == 'usage':
         print(f'sent {report_usage(key_or_exit(), show=True)} runs to Goalcraft')
+    elif cmd == 'version':
+        print(VERSION)
     elif cmd == 'limit':
         print('sent to Goalcraft' if report_limit(key_or_exit(), show=True) else 'failed: see ~/.goalcraft/wake.log')
     elif cmd == 'once':

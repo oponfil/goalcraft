@@ -20,6 +20,19 @@ const funnelId = z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/).describe('Funnel 
 const agent = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,31}$/)
   .describe('Who you are: claude, chatgpt, grok, gemini, deepseek, kimi, qwen, mistral, perplexity, hermes, or another lowercase name. Several agents of one kind in a funnel add a suffix: claude-search, claude-apply (shown as Claude with its logo)')
 
+// The wake script's latest version: the VERSION line of the file on goalcraft.ai, read at most hourly.
+let wakeLatest: { at: number, version: string | null } | null = null
+async function latestWake() {
+  if (wakeLatest && Date.now() - wakeLatest.at < 3600e3) return wakeLatest.version
+  let version: string | null = wakeLatest?.version ?? null
+  try {
+    const r = await fetch('https://goalcraft.ai/wake/goalcraft-wake.py', { signal: AbortSignal.timeout(5000) })
+    if (r.ok) version = /^VERSION = '([\w.-]+)'/m.exec(await r.text())?.[1] ?? null
+  } catch { /* keep what was known */ }
+  wakeLatest = { at: Date.now(), version }
+  return version
+}
+
 const INSTRUCTIONS = `Goalcraft shows the person their goals as funnels and the agents working them.
 A funnel is one goal (e.g. "Job Search") with 2-5 stages top to bottom (jobs found → applied → interview → final round) and a result at the bottom (offer); its goal is how many results by when (goal_total by goal_due).
 Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage k, zone n (below the last stage) turns the last stage into results. At most two agents per zone on Pro, one on the free plan.
@@ -28,7 +41,7 @@ Your chat: the dashboard's "Open" button by you leads to the conversation you wo
 On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer (a question is as short as you can make it, at most 400 characters: only what the person needs to understand it and decide): while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next). A reply never asks the person for anything: if you need more from them, or can't do what was agreed and need them to act (sign in somewhere, send something themselves, decide again), ask a new question instead (set_agent_state ask), saying plainly what happened and exactly what to do, where. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. When it needs the person, it asks as every agent does: state ask with a question. It also keeps an eye on the person's tasks for the funnel (set_tasks), most urgent first, without what is done or no longer matters.
 The person's tasks: the things only the person can do for a funnel (take a test task, fill in a form, answer a recruiter), shown to them on the dashboard. Every agent of the funnel, supervisor or worker, sees the same list (list_funnels tasks) and changes it the same way with set_tasks: adds a task when the person asks or when there is something only they can do, marks what is done, keeps the order. What an agent can't go on without is a question, not a task: never both. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
-Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and a funnel's supervisor can write to its workers (send_message). On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns.
+Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and a funnel's supervisor can write to its workers (send_message). On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns. The script never updates itself; list_funnels shows it as wake_script. When a supervisor sees update_available, or running false for a script that was set up, it tells the person once (not on every run): on their computer it asks whether to update and, on yes, runs wake_script.update; elsewhere it adds a task for them (set_tasks) with that command.
 Your name: the dashboard and emails show you by your model's name (Claude, ChatGPT…) unless you give your own short name with set_agent_state(name); give one when the person asks you to rename yourself.
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
@@ -156,12 +169,27 @@ function server(db: Db, caller: Caller) {
     ],
   }, { instructions: INSTRUCTIONS })
 
+  // The person's wake script, if they have one: its version (it says it with every request), the
+  // latest on goalcraft.ai, whether it runs, and how to update it. It never updates itself.
+  async function wakeScript() {
+    const { data } = await db.from('wake_keys').select('script_version, last_used_at').maybeSingle()
+    if (!data) return null
+    const latest = await latestWake()
+    const seen = data.last_used_at ? Date.parse(data.last_used_at) : null
+    return {
+      version: data.script_version, latest,
+      running: seen != null && Date.now() - seen < 5 * 60e3, last_seen_at: data.last_used_at,
+      update_available: !!latest && data.script_version !== latest,
+      update: 'curl -fsSL https://goalcraft.ai/wake/goalcraft-wake.py -o ~/.goalcraft/goalcraft-wake.py && launchctl kickstart -k gui/$(id -u)/ai.goalcraft.wake',
+    }
+  }
+
   s.registerTool('list_funnels', {
     title: 'List funnels',
-    description: 'The person\'s plan with its limits, and their goal funnels: stages with counts, results, goal, agents present, open questions, and answers you still owe a short reply to (answers_to_reply).',
+    description: 'The person\'s plan with its limits, their wake script if they set one up (wake_script: its version, the latest, whether it runs, the update command), and their goal funnels: stages with counts, results, goal, agents present, open questions, and answers you still owe a short reply to (answers_to_reply).',
     inputSchema: req({}),
     annotations: { title: 'List funnels', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async () => text({ ...(await plan(db)), funnels: await funnels(db) }))
+  }, async () => text({ ...(await plan(db)), wake_script: await wakeScript(), funnels: await funnels(db) }))
 
   s.registerTool('upsert_funnel', {
     title: 'Create or update a funnel',

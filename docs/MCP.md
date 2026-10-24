@@ -71,7 +71,7 @@ Only counts, dates and links are stored. Item lists (vacancies, people, papers) 
 
 | Tool | Does |
 |---|---|
-| `list_funnels()` | The plan and its limits; funnels, stages, counts, results, goal, agents present, open questions, and answers the agent still owes a short reply to (`answers_to_reply`) |
+| `list_funnels()` | The plan and its limits; the person's wake script if they set one up (`wake_script`: `version`, `latest`, `running`, `update_available` and the `update` command; it never updates itself); funnels, stages, counts, results, goal, agents present, open questions, and answers the agent still owes a short reply to (`answers_to_reply`) |
 | `upsert_funnel(id, title, result, goal_total, goal_due?, source_url?, guide_url?, theme?, stages[])` | Create or update a funnel and its stages (`key`, `label`); stages keep their counts by key; `goal_due` is a date-time with the person's UTC offset (`2026-12-31T18:00:00+07:00`) or a date (`2026-12-31`, the end of that day in UTC), and leaving it out keeps the one set before |
 | `report_counts(funnel_id, counts{stage_key: n}, results?, fill_percent?{stage_key: 0–100}, flow_per_day?{stage_key or "results": n}, source_url?, guide_url?)` | Counts after the agent's work, cumulative (everything that ever reached a stage); the server stores each report with a timestamp. `source_url` sets the funnel's list link (`null` removes it). Optional manual readings: tank fill in % and the flow written on a tank (`+N`) in items per day, by stage key or `results`; `null` returns one to automatic |
 | `add_result(funnel_id)` | One more result came out (increments `results`) |
