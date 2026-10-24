@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=50252541';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=50252541';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=50252541';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=ebd31f61';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=ebd31f61';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ebd31f61';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -333,7 +333,7 @@ export function mountDashboard(funnels, opts = {}) {
     // A run's funnel by its id (live) or title (demo); its name as on the board.
     const funnelOf = new Map(scene.funnels.map(f => [f.id ?? f.title, f]));
     const agentName = r => agentInfo(r.agent).name;
-    const measures = ['$', ...['claude', 'codex'].filter(app => rows.some(r => r.app === app && r.limit != null))];
+    const measures = ['$', ...['claude', 'codex', 'antigravity'].filter(app => rows.some(r => r.app === app && r.limit != null))];
     const value = r => spendState.measure === '$' ? r.cost : r.app === spendState.measure ? r.limit : null;
     const fmt = v => spendState.measure === '$' ? fmtCost(v) : fmtPercent(v);
     let u, all, period;
@@ -382,7 +382,7 @@ export function mountDashboard(funnels, opts = {}) {
       body.innerHTML = `${filtered ? `<p class="spend-filter"><span>${esc(filtered)}</span> <button type="button" class="link spend-all">${esc(t('spend.allFunnels'))}</button></p>` : ''}
         <div class="hist-controls">${periods.length > 1 ? `<div class="hist-periods spend-periods">${btns(periods.map(String), String(shown), 'p', p => periodLabel(u, Number(p)))}</div>` : '<span></span>'}
           <div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" title="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div></div>
-        <div class="hist-controls">${measures.length > 1 ? `<div class="hist-periods spend-measure">${btns(measures, spendState.measure, 'm', m => m === '$' ? '$' : `% ${m === 'claude' ? 'Claude' : 'Codex'}`)}</div>` : '<span></span>'}
+        <div class="hist-controls">${measures.length > 1 ? `<div class="hist-periods spend-measure">${btns(measures, spendState.measure, 'm', m => m === '$' ? '$' : `% ${{ claude: 'Claude', codex: 'Codex', antigravity: 'Antigravity' }[m]}`)}</div>` : '<span></span>'}
           <div class="hist-periods spend-split">${btns(splits, split, 's', s => t({ funnel: 'spend.byFunnel', agent: 'spend.byAgent', vendor: 'spend.byVendor' }[s]))}</div></div>
         <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(spendState.measure === '$' ? '$' + fmtCount(v) : v + '%')}</span>`).join('')}</div>
           <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}

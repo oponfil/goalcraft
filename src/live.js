@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=50252541';
+import { supabase } from './auth.js?v=ebd31f61';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -119,33 +119,38 @@ function dayUsage(rows) {
   };
 }
 
-// The Claude plan's weekly limit, from the wake script's hourly readings: what share of it $1 at API
-// prices takes (the rise of the weekly percent over what every local session cost meanwhile, over
-// the last week, within one weekly window), and how much of it is used now. Claude doesn't log the
-// limit as Codex does, so a Claude run's share is its cost times this rate.
-let claudeLimit = { perDollar: null, week: null };
-function limitRate(rows) {
+// The plans' limits the wake script reads hourly (Claude's weekly limit, Antigravity's Gemini quota):
+// what share of each $1 at API prices takes (the rise of the used percent over what every local
+// session of that app cost meanwhile, over the last week, within one window), and how much is used
+// now. Neither app logs it per run as Codex does, so a run's share is its cost times this rate.
+let limits = {};
+// Claude gives whole percents: wait until enough has been spent for the rate to mean something;
+// Antigravity's are exact.
+const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3 } };
+function limitRate(rows, min) {
   let pct = 0, usd = 0;
   for (let i = 1; i < rows.length; i++) {
     const a = rows[i - 1], b = rows[i];
-    const sameWeek = a.week_resets_at && b.week_resets_at && Math.abs(Date.parse(a.week_resets_at) - Date.parse(b.week_resets_at)) < 3600e3;
-    if (b.cost_usd == null || !sameWeek) continue;
+    const sameWindow = a.week_resets_at && b.week_resets_at && Math.abs(Date.parse(a.week_resets_at) - Date.parse(b.week_resets_at)) < 3600e3;
+    if (b.cost_usd == null || !sameWindow) continue;
     pct += Math.max(0, Number(b.week_percent) - Number(a.week_percent));
     usd += Number(b.cost_usd);
   }
-  // Whole percents only: wait until enough has been spent for the rate to mean something.
-  return { perDollar: usd >= 20 && pct >= 2 ? pct / usd : null, week: rows.length ? Number(rows[rows.length - 1].week_percent) : null };
+  return { perDollar: usd >= min.usd && pct >= min.pct ? pct / usd : null, week: rows.length ? Number(rows[rows.length - 1].week_percent) : null };
 }
-// A Claude run's share of the weekly limit, from its cost; Codex runs keep what Codex logged.
-const withLimit = r => (r.app === 'claude' && r.limit_used == null && r.cost_usd != null && claudeLimit.perDollar != null
-  ? { ...r, limit_used: Number(r.cost_usd) * claudeLimit.perDollar, limit_percent: claudeLimit.week, limit_window_minutes: 7 * 1440 }
-  : r);
+// A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged.
+const withLimit = r => {
+  const l = limits[r.app];
+  return r.limit_used == null && r.cost_usd != null && l?.perDollar != null
+    ? { ...r, limit_used: Number(r.cost_usd) * l.perDollar, limit_percent: l.week, limit_window_minutes: 7 * 1440 }
+    : r;
+};
 
 export async function loadFunnels() {
   const now = Date.now();
-  const readings = await supabase.from('limit_readings').select('at, week_percent, week_resets_at, cost_usd')
-    .eq('app', 'claude').gte('at', new Date(now - 8 * DAY).toISOString()).order('at');
-  if (!readings.error) claudeLimit = limitRate(readings.data);
+  const readings = await supabase.from('limit_readings').select('app, at, week_percent, week_resets_at, cost_usd')
+    .gte('at', new Date(now - 8 * DAY).toISOString()).order('at');
+  if (!readings.error) limits = Object.fromEntries(Object.keys(LIMIT_MIN).map(app => [app, limitRate(readings.data.filter(r => r.app === app), LIMIT_MIN[app])]));
   const [funnels, reports, usage] = await Promise.all([
     supabase.from('funnels')
       .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day,

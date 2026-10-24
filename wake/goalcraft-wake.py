@@ -23,7 +23,8 @@ The key comes from the Goalcraft MCP tool create_wake_key (your agent calls it a
 It only lets the script ask whom to wake, and send what the agents' runs used in tokens (read from
 their session files here: numbers only, nothing from the conversations). Once an hour it also asks
 Anthropic how much of your Claude plan's limit is used, with Claude Code's own sign-in from this Mac's
-keychain (read here, sent only to Anthropic), so the dashboard can show each run's share of it.
+keychain (read here, sent only to Anthropic), and Google Antigravity (while it runs) how much of its Gemini
+quota is, from its own server on this Mac, so the dashboard can show each run's share of them.
 Standard library only; the log is ~/.goalcraft/wake.log.
 """
 import glob
@@ -355,10 +356,7 @@ def report_limit(key, show=False):
         log('limit: no weekly limit in the answer')
         return False
     now = time.time()
-    try:
-        before = json.loads(LIMIT_STATE.read_text()).get('at')
-    except Exception:
-        before = None
+    before = limit_state().get('at')
     cost = round(local_claude_cost(before, now), 4) if before else None
     row = {'app': 'claude', 'at': iso(now), 'week_percent': week['utilization'], 'week_resets_at': week.get('resets_at'),
            'session_percent': session.get('utilization'), 'session_resets_at': session.get('resets_at'), 'cost_usd': cost}
@@ -374,7 +372,100 @@ def report_limit(key, show=False):
     except Exception as e:
         log(f'limit: could not send: {e}')
         return False
-    LIMIT_STATE.write_text(json.dumps({'at': now}))
+    save_limit_state(at=now)
+    return True
+
+
+def limit_state():
+    try:
+        return json.loads(LIMIT_STATE.read_text())
+    except Exception:
+        return {}
+
+
+def save_limit_state(**changes):
+    LIMIT_STATE.write_text(json.dumps({**limit_state(), **changes}))
+
+
+def antigravity_server():
+    """Antigravity's language server on this Mac, while the app runs: its local ports and the token the
+    app itself uses with it (from the process's command line; it never leaves this computer)."""
+    try:
+        ps = subprocess.run(['ps', '-axo', 'pid=,command='], capture_output=True, text=True, timeout=10).stdout
+    except Exception:
+        return None
+    for line in ps.splitlines():
+        if 'language_server' not in line or 'antigravity' not in line or '--csrf_token' not in line:
+            continue
+        pid = line.split()[0]
+        token = line.split('--csrf_token', 1)[1].strip(' =').split()[0]
+        try:
+            out = subprocess.run(['lsof', '-nP', '-iTCP', '-sTCP:LISTEN', '-a', '-p', pid], capture_output=True, text=True, timeout=10).stdout
+        except Exception:
+            continue
+        ports = [l.split()[8].rsplit(':', 1)[1] for l in out.splitlines()[1:] if len(l.split()) > 8]
+        return {'token': token, 'ports': ports}
+    return None
+
+
+def antigravity_cost(since, until):
+    """What every Antigravity conversation here cost at API prices between two moments."""
+    total = 0.0
+    for f in glob.glob(str(ANTIGRAVITY / '*.db')):
+        if os.path.getmtime(f) < since:
+            continue
+        for t, model, u in antigravity_calls(f):
+            if since < t <= until:
+                total += gemini_cost(model, u) or 0.0
+    return total
+
+
+def report_antigravity_limit(key, show=False):
+    """Read how much of Antigravity's Gemini quota is used (the most used Gemini model's, as the app shows
+    it) and send it to Goalcraft, with what every Antigravity conversation cost since the reading before."""
+    import ssl
+    server = antigravity_server()
+    if not server:
+        return False  # the app isn't running: nothing to read, and nothing to log every hour
+    ctx = ssl.create_default_context()
+    ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE  # its own certificate, on 127.0.0.1
+    status = None
+    for port in server['ports']:
+        req = urllib.request.Request(f'https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/GetUserStatus',
+                                     data=b'{}', method='POST', headers={'Content-Type': 'application/json', 'Connect-Protocol-Version': '1',
+                                                                          'X-Codeium-Csrf-Token': server['token']})
+        try:
+            with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
+                status = json.load(r)
+            break
+        except Exception:
+            continue
+    if not status:
+        log('limit: Antigravity is running but did not answer')
+        return False
+    gemini = [c.get('quotaInfo') or {} for c in ((status.get('userStatus') or {}).get('cascadeModelConfigData') or {}).get('clientModelConfigs', [])
+              if str(c.get('label', '')).lower().startswith('gemini') and (c.get('quotaInfo') or {}).get('remainingFraction') is not None]
+    if not gemini:
+        log('limit: no Gemini quota in Antigravity')
+        return False
+    q = min(gemini, key=lambda x: x['remainingFraction'])
+    now = time.time()
+    before = limit_state().get('antigravity_at')
+    cost = round(antigravity_cost(before, now), 4) if before else None
+    row = {'app': 'antigravity', 'at': iso(now), 'week_percent': round((1 - q['remainingFraction']) * 100, 2),
+           'week_resets_at': q.get('resetTime'), 'cost_usd': cost}
+    if show:
+        print(f'Antigravity (Gemini): {row["week_percent"]}% used (resets {row["week_resets_at"]})'
+              + (f', Antigravity since the last reading ≈${cost:.2f}' if cost is not None else ''))
+    req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={
+        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            json.load(r)
+    except Exception as e:
+        log(f'limit: could not send Antigravity: {e}')
+        return False
+    save_limit_state(antigravity_at=now)
     return True
 
 
@@ -485,6 +576,44 @@ def first(msg, *path):
         msg = proto(v)
 
 
+def antigravity_calls(f):
+    """An Antigravity conversation's model calls, oldest first: (time, model, usage), the time being that
+    of the step each call ended on. Usage fields (ModelUsageStats): 2 input, 3 output with thinking,
+    4 cache writes, 5 cache reads."""
+    import sqlite3
+    try:
+        db = sqlite3.connect(f'file:{f}?mode=ro&immutable=1', uri=True)
+        when_ = {idx: first(proto(meta or b''), 1, 1) for idx, meta in db.execute('select idx, metadata from steps')}
+        calls = db.execute('select data from gen_metadata order by idx').fetchall()
+        db.close()
+    except Exception as e:
+        log(f'usage: antigravity {pathlib.Path(f).stem}: {e}')
+        return []
+    points = []
+    for (data,) in calls:
+        call = proto(proto(data).get(1, [b''])[0])
+        usage = proto(first(call, 17, 2) or b'')
+        model = (call.get(19) or [b''])[0].decode('utf-8', 'replace')
+        facts = {}
+        for kv in call.get(20, []):
+            kv = proto(kv)
+            facts[(kv.get(1) or [b''])[0].decode('utf-8', 'replace')] = (kv.get(2) or [b''])[0].decode('utf-8', 'replace')
+        step = facts.get('last_step_index', '')
+        t = when_.get(int(step)) if step.isdigit() else None
+        if t and usage:
+            points.append((t, model, usage))
+    return sorted(points, key=lambda p: p[0])
+
+
+def gemini_cost(model, u):
+    """One Antigravity model call at API prices, or None for a model with no price."""
+    pr = price(model, GEMINI_PRICES)
+    if pr is None:
+        return None
+    n = lambda field: (u.get(field) or [0])[0]
+    return ((n(2) + n(4)) * pr[0] + n(3) * pr[1] + n(5) * pr[2]) / 1e6
+
+
 def antigravity_usage(item):
     """Runs of a Gemini agent in Google Antigravity: the conversations that mention both its name and its
     funnel (it calls Goalcraft from there), each model call's tokens and the time of the step it ended on."""
@@ -500,28 +629,7 @@ def antigravity_usage(item):
         if not all(n in raw for n in names):
             continue
         cascade = pathlib.Path(f).stem
-        try:
-            db = sqlite3.connect(f'file:{f}?mode=ro&immutable=1', uri=True)
-            when_ = {idx: first(proto(meta or b''), 1, 1) for idx, meta in db.execute('select idx, metadata from steps')}
-            calls = db.execute('select data from gen_metadata order by idx').fetchall()
-            db.close()
-        except Exception as e:
-            log(f'usage: antigravity {cascade}: {e}')
-            continue
-        points = []
-        for (data,) in calls:
-            call = proto(proto(data).get(1, [b''])[0])
-            usage = proto(first(call, 17, 2) or b'')
-            model = (call.get(19) or [b''])[0].decode('utf-8', 'replace')
-            facts = {}
-            for kv in call.get(20, []):
-                kv = proto(kv)
-                facts[(kv.get(1) or [b''])[0].decode('utf-8', 'replace')] = (kv.get(2) or [b''])[0].decode('utf-8', 'replace')
-            step = facts.get('last_step_index', '')
-            t = when_.get(int(step)) if step.isdigit() else None
-            if t and usage:
-                points.append((t, model, usage))
-        points.sort(key=lambda p: p[0])
+        points = antigravity_calls(f)
         for run in split_runs(points):
             if run[-1][0] < since:
                 continue
@@ -529,14 +637,13 @@ def antigravity_usage(item):
             cost, models = 0.0, {}
             for _, model, u in run:
                 n = lambda field: (u.get(field) or [0])[0]
-                fresh, out_, write, read = n(2), n(3), n(4), n(5)
-                kinds['input_tokens'] += fresh
-                kinds['output_tokens'] += out_
-                kinds['cache_write_tokens'] += write
-                kinds['cache_read_tokens'] += read
+                kinds['input_tokens'] += n(2)
+                kinds['output_tokens'] += n(3)
+                kinds['cache_write_tokens'] += n(4)
+                kinds['cache_read_tokens'] += n(5)
                 models[model] = models.get(model, 0) + 1
-                pr = price(model, GEMINI_PRICES)
-                cost = None if pr is None or cost is None else cost + ((fresh + write) * pr[0] + out_ * pr[1] + read * pr[2]) / 1e6
+                c = gemini_cost(model, u)
+                cost = None if c is None or cost is None else cost + c
             out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'antigravity',
                         'run_key': f'{cascade}:{int(run[0][0])}', 'model': max(models, key=models.get),
                         'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), **totals(kinds),
@@ -629,7 +736,9 @@ def limit_next_after(seconds):
 
 def limit_job(key):
     """One hourly reading of the Claude plan's limit; when it fails (no network, say), again in 5 minutes."""
-    limit_next_after(LIMIT_EVERY if report_limit(key) else 5 * 60)
+    claude = report_limit(key)
+    report_antigravity_limit(key)
+    limit_next_after(LIMIT_EVERY if claude else 5 * 60)
 
 
 def run():
@@ -705,7 +814,9 @@ if __name__ == '__main__':
     elif cmd == 'version':
         print(VERSION)
     elif cmd == 'limit':
-        print('sent to Goalcraft' if report_limit(key_or_exit(), show=True) else 'failed: see ~/.goalcraft/wake.log')
+        key = key_or_exit()
+        print('Claude: sent' if report_limit(key, show=True) else 'Claude: failed, see ~/.goalcraft/wake.log')
+        print('Antigravity: sent' if report_antigravity_limit(key, show=True) else 'Antigravity: not running or failed')
     elif cmd == 'once':
         print('ok' if check(key_or_exit()) == 200 else 'failed: see ~/.goalcraft/wake.log')
         time.sleep(1)

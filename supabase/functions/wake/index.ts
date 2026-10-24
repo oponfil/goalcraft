@@ -9,7 +9,7 @@
 //                input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd,
 //                limit_percent, limit_used, limit_window_minutes }], replace_from? }   → { saved }: what their runs
 //                used; replace_from drops what was sent before for runs that ended since then
-//   POST /wake { limits: [{ app: "claude", at, week_percent, week_resets_at?, session_percent?, session_resets_at?,
+//   POST /wake { limits: [{ app: "claude" | "antigravity", at, week_percent, week_resets_at?, session_percent?, session_resets_at?,
 //                cost_usd? }] }   → { saved }: the plan's limit as the script read it, with what every local
 //                session of that app cost since the reading before (the board turns cost into a share of it)
 //
@@ -49,7 +49,7 @@ async function saveLimits(user: string, list: any[]) {
   const time = (v: unknown) => typeof v === 'string' && !isNaN(Date.parse(v)) ? new Date(v).toISOString() : null
   const ok = list.slice(0, 50).flatMap((r: any) => {
     const at = time(r?.at), week = num(r?.week_percent, 100)
-    if (r?.app !== 'claude' || !at || week == null) return []
+    if (!['claude', 'antigravity'].includes(r?.app) || !at || week == null) return []
     return [{ user_id: user, app: r.app, at, week_percent: week, week_resets_at: time(r.week_resets_at),
       session_percent: num(r.session_percent, 100), session_resets_at: time(r.session_resets_at), cost_usd: num(r.cost_usd, 1e6) }]
   })
