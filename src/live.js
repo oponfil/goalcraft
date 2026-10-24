@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=fbab5950';
+import { supabase } from './auth.js?v=e88abac4';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -196,7 +196,8 @@ export async function spending(from) {
     .select('funnel_id, agent, app, model, started_at, cost_usd, limit_used')
     .gte('started_at', new Date(from).toISOString()).order('started_at'));
   if (error) throw error;
-  return data.map(withLimit).map(r => ({ funnel: r.funnel_id, agent: r.agent, app: r.app, at: Date.parse(r.started_at),
+  // limit: which limit its share is of ("claude", "codex", "antigravity:gemini-4-argon"…).
+  return data.map(withLimit).map(r => ({ funnel: r.funnel_id, agent: r.agent, app: r.app, quota: limitKey(r), at: Date.parse(r.started_at),
     cost: r.cost_usd == null ? null : Number(r.cost_usd), limit: r.limit_used == null ? null : Number(r.limit_used) }));
 }
 

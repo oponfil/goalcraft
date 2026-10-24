@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=fbab5950';
-import { mountDashboard } from './dashboard.js?v=fbab5950';
-import { t } from './i18n.js?v=fbab5950';
+import { FUNNELS, SUP_RUNS } from './data.js?v=e88abac4';
+import { mountDashboard } from './dashboard.js?v=e88abac4';
+import { t } from './i18n.js?v=e88abac4';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -53,8 +53,10 @@ async function demoSpending(from) {
           if (at > now || at < from) continue;
           const m = size * (2 + r() * 4);  // millions of tokens, nearly all re-read from the cache
           const cost = m * (0.03 * pr[0] + 0.95 * pr[1] + 0.01 * pr[3]);
-          out.push({ funnel: f.title, agent: a.agent, app: a.agent === 'claude' ? 'claude' : a.agent === 'chatgpt' ? 'codex' : null, at, cost,
-            limit: a.agent === 'chatgpt' ? cost * 0.9 : a.agent === 'claude' ? cost * 0.12 : null });
+          const app = { claude: 'claude', chatgpt: 'codex', gemini: 'antigravity' }[a.agent] ?? null;
+          const quota = app === 'antigravity' ? 'antigravity:gemini-4-argon' : app;
+          out.push({ funnel: f.title, agent: a.agent, app, quota, at, cost,
+            limit: { chatgpt: cost * 0.9, claude: cost * 0.12, gemini: cost * 0.3 }[a.agent] ?? null });
         }
       }
     }
