@@ -125,7 +125,7 @@ export default {
   'board.silent': (n) => `제때 소식이 없는 에이전트: ${n}`,
   'board.lost': (who) => `${who}에게서 소식이 없습니다`,
   'board.runs': '이전 실행',
-  'board.usageDay': (n) => `최근 7일: ${n}`,
+  'board.usageDay': (n) => `최근 7일 사용량: ${n}`,
   'board.tokens': (n) => `${n} 토큰`,
   'board.tokNew': (n) => `새 입력: ${n}`,
   'board.tokCacheRead': (n) => `캐시에서 읽은 입력: ${n}`,

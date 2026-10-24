@@ -126,7 +126,7 @@ export default {
   'board.silent': (n) => `時間どおりに連絡がないエージェント：${n}`,
   'board.lost': (who) => `${who} から連絡がありません`,
   'board.runs': '以前の実行',
-  'board.usageDay': (n) => `直近7日間: ${n}`,
+  'board.usageDay': (n) => `直近7日間の消費: ${n}`,
   'board.tokens': (n) => `${n} トークン`,
   'board.tokNew': (n) => `新規入力: ${n}`,
   'board.tokCacheRead': (n) => `キャッシュからの入力: ${n}`,

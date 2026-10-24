@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=a116d5bf';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=a116d5bf';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=a116d5bf';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c5e77b44';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c5e77b44';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c5e77b44';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -555,7 +555,8 @@ export function mountDashboard(funnels, opts = {}) {
       where = `${from}<b class="run">+${fmtCount(n)}</b> ${esc(plural(n, into))}`;
     }
     // Live only: the agent's last runs, loaded when the person opens them.
-    const history = opts.runs ? `<details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-day"></div><div class="runs-list"></div></details>` : '';
+    // Its last week's spending shows at once, above its runs (which open on a click).
+    const history = opts.runs ? `<div class="runs-day"></div><details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-list"></div></details>` : '';
     // Overdue (it should have run by now) or silent at work: when it was last heard from.
     const missed = scene.overdue(a)
       ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.t + (a.seenAgo || 0))))}</p>` : '';
@@ -600,9 +601,25 @@ export function mountDashboard(funnels, opts = {}) {
 
   // The runs list: when each run started, how long it took (or that it is still going) and what it
   // added to the items its zone works into.
+  // The last week's spending: its cost at API prices and, when known, its share of the plan's weekly
+  // limit (as Codex logged it; for Claude, ≈ its cost at the measured rate). Hovering shows tokens.
+  const weekLine = u => {
+    if (!u) return '';
+    const share = u.limit_used != null ? (u.app === 'claude' ? '≈' : '') + fmtPercent(u.limit_used) : null;
+    const what = u.cost != null ? t('board.usageCost', fmtCost(u.cost)) : t('board.tokens', fmtTokens(u.tokens));
+    return `<p class="pop-note usage" data-tip="${esc(usageTip(u, share))}">${esc(t('board.usageDay', what))}${share ? ` (${esc(t('board.usageLimit', share, 7))})` : ''}</p>`;
+  };
+  // A week of the demo's runs added up, when the agent has no count from the wake script.
+  const weekOf = rows => {
+    const week = rows.filter(r => r.usage && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 7 * 864e5);
+    return week.length ? sumUsage(week.map(r => r.usage)) : null;
+  };
   function bindRuns(a) {
     const box = pop.querySelector('details.runs');
     if (!box) return;
+    const dayBox = pop.querySelector('.runs-day');
+    if (a.usage) dayBox.innerHTML = weekLine(a.usage);
+    else if (!opts.live) Promise.resolve().then(() => opts.runs(a)).then(rows => { if (dayBox.isConnected) dayBox.innerHTML = weekLine(weekOf(rows)); }).catch(() => {});
     box.addEventListener('toggle', async () => {
       const list = box.querySelector('.runs-list');
       if (!box.open || list.dataset.loaded) return;
@@ -611,18 +628,12 @@ export function mountDashboard(funnels, opts = {}) {
       try {
         const rows = await opts.runs(a);
         const st = a.f.stages, when = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
-        // What it spent, in money: the last week, as the plans' limits are weekly (the wake script's
-        // count; in the demo, the listed runs of the last week) and each run at API prices. Hovering one shows its tokens by kind and its
-        // share of the plan's limit: as Codex logged it, or for Claude its cost at the measured rate. Codex logs the limit in whole percent, so a
-        // run's share is the day's limit spread over its runs by their cost, to a tenth.
-        const day = rows.filter(r => r.usage && Date.now() - (r.ended_at ? Date.parse(r.ended_at) : Date.now()) < 7 * 864e5);
-        const u = a.usage || (day.length ? sumUsage(day.map(r => r.usage)) : null);
+        // Each run at API prices; hovering one shows its tokens by kind and its share of the plan's
+        // limit: the week's share spread over the runs by their cost, to a tenth.
+        const u = a.usage || weekOf(rows);
         const perDollar = u?.limit_used != null && u.cost > 0 ? u.limit_used / u.cost : null;
         const runLimit = ru => perDollar != null && ru.cost != null ? '≈' + fmtPercent(ru.cost * perDollar)
           : ru.limit_used != null ? fmtPercent(ru.limit_used) : null;
-        const spent = u ? `<p class="pop-note usage" data-tip="${esc(usageTip(u, u.limit_used != null ? (u.app === 'claude' ? '≈' : '') + fmtPercent(u.limit_used) : null))}">${esc(t('board.usageDay',
-          u.cost != null ? t('board.usageCost', fmtCost(u.cost)) : t('board.tokens', fmtTokens(u.tokens))))}</p>` : '';
-        box.querySelector('.runs-day').innerHTML = spent;
         list.innerHTML = (rows.length ? rows.map(r => {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
           // A supervisor's run says what it found; a worker's run, what it added.

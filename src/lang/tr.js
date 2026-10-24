@@ -125,7 +125,7 @@ export default {
   'board.silent': (n) => `Zamanında haber vermeyen ajanlar: ${n}`,
   'board.lost': (who) => `${who} ses vermiyor`,
   'board.runs': 'Önceki çalışmalar',
-  'board.usageDay': (n) => `Son 7 gün: ${n}`,
+  'board.usageDay': (n) => `Son 7 günün harcaması: ${n}`,
   'board.tokens': (n) => `${n} token`,
   'board.tokNew': (n) => `Yeni girdi: ${n}`,
   'board.tokCacheRead': (n) => `Önbellekten girdi: ${n}`,
