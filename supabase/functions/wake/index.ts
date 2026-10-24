@@ -74,7 +74,7 @@ async function saveUsage(user: string, body: any) {
   const ok = rows.flatMap((r: any) => {
     const funnel_id = id.get(r?.funnel_id), agent = str(r?.agent, 64), run_key = str(r?.run_key, 200)
     const started_at = time(r?.started_at), ended_at = time(r?.ended_at)
-    if (!funnel_id || !agent || !run_key || !started_at || !ended_at || !['claude', 'codex'].includes(r?.app)) return []
+    if (!funnel_id || !agent || !run_key || !started_at || !ended_at || !['claude', 'codex', 'antigravity'].includes(r?.app)) return []
     return [{
       user_id: user, funnel_id, agent, run_key, app: r.app, model: str(r.model, 64), started_at, ended_at,
       tokens: Math.round(num(r.tokens, 1e12) ?? 0), new_tokens: Math.round(num(r.new_tokens, 1e12) ?? 0),
@@ -118,8 +118,10 @@ Deno.serve(async (req) => {
     const { data, error } = await admin.from('presence').select('agent, chat_url, funnels (key)')
       .eq('user_id', user).gte('updated_at', iso(now - 7 * 24 * 3600e3))
     if (error) return json({ error: 'failed' }, 500)
+    // Gemini agents with no chat link the script can resume: it looks for them in Google Antigravity,
+    // in the conversations that mention their name and funnel.
     return json({ agents: (data ?? []).flatMap((p: any) => {
-      const s = session(p.chat_url)
+      const s = session(p.chat_url) ?? ((!p.chat_url || /^antigravity:/i.test(p.chat_url)) && /^gemini/i.test(p.agent) ? { app: 'antigravity', session: null } : null)
       return s ? [{ agent: p.agent, funnel_id: p.funnels?.key, ...s }] : []
     }) })
   }

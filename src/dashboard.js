@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=ba0b1837';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=ba0b1837';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ba0b1837';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=50252541';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=50252541';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=50252541';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -538,10 +538,14 @@ export function mountDashboard(funnels, opts = {}) {
         <p class="pop-note">${esc(t('board.noSupervisorText'))}</p>
         <a class="btn" href="../connect/#supervisor">${esc(t('board.appointSupervisor'))}</a>`;
     }
-    const a = h.a, info = agentInfo(a.agent), f = a.f;
-    // own: the agent's own chat, an app link (claude://, codex://) or a web one; web: where to go
-    // when the app isn't on this computer.
-    const own = a.chat || info.chat, web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);
+    const a = h.a, f = a.f;
+    // A Gemini agent working in Google Antigravity (its link, or its spending read from there) opens
+    // Antigravity, not the Gemini website (still the way when the app isn't on this computer).
+    const inAntigravity = /^antigravity:/i.test(a.chat || '') || (!a.chat && a.usage?.app === 'antigravity');
+    const info = inAntigravity ? { ...agentInfo(a.agent), product: 'Antigravity', app: null } : agentInfo(a.agent);
+    // own: the agent's own chat, an app link (claude://, codex://, antigravity://) or a web one; web:
+    // where to go when the app isn't on this computer.
+    const own = a.chat || (inAntigravity ? 'antigravity://' : info.chat), web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);
     // Its own name when it gave one; else a supervisor goes by its funnel, a worker by its model.
     const named = a.shownName = a.name || (a.sup ? t('board.supervisorName', f.title) : info.name), who = esc(named);
     // The step it works on, with what this run added (the last run's while it sleeps) to the items

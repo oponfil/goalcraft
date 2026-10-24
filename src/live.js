@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=ba0b1837';
+import { supabase } from './auth.js?v=50252541';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -159,9 +159,10 @@ export async function loadFunnels() {
       .select('funnel_id, stage_key, value, at')
       .gte('at', new Date(now - WINDOW_DAYS * DAY).toISOString())
       .order('at').order('id')),
-    supabase.from('agent_usage')
+    // A week of runs is more than one page of rows (1000): read them all.
+    all(() => supabase.from('agent_usage')
       .select('funnel_id, agent, app, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at')
-      .gte('ended_at', new Date(now - 7 * DAY).toISOString()),
+      .gte('ended_at', new Date(now - 7 * DAY).toISOString()).order('ended_at').order('agent').order('run_key')),
   ]);
   if (funnels.error) throw funnels.error;
   if (reports.error) throw reports.error;

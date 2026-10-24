@@ -184,6 +184,7 @@ USAGE_DAYS = 2      # runs ended this recently are (re)sent
 RUN_GAP = 5 * 60    # a pause this long in one session starts a new run
 PROJECTS = HOME / '.claude' / 'projects'
 CODEX_SESSIONS = HOME / '.codex' / 'sessions'
+ANTIGRAVITY = HOME / '.gemini' / 'antigravity' / 'conversations'  # Google Antigravity (Gemini): one database per conversation
 # Anthropic's API prices in $ per million tokens (input, output, cache read); cache writes cost 1.25x
 # input for 5 minutes and 2x for an hour. Longest matching prefix wins; other models get no cost.
 PRICES = {
@@ -196,6 +197,9 @@ PRICES = {
 
 # OpenAI's API prices for Codex's models, $ per million tokens (input, output, cached input, cache write).
 OPENAI_PRICES = {'gpt-6.1-sol': (2, 10, 0.10, 2.5)}
+
+# Google's API prices for Antigravity's models, $ per million tokens (input, output with thinking, cached input).
+GEMINI_PRICES = {'gemini-4-argon': (2, 10, 0.10)}
 
 
 def price(model, table=PRICES):
@@ -440,6 +444,106 @@ def codex_usage(item):
     return out
 
 
+def proto(b):
+    """A protobuf message as {field: [values]}: ints for varints, bytes for everything length-delimited."""
+    out, i = {}, 0
+
+    def varint():
+        nonlocal i
+        r = shift = 0
+        while True:
+            x = b[i]
+            i += 1
+            r |= (x & 0x7f) << shift
+            shift += 7
+            if x < 0x80:
+                return r
+    while i < len(b):
+        key = varint()
+        field, kind = key >> 3, key & 7
+        if kind == 0:
+            v = varint()
+        elif kind == 2:
+            n = varint()
+            v, i = b[i:i + n], i + n
+        elif kind == 1:
+            v, i = None, i + 8
+        elif kind == 5:
+            v, i = None, i + 4
+        else:
+            break
+        out.setdefault(field, []).append(v)
+    return out
+
+
+def first(msg, *path):
+    """The value at a path of fields in a protobuf message, or None."""
+    for n, f in enumerate(path):
+        v = (msg.get(f) or [None])[0]
+        if v is None or n == len(path) - 1:
+            return v
+        msg = proto(v)
+
+
+def antigravity_usage(item):
+    """Runs of a Gemini agent in Google Antigravity: the conversations that mention both its name and its
+    funnel (it calls Goalcraft from there), each model call's tokens and the time of the step it ended on."""
+    import sqlite3
+    since = time.time() - USAGE_DAYS * 86400
+    names = (f'"{item["agent"]}"'.encode(), f'"{item["funnel_id"]}"'.encode())
+    out = []
+    for f in glob.glob(str(ANTIGRAVITY / '*.db')):
+        if os.path.getmtime(f) < since:
+            continue
+        with open(f, 'rb') as fh:
+            raw = fh.read()
+        if not all(n in raw for n in names):
+            continue
+        cascade = pathlib.Path(f).stem
+        try:
+            db = sqlite3.connect(f'file:{f}?mode=ro&immutable=1', uri=True)
+            when_ = {idx: first(proto(meta or b''), 1, 1) for idx, meta in db.execute('select idx, metadata from steps')}
+            calls = db.execute('select data from gen_metadata order by idx').fetchall()
+            db.close()
+        except Exception as e:
+            log(f'usage: antigravity {cascade}: {e}')
+            continue
+        points = []
+        for (data,) in calls:
+            call = proto(proto(data).get(1, [b''])[0])
+            usage = proto(first(call, 17, 2) or b'')
+            model = (call.get(19) or [b''])[0].decode('utf-8', 'replace')
+            facts = {}
+            for kv in call.get(20, []):
+                kv = proto(kv)
+                facts[(kv.get(1) or [b''])[0].decode('utf-8', 'replace')] = (kv.get(2) or [b''])[0].decode('utf-8', 'replace')
+            step = facts.get('last_step_index', '')
+            t = when_.get(int(step)) if step.isdigit() else None
+            if t and usage:
+                points.append((t, model, usage))
+        points.sort(key=lambda p: p[0])
+        for run in split_runs(points):
+            if run[-1][0] < since:
+                continue
+            kinds = {'input_tokens': 0, 'cache_read_tokens': 0, 'cache_write_tokens': 0, 'output_tokens': 0}
+            cost, models = 0.0, {}
+            for _, model, u in run:
+                n = lambda field: (u.get(field) or [0])[0]
+                fresh, out_, write, read = n(2), n(3), n(4), n(5)
+                kinds['input_tokens'] += fresh
+                kinds['output_tokens'] += out_
+                kinds['cache_write_tokens'] += write
+                kinds['cache_read_tokens'] += read
+                models[model] = models.get(model, 0) + 1
+                pr = price(model, GEMINI_PRICES)
+                cost = None if pr is None or cost is None else cost + ((fresh + write) * pr[0] + out_ * pr[1] + read * pr[2]) / 1e6
+            out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'antigravity',
+                        'run_key': f'{cascade}:{int(run[0][0])}', 'model': max(models, key=models.get),
+                        'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), **totals(kinds),
+                        'cost_usd': round(cost, 4) if cost is not None else None})
+    return out
+
+
 def report_usage(key, show=False):
     """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
     req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
@@ -453,7 +557,8 @@ def report_usage(key, show=False):
     rows = []
     for item in agents:
         try:
-            rows += claude_usage(item, sessions) if item['app'] == 'claude' else codex_usage(item)
+            rows += (claude_usage(item, sessions) if item['app'] == 'claude' else codex_usage(item) if item['app'] == 'codex'
+                     else antigravity_usage(item) if item['app'] == 'antigravity' else [])
         except Exception as e:
             log(f'usage: {item["agent"]} in {item["funnel_id"]}: {e}')
     if show:

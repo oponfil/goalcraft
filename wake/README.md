@@ -19,6 +19,7 @@ The agents themselves don't know what they spend, but their apps log it on your 
 |---|---|---|
 | Claude app, Claude Code | `~/.claude/projects/*/<session>.jsonl` (every session of a scheduled task) | tokens, cost at API prices, ≈ % of the plan's weekly limit (see below) |
 | Codex | `~/.codex/sessions/…/rollout-*.jsonl` | tokens, % of the plan's limit |
+| Google Antigravity (Gemini) | `~/.gemini/antigravity/conversations/*.db`: the conversations that mention the agent's name and its funnel (it calls Goalcraft from there) | tokens, cost at API prices (Antigravity doesn't keep its plan's limit here) |
 
 Web chats (claude.ai, chatgpt.com, Grok) keep this on their servers, so their agents show none. The cost is what the same tokens would cost on the API; on a subscription they count against its limits instead. `python3 ~/.goalcraft/goalcraft-wake.py usage` reads and sends it at once, and prints it.
 
