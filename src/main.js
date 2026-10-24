@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=e9945084';
-import { mountDashboard } from './dashboard.js?v=e9945084';
-import { t } from './i18n.js?v=e9945084';
+import { FUNNELS, SUP_RUNS } from './data.js?v=69ae49b5';
+import { mountDashboard } from './dashboard.js?v=69ae49b5';
+import { t } from './i18n.js?v=69ae49b5';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -10,6 +10,7 @@ mountDashboard(FUNNELS, {
   onMessage: async () => null,
   runs: demoRuns,
   history: demoHistory,
+  spending: demoSpending,
 });
 
 // Made-up growth of a stage for its card, the same each time: about its flow per day, more on
@@ -31,6 +32,34 @@ async function demoHistory(f, j) {
   adds.sort((a, b) => a[0] - b[0]);
   const start = new Date(now - 119 * 864e5); start.setHours(0, 0, 0, 0);
   return { adds, since: start.getTime() };
+}
+
+// Made-up spending of every agent for the spending chart, the same each time: two to four runs a
+// day over the last 120 days, priced as its model is (DEMO_PRICES), busier on weekdays; ChatGPT
+// (Codex) also with its share of the plan's weekly limit, Claude with its share at a made-up rate.
+async function demoSpending(from) {
+  const out = [], now = Date.now();
+  for (const f of FUNNELS) {
+    for (const a of [...f.workers, ...(f.supervisor ? [{ ...f.supervisor, sup: true }] : [])]) {
+      let seed = [...f.title + a.agent + (a.sup ? 'sup' : a.zone)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 5);
+      const r = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+      const pr = DEMO_PRICES[a.agent] || DEMO_PRICES.gemini, size = a.sup ? 0.3 : 0.6 + r();
+      for (let i = 119; i >= 0; i--) {
+        const d = new Date(now - i * 864e5), weekend = d.getDay() === 0 || d.getDay() === 6;
+        const n = Math.round((weekend ? 1.5 : 3) * (0.5 + r()));
+        d.setHours(0, 0, 0, 0);
+        for (let k = 0; k < n; k++) {
+          const at = d.getTime() + (7 + r() * 16) * 3600e3;
+          if (at > now || at < from) continue;
+          const m = size * (2 + r() * 4);  // millions of tokens, nearly all re-read from the cache
+          const cost = m * (0.03 * pr[0] + 0.95 * pr[1] + 0.01 * pr[3]);
+          out.push({ funnel: f.title, agent: a.agent, app: a.agent === 'claude' ? 'claude' : a.agent === 'chatgpt' ? 'codex' : null, at, cost,
+            limit: a.agent === 'chatgpt' ? cost * 0.9 : a.agent === 'claude' ? cost * 0.12 : null });
+        }
+      }
+    }
+  }
+  return out.sort((x, y) => x.at - y.at);
 }
 
 // Made-up last runs for an agent's card, the same each time for the same agent: a run every 6-12

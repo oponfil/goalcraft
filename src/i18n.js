@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=e9945084';
-import vi from './lang/vi.js?v=e9945084';
-import ja from './lang/ja.js?v=e9945084';
-import pt from './lang/pt.js?v=e9945084';
-import tr from './lang/tr.js?v=e9945084';
-import ko from './lang/ko.js?v=e9945084';
+import es from './lang/es.js?v=69ae49b5';
+import vi from './lang/vi.js?v=69ae49b5';
+import ja from './lang/ja.js?v=69ae49b5';
+import pt from './lang/pt.js?v=69ae49b5';
+import tr from './lang/tr.js?v=69ae49b5';
+import ko from './lang/ko.js?v=69ae49b5';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -366,6 +366,16 @@ const STRINGS = {
   'hist.all': L('All', 'Всё', '全部', 'ทั้งหมด'),
   'hist.total': L((n, a, per) => `In this period: +${n} · +${a} ${per} on average`, (n, a, per) => `За период: +${n} · в среднем +${a} ${per}`, (n, a, per) => `此期间：+${n} · 平均${per} +${a}`, (n, a, per) => `ช่วงนี้: +${n} · เฉลี่ย +${a} ${per}`),
   'hist.weeks': L((n) => `${n} weeks`, (n) => `${n} нед.`, (n) => `${n} 周`, (n) => `${n} สัปดาห์`),
+  'spend.button': L('Spending', 'Расход', '消耗', 'ค่าใช้จ่าย'),
+  'spend.title': L('Agents\' spending', 'Расход агентов', '智能体消耗', 'ค่าใช้จ่ายของเอเจนต์'),
+  'spend.byFunnel': L('Funnels', 'Воронки', '漏斗', 'กรวย'),
+  'spend.byAgent': L('Agents', 'Агенты', '智能体', 'เอเจนต์'),
+  'spend.total': L((n, a, per) => `In this period: ${n} · ${a} ${per} on average`, (n, a, per) => `За период: ${n} · в среднем ${a} ${per}`, (n, a, per) => `此期间：${n} · 平均${per} ${a}`, (n, a, per) => `ช่วงนี้: ${n} · เฉลี่ย ${a} ${per}`),
+  'spend.limitNote': L('of the weekly limit', 'от недельного лимита', '占每周额度', 'ของโควตารายสัปดาห์'),
+  'spend.allFunnels': L('All funnels', 'Все воронки', '全部漏斗', 'ทุกกรวย'),
+  'spend.pick': L('Show this funnel only', 'Показать только эту воронку', '只看这个漏斗', 'แสดงเฉพาะกรวยนี้'),
+  'spend.runs': L((n) => `${n} run${n === 1 ? '' : 's'}`, (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'запуск' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'запуска' : 'запусков'}`, (n) => `${n} 次运行`, (n) => `${n} ครั้ง`),
+  'spend.none': L('No spending yet: it comes from the wake script on your computer, which reads it from your agents\' apps.', 'Расхода пока нет: его присылает скрипт пробуждения на вашем компьютере, читая его из приложений агентов.', '还没有消耗记录：它来自你电脑上的唤醒脚本，从智能体的应用中读取。', 'ยังไม่มีค่าใช้จ่าย: สคริปต์ปลุกบนคอมพิวเตอร์ของคุณจะส่งมา โดยอ่านจากแอปของเอเจนต์'),
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.moreQuestions': L((n) => `${n} more question${n === 1 ? '' : 's'}`, (n) => `Ещё вопросов: ${n}`, (n) => `还有 ${n} 个问题`, (n) => `อีก ${n} คำถาม`),
   'nav.tanksGrow': L('Tanks grow with items', 'Баки растут с количеством', '储罐随数量增长', 'ถังขยายตามจำนวน'),

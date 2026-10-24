@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=e9945084';
+import { supabase } from './auth.js?v=69ae49b5';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -173,6 +173,17 @@ export async function answer(questionId, text) {
     .update({ answer: text, answered_at: new Date().toISOString() })
     .eq('id', questionId);
   return error?.message;
+}
+
+// Every run's cost since a moment, for the spending chart: which funnel and agent, when, what it cost
+// at API prices and its share of the plan's limit (Codex as logged; Claude at the measured rate).
+export async function spending(from) {
+  const { data, error } = await all(() => supabase.from('agent_usage')
+    .select('funnel_id, agent, app, started_at, cost_usd, limit_used')
+    .gte('started_at', new Date(from).toISOString()).order('started_at'));
+  if (error) throw error;
+  return data.map(withLimit).map(r => ({ funnel: r.funnel_id, agent: r.agent, app: r.app, at: Date.parse(r.started_at),
+    cost: r.cost_usd == null ? null : Number(r.cost_usd), limit: r.limit_used == null ? null : Number(r.limit_used) }));
 }
 
 // An agent's last runs in its funnel, newest first, for its card.
