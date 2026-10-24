@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=548f4e8e';
+import { supabase } from './auth.js?v=a116d5bf';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -113,7 +113,8 @@ function dayUsage(rows) {
   return {
     runs: rows.length,
     ...kinds(rows),
-    cost: rows.every(r => r.cost_usd != null) ? rows.reduce((n, r) => n + Number(r.cost_usd), 0) : null,
+    // What the runs with a known price cost; a run whose model has no price doesn't hide the rest.
+    cost: rows.some(r => r.cost_usd != null) ? rows.reduce((n, r) => n + Number(r.cost_usd ?? 0), 0) : null,
     app: rows[0].app,
   };
 }
@@ -213,7 +214,7 @@ export async function runs(a, limit = 10) {
     if (best >= 0) mine[best].push(u);
   }
   return data.map((r, i) => mine[i].length ? { ...r, usage: { ...kinds(mine[i]),
-    cost: mine[i].every(u => u.cost_usd != null) ? mine[i].reduce((n, u) => n + Number(u.cost_usd), 0) : null } } : r);
+    cost: mine[i].some(u => u.cost_usd != null) ? mine[i].reduce((n, u) => n + Number(u.cost_usd ?? 0), 0) : null } } : r);
 }
 
 // A stage's history for its card: how much it grew each day (its reports' rises added up, as the

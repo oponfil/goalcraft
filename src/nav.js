@@ -2,9 +2,9 @@
 // profile button (the Google photo, or a plain silhouette) whose menu holds the rarely used
 // settings: the language, email when an agent asks, and signing out. A signed-in person's language
 // is kept in their account too.
-import { account, openBilling } from './billing.js?v=548f4e8e';
-import { supabase, siteUrl } from './auth.js?v=548f4e8e';
-import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved, TANK_VIEWS, tankView, setTankView, onTanksSaved } from './i18n.js?v=548f4e8e';
+import { account, openBilling } from './billing.js?v=a116d5bf';
+import { supabase, siteUrl } from './auth.js?v=a116d5bf';
+import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved, TANK_VIEWS, tankView, setTankView, onTanksSaved } from './i18n.js?v=a116d5bf';
 
 // The profile button's picture for people without a Google photo.
 const SILHOUETTE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5z"/></svg>';

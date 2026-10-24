@@ -412,6 +412,7 @@ def codex_usage(item):
                 if pl.get('type') == 'token_count' and total and t is not None:
                     points.append((t, total, (pl.get('rate_limits') or {}).get('primary') or {}, model))
         before, limit_before = {}, None
+        known = next((p[3] for p in points if p[3]), None)
         for run in split_runs(points):
             end = run[-1][1]
             d = {k: end.get(k, 0) - before.get(k, 0) for k in ('input_tokens', 'cached_input_tokens', 'cache_write_input_tokens', 'output_tokens')}
@@ -426,7 +427,8 @@ def codex_usage(item):
             read, write = max(0, d['cached_input_tokens']), max(0, d['cache_write_input_tokens'])
             kinds = {'input_tokens': max(0, d['input_tokens'] - read - write), 'cache_read_tokens': read,
                      'cache_write_tokens': write, 'output_tokens': max(0, d['output_tokens'])}
-            model_ = run[-1][3]
+            # A run that began before Codex logged the thread's model: the model the thread uses.
+            model_ = run[-1][3] or known
             pr = price(model_, OPENAI_PRICES)
             cost = None if pr is None else (kinds['input_tokens'] * pr[0] + kinds['output_tokens'] * pr[1]
                                             + read * pr[2] + write * pr[3]) / 1e6

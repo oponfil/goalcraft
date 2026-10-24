@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=548f4e8e';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=548f4e8e';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=548f4e8e';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=a116d5bf';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=a116d5bf';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=a116d5bf';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -511,7 +511,7 @@ export function mountDashboard(funnels, opts = {}) {
   const sumUsage = list => {
     const out = {};
     for (const k of ['tokens', 'input_tokens', 'cache_read_tokens', 'cache_write_tokens', 'output_tokens', 'cost', 'limit_used'])
-      out[k] = list.every(x => x[k] != null) ? list.reduce((n, x) => n + x[k], 0) : null;
+      out[k] = list.some(x => x[k] != null) ? list.reduce((n, x) => n + (x[k] ?? 0), 0) : null;
     out.limit = list[0].limit ?? null; out.limitDays = list[0].limitDays ?? null;
     return out;
   };
