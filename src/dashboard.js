@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c13c7fce';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c13c7fce';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c13c7fce';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=ba0b1837';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=ba0b1837';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ba0b1837';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -348,10 +348,14 @@ export function mountDashboard(funnels, opts = {}) {
       if (!measures.includes(spendState.measure)) spendState.measure = '$';
       const periods = PERIODS[u].filter(p => !p || all.length > p), shown = periods.includes(period) ? period : 0;
       const bars = shown ? all.slice(-shown) : all, n = bars.length, from = bars[0].getTime();
-      const split = spendState.funnel ? 'agent' : spendState.split;
+      // By funnel, by agent, or by service (Claude, ChatGPT, Gemini…: the agents' brands added up).
+      const splits = spendState.funnel ? ['agent', 'vendor'] : ['funnel', 'agent', 'vendor'];
+      const split = splits.includes(spendState.split) ? spendState.split : 'agent';
       const mine = rows.filter(r => r.at >= from && value(r) != null && (!spendState.funnel || r.funnel === spendState.funnel));
-      const groupOf = r => split === 'funnel' ? r.funnel : `${r.agent}|${r.funnel}`;
-      const label = k => split === 'funnel' ? funnelOf.get(k)?.title ?? '?' : `${agentInfo(k.split('|')[0]).name}${spendState.funnel ? '' : ' · ' + (funnelOf.get(k.split('|').slice(1).join('|'))?.title ?? '?')}`;
+      const vendor = agent => agentInfo(agent.split(/[-_]/)[0]).name;
+      const groupOf = r => split === 'funnel' ? r.funnel : split === 'vendor' ? vendor(r.agent) : `${r.agent}|${r.funnel}`;
+      const label = k => split === 'funnel' ? funnelOf.get(k)?.title ?? '?' : split === 'vendor' ? k
+        : `${agentInfo(k.split('|')[0]).name}${spendState.funnel ? '' : ' · ' + (funnelOf.get(k.split('|').slice(1).join('|'))?.title ?? '?')}`;
       // Groups, the biggest first (at the bottom of each bar, first in the legend), each with its colour.
       const totals = new Map(), runs = new Map();
       for (const r of mine) { const k = groupOf(r); totals.set(k, (totals.get(k) || 0) + value(r)); runs.set(k, (runs.get(k) || 0) + 1); }
@@ -379,13 +383,13 @@ export function mountDashboard(funnels, opts = {}) {
         <div class="hist-controls">${periods.length > 1 ? `<div class="hist-periods spend-periods">${btns(periods.map(String), String(shown), 'p', p => periodLabel(u, Number(p)))}</div>` : '<span></span>'}
           <div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" title="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div></div>
         <div class="hist-controls">${measures.length > 1 ? `<div class="hist-periods spend-measure">${btns(measures, spendState.measure, 'm', m => m === '$' ? '$' : `% ${m === 'claude' ? 'Claude' : 'Codex'}`)}</div>` : '<span></span>'}
-          ${spendState.funnel ? '' : `<div class="hist-periods spend-split">${btns(['funnel', 'agent'], split, 's', s => t(s === 'funnel' ? 'spend.byFunnel' : 'spend.byAgent'))}</div>`}</div>
-        <p class="pop-note">${esc(t('spend.total', fmt(sum), fmt(sum / n), t('flow.' + u)))}${spendState.measure === '$' ? '' : ' · ' + esc(t('spend.limitNote'))}</p>
+          <div class="hist-periods spend-split">${btns(splits, split, 's', s => t({ funnel: 'spend.byFunnel', agent: 'spend.byAgent', vendor: 'spend.byVendor' }[s]))}</div></div>
         <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(spendState.measure === '$' ? '$' + fmtCount(v) : v + '%')}</span>`).join('')}</div>
           <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}
             <div class="hist-bars stacked${n > 60 ? ' dense' : ''}">${bars.map((d, i) => `<span data-tip="${esc(tipOf(d, i))}">${groups.filter(k => cells[i].get(k)).map(k => `<i style="height:${(cells[i].get(k) / max) * 100}%;background:${color.get(k)}"></i>`).join('')}</span>`).join('')}</div></div></div>
         <div class="hist-axis"><span>${esc(short.format(bars[0]))}</span><span>${esc(short.format(bars[n - 1]))}</span></div>
-        <ul class="spend-list">${groups.slice(0, 12).map(k => `<li${split === 'funnel' ? ` data-f="${esc(k)}" class="pick" title="${esc(t('spend.pick'))}"` : ''}><i style="background:${color.get(k)}"></i><span class="who">${esc(label(k))}</span><span class="n">${esc(t('spend.runs', runs.get(k)))}</span><b>${esc(fmt(totals.get(k)))}</b></li>`).join('')}</ul>`;
+        <ul class="spend-list">${groups.slice(0, 12).map(k => `<li${split === 'funnel' ? ` data-f="${esc(k)}" class="pick" title="${esc(t('spend.pick'))}"` : ''}><i style="background:${color.get(k)}"></i><span class="who">${esc(label(k))}</span><span class="n">${esc(t('spend.runs', runs.get(k)))}</span><b>${esc(fmt(totals.get(k)))}</b></li>`).join('')}
+          <li class="total"><i></i><span class="who">${esc(t('spend.all'))}</span><span class="n">${esc(t('spend.runs', mine.length))}</span><b>${esc(fmt(sum))}</b></li></ul>`;
       const on = (sel, fn) => body.querySelectorAll(sel).forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); fn(b); draw(); }));
       on('.spend-periods button', b => { period = Number(b.dataset.p); try { localStorage.setItem(periodKey(u), String(period)); } catch {} });
       on('.spend-measure button', b => { spendState.measure = b.dataset.m; });
