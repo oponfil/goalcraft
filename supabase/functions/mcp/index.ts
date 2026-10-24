@@ -179,7 +179,8 @@ function server(db: Db, caller: Caller) {
     return {
       version: data.script_version, latest,
       running: seen != null && Date.now() - seen < 5 * 60e3, last_seen_at: data.last_used_at,
-      update_available: !!latest && data.script_version !== latest,
+      // Versions are dates (2026-10-24), so they compare as text; the oldest scripts say "1".
+      update_available: !!latest && (data.script_version ?? '') < latest,
       update: 'curl -fsSL https://goalcraft.ai/wake/goalcraft-wake.py -o ~/.goalcraft/goalcraft-wake.py && launchctl kickstart -k gui/$(id -u)/ai.goalcraft.wake',
     }
   }
