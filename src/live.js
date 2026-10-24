@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=a12c2388';
+import { supabase } from './auth.js?v=e9945084';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -118,8 +118,33 @@ function dayUsage(rows) {
   };
 }
 
+// The Claude plan's weekly limit, from the wake script's hourly readings: what share of it $1 at API
+// prices takes (the rise of the weekly percent over what every local session cost meanwhile, over
+// the last week, within one weekly window), and how much of it is used now. Claude doesn't log the
+// limit as Codex does, so a Claude run's share is its cost times this rate.
+let claudeLimit = { perDollar: null, week: null };
+function limitRate(rows) {
+  let pct = 0, usd = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const a = rows[i - 1], b = rows[i];
+    const sameWeek = a.week_resets_at && b.week_resets_at && Math.abs(Date.parse(a.week_resets_at) - Date.parse(b.week_resets_at)) < 3600e3;
+    if (b.cost_usd == null || !sameWeek) continue;
+    pct += Math.max(0, Number(b.week_percent) - Number(a.week_percent));
+    usd += Number(b.cost_usd);
+  }
+  // Whole percents only: wait until enough has been spent for the rate to mean something.
+  return { perDollar: usd >= 20 && pct >= 2 ? pct / usd : null, week: rows.length ? Number(rows[rows.length - 1].week_percent) : null };
+}
+// A Claude run's share of the weekly limit, from its cost; Codex runs keep what Codex logged.
+const withLimit = r => (r.app === 'claude' && r.limit_used == null && r.cost_usd != null && claudeLimit.perDollar != null
+  ? { ...r, limit_used: Number(r.cost_usd) * claudeLimit.perDollar, limit_percent: claudeLimit.week, limit_window_minutes: 7 * 1440 }
+  : r);
+
 export async function loadFunnels() {
   const now = Date.now();
+  const readings = await supabase.from('limit_readings').select('at, week_percent, week_resets_at, cost_usd')
+    .eq('app', 'claude').gte('at', new Date(now - 8 * DAY).toISOString()).order('at');
+  if (!readings.error) claudeLimit = limitRate(readings.data);
   const [funnels, reports, usage] = await Promise.all([
     supabase.from('funnels')
       .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day,
@@ -140,7 +165,7 @@ export async function loadFunnels() {
   if (funnels.error) throw funnels.error;
   if (reports.error) throw reports.error;
   // Token use is extra: without it (say, before the table exists) the board still loads.
-  return funnels.data.map(f => toScene(f, reports.data, now, usage.error ? [] : usage.data));
+  return funnels.data.map(f => toScene(f, reports.data, now, usage.error ? [] : usage.data.map(withLimit)));
 }
 
 export async function answer(questionId, text) {
@@ -161,8 +186,9 @@ export async function runs(a, limit = 10) {
   // Each run's tokens: every stretch the wake script counted goes to the one run it overlaps most
   // (a few minutes' slack for the agent's first and last signal).
   const from = data[data.length - 1].started_at;
-  const { data: used } = await supabase.from('agent_usage').select('started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
+  const { data: usedRows } = await supabase.from('agent_usage').select('app, started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
     .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from);
+  const used = usedRows?.map(withLimit);
   if (!used?.length) return data;
   const pad = 5 * 60e3, mine = data.map(() => []);
   const span = r => [Date.parse(r.started_at) - pad, (r.ended_at ? Date.parse(r.ended_at) : Date.now()) + pad];

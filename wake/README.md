@@ -17,10 +17,12 @@ The agents themselves don't know what they spend, but their apps log it on your 
 
 | App | Read from | Shows |
 |---|---|---|
-| Claude app, Claude Code | `~/.claude/projects/*/<session>.jsonl` (every session of a scheduled task) | tokens, cost at API prices |
+| Claude app, Claude Code | `~/.claude/projects/*/<session>.jsonl` (every session of a scheduled task) | tokens, cost at API prices, ≈ % of the plan's weekly limit (see below) |
 | Codex | `~/.codex/sessions/…/rollout-*.jsonl` | tokens, % of the plan's limit |
 
 Web chats (claude.ai, chatgpt.com, Grok) keep this on their servers, so their agents show none. The cost is what the same tokens would cost on the API; on a subscription they count against its limits instead. `python3 ~/.goalcraft/goalcraft-wake.py usage` reads and sends it at once, and prints it.
+
+Claude doesn't log its plan's limit as Codex does, so once an hour the script asks Anthropic how much of it is used (the weekly and 5-hour percents claude.ai shows under Settings → Usage), signing in as Claude Code does on this Mac (its keychain entry; the sign-in is read here and sent only to Anthropic). With each reading it sends what every Claude Code session here cost since the one before, your own chats included, since they all count against the same limit. From a week of readings the dashboard works out what $1 at API prices takes of the weekly limit, and shows each Claude run's share as ≈ its cost times that. It starts once about $20 has been spent and the weekly percent has risen by at least 2 (it comes in whole percents); chats in the Claude app's Chat tab and on other computers count against the limit too but aren't seen here, so the share is a little high. `python3 ~/.goalcraft/goalcraft-wake.py limit` reads and sends it at once.
 
 ## Install (macOS)
 

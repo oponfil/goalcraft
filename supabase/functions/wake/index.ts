@@ -9,6 +9,9 @@
 //                input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd,
 //                limit_percent, limit_used, limit_window_minutes }], replace_from? }   → { saved }: what their runs
 //                used; replace_from drops what was sent before for runs that ended since then
+//   POST /wake { limits: [{ app: "claude", at, week_percent, week_resets_at?, session_percent?, session_resets_at?,
+//                cost_usd? }] }   → { saved }: the plan's limit as the script read it, with what every local
+//                session of that app cost since the reading before (the board turns cost into a share of it)
 //
 // An agent is woken once for each reason: a message it has not read (from the person, or for a
 // worker from its supervisor), an answer to its question while it sleeps, for a supervisor a worker's
@@ -38,6 +41,23 @@ function session(chat: string | null): { app: string, session: string } | null {
   const codex = chat.match(/^codex:\/\/threads\/([0-9a-f-]{36})$/i)
   if (codex) return { app: 'codex', session: codex[1] }
   return null
+}
+
+// The plan's limit as the script read it: numbers only, one row per reading.
+async function saveLimits(user: string, list: any[]) {
+  const num = (v: unknown, max: number) => typeof v === 'number' && isFinite(v) && v >= 0 && v <= max ? v : null
+  const time = (v: unknown) => typeof v === 'string' && !isNaN(Date.parse(v)) ? new Date(v).toISOString() : null
+  const ok = list.slice(0, 50).flatMap((r: any) => {
+    const at = time(r?.at), week = num(r?.week_percent, 100)
+    if (r?.app !== 'claude' || !at || week == null) return []
+    return [{ user_id: user, app: r.app, at, week_percent: week, week_resets_at: time(r.week_resets_at),
+      session_percent: num(r.session_percent, 100), session_resets_at: time(r.session_resets_at), cost_usd: num(r.cost_usd, 1e6) }]
+  })
+  if (ok.length) {
+    const { error } = await admin.from('limit_readings').upsert(ok, { onConflict: 'user_id,app,at' })
+    if (error) return json({ error: 'failed' }, 500)
+  }
+  return json({ saved: ok.length })
 }
 
 // What the script read from the agents' session files: one row per run, upserted by its key. Only
@@ -88,7 +108,10 @@ Deno.serve(async (req) => {
   // ?check=1: the script only checks its key (when it is installed); nobody is woken or marked.
   const params = new URL(req.url).searchParams
   if (params.has('check')) return json({ ok: true })
-  if (req.method === 'POST') return saveUsage(user, await req.json().catch(() => null))
+  if (req.method === 'POST') {
+    const body = await req.json().catch(() => null)
+    return Array.isArray(body?.limits) ? saveLimits(user, body.limits) : saveUsage(user, body)
+  }
   if (params.has('agents')) {
     const { data, error } = await admin.from('presence').select('agent, chat_url, funnels (key)')
       .eq('user_id', user).gte('updated_at', iso(now - 7 * 24 * 3600e3))

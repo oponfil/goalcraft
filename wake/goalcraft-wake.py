@@ -11,11 +11,14 @@ Goalcraft: a Claude app session (Claude Code) through `claude -p --resume`, a Co
     python3 goalcraft-wake.py uninstall       stop it and remove it from the login items
     python3 goalcraft-wake.py once            one check, then exit (to try it)
     python3 goalcraft-wake.py usage           read and send the agents' token use now, and print it
+    python3 goalcraft-wake.py limit           read and send the Claude plan's limit now, and print it
     python3 goalcraft-wake.py run             the loop itself (what install starts)
 
 The key comes from the Goalcraft MCP tool create_wake_key (your agent calls it and runs install for you).
 It only lets the script ask whom to wake, and send what the agents' runs used in tokens (read from
-their session files here: numbers only, nothing from the conversations).
+their session files here: numbers only, nothing from the conversations). Once an hour it also asks
+Anthropic how much of your Claude plan's limit is used, with Claude Code's own sign-in from this Mac's
+keychain (read here, sent only to Anthropic), so the dashboard can show each run's share of it.
 Standard library only; the log is ~/.goalcraft/wake.log.
 """
 import glob
@@ -168,6 +171,8 @@ def wake(item):
 # totals and plan limit in its rollout files (~/.codex/sessions/…). Every few minutes the script sums
 # them per run and sends Goalcraft the numbers only, nothing from the conversations.
 USAGE_EVERY = 5 * 60
+LIMIT_EVERY = 60 * 60  # the Claude plan's limit is read hourly
+LIMIT_STATE = DIR / 'limit.json'  # when it was last read: the cost of every session since then goes with the next reading
 USAGE_DAYS = 2      # runs ended this recently are (re)sent
 RUN_GAP = 5 * 60    # a pause this long in one session starts a new run
 PROJECTS = HOME / '.claude' / 'projects'
@@ -260,18 +265,106 @@ def claude_usage(item, sessions):
                     kinds['cache_write_tokens'] += write
                     kinds['output_tokens'] += out_
                     models[model] = models.get(model, 0) + 1
-                    pr = price(model)
-                    if model == '<synthetic>':  # Claude Code's own notes, not a model call
-                        pass
-                    elif pr is None or cost is None:
-                        cost = None
-                    else:
-                        cost += (fresh * pr[0] + out_ * pr[1] + read * pr[2] + hour * pr[0] * 2 + (write - hour) * pr[0] * 1.25) / 1e6
+                    c = message_cost(model, u)
+                    cost = None if c is None or cost is None else cost + c
                 out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'claude',
                             'run_key': f'{cli}:{int(run[0][0])}', 'model': max(models, key=models.get),
                             'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), **totals(kinds),
                             'cost_usd': round(cost, 4) if cost is not None else None})
     return out
+
+
+def message_cost(model, u):
+    """One Claude message at API prices: 0 for Claude Code's own notes, None for a model with no price."""
+    if model == '<synthetic>':  # Claude Code's own notes, not a model call
+        return 0.0
+    pr = price(model)
+    if pr is None:
+        return None
+    fresh, read, out_ = u.get('input_tokens', 0), u.get('cache_read_input_tokens', 0), u.get('output_tokens', 0)
+    write = u.get('cache_creation_input_tokens', 0)
+    hour = (u.get('cache_creation') or {}).get('ephemeral_1h_input_tokens', 0)
+    return (fresh * pr[0] + out_ * pr[1] + read * pr[2] + hour * pr[0] * 2 + (write - hour) * pr[0] * 1.25) / 1e6
+
+
+def local_claude_cost(since, until):
+    """What every Claude Code session on this Mac cost at API prices between two moments, the person's
+    own chats included: all of it counts against the same plan's limit."""
+    total, seen = 0.0, set()
+    for f in glob.glob(str(PROJECTS / '*' / '*.jsonl')):
+        if os.path.getmtime(f) < since:
+            continue
+        with open(f, errors='ignore') as fh:
+            for line in fh:
+                if '"usage"' not in line:
+                    continue
+                try:
+                    d = json.loads(line)
+                except Exception:
+                    continue
+                m = d.get('message')
+                if not isinstance(m, dict) or not isinstance(m.get('usage'), dict) or m.get('id') in seen:
+                    continue
+                t = when(d.get('timestamp') or '')
+                if t is None or not since < t <= until:
+                    continue
+                seen.add(m.get('id'))
+                total += message_cost(m.get('model'), m['usage']) or 0.0
+    return total
+
+
+def claude_token():
+    """Claude Code's sign-in on this Mac (its keychain entry), while it is still valid."""
+    try:
+        out = subprocess.run(['security', 'find-generic-password', '-s', 'Claude Code-credentials', '-w'],
+                             capture_output=True, text=True, timeout=15).stdout
+        o = json.loads(out).get('claudeAiOauth') or {}
+    except Exception:
+        return None
+    return o.get('accessToken') if o.get('expiresAt', 0) / 1000 > time.time() + 60 else None
+
+
+def report_limit(key, show=False):
+    """Read how much of the Claude plan's limit is used and send it to Goalcraft, with what every local
+    session cost since the reading before."""
+    token = claude_token()
+    if not token:
+        log('limit: no valid Claude Code sign-in in the keychain; skipped')
+        return False
+    req = urllib.request.Request('https://api.anthropic.com/api/oauth/usage', headers={
+        'Authorization': f'Bearer {token}', 'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': 'goalcraft-wake/1'})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            u = json.load(r)
+    except Exception as e:
+        log(f'limit: could not read it: {e}')
+        return False
+    week, session = u.get('seven_day') or {}, u.get('five_hour') or {}
+    if week.get('utilization') is None:
+        log('limit: no weekly limit in the answer')
+        return False
+    now = time.time()
+    try:
+        before = json.loads(LIMIT_STATE.read_text()).get('at')
+    except Exception:
+        before = None
+    cost = round(local_claude_cost(before, now), 4) if before else None
+    row = {'app': 'claude', 'at': iso(now), 'week_percent': week['utilization'], 'week_resets_at': week.get('resets_at'),
+           'session_percent': session.get('utilization'), 'session_resets_at': session.get('resets_at'), 'cost_usd': cost}
+    if show:
+        print(f'Claude: week {week["utilization"]}% (resets {week.get("resets_at")}), 5 hours {session.get("utilization")}%'
+              + (f', local sessions since the last reading ≈${cost:.2f}' if cost is not None else ''))
+    body = json.dumps({'limits': [row]}).encode()
+    req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={
+        'Authorization': f'Bearer {key}', 'User-Agent': 'goalcraft-wake/1', 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            json.load(r)
+    except Exception as e:
+        log(f'limit: could not send: {e}')
+        return False
+    LIMIT_STATE.write_text(json.dumps({'at': now}))
+    return True
 
 
 def totals(kinds):
@@ -415,7 +508,7 @@ def key_or_exit():
 def run():
     key = key_or_exit()
     log('started')
-    counted = 0
+    counted = limited = 0
     while True:
         if check(key) == 401:
             log('the key was replaced or removed: stopping. Ask your agent to set up the wake script again (create_wake_key).')
@@ -423,6 +516,9 @@ def run():
         if time.time() - counted > USAGE_EVERY:
             counted = time.time()
             threading.Thread(target=report_usage, args=(key,), daemon=True).start()
+        if time.time() - limited > LIMIT_EVERY:
+            limited = time.time()
+            threading.Thread(target=report_limit, args=(key,), daemon=True).start()
         time.sleep(EVERY)
 
 
@@ -479,6 +575,8 @@ if __name__ == '__main__':
         run()
     elif cmd == 'usage':
         print(f'sent {report_usage(key_or_exit(), show=True)} runs to Goalcraft')
+    elif cmd == 'limit':
+        print('sent to Goalcraft' if report_limit(key_or_exit(), show=True) else 'failed: see ~/.goalcraft/wake.log')
     elif cmd == 'once':
         print('ok' if check(key_or_exit()) == 200 else 'failed: see ~/.goalcraft/wake.log')
         time.sleep(1)
