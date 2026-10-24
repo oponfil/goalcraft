@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=c5e77b44';
-import vi from './lang/vi.js?v=c5e77b44';
-import ja from './lang/ja.js?v=c5e77b44';
-import pt from './lang/pt.js?v=c5e77b44';
-import tr from './lang/tr.js?v=c5e77b44';
-import ko from './lang/ko.js?v=c5e77b44';
+import es from './lang/es.js?v=c13c7fce';
+import vi from './lang/vi.js?v=c13c7fce';
+import ja from './lang/ja.js?v=c13c7fce';
+import pt from './lang/pt.js?v=c13c7fce';
+import tr from './lang/tr.js?v=c13c7fce';
+import ko from './lang/ko.js?v=c13c7fce';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -379,7 +379,8 @@ const STRINGS = {
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.moreQuestions': L((n) => `${n} more question${n === 1 ? '' : 's'}`, (n) => `Ещё вопросов: ${n}`, (n) => `还有 ${n} 个问题`, (n) => `อีก ${n} คำถาม`),
   'nav.tanksGrow': L('Tanks grow with items', 'Баки растут с количеством', '储罐随数量增长', 'ถังขยายตามจำนวน'),
-  'board.usageCost': L((c) => `≈${c} at API prices`, (c) => `≈${c} по ценам API`, (c) => `按 API 价格约 ${c}`, (c) => `≈${c} ตามราคา API`),
+  'board.usageCost': L((c) => `${c} at API prices`, (c) => `${c} по ценам API`, (c) => `按 API 价格 ${c}`, (c) => `${c} ตามราคา API`),
+  'board.usageShare': L((p) => `${p} of limit`, (p) => `${p} лимита`, (p) => `占额度 ${p}`, (p) => `${p} ของโควตา`),
   'board.usageLimit': L((p, d) => (d === 7 ? `${p} of the weekly limit` : `${p} of the ${d}-day limit`), (p, d) => (d === 7 ? `${p} недельного лимита` : `${p} лимита на ${d} дн.`), (p, d) => (d === 7 ? `每周额度已用 ${p}` : `${d} 天额度已用 ${p}`), (p, d) => (d === 7 ? `ใช้ ${p} ของโควตารายสัปดาห์` : `ใช้ ${p} ของโควตา ${d} วัน`)),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),
   // A supervisor that gave itself no name: by its funnel.

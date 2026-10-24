@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c5e77b44';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c5e77b44';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c5e77b44';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=c13c7fce';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c13c7fce';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c13c7fce';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -602,12 +602,14 @@ export function mountDashboard(funnels, opts = {}) {
   // The runs list: when each run started, how long it took (or that it is still going) and what it
   // added to the items its zone works into.
   // The last week's spending: its cost at API prices and, when known, its share of the plan's weekly
-  // limit (as Codex logged it; for Claude, ≈ its cost at the measured rate). Hovering shows tokens.
+  // limit (as Codex logged it; for Claude, its cost at the measured rate). Hovering shows tokens.
   const weekLine = u => {
     if (!u) return '';
-    const share = u.limit_used != null ? (u.app === 'claude' ? '≈' : '') + fmtPercent(u.limit_used) : null;
-    const what = u.cost != null ? t('board.usageCost', fmtCost(u.cost)) : t('board.tokens', fmtTokens(u.tokens));
-    return `<p class="pop-note usage" data-tip="${esc(usageTip(u, share))}">${esc(t('board.usageDay', what))}${share ? ` (${esc(t('board.usageLimit', share, 7))})` : ''}</p>`;
+    const share = u.limit_used != null ? fmtPercent(u.limit_used) : null;
+    const tip = [u.cost != null && t('board.usageCost', fmtCost(u.cost)), usageTip(u, share)].filter(Boolean).join('\n');
+    const what = u.cost != null ? fmtCost(u.cost) : t('board.tokens', fmtTokens(u.tokens));
+    // One line: "Spent in 7 days: $695 · 31.1% of limit"; the prices and tokens behind it on hover.
+    return `<p class="pop-note usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', what))}${share ? ` · ${esc(t('board.usageShare', share))}` : ''}</p>`;
   };
   // A week of the demo's runs added up, when the agent has no count from the wake script.
   const weekOf = rows => {
@@ -632,7 +634,7 @@ export function mountDashboard(funnels, opts = {}) {
         // limit: the week's share spread over the runs by their cost, to a tenth.
         const u = a.usage || weekOf(rows);
         const perDollar = u?.limit_used != null && u.cost > 0 ? u.limit_used / u.cost : null;
-        const runLimit = ru => perDollar != null && ru.cost != null ? '≈' + fmtPercent(ru.cost * perDollar)
+        const runLimit = ru => perDollar != null && ru.cost != null ? fmtPercent(ru.cost * perDollar)
           : ru.limit_used != null ? fmtPercent(ru.limit_used) : null;
         list.innerHTML = (rows.length ? rows.map(r => {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
