@@ -1,5 +1,6 @@
 // Agent miners, drawn from simple shapes on the scene's fine grid (half-unit pixels).
 // A miner fits a 20×28 box (units), faces right, and is mirrored or rotated for other poses.
+import { LOGO_SVG } from './logos.js?v=43e2cc27';
 
 // 13x13 brand marks printed on the shirt in half-unit pixels, simplified so they stay
 // recognisable at this size.
@@ -408,10 +409,44 @@ export function drawSpyglass(ctx, x, y, angle) {
   ctx.restore();
 }
 
+// The services' real logos as images, made once each, the first time an agent wears one.
+const logoImages = {};
+const logoImage = id => {
+  if (!LOGO_SVG[id]) return null;
+  if (!logoImages[id]) {
+    logoImages[id] = new Image();
+    logoImages[id].src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(LOGO_SVG[id]);
+  }
+  return logoImages[id];
+};
+// Where the scene collects the logos of this frame, to draw them crisp over the pixel picture
+// (drawLogos); without one (the deck), a logo is drawn in pixels on the shirt.
+let logoSink = null;
+export function collectLogos(list) { logoSink = list; }
+// The logos collected: each on a white badge, in its own colors. g draws in screen pixels, S of
+// them to a unit.
+export function drawLogos(g, list, S) {
+  g.save(); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  for (const { x, y, id } of list) {
+    const img = logoImage(id);
+    g.fillStyle = '#FFFFFF';
+    g.beginPath(); g.arc(x * S, y * S, 3.4 * S, 0, Math.PI * 2); g.fill();
+    if (img?.complete && img.naturalWidth) g.drawImage(img, (x - 2.4) * S, (y - 2.4) * S, 4.8 * S, 4.8 * S);
+  }
+  g.restore();
+}
+
 // Logo centred at (cx, cy) in half-unit pixels; never mirrored.
 function drawLogo(ctx, cx, cy, agent) {
   // "claude-search" wears the Claude logo.
-  const rows = LOGOS[agent] || LOGOS[String(agent).split(/[-_]/)[0]];
+  const id = LOGOS[agent] ? agent : String(agent).split(/[-_]/)[0];
+  if (logoSink && LOGO_SVG[id]) {
+    // the badge's centre in the scene's units, wherever the canvas is moved to now
+    const m = ctx.getTransform(), r = m.a;
+    logoSink.push({ x: (m.a * cx + m.c * cy + m.e) / r, y: (m.b * cx + m.d * cy + m.f) / r, id });
+    return;
+  }
+  const rows = LOGOS[id];
   if (!rows) return;
   const x = Math.round((cx - rows[0].length / 4) * 2) / 2, y = Math.round((cy - rows.length / 4) * 2) / 2;
   ctx.fillStyle = '#FFFFFF';

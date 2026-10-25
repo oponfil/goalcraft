@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=606233db';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=606233db';
-import { themeOf } from './themes.js?v=606233db';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=606233db';
+import { agentInfo, plural } from './data.js?v=43e2cc27';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=43e2cc27';
+import { themeOf } from './themes.js?v=43e2cc27';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=43e2cc27';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -458,6 +458,9 @@ export class Scene {
     c.drawImage(this.bg, 0, 0);
     c.setTransform(RES, 0, 0, RES, 0, 0);
     this.hits = [];
+    // The agents' logos are drawn after the picture is scaled up, crisp (sprites.js drawLogos).
+    this.logos = [];
+    collectLogos(this.logos);
     this.funnels.forEach((f, fi) => {
       if (f.source_url) this.hits.push(this.sourceHit(fi));
       if (f.guide_url) this.hits.push(this.guideHit(fi));
@@ -504,9 +507,11 @@ export class Scene {
       c.fillStyle = '#F2C14E'; c.fillRect(this.dropAt * CW - 2, 2, 4, this.H - 4);
     }
 
+    collectLogos(null);
     const g = this.ctx;
     g.imageSmoothingEnabled = false;
     g.drawImage(this.lo, 0, 0, this.canvas.width, this.canvas.height);
+    drawLogos(g, this.logos, this.S);
     this.drawText(g);
   }
 
