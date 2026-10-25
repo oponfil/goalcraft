@@ -463,9 +463,9 @@ export function drawSitting(ctx, x, y, agent, color, outfit = 'helmet') {
 export function drawBossSitting(ctx, x, y, agent, color, outfit = 'helmet') {
   seated(ctx, x, y, agent, c => bossBody(c, agent, color, outfit));
 }
-// A pause sign over a paused agent's head: two bars on a small dark plate.
+// A pause sign over a paused agent's head: just the two bars, with a dark edge to show on any backdrop.
 export function drawPause(ctx, cx, y) {
-  rect(ctx, cx - 5, y, 10, 9, '#2A2420'); rect(ctx, cx - 5, y, 10, 0.6, '#4A403A');
+  rect(ctx, cx - 3.5, y + 1.5, 3, 6, '#1A1614'); rect(ctx, cx + 0.5, y + 1.5, 3, 6, '#1A1614');
   rect(ctx, cx - 3, y + 2, 2, 5, '#F4EDE1'); rect(ctx, cx + 1, y + 2, 2, 5, '#F4EDE1');
 }
 
