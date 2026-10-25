@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=769f0b2f';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=769f0b2f';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=769f0b2f';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=efe86892';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=efe86892';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=efe86892';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -335,7 +335,13 @@ export function mountDashboard(funnels, opts = {}) {
   // The agents' spending over all funnels: bars per hour, day or week (the flow unit), each split by
   // funnel or by agent, in $ at API prices or as a share of the Claude or Codex plan's limit; a
   // funnel picked in the legend narrows it to that funnel, by agent. Under it, the agents by spend.
-  const SPEND_COLORS = ['#9FE870', '#79B4F0', '#F2C14E', '#F28AB8', '#B585F2', '#7CF0B0', '#FF8A5B', '#E8E3D8', '#5BC0BE', '#C9A27E'];
+  const SPEND_COLORS = ['#9FE870', '#79B4F0', '#F2C14E', '#F28AB8', '#B585F2', '#7CF0B0', '#E8E3D8', '#5BC0BE', '#C9A27E', '#C4E538', '#FF6FD8', '#FFD9A0', '#8E9BFF', '#FF8A5B'];
+  // A service's own color on the chart: its brand's (data.js), the black ones light enough to see on
+  // the dark card.
+  const BRAND_CHART = { grok: '#EDEDED', kimi: '#9A9AA6' };
+  const brandColor = id => BRAND_CHART[id] ?? agentInfo(id).color;
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const near = (a, b) => { const [x, y] = [rgb(a), rgb(b)]; return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) < 90; };
   const spendState = { measure: '$', split: 'funnel', funnel: null };
   async function showSpend(e) {
     showPop(e, `<div class="pop-title">${esc(t('spend.title'))}</div><div class="hist-body"><div class="pop-loading" role="status" aria-label="${esc(t('board.loading'))}"></div></div>`);
@@ -369,7 +375,8 @@ export function mountDashboard(funnels, opts = {}) {
       const splits = spendState.funnel ? ['agent', 'vendor'] : ['funnel', 'agent', 'vendor'];
       const split = splits.includes(spendState.split) ? spendState.split : 'agent';
       const mine = rows.filter(r => r.at >= from && value(r) != null && (!spendState.funnel || r.funnel === spendState.funnel));
-      const vendor = agent => agentInfo(agent.split(/[-_]/)[0]).name;
+      const vendorId = new Map();
+      const vendor = agent => { const id = agent.split(/[-_]/)[0], name = agentInfo(id).name; vendorId.set(name, id); return name; };
       const groupOf = r => split === 'funnel' ? r.funnel : split === 'vendor' ? vendor(r.agent) : `${r.agent}|${r.funnel}`;
       const label = k => split === 'funnel' ? funnelOf.get(k)?.title ?? '?' : split === 'vendor' ? k
         : `${agentInfo(k.split('|')[0]).name}${spendState.funnel ? '' : ' · ' + (funnelOf.get(k.split('|').slice(1).join('|'))?.title ?? '?')}`;
@@ -377,7 +384,22 @@ export function mountDashboard(funnels, opts = {}) {
       const totals = new Map(), runs = new Map();
       for (const r of mine) { const k = groupOf(r); totals.set(k, (totals.get(k) || 0) + value(r)); runs.set(k, (runs.get(k) || 0) + 1); }
       const groups = [...totals.keys()].sort((a, b) => totals.get(b) - totals.get(a));
-      const color = new Map(groups.map((k, i) => [k, SPEND_COLORS[i % SPEND_COLORS.length]]));
+      // A service, and the first (biggest) agent of each service, in the service's own color, so the bars
+      // read at once: Claude orange, ChatGPT green. Funnels, a service's other agents, and a service whose
+      // color another already has, take the next color of the palette not close to one in use.
+      const color = new Map(), brands = [], taken = new Set();
+      const brandOf = k => split === 'funnel' ? null : (split === 'vendor' ? vendorId.get(k) : k.split('|')[0]).split(/[-_]/)[0];
+      for (const k of groups) {
+        const b = brandOf(k) && brandColor(brandOf(k));
+        if (b && !brands.some(c => near(c, b))) { color.set(k, b); brands.push(b); }
+      }
+      let next = 0;
+      for (const k of groups) {
+        if (color.has(k)) continue;
+        const left = SPEND_COLORS.filter(c => !taken.has(c));
+        const c = left.find(c => !brands.some(u => near(c, u))) ?? left[0] ?? SPEND_COLORS[next++ % SPEND_COLORS.length];
+        color.set(k, c); taken.add(c);
+      }
       const index = new Map(bars.map((d, i) => [d.getTime(), i]));
       const cells = bars.map(() => new Map());
       for (const r of mine) {
