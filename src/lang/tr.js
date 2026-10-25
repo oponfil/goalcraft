@@ -143,6 +143,8 @@ export default {
   'hist.weeks': (n) => `${n} hafta`,
   'spend.button': 'Harcama',
   'spend.title': 'Ajanların harcaması',
+  'spend.inUsd': 'Dolar cinsinden harcama',
+  'spend.inLimit': (n) => `${n} limitinin %'si olarak harcama`,
   'spend.byFunnel': 'Huniler',
   'spend.byAgent': 'Ajanlar',
   'spend.byVendor': 'Hizmetler',

@@ -143,6 +143,8 @@ export default {
   'hist.weeks': (n) => `${n}주`,
   'spend.button': '사용량',
   'spend.title': '에이전트 사용량',
+  'spend.inUsd': '달러 기준 사용량',
+  'spend.inLimit': (n) => `${n} 한도 대비 사용량(%)`,
   'spend.byFunnel': '퍼널',
   'spend.byAgent': '에이전트',
   'spend.byVendor': '서비스',

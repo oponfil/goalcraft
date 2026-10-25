@@ -144,6 +144,8 @@ export default {
   'hist.weeks': (n) => `${n}週間`,
   'spend.button': '消費',
   'spend.title': 'エージェントの消費',
+  'spend.inUsd': 'ドル建ての消費',
+  'spend.inLimit': (n) => `${n}の上限に対する消費（%）`,
   'spend.byFunnel': 'ファネル',
   'spend.byAgent': 'エージェント',
   'spend.byVendor': 'サービス',

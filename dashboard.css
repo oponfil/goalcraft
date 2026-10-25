@@ -441,3 +441,4 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop .spend-measure button { display: inline-flex; align-items: center; gap: 4px; }  /* "%" and the service's logo */
 /* While a card's data loads (spending, a tank's history): a spinning wheel. */
 #pop .pop-loading { width: 22px; height: 22px; margin: 28px auto; border: 3px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
+#pop .spend-measure button[data-tip] { cursor: pointer; }

@@ -143,6 +143,8 @@ export default {
   'hist.weeks': (n) => `${n} semanas`,
   'spend.button': 'Gasto',
   'spend.title': 'Gasto de los agentes',
+  'spend.inUsd': 'Gasto en dólares',
+  'spend.inLimit': (n) => `Gasto en % del límite de ${n}`,
   'spend.byFunnel': 'Embudos',
   'spend.byAgent': 'Agentes',
   'spend.byVendor': 'Servicios',

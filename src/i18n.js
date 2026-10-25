@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=887f4744';
-import vi from './lang/vi.js?v=887f4744';
-import ja from './lang/ja.js?v=887f4744';
-import pt from './lang/pt.js?v=887f4744';
-import tr from './lang/tr.js?v=887f4744';
-import ko from './lang/ko.js?v=887f4744';
+import es from './lang/es.js?v=606233db';
+import vi from './lang/vi.js?v=606233db';
+import ja from './lang/ja.js?v=606233db';
+import pt from './lang/pt.js?v=606233db';
+import tr from './lang/tr.js?v=606233db';
+import ko from './lang/ko.js?v=606233db';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -368,6 +368,8 @@ const STRINGS = {
   'hist.weeks': L((n) => `${n} weeks`, (n) => `${n} нед.`, (n) => `${n} 周`, (n) => `${n} สัปดาห์`),
   'spend.button': L('Spending', 'Расход', '消耗', 'ค่าใช้จ่าย'),
   'spend.title': L('Agents\' spending', 'Расход агентов', '智能体消耗', 'ค่าใช้จ่ายของเอเจนต์'),
+  'spend.inUsd': L('Spending in dollars', 'Расход в долларах', '以美元计的消耗', 'ค่าใช้จ่ายเป็นดอลลาร์'),
+  'spend.inLimit': L((n) => `Spending in % of the ${n} limit`, (n) => `Расход в % лимита ${n}`, (n) => `消耗占 ${n} 额度的百分比`, (n) => `ค่าใช้จ่ายเป็น % ของโควตา ${n}`),
   'spend.byFunnel': L('Funnels', 'Воронки', '漏斗', 'กรวย'),
   'spend.byAgent': L('Agents', 'Агенты', '智能体', 'เอเจนต์'),
   'spend.byVendor': L('Services', 'Сервисы', '服务', 'บริการ'),

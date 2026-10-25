@@ -144,6 +144,8 @@ export default {
   'hist.weeks': (n) => `${n} tuần`,
   'spend.button': 'Chi phí',
   'spend.title': 'Chi phí của các agent',
+  'spend.inUsd': 'Chi phí tính bằng đô la',
+  'spend.inLimit': (n) => `Chi phí theo % hạn mức ${n}`,
   'spend.byFunnel': 'Phễu',
   'spend.byAgent': 'Agent',
   'spend.byVendor': 'Dịch vụ',
