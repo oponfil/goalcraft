@@ -171,6 +171,7 @@ export default {
   'board.runsFailed': '実行記録を読み込めませんでした。',
   'board.paused': (who) => `${who}は一時停止中`,
   'board.pausedLimit': (n, t) => (t ? `${n}の上限に達しました。${t}後にリセット` : `${n}の上限に達しました`),
+  'board.loading': '読み込み中…',
   'board.resting': (who) => `${who} は睡眠中`,
   'board.wakesIn': (t) => `${t}後に起きます。`,
   'board.starting': (who) => `${who} がシフトを始めます`,

@@ -171,6 +171,7 @@ export default {
   'board.runsFailed': 'Không tải được các lần chạy.',
   'board.paused': (who) => `${who} đang tạm dừng`,
   'board.pausedLimit': (n, t) => (t ? `Hết hạn mức ${n}, đặt lại sau ${t}` : `Hết hạn mức ${n}`),
+  'board.loading': 'Đang tải…',
   'board.resting': (who) => `${who} đang ngủ`,
   'board.wakesIn': (t) => `Sẽ thức dậy sau ${t}.`,
   'board.starting': (who) => `${who} bắt đầu ca làm`,

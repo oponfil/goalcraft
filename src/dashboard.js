@@ -1,8 +1,9 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=95c7e7ad';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=95c7e7ad';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=95c7e7ad';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=887f4744';
+import { LOGOS } from './sprites.js?v=887f4744';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=887f4744';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=887f4744';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -21,6 +22,15 @@ const STATE_ICONS = {
 };
 // Bars going up: the agents' spending.
 const SPEND_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h16M7 16v-4M12 16V7M17 16v-7"/></svg>';
+// A service's logo as the agents wear it on their shirts (sprites.js), as a small inline SVG.
+const logoSvg = id => {
+  const rows = LOGOS[id];
+  if (!rows) return '';
+  const cells = rows.flatMap((row, y) => [...row].map((c, x) => (c === 'I' ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : ''))).join('');
+  return `<svg viewBox="0 0 ${rows[0].length} ${rows.length}" width="14" height="14" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${cells}</svg>`;
+};
+// Each limit's logo on the spending chart's "%" buttons; the full name on hover.
+const LIMIT_LOGOS = { claude: 'claude', codex: 'chatgpt', 'antigravity:gemini-4-argon': 'gemini', 'antigravity:gemini': 'gemini' };
 // The plans' limits by their key (live.js limitKey): Claude's, Codex's, Antigravity's quotas.
 const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT (Antigravity)' };
 const TASKS_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>';
@@ -259,7 +269,7 @@ export function mountDashboard(funnels, opts = {}) {
   const periodKey = u => `goalcraft-period-${u}`;
   async function showHistory(e, f, j) {
     const st = f.stages[j], name = plural(5, st.forms);  // as the tank's tooltip: "found jobs", "найденных вакансий"
-    showPop(e, `<div class="pop-title">${esc(f.title)}: ${esc(name)}</div><div class="hist-body"><p class="pop-note">…</p></div>`);
+    showPop(e, `<div class="pop-title">${esc(f.title)}: ${esc(name)}</div><div class="hist-body"><div class="pop-loading" role="status" aria-label="${esc(t('board.loading'))}"></div></div>`);
     let data;
     try { data = await opts.history(f, j); } catch { pop.querySelector('.hist-body').innerHTML = `<p class="pop-note">${esc(t('hist.failed'))}</p>`; return; }
     const body = pop.querySelector('.hist-body');
@@ -326,7 +336,7 @@ export function mountDashboard(funnels, opts = {}) {
   const SPEND_COLORS = ['#9FE870', '#79B4F0', '#F2C14E', '#F28AB8', '#B585F2', '#7CF0B0', '#FF8A5B', '#E8E3D8', '#5BC0BE', '#C9A27E'];
   const spendState = { measure: '$', split: 'funnel', funnel: null };
   async function showSpend(e) {
-    showPop(e, `<div class="pop-title">${esc(t('spend.title'))}</div><div class="hist-body"><p class="pop-note">…</p></div>`);
+    showPop(e, `<div class="pop-title">${esc(t('spend.title'))}</div><div class="hist-body"><div class="pop-loading" role="status" aria-label="${esc(t('board.loading'))}"></div></div>`);
     pop.classList.add('wide');
     const body = pop.querySelector('.hist-body');
     let rows;
@@ -387,7 +397,7 @@ export function mountDashboard(funnels, opts = {}) {
       body.innerHTML = `${filtered ? `<p class="spend-filter"><span>${esc(filtered)}</span> <button type="button" class="link spend-all">${esc(t('spend.allFunnels'))}</button></p>` : ''}
         <div class="hist-controls">${periods.length > 1 ? `<div class="hist-periods spend-periods">${btns(periods.map(String), String(shown), 'p', p => periodLabel(u, Number(p)))}</div>` : '<span></span>'}
           <div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" title="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div></div>
-        <div class="hist-controls">${measures.length > 1 ? `<div class="hist-periods spend-measure">${btns(measures, spendState.measure, 'm', m => m === '$' ? '$' : `% ${LIMIT_NAMES[m]}`)}</div>` : '<span></span>'}
+        <div class="hist-controls">${measures.length > 1 ? `<div class="hist-periods spend-measure">${measures.map(m => `<button type="button" data-m="${esc(m)}" class="${m === spendState.measure ? 'on' : ''}"${m === '$' ? '' : ` title="% ${esc(LIMIT_NAMES[m])}" aria-label="% ${esc(LIMIT_NAMES[m])}"`}>${m === '$' ? '$' : `%${logoSvg(LIMIT_LOGOS[m]) || ' ' + esc(LIMIT_NAMES[m])}`}</button>`).join('')}</div>` : '<span></span>'}
           <div class="hist-periods spend-split">${btns(splits, split, 's', s => t({ funnel: 'spend.byFunnel', agent: 'spend.byAgent', vendor: 'spend.byVendor' }[s]))}</div></div>
         <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(spendState.measure === '$' ? '$' + fmtCount(v) : v + '%')}</span>`).join('')}</div>
           <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}

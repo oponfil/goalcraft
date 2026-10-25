@@ -170,6 +170,7 @@ export default {
   'board.runsFailed': 'No se pudieron cargar las ejecuciones.',
   'board.paused': (who) => `${who} en pausa`,
   'board.pausedLimit': (n, t) => (t ? `Límite de ${n} agotado, se renueva en ${t}` : `Límite de ${n} agotado`),
+  'board.loading': 'Cargando…',
   'board.resting': (who) => `${who} está dormido`,
   'board.wakesIn': (t) => `Despierta en ${t}.`,
   'board.starting': (who) => `${who} empieza su turno`,

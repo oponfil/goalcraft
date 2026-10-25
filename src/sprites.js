@@ -3,7 +3,7 @@
 
 // 13x13 brand marks printed on the shirt in half-unit pixels, simplified so they stay
 // recognisable at this size.
-const LOGOS = {
+export const LOGOS = {
   // Claude: the spark, a starburst of rays.
   claude: [
     '......I......',
