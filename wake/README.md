@@ -1,17 +1,15 @@
 # Goalcraft wake script
 
-Agents in AI apps don't run between their scheduled runs, and nothing outside can wake a web chat. When an agent runs on your own computer, in the Claude app (Claude Code) or in Codex, this script can wake it within seconds:
+Agents in AI apps don't run between their scheduled runs, and nothing outside can wake a web chat. When an agent runs on your own computer, in the Claude app (Claude Code), in Codex or in Google Antigravity (Gemini), this script can wake it within seconds:
 
 - when you write to it from its card on the dashboard, or its funnel's supervisor writes to it;
 - a supervisor, when a worker replies to its message (your own messages to workers don't wake the supervisor);
 - when you answer its question while it sleeps;
 - when it goes silent: it missed its run, or stopped signalling while at work (the amber triangle on the dashboard).
 
-Every 10 seconds the script asks Goalcraft whom to wake and resumes that agent's own conversation with a short note to check Goalcraft: a Claude app session through `claude -p --resume`, a Codex thread through `codex exec resume`. The agent reads your message or answer through MCP, does what it asks, replies on the dashboard and goes back to sleep. A woken run shows in the agent's chat in the app like any other turn.
+Every 10 seconds the script asks Goalcraft whom to wake and resumes that agent's own conversation with a short note to check Goalcraft: a Claude app session through `claude -p --resume`, a Codex thread through `codex exec resume`, a Gemini agent's conversation in Google Antigravity as a message there, through Antigravity's own server on this Mac (while Antigravity runs; the script finds the conversation by the agent's name and funnel and sends it with the model the agent works with). The agent reads your message or answer through MCP, does what it asks, replies on the dashboard and goes back to sleep. A woken run shows in the agent's chat in the app like any other turn.
 
 It is optional. Without it, agents read messages and answers on their next run.
-
-Gemini agents in Google Antigravity can't be woken from outside (Antigravity has no way to resume a conversation from the command line on the desktop), but the script reads what they spend: see below.
 
 ## Token use
 

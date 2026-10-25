@@ -5,7 +5,8 @@ Every 10 seconds it asks Goalcraft which of your agents to wake: one you wrote t
 one whose question you answered while it sleeps, or one that went silent (it missed its run, or
 stopped signalling at work). It wakes each in its own conversation with a short note to check
 Goalcraft: a Claude app session (Claude Code) through `claude -p --resume`, a Codex thread through
-`codex exec resume`. Web chats (claude.ai, chatgpt.com) can't be woken from outside and are skipped.
+`codex exec resume`, a Gemini agent's conversation in Google Antigravity through Antigravity's own
+server on this Mac (while Antigravity runs). Web chats (claude.ai, chatgpt.com) can't be woken from outside and are skipped.
 
     python3 goalcraft-wake.py install <key>   save the key and keep the script running (macOS)
     python3 goalcraft-wake.py uninstall       stop it and remove it from the login items
@@ -145,6 +146,8 @@ running = set()  # sessions being woken now: one run at a time per conversation
 
 
 def wake(item):
+    if item['app'] == 'antigravity':
+        return antigravity_wake(item)
     key = item['session']
     if key in running:
         return
@@ -172,6 +175,52 @@ def wake(item):
             running.discard(key)
     threading.Thread(target=go, daemon=True).start()
     log(f'waking {who}')
+
+
+def antigravity_conversation(item):
+    """The Antigravity conversation of a Gemini agent: the most recent one that mentions both its name and
+    its funnel (it calls Goalcraft from there), with the model its last call used."""
+    names = (f'"{item["agent"]}"'.encode(), f'"{item["funnel_id"]}"'.encode())
+    found = []
+    for f in glob.glob(str(ANTIGRAVITY / '*.db')):
+        with open(f, 'rb') as fh:
+            raw = fh.read()
+        if all(n in raw for n in names):
+            found.append((os.path.getmtime(f), f))
+    if not found:
+        return None, None
+    f = max(found)[1]
+    calls = antigravity_calls(f, facts=True)
+    model = calls[-1][3].get('model_enum') if calls else None
+    return pathlib.Path(f).stem, model
+
+
+def antigravity_wake(item):
+    """Wake a Gemini agent in Google Antigravity: the note goes into its conversation as the person's
+    message, through Antigravity's own server on this Mac, with the model the agent works with (without
+    one Antigravity only files the message and doesn't run the agent)."""
+    import ssl
+    who = f'{item["agent"]} in {item["funnel_id"]} ({", ".join(item["reasons"])})'
+    cascade, model = antigravity_conversation(item)
+    server = antigravity_server()
+    if not cascade or not model or not server:
+        log(f'skip {who}: ' + ('Antigravity is not running' if not server else 'its Antigravity conversation was not found'))
+        return
+    body = {'cascadeId': cascade, 'items': [{'text': note(item)}],
+            'cascadeConfig': {'plannerConfig': {'requestedModel': {'model': model}}}}
+    ctx = ssl.create_default_context()
+    ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE  # its own certificate, on 127.0.0.1
+    for port in server['ports']:
+        req = urllib.request.Request(f'https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/SendUserCascadeMessage',
+                                     data=json.dumps(body).encode(), method='POST', headers={
+                                         'Content-Type': 'application/json', 'Connect-Protocol-Version': '1', 'X-Codeium-Csrf-Token': server['token']})
+        try:
+            with urllib.request.urlopen(req, timeout=30, context=ctx):
+                log(f'woke {who} in Antigravity')
+                return
+        except Exception as e:
+            err = e
+    log(f'skip {who}: Antigravity did not take the note: {err}')
 
 
 # Token use. The agents don't know what they spend, but their apps log it on this computer: every
@@ -594,32 +643,39 @@ def first(msg, *path):
         msg = proto(v)
 
 
-def antigravity_calls(f):
+def antigravity_calls(f, facts=False):
     """An Antigravity conversation's model calls, oldest first: (time, model, usage), the time being that
     of the step each call ended on. Usage fields (ModelUsageStats): 2 input, 3 output with thinking,
     4 cache writes, 5 cache reads."""
     import sqlite3
-    try:
-        db = sqlite3.connect(f'file:{f}?mode=ro&immutable=1', uri=True)
-        when_ = {idx: first(proto(meta or b''), 1, 1) for idx, meta in db.execute('select idx, metadata from steps')}
-        calls = db.execute('select data from gen_metadata order by idx').fetchall()
-        db.close()
-    except Exception as e:
-        log(f'usage: antigravity {pathlib.Path(f).stem}: {e}')
+    # Read-only but with its write-ahead log, where the newest calls wait until Antigravity folds them
+    # in; as an immutable file (the log left out) if that can't be opened.
+    when_, calls = None, None
+    for mode in ('ro', 'ro&immutable=1'):
+        try:
+            db = sqlite3.connect(f'file:{f}?mode={mode}', uri=True)
+            when_ = {idx: first(proto(meta or b''), 1, 1) for idx, meta in db.execute('select idx, metadata from steps')}
+            calls = db.execute('select data from gen_metadata order by idx').fetchall()
+            db.close()
+            break
+        except Exception as e:
+            err = e
+    if calls is None:
+        log(f'usage: antigravity {pathlib.Path(f).stem}: {err}')
         return []
     points = []
     for (data,) in calls:
         call = proto(proto(data).get(1, [b''])[0])
         usage = proto(first(call, 17, 2) or b'')
         model = (call.get(19) or [b''])[0].decode('utf-8', 'replace')
-        facts = {}
+        facts_ = {}
         for kv in call.get(20, []):
             kv = proto(kv)
-            facts[(kv.get(1) or [b''])[0].decode('utf-8', 'replace')] = (kv.get(2) or [b''])[0].decode('utf-8', 'replace')
-        step = facts.get('last_step_index', '')
+            facts_[(kv.get(1) or [b''])[0].decode('utf-8', 'replace')] = (kv.get(2) or [b''])[0].decode('utf-8', 'replace')
+        step = facts_.get('last_step_index', '')
         t = when_.get(int(step)) if step.isdigit() else None
         if t and usage:
-            points.append((t, model, usage))
+            points.append((t, model, usage, facts_) if facts else (t, model, usage))
     return sorted(points, key=lambda p: p[0])
 
 

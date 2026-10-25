@@ -43,6 +43,13 @@ function session(chat: string | null): { app: string, session: string } | null {
   return null
 }
 
+// What the script resumes for an agent: its Claude or Codex session, or for a Gemini agent with no
+// such link, its conversation in Google Antigravity (the script finds it by the agent's name and funnel).
+function resumable(p: any, chat: string | null = null): { app: string, session: string | null } | null {
+  return session(chat ?? p.chat_url)
+    ?? ((!p.chat_url || /^antigravity:/i.test(p.chat_url)) && /^gemini/i.test(p.agent) ? { app: 'antigravity', session: null } : null)
+}
+
 // The plan's limit as the script read it: numbers only, one row per reading.
 async function saveLimits(user: string, list: any[]) {
   const num = (v: unknown, max: number) => typeof v === 'number' && isFinite(v) && v >= 0 && v <= max ? v : null
@@ -122,7 +129,7 @@ Deno.serve(async (req) => {
     // Gemini agents with no chat link the script can resume: it looks for them in Google Antigravity,
     // in the conversations that mention their name and funnel.
     return json({ agents: (data ?? []).flatMap((p: any) => {
-      const s = session(p.chat_url) ?? ((!p.chat_url || /^antigravity:/i.test(p.chat_url)) && /^gemini/i.test(p.agent) ? { app: 'antigravity', session: null } : null)
+      const s = resumable(p)
       return s ? [{ agent: p.agent, funnel_id: p.funnels?.key, ...s }] : []
     }) })
   }
@@ -145,7 +152,7 @@ Deno.serve(async (req) => {
   const wake = new Map<string, any>()
   const add = (p: any, reason: string, chat: string | null) => {
     if (p.state === 'pause') return false  // paused: it won't run until resumed, so nothing wakes it
-    const s = session(chat ?? p.chat_url)
+    const s = resumable(p, chat)
     if (!s) return false
     const k = `${p.funnel_id}|${p.agent}`
     const w = wake.get(k) ?? { agent: p.agent, funnel_id: p.funnels?.key, funnel: p.funnels?.title, reasons: [], ...s }
