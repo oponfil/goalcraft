@@ -437,3 +437,4 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 /* An agent's card: its state right under its name (wakes in…, on pause, how late), then its work. */
 #pop .pop-status .pop-note { margin: 4px 0 0; }
 #pop .pop-sub.where { margin-bottom: 12px; }
+#pop .run-row .at { min-width: 5.2em; }  /* today's "21:14" lines up with an earlier "пн, 21:14" */

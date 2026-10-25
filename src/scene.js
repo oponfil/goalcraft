@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=52e099e4';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=52e099e4';
-import { themeOf } from './themes.js?v=52e099e4';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=52e099e4';
+import { agentInfo, plural } from './data.js?v=4ebc8b1f';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=4ebc8b1f';
+import { themeOf } from './themes.js?v=4ebc8b1f';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=4ebc8b1f';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).

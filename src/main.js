@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=52e099e4';
-import { mountDashboard } from './dashboard.js?v=52e099e4';
-import { t } from './i18n.js?v=52e099e4';
+import { FUNNELS, SUP_RUNS } from './data.js?v=4ebc8b1f';
+import { mountDashboard } from './dashboard.js?v=4ebc8b1f';
+import { t } from './i18n.js?v=4ebc8b1f';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -76,7 +76,8 @@ function demoRuns(a) {
   if (a.sup) {
     const now = Date.now(), rows = [];
     let start = now - (a.state === 'sleep' ? 1 + r() * 3 : 0.1) * 3600e3;
-    for (let i = 0; i < 8; i++) {
+    // A week of them, like a live agent's card.
+    for (let i = 0; start > now - 7 * 864e5; i++) {
       const going = i === 0 && a.state === 'work';
       rows.push({ started_at: new Date(start).toISOString(), ended_at: going ? null : new Date(start + (3 + r() * 6) * 60e3).toISOString(),
         status: i === 0 ? a.status : SUP_RUNS[Math.floor(r() * SUP_RUNS.length)] });
@@ -88,7 +89,7 @@ function demoRuns(a) {
   const perDay = a.f.flows[z] || 0, crew = Math.max(1, a.f.workers.filter(w => w.zone === a.zone).length);
   const now = Date.now(), rows = [];
   let start = now - (a.state === 'sleep' ? 2 + r() * 4 : 0.2 + r() * 0.3) * 3600e3, left = holds;
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; start > now - 7 * 864e5; i++) {
     const going = i === 0 && a.state !== 'sleep', gap = 6 + r() * 6;
     const ended = going ? null : start + (10 + r() * 30) * 60e3;
     const share = perDay * (gap / 24) / crew * (0.5 + r());

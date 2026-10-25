@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=52e099e4';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=52e099e4';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=52e099e4';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=4ebc8b1f';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=4ebc8b1f';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=4ebc8b1f';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -648,7 +648,11 @@ export function mountDashboard(funnels, opts = {}) {
       list.textContent = '…';
       try {
         const rows = await opts.runs(a);
-        const st = a.f.stages, when = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
+        // A run today shows its time; an earlier one its day too ("пн, 21:14"): the list covers a week.
+        const st = a.f.stages, hm = new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit' });
+        const dayHm = new Intl.DateTimeFormat(lang, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+        const today = new Date().toDateString();
+        const when = { format: d => (d.toDateString() === today ? hm : dayHm).format(d) };
         // Each run at API prices; hovering one shows its tokens by kind and its share of the plan's
         // limit: the week's share spread over the runs by their cost, to a tenth.
         const u = a.usage || weekOf(rows);

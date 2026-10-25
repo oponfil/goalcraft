@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=52e099e4';
+import { supabase } from './auth.js?v=4ebc8b1f';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -211,19 +211,20 @@ export async function spending(from) {
     cost: r.cost_usd == null ? null : Number(r.cost_usd), limit: r.limit_used == null ? null : Number(r.limit_used) }));
 }
 
-// An agent's last runs in its funnel, newest first, for its card.
-export async function runs(a, limit = 10) {
-  const { data, error } = await supabase.from('agent_runs')
+// An agent's runs in its funnel over the last week (as its spending), newest first, for its card.
+export async function runs(a) {
+  const week = new Date(Date.now() - 7 * DAY).toISOString();
+  const { data, error } = await all(() => supabase.from('agent_runs')
     .select('zone, started_at, ended_at, added, status, summary')
-    .eq('funnel_id', a.f.id).eq('agent', a.agent)
-    .order('started_at', { ascending: false }).limit(limit);
+    .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('started_at', week)
+    .order('started_at', { ascending: false }));
   if (error) throw error;
   if (!data.length) return data;
   // Each run's tokens: every stretch the wake script counted goes to the one run it overlaps most
   // (a few minutes' slack for the agent's first and last signal).
   const from = data[data.length - 1].started_at;
-  const { data: usedRows } = await supabase.from('agent_usage').select('app, model, started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
-    .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from);
+  const { data: usedRows } = await all(() => supabase.from('agent_usage').select('app, model, started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
+    .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from).order('ended_at').order('run_key'));
   const used = usedRows?.map(withLimit);
   if (!used?.length) return data;
   const pad = 5 * 60e3, mine = data.map(() => []);
