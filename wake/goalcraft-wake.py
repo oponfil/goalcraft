@@ -177,19 +177,36 @@ def wake(item):
     log(f'waking {who}')
 
 
+def antigravity_owner(f):
+    """Whose Antigravity conversation this is: the agent and funnel its own Goalcraft calls name most
+    often. Every agent's name is in every conversation of its funnel (list_funnels returns them all, a
+    supervisor talks about its workers), but only its own calls carry it as their arguments, and the
+    agent makes most of the calls in its conversation (a supervisor seldom calls for a worker)."""
+    import collections
+    import re
+    with open(f, 'rb') as fh:
+        raw = fh.read()
+    calls = collections.Counter()
+    for m in re.finditer(rb'"Arguments":\{([^{}]*)', raw):
+        agent = re.search(rb'"agent":"([^"]+)"', m.group(1))
+        funnel = re.search(rb'"funnel_id":"([^"]+)"', m.group(1))
+        if agent and funnel:
+            calls[(agent.group(1).decode('utf-8', 'replace'), funnel.group(1).decode('utf-8', 'replace'))] += 1
+    return calls.most_common(1)[0][0] if calls else None
+
+
+def antigravity_conversations(item, since=0):
+    """The Antigravity conversations of a Gemini agent changed since a moment, the latest last."""
+    found = [(os.path.getmtime(f), f) for f in glob.glob(str(ANTIGRAVITY / '*.db')) if os.path.getmtime(f) >= since]
+    return [f for _, f in sorted(found) if antigravity_owner(f) == (item['agent'], item['funnel_id'])]
+
+
 def antigravity_conversation(item):
-    """The Antigravity conversation of a Gemini agent: the most recent one that mentions both its name and
-    its funnel (it calls Goalcraft from there), with the model its last call used."""
-    names = (f'"{item["agent"]}"'.encode(), f'"{item["funnel_id"]}"'.encode())
-    found = []
-    for f in glob.glob(str(ANTIGRAVITY / '*.db')):
-        with open(f, 'rb') as fh:
-            raw = fh.read()
-        if all(n in raw for n in names):
-            found.append((os.path.getmtime(f), f))
+    """The Antigravity conversation of a Gemini agent (its latest), with the model its last call used."""
+    found = antigravity_conversations(item)
     if not found:
         return None, None
-    f = max(found)[1]
+    f = found[-1]
     calls = antigravity_calls(f, facts=True)
     model = calls[-1][3].get('model_enum') if calls else None
     return pathlib.Path(f).stem, model
@@ -695,19 +712,11 @@ def gemini_cost(model, u):
 
 
 def antigravity_usage(item):
-    """Runs of a Gemini agent in Google Antigravity: the conversations that mention both its name and its
-    funnel (it calls Goalcraft from there), each model call's tokens and the time of the step it ended on."""
-    import sqlite3
+    """Runs of a Gemini agent in Google Antigravity: its conversations (antigravity_owner), each model
+    call's tokens and the time of the step it ended on."""
     since = time.time() - USAGE_DAYS * 86400
-    names = (f'"{item["agent"]}"'.encode(), f'"{item["funnel_id"]}"'.encode())
     out = []
-    for f in glob.glob(str(ANTIGRAVITY / '*.db')):
-        if os.path.getmtime(f) < since:
-            continue
-        with open(f, 'rb') as fh:
-            raw = fh.read()
-        if not all(n in raw for n in names):
-            continue
+    for f in antigravity_conversations(item, since):
         cascade = pathlib.Path(f).stem
         points = antigravity_calls(f)
         for run in split_runs(points):
