@@ -519,8 +519,14 @@ def report_antigravity_limit(key, show=False):
             print(f'Antigravity {q}: {round((1 - qi["remainingFraction"]) * 100, 2)}% used, resets {qi["resetTime"]}'
                   + ('' if weekly else ' (a short window: not sent)') + (f', since the last reading ≈${costs.get(q, 0):.2f}' if before else ''))
         if weekly:
+            # What its models cost here since its window began (a week before it resets): the board
+            # divides the used percent by it, exact from the first reading.
+            window = antigravity_cost(resets - 7 * 86400, now).get(q, 0.0)
             rows.append({'app': 'antigravity', 'quota': q, 'at': iso(now), 'week_percent': round((1 - qi['remainingFraction']) * 100, 2),
-                         'week_resets_at': qi['resetTime'], 'cost_usd': round(costs.get(q, 0.0), 4) if before else None})
+                         'week_resets_at': qi['resetTime'], 'cost_usd': round(costs.get(q, 0.0), 4) if before else None,
+                         'window_cost_usd': round(window, 4)})
+            if show:
+                print(f'  {q}: its models cost ≈${window:.2f} here since the window began')
     if not rows:
         save_limit_state(antigravity_at=now)
         return True

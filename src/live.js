@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=4ebc8b1f';
+import { supabase } from './auth.js?v=95c7e7ad';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -150,7 +150,9 @@ function limitRate(rows, min) {
     usd += Number(b.cost_usd);
   }
   const last = rows[rows.length - 1];
-  return { perDollar: usd >= min.usd && pct >= min.pct ? pct / usd : null, week: last ? Number(last.week_percent) : null, resets: last?.week_resets_at ? Date.parse(last.week_resets_at) : null };
+  // With the cost since the window began (Antigravity, whose percent is exact): the used percent over it.
+  const windowRate = last?.window_cost_usd > 0.5 && Number(last.week_percent) >= min.pct ? Number(last.week_percent) / Number(last.window_cost_usd) : null;
+  return { perDollar: windowRate ?? (usd >= min.usd && pct >= min.pct ? pct / usd : null), week: last ? Number(last.week_percent) : null, resets: last?.week_resets_at ? Date.parse(last.week_resets_at) : null };
 }
 // A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged.
 const withLimit = r => {
@@ -162,7 +164,7 @@ const withLimit = r => {
 
 export async function loadFunnels() {
   const now = Date.now();
-  const readings = await supabase.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, cost_usd')
+  const readings = await supabase.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, cost_usd, window_cost_usd')
     .gte('at', new Date(now - 8 * DAY).toISOString()).order('at');
   if (!readings.error) {
     const keys = [...new Set(readings.data.map(r => (r.quota ? `${r.app}:${r.quota}` : r.app)))];
