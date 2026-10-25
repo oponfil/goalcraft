@@ -168,6 +168,8 @@ export default {
   'board.appointSupervisor': '슈퍼바이저 정하기',
   'board.noRuns': '아직 기록된 실행이 없습니다.',
   'board.runsFailed': '실행 기록을 불러오지 못했습니다.',
+  'board.paused': (who) => `${who} 일시 중지됨`,
+  'board.pausedLimit': (n, t) => (t ? `${n} 한도 소진, ${t} 후 초기화` : `${n} 한도 소진`),
   'board.resting': (who) => `${who}이(가) 쉬는 중입니다`,
   'board.wakesIn': (t) => `${t} 후에 깨어납니다.`,
   'board.starting': (who) => `${who}이(가) 일을 시작합니다`,

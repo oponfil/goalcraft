@@ -168,6 +168,8 @@ export default {
   'board.appointSupervisor': 'Süpervizör ata',
   'board.noRuns': 'Henüz kayıtlı çalışma yok.',
   'board.runsFailed': 'Çalışmalar yüklenemedi.',
+  'board.paused': (who) => `${who} duraklatıldı`,
+  'board.pausedLimit': (n, t) => (t ? `${n} limiti doldu, ${t} sonra yenilenir` : `${n} limiti doldu`),
   'board.resting': (who) => `${who} uyuyor`,
   'board.wakesIn': (t) => `${t} sonra uyanacak.`,
   'board.starting': (who) => `${who} vardiyasına başlıyor`,

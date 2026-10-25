@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=e88abac4';
-import vi from './lang/vi.js?v=e88abac4';
-import ja from './lang/ja.js?v=e88abac4';
-import pt from './lang/pt.js?v=e88abac4';
-import tr from './lang/tr.js?v=e88abac4';
-import ko from './lang/ko.js?v=e88abac4';
+import es from './lang/es.js?v=bbdeba8c';
+import vi from './lang/vi.js?v=bbdeba8c';
+import ja from './lang/ja.js?v=bbdeba8c';
+import pt from './lang/pt.js?v=bbdeba8c';
+import tr from './lang/tr.js?v=bbdeba8c';
+import ko from './lang/ko.js?v=bbdeba8c';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -398,6 +398,8 @@ const STRINGS = {
   'board.appointSupervisor': L('Appoint a supervisor', 'Назначить супервайзера', '指定主管', 'แต่งตั้งผู้ดูแล'),
   'board.noRuns': L('No runs recorded yet.', 'Запусков пока не записано.', '还没有记录到运行。', 'ยังไม่มีการรันที่บันทึกไว้'),
   'board.runsFailed': L('Could not load the runs.', 'Не удалось загрузить запуски.', '无法加载运行记录。', 'โหลดการรันไม่สำเร็จ'),
+  'board.paused': L((who) => `${who} is paused`, (who) => `${who} на паузе`, (who) => `${who} 已暂停`, (who) => `${who} หยุดชั่วคราว`),
+  'board.pausedLimit': L((n, t) => (t ? `${n} limit used up, resets in ${t}` : `${n} limit used up`), (n, t) => (t ? `Лимит ${n} исчерпан, сброс через ${t}` : `Лимит ${n} исчерпан`), (n, t) => (t ? `${n} 额度已用完，${t}后重置` : `${n} 额度已用完`), (n, t) => (t ? `โควตา ${n} หมดแล้ว รีเซ็ตในอีก ${t}` : `โควตา ${n} หมดแล้ว`)),
   'board.resting': L((who) => `${who} is asleep`, (who) => `${who} спит`, (who) => `${who} 在睡觉`, (who) => `${who} กำลังหลับ`),
   'board.wakesIn': L((t) => `Wakes up in ${t}.`, (t) => `Проснётся через ${t}.`, (t) => `${t}后醒来。`, (t) => `จะตื่นในอีก ${t}`),
   'board.starting': L((who) => `${who} is starting a shift`, (who) => `${who} начинает смену`, (who) => `${who} 开始轮班`, (who) => `${who} กำลังเริ่มกะ`),

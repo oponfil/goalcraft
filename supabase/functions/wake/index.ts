@@ -144,6 +144,7 @@ Deno.serve(async (req) => {
 
   const wake = new Map<string, any>()
   const add = (p: any, reason: string, chat: string | null) => {
+    if (p.state === 'pause') return false  // paused: it won't run until resumed, so nothing wakes it
     const s = session(chat ?? p.chat_url)
     if (!s) return false
     const k = `${p.funnel_id}|${p.agent}`
@@ -171,7 +172,7 @@ Deno.serve(async (req) => {
   }
   for (const p of presence.data ?? []) {
     const overdue = p.state === 'sleep' && p.next_run_at && now - Date.parse(p.next_run_at) > SILENT
-    const lost = p.state !== 'sleep' && now - Date.parse(p.updated_at) > SILENT
+    const lost = p.state !== 'sleep' && p.state !== 'pause' && now - Date.parse(p.updated_at) > SILENT
     const already = wokeAfter.get(`${p.funnel_id}|${p.agent}`) === Date.parse(p.updated_at)
     if ((overdue || lost) && !already && add(p, overdue ? 'overdue' : 'silent', null)) woke.silent.push(p)
   }

@@ -433,3 +433,4 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop .spend-list b { font-weight: 600; min-width: 56px; text-align: right; }
 #pop .spend-list li.total { border-top: 2px solid var(--border); margin-top: 4px; padding-top: 6px; font-weight: 600; }
 #pop .spend-list li.total i { background: none; }
+.state-icon.pause { color: #F2C14E; }

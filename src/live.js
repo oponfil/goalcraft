@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=e88abac4';
+import { supabase } from './auth.js?v=bbdeba8c';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -64,7 +64,13 @@ function agentOf(f, p, now, usage = []) {
       // Once all are answered, an asking agent is shown back at work.
       const qs = f.questions.filter(q => q.agent === p.agent && !q.answered_at)
         .sort((a, b) => Date.parse(a.asked_at) - Date.parse(b.asked_at));
-      const state = p.state === 'ask' && !qs.length ? 'work' : p.state;
+      // An agent asleep whose plan's limit is used up won't run until it resets: shown on pause, with
+      // the limit as the reason (Claude's and Antigravity's as last read, Codex's as it logged it).
+      const mine = usage.filter(u => u.funnel_id === f.id && u.agent === p.agent);
+      const lastRun = mine.reduce((a, u) => (!a || u.ended_at > a.ended_at ? u : a), null);
+      const lim = lastRun && limits[limitKey(lastRun)];
+      const spent = lastRun && (lastRun.app === 'codex' ? Number(lastRun.limit_percent) >= 99.5 && { resets: null } : lim?.week >= 99.5 && lim);
+      const state = p.state === 'ask' && !qs.length ? 'work' : p.state === 'sleep' && spent ? 'pause' : p.state;
       return {
         agent: p.agent,
         // Its own name ("Супервайзер поиска работы"), when it gave one.
@@ -72,6 +78,9 @@ function agentOf(f, p, now, usage = []) {
         zone: p.zone == null ? null : p.zone - 1,
         state,
         wakeIn: p.state === 'sleep' && p.next_run_at ? (Date.parse(p.next_run_at) - now) / 1000 : null,
+        // Why it is paused, as it or its supervisor said; or the used-up limit that holds it.
+        pauseReason: p.pause_reason,
+        pauseLimit: state === 'pause' && p.state === 'sleep' ? { key: limitKey(lastRun), resets: spent.resets } : null,
         // Seconds since the agent last changed its state (its last word, for an overdue one).
         seenAgo: (now - Date.parse(p.updated_at)) / 1000,
         questions: qs.map(q => ({ id: q.id, question: q.question, chat: q.chat_url })),
@@ -87,7 +96,7 @@ function agentOf(f, p, now, usage = []) {
         chat: p.chat_url,
         // Its token use over the last week (the plans' limits are weekly), as the person's wake script read it from the agent's own
         // session files (null: not known, e.g. a web chat).
-        usage: dayUsage(usage.filter(u => u.funnel_id === f.id && u.agent === p.agent)),
+        usage: dayUsage(mine),
         // What this run added (the last run's, while the agent sleeps); null = not known.
         added: p.run_added,
       };
@@ -140,7 +149,8 @@ function limitRate(rows, min) {
     pct += Math.max(0, Number(b.week_percent) - Number(a.week_percent));
     usd += Number(b.cost_usd);
   }
-  return { perDollar: usd >= min.usd && pct >= min.pct ? pct / usd : null, week: rows.length ? Number(rows[rows.length - 1].week_percent) : null };
+  const last = rows[rows.length - 1];
+  return { perDollar: usd >= min.usd && pct >= min.pct ? pct / usd : null, week: last ? Number(last.week_percent) : null, resets: last?.week_resets_at ? Date.parse(last.week_resets_at) : null };
 }
 // A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged.
 const withLimit = r => {
@@ -162,7 +172,7 @@ export async function loadFunnels() {
     supabase.from('funnels')
       .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day,
         stages (key, position, label, count, fill_percent, flow_per_day),
-        presence (agent, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, updated_at),
+        presence (agent, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, pause_reason, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
         agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),
         person_tasks (id, position, title, detail, url, due_at, done_at)`)

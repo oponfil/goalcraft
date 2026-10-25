@@ -168,6 +168,8 @@ export default {
   'board.appointSupervisor': 'Nombrar supervisor',
   'board.noRuns': 'Aún no hay ejecuciones registradas.',
   'board.runsFailed': 'No se pudieron cargar las ejecuciones.',
+  'board.paused': (who) => `${who} en pausa`,
+  'board.pausedLimit': (n, t) => (t ? `Límite de ${n} agotado, se renueva en ${t}` : `Límite de ${n} agotado`),
   'board.resting': (who) => `${who} está dormido`,
   'board.wakesIn': (t) => `Despierta en ${t}.`,
   'board.starting': (who) => `${who} empieza su turno`,

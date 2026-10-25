@@ -39,6 +39,7 @@ Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage 
 Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when you wake up and again every 5 minutes while you work. The dashboard waits twice that, 10 minutes of silence, then warns the person that you did not wake up (10 minutes past your next_run_at) or that it lost contact with you (10 minutes after your last signal).
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not. In Google Antigravity send none: the dashboard opens Antigravity.
 On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer (a question is as short as you can make it, at most 400 characters: only what the person needs to understand it and decide): while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next). A reply never asks the person for anything: if you need more from them, or can't do what was agreed and need them to act (sign in somewhere, send something themselves, decide again), ask a new question instead (set_agent_state ask), saying plainly what happened and exactly what to do, where. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
+Pause: when the person asks you to stop for a while, or your plan's limit has run out so you can't work until it resets, set_agent_state(pause, reason) (and turn off your schedule if the person asked you to stop). The dashboard sits you on a chair with a pause sign, raises no warning for your silence and nothing wakes you. Any set_agent_state(work) or (sleep) resumes you. A supervisor pauses or resumes a worker of its funnel when the person tells it to, with the worker's name and zone.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. When it needs the person, it asks as every agent does: state ask with a question. It also keeps an eye on the person's tasks for the funnel (set_tasks), most urgent first, without what is done or no longer matters.
 The person's tasks: the things only the person can do for a funnel (take a test task, fill in a form, answer a recruiter), shown to them on the dashboard. Every agent of the funnel, supervisor or worker, sees the same list (list_funnels tasks) and changes it the same way with set_tasks: adds a task when the person asks or when there is something only they can do, marks what is done, keeps the order. What an agent can't go on without is a question, not a task: never both. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
 Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and a funnel's supervisor can write to its workers (send_message). On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns. The script never updates itself; list_funnels shows it as wake_script. When a supervisor sees update_available, or running false for a script that was set up, it tells the person once (not on every run): on their computer it asks whether to update and, on yes, runs wake_script.update; elsewhere it adds a task for them (set_tasks) with that command.
@@ -99,7 +100,7 @@ async function funnels(db: Db, key?: string) {
   let q = db.from('funnels')
     .select(`key, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day, updated_at,
       stages (key, position, label, count, fill_percent, flow_per_day),
-      presence (agent, display_name, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, updated_at),
+      presence (agent, display_name, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, pause_reason, updated_at),
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
       agent_messages (id, agent, text, sent_at, read_at),
       person_tasks (id, position, title, detail, url, due_at, done_at)`)
@@ -308,12 +309,13 @@ function server(db: Db, caller: Caller) {
 
   s.registerTool('set_agent_state', {
     title: 'Set your state',
-    description: 'Show where you are and what you are doing: work (working now; send it when you wake up and every 5 minutes while you work: the heartbeat), sleep (until next_run_at), ask (waiting for the person, with a question; returns the question_id its answer is read by). The funnel\'s supervisor uses zone "supervisor" and gives what its run found as status and summary.',
+    description: 'Show where you are and what you are doing: work (working now; send it when you wake up and every 5 minutes while you work: the heartbeat), sleep (until next_run_at), ask (waiting for the person, with a question; returns the question_id its answer is read by), pause (stopped until resumed, with a short reason: the person paused you, or your plan\'s limit ran out; a supervisor may pause or resume a worker of its funnel the same way, giving the worker\'s name and zone). The funnel\'s supervisor uses zone "supervisor" and gives what its run found as status and summary.',
     inputSchema: req({
       funnel_id: funnelId,
       agent,
       zone: z.union([z.number().int().min(0).max(5), z.literal('supervisor')]).describe('0 = inflow above the first stage, k = into stage k, n = output below the last stage; "supervisor" = the platform over the whole funnel (one agent per funnel)'),
-      state: z.enum(['work', 'sleep', 'ask']),
+      state: z.enum(['work', 'sleep', 'ask', 'pause']),
+      reason: z.string().min(1).max(120).optional().describe('For pause: why, in one short line in the person\'s language, e.g. "лимит Claude исчерпан до среды", "на паузе по просьбе Олега"'),
       next_run_at: z.string().datetime({ offset: true }).optional().describe('For sleep: ISO time of your next run'),
       question: z.string().min(1).max(400).optional().describe('For ask: what you need from the person, as short as you can (at most 400 characters): only what they need to understand it and decide'),
       chat_url: z.string().url().regex(CHAT_LINK).optional().describe('Link to this conversation, so the person\'s "Open" leads to this very chat: https://claude.ai/chat/…, https://chatgpt.com/c/…, or in the Claude app claude://claude.ai/epitaxy/<your session id> (see the instructions). Codex links itself. With ask it is kept with the question'),
@@ -351,7 +353,7 @@ function server(db: Db, caller: Caller) {
     // A run starts when the agent comes to work from sleep (or to another zone): its counter starts at 0
     // and is kept through the next sleep, so the person sees what the last run added.
     const prev = check(await db.from('presence').select('zone, state').eq('funnel_id', f.id).eq('agent', a.agent).maybeSingle()) as any
-    const newRun = a.state === 'work' && (!prev || prev.state === 'sleep' || prev.zone !== zone)
+    const newRun = a.state === 'work' && (!prev || prev.state === 'sleep' || prev.state === 'pause' || prev.zone !== zone)
     const run = !newRun ? {} : zone == null ? { run_base: null, run_added: null, run_manual: false }
       : { run_base: (await zoneTargets(db, f.id))(zone), run_added: 0, run_manual: false }
     if (newRun) {
@@ -363,10 +365,11 @@ function server(db: Db, caller: Caller) {
     const found: Record<string, unknown> = { ...(a.status && { status: a.status }), ...(a.summary && { summary: a.summary }) }
     if (a.status && !a.summary) found.summary = null
     if (Object.keys(found).length) check(await openRun(db, f.id, a.agent).update(found))
-    if (a.state === 'sleep') check(await endRun(db, f.id, a.agent))
+    if (a.state === 'sleep' || a.state === 'pause') check(await endRun(db, f.id, a.agent))
     check(await db.from('presence').upsert({
       funnel_id: f.id, agent: a.agent, zone, state: a.state, ...found, ...(a.name && { display_name: a.name }),
       next_run_at: a.state === 'sleep' ? a.next_run_at ?? null : null,
+      pause_reason: a.state === 'pause' ? a.reason ?? null : null,
       question_id, ...(chat_url !== undefined && { chat_url }),
       ...run,
       ...(a.added != null && { run_added: a.added, run_manual: true }),

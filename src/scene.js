@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=e88abac4';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=e88abac4';
-import { themeOf } from './themes.js?v=e88abac4';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=e88abac4';
+import { agentInfo, plural } from './data.js?v=bbdeba8c';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=bbdeba8c';
+import { themeOf } from './themes.js?v=bbdeba8c';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=bbdeba8c';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -522,6 +522,7 @@ export class Scene {
   drawAgent(c, a) {
     const t = this.t, info = agentInfo(a.agent), theme = themeOf(a.f), outfit = theme.outfit;
     if (a.sup) return this.drawSupervisor(c, a, info, outfit);
+    if (a.state === 'pause') return this.drawPaused(c, a, info, outfit, this.spot(a, 'ask'), drawSitting);
     if (a.state === 'sleep') {
       const p = this.spot(a, 'rest');
       drawLying(c, p.x, p.y, a.agent, info.color, a.side === 'R', outfit);
@@ -599,8 +600,25 @@ export class Scene {
     return { k: 1 - (q - 0.85) / 0.15, walking: true, facesLeft: true };
   }
 
+  // On pause: sitting on a chair where it would stand, a pause sign over its head; a question it
+  // left keeps its bubble. Nothing else: no timer, no warning.
+  drawPaused(c, a, info, outfit, p, draw) {
+    draw(c, p.x, p.y, a.agent, info.color, outfit);
+    drawPause(c, p.x + 10, p.y - 9);
+    a.noteAt = { x: p.x + 10, y: p.y - 9 };
+    if (a.questions.length) {
+      const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
+      const left = a.sup || a.side !== 'R';
+      const bx = left ? p.x + 24 : p.x - 20 - extra;
+      drawBubble(c, bx, p.y - 6, a.questions.length, left);
+      a.bubble = { x: bx, y: p.y - 6 };
+      this.hits.push({ x: Math.min(p.x, bx) - 4, y: p.y - 12, w: 48 + extra, h: 44, type: 'ask', a });
+    } else this.hits.push({ x: p.x - 4, y: p.y - 12, w: 28, h: 42, type: 'agent', a });
+  }
+
   drawSupervisor(c, a, info, outfit) {
     const t = this.t;
+    if (a.state === 'pause') return this.drawPaused(c, a, info, outfit, this.spot(a, 'ask'), drawBossSitting);
     if (a.state === 'sleep') {
       const p = this.spot(a, 'rest');
       drawBossLying(c, p.x, p.y, a.agent, info.color, outfit);
@@ -885,7 +903,7 @@ export class Scene {
   // How many of the funnel's agents have not been heard from in time: overslept a run or silent at work.
   silentIn(f) { return this.agents.filter(a => a.f === f && (this.overdue(a) || this.lost(a))).length; }
   waitingFor(f) {
-    return this.agents.filter(a => a.f === f && (a.state === 'ask' || a.state === 'sleep')).reduce((n, a) => n + a.questions.length, 0);
+    return this.agents.filter(a => a.f === f && ['ask', 'sleep', 'pause'].includes(a.state)).reduce((n, a) => n + a.questions.length, 0);
   }
 }
 

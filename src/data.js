@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=e88abac4';
+import { lang } from './i18n.js?v=bbdeba8c';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -190,7 +190,7 @@ export const FUNNELS = [
       },
       { agent: 'qwen', zone: 1, state: 'work' },
       { agent: 'grok', zone: 2, state: 'work' },
-      { agent: 'gemini', zone: 3, state: 'sleep', wakeIn: 14 },
+      { agent: 'gemini', zone: 3, state: 'pause', pauseReason: 'Paused: the Gemini quota is used up until Friday' },
       { agent: 'kimi', zone: 4, state: 'work' },
     ],
   },
@@ -358,6 +358,7 @@ const DEMO = {
   'About two hours; the brief is in your email.': ['Часа на два; задание у вас в почте.', '大约两小时；题目在你的邮箱里。', 'ราวสองชั่วโมง โจทย์อยู่ในอีเมลของคุณ', 'Unas dos horas; el enunciado está en tu correo.', 'Khoảng hai giờ; đề bài trong email của bạn.', '約2時間。課題の内容はメールにあります。', 'Cerca de duas horas; o enunciado está no seu e-mail.', 'Yaklaşık iki saat; görev e-postanda.', '두 시간 정도 걸려요. 과제 설명은 메일에 있어요.'],
   'Update your LinkedIn headline': ['Обновить заголовок в LinkedIn', '更新 LinkedIn 标题', 'อัปเดตหัวข้อโปรไฟล์ LinkedIn', 'Actualizar el titular de LinkedIn', 'Cập nhật tiêu đề LinkedIn', 'LinkedIn の見出しを更新する', 'Atualizar o título do LinkedIn', 'LinkedIn başlığını güncelle', 'LinkedIn 헤드라인 업데이트하기'],
   'Recruiters search for “AI product manager”.': ['Рекрутеры ищут «AI product manager».', '招聘人员搜索的是“AI product manager”。', 'ผู้สรรหาค้นหาคำว่า “AI product manager”', 'Los reclutadores buscan «AI product manager».', 'Nhà tuyển dụng tìm “AI product manager”.', 'リクルーターは「AI product manager」で検索しています。', 'Os recrutadores buscam “AI product manager”.', 'İşe alımcılar “AI product manager” diye arıyor.', '리크루터들은 “AI product manager”로 검색해요.'],
+  'Paused: the Gemini quota is used up until Friday': ['На паузе: квота Gemini исчерпана до пятницы', '已暂停：Gemini 额度用完，周五恢复', 'หยุดชั่วคราว: โควตา Gemini หมดถึงวันศุกร์', 'En pausa: la cuota de Gemini se agotó hasta el viernes', 'Tạm dừng: hết hạn mức Gemini đến thứ Sáu', '一時停止中：Gemini の枠を金曜まで使い切りました', 'Em pausa: a cota do Gemini acabou até sexta', 'Duraklatıldı: Gemini kotası cumaya kadar doldu', '일시 중지: 금요일까지 Gemini 한도 소진'],
   'take the lead investor first': ['сначала ведущий инвестор', '先谈领投方', 'คุยกับนักลงทุนหลักก่อน', 'primero el inversor líder', 'ưu tiên nhà đầu tư dẫn dắt', 'まずリード投資家から', 'primeiro o investidor líder', 'önce lider yatırımcı', '리드 투자자부터'],
   'Send the data room link to the lead investor': ['Отправить ссылку на data room ведущему инвестору', '把数据室链接发给领投方', 'ส่งลิงก์ดาต้ารูมให้นักลงทุนหลัก', 'Enviar el enlace del data room al inversor líder', 'Gửi đường dẫn phòng dữ liệu cho nhà đầu tư dẫn dắt', 'リード投資家にデータルームのリンクを送る', 'Enviar o link do data room ao investidor líder', 'Veri odası bağlantısını lider yatırımcıya gönder', '리드 투자자에게 데이터룸 링크 보내기'],
   'They asked for it after the first call.': ['Просили после первого созвона.', '第一次通话后他们要过。', 'เขาขอไว้หลังคุยครั้งแรก', 'Lo pidieron tras la primera llamada.', 'Họ đã xin sau cuộc gọi đầu tiên.', '最初の通話のあとに頼まれました。', 'Pediram depois da primeira call.', 'İlk görüşmeden sonra istediler.', '첫 통화 후에 요청했어요.'],
@@ -456,6 +457,7 @@ if (COL != null) for (const f of FUNNELS) {
   if (f.supervisor) { if (f.supervisor.summary) f.supervisor.summary = tr(f.supervisor.summary); if (f.supervisor.question) f.supervisor.question = tr(f.supervisor.question); }
   for (const w of f.workers) {
     if (w.question) w.question = tr(w.question);
+    if (w.pauseReason) w.pauseReason = tr(w.pauseReason);
     for (const q of w.questions || []) q.question = tr(q.question);
     for (const r of w.replies || []) { r.question = tr(r.question); r.answer = tr(r.answer); r.reply = tr(r.reply); }
   }

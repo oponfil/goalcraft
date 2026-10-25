@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=e88abac4';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=e88abac4';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=e88abac4';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=bbdeba8c';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=bbdeba8c';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=bbdeba8c';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -15,11 +15,14 @@ const opens = (url, web) => (/^https?:/.test(url) ? 'target="_blank" rel="noopen
 // A clipboard: the person's tasks.
 // An agent's state on its card, as an icon beside its name: a moon while it sleeps, a bolt while it works.
 const STATE_ICONS = {
+  'board.paused': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>',
   'board.resting': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>',
   'board.working': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M13.5 2 5 13.5h6L10 22l9-12h-6.5z"/></svg>',
 };
 // Bars going up: the agents' spending.
 const SPEND_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h16M7 16v-4M12 16V7M17 16v-7"/></svg>';
+// The plans' limits by their key (live.js limitKey): Claude's, Codex's, Antigravity's quotas.
+const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT (Antigravity)' };
 const TASKS_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>';
 
 function openApp(e) {
@@ -335,7 +338,6 @@ export function mountDashboard(funnels, opts = {}) {
     const agentName = r => agentInfo(r.agent).name;
     // $ at API prices, or the share of one plan's limit: Claude's, Codex's, or one of Antigravity's
     // quotas (one per group of models, as its settings show them).
-    const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT (Antigravity)' };
     const measures = ['$', ...Object.keys(LIMIT_NAMES).filter(q => rows.some(r => r.quota === q && r.limit != null))];
     const value = r => spendState.measure === '$' ? r.cost : r.quota === spendState.measure ? r.limit : null;
     const fmt = v => spendState.measure === '$' ? fmtCost(v) : fmtPercent(v);
@@ -598,6 +600,10 @@ export function mountDashboard(funnels, opts = {}) {
         ${asleep && !missed ? `<p class="pop-note">${esc(t('board.nextRun', when))}</p>` : ''}${missed}${asks}${reply}${history}`;
     }
     const lost = scene.lost(a) ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.silence(a))))}</p>` : '';
+    // On pause: why, as it or its supervisor said, or the used-up limit with when it resets.
+    const pl = a.pauseLimit, why = a.state !== 'pause' ? '' : a.pauseReason
+      || (pl ? t('board.pausedLimit', LIMIT_NAMES[pl.key] ?? pl.key, pl.resets ? fmtDuration((pl.resets - Date.now()) / 1000) : null) : '');
+    const paused = why ? `<p class="pop-note">${esc(why)}</p>` : '';
     const wake = wakesText(a), wakes = `<p class="pop-note wakes"${wake ? '' : ' hidden'}>${esc(wake)}</p>`;
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
@@ -606,7 +612,7 @@ export function mountDashboard(funnels, opts = {}) {
         <div class="pop-msg"></div></div>`
       : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : '';
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
-      <div class="pop-sub">${where}</div>${wakes}${missed}${lost}
+      <div class="pop-sub">${where}</div>${paused}${wakes}${missed}${lost}
       ${write}${history}`;
   }
 
@@ -711,13 +717,13 @@ export function mountDashboard(funnels, opts = {}) {
 
   // What an agent is doing now, and the card's title that says it: its name with a moon or a bolt
   // while it sleeps or works, in words otherwise (starting or finishing a shift, overdue, silent).
-  const agentState = a => scene.overdue(a) ? 'board.overdue' : scene.lost(a) ? 'board.lost' : a.state === 'sleep' ? 'board.resting'
+  const agentState = a => a.state === 'pause' ? 'board.paused' : scene.overdue(a) ? 'board.overdue' : scene.lost(a) ? 'board.lost' : a.state === 'sleep' ? 'board.resting'
     : a.state === 'walk' ? (a.to === 'work' ? 'board.starting' : 'board.finished')
       : 'board.working';
   function agentTitle(a, named) {
     const state = agentState(a), who = esc(named);
     return STATE_ICONS[state]
-      ? `${who}<span class="state-icon ${state === 'board.resting' ? 'sleep' : 'work'}" role="img" title="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
+      ? `${who}<span class="state-icon ${{ 'board.resting': 'sleep', 'board.paused': 'pause' }[state] ?? 'work'}" role="img" title="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
       : t(state, who);
   }
   // Asleep on time: when it wakes up.
