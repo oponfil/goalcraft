@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=efe86892';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=efe86892';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=efe86892';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2eda80d1';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2eda80d1';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=2eda80d1';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -679,7 +679,7 @@ export function mountDashboard(funnels, opts = {}) {
       const list = box.querySelector('.runs-list');
       if (!box.open || list.dataset.loaded) return;
       list.dataset.loaded = 1;
-      list.textContent = '…';
+      list.innerHTML = `<div class="pop-loading" role="status" aria-label="${esc(t('board.loading'))}"></div>`;
       try {
         const rows = await opts.runs(a);
         // A run today shows its time; an earlier one its day too ("пн, 21:14"): the list covers a week.
