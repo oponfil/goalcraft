@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=bbdeba8c';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=bbdeba8c';
-import { themeOf } from './themes.js?v=bbdeba8c';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=bbdeba8c';
+import { agentInfo, plural } from './data.js?v=5e425976';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=5e425976';
+import { themeOf } from './themes.js?v=5e425976';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=5e425976';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -604,8 +604,8 @@ export class Scene {
   // left keeps its bubble. Nothing else: no timer, no warning.
   drawPaused(c, a, info, outfit, p, draw) {
     draw(c, p.x, p.y, a.agent, info.color, outfit);
-    drawPause(c, p.x + 10, p.y - 9);
-    a.noteAt = { x: p.x + 10, y: p.y - 9 };
+    drawPause(c, p.x + 10, p.y - 5);
+    a.noteAt = { x: p.x + 10, y: p.y - 5 };
     if (a.questions.length) {
       const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
       const left = a.sup || a.side !== 'R';

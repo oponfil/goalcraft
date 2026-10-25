@@ -442,25 +442,20 @@ export function drawLying(ctx, x, y, agent, color, flip = false, outfit = 'helme
   drawLogo(ctx, flip ? x + 10.5 : x + 17.5, y + 10, agent);
 }
 
-// Sitting on a wooden chair, in the same 20×28 box as standing: paused (it won't run until it is
-// resumed, or its plan's limit resets), not asleep. The body sits 3 lower, cut above its legs; the
-// thighs rest on the seat, the shins and boots hang in front of it. boss: the supervisor's figure.
+// Sitting on the ground, in the same 20×28 box as standing: paused (it won't run until it is
+// resumed, or its plan's limit resets), not asleep. The body sits 5 lower, cut above its legs; the
+// legs stretch out forward and apart, the boots' soles toward us. boss: the supervisor's figure.
 function seated(ctx, x, y, agent, drawBody) {
-  const WOOD = '#8A5A32', WOOD_DARK = '#5E3B1B', WOOD_LIGHT = '#B07A50';
-  // the chair's back, behind the figure
-  rect(ctx, x + 2, y + 9, 1.5, 16, WOOD_DARK); rect(ctx, x + 16.5, y + 9, 1.5, 16, WOOD_DARK);
-  rect(ctx, x + 2, y + 9, 16, 1.5, WOOD); rect(ctx, x + 2, y + 9, 16, 0.5, WOOD_LIGHT);
-  ctx.save(); ctx.translate(x, y + 3);
+  ctx.save(); ctx.translate(x, y + 5);
   ctx.beginPath(); ctx.rect(-8, -12, 36, 34); ctx.clip();
   drawBody(ctx);
   ctx.restore();
-  // the seat, the thighs on it, the shins and boots hanging in front, the chair's front legs
-  rect(ctx, x + 1.5, y + 23.5, 17, 1.5, WOOD); rect(ctx, x + 1.5, y + 23.5, 17, 0.5, WOOD_LIGHT);
-  rect(ctx, x + 2.5, y + 25, 1.2, 3, WOOD_DARK); rect(ctx, x + 16.3, y + 25, 1.2, 3, WOOD_DARK);
-  rect(ctx, x + 5, y + 22.5, 4.5, 2, PANTS); rect(ctx, x + 10.5, y + 22.5, 4.5, 2, PANTS);
-  rect(ctx, x + 5.5, y + 24.5, 3.5, 2, PANTS); rect(ctx, x + 11, y + 24.5, 3.5, 2, PANTS);
-  rect(ctx, x + 4.5, y + 26.5, 5, 1.5, BOOTS); rect(ctx, x + 10.5, y + 26.5, 5, 1.5, BOOTS);
-  drawLogo(ctx, x + 10, y + 20.5, agent);
+  // the legs forward and apart, foreshortened, and the soles
+  rect(ctx, x + 1.5, y + 25, 7, 2.5, PANTS); rect(ctx, x + 11.5, y + 25, 7, 2.5, PANTS);
+  rect(ctx, x + 8.5, y + 25.5, 3, 2, shade(PANTS, 0.7));
+  rect(ctx, x - 1, y + 24, 3, 4, BOOTS); rect(ctx, x + 18, y + 24, 3, 4, BOOTS);
+  rect(ctx, x - 0.5, y + 24.5, 2, 3, '#3A3A40'); rect(ctx, x + 18.5, y + 24.5, 2, 3, '#3A3A40');
+  drawLogo(ctx, x + 10, y + 22.5, agent);
 }
 export function drawSitting(ctx, x, y, agent, color, outfit = 'helmet') {
   seated(ctx, x, y, agent, c => body(c, agent, color, -1, false, outfit));

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=bbdeba8c';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=bbdeba8c';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=bbdeba8c';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=5e425976';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=5e425976';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=5e425976';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -595,9 +595,10 @@ export function mountDashboard(funnels, opts = {}) {
       // Standing, the agent is waiting and takes the answer at once; asleep, only on its next run.
       const asleep = a.state === 'sleep', left = scene.sleepLeft(a);
       const when = left > 0 ? fmtDuration(left) : null;
+      // Its state right under its name (when it takes the answer, or how late it is), then its work.
       return `<div class="pop-title">${t(asleep ? 'board.askedAsleep' : 'board.asking', who)}</div>
-        <div class="pop-sub">${where}</div>
-        ${asleep && !missed ? `<p class="pop-note">${esc(t('board.nextRun', when))}</p>` : ''}${missed}${asks}${reply}${history}`;
+        <div class="pop-status">${asleep && !missed ? `<p class="pop-note">${esc(t('board.nextRun', when))}</p>` : ''}${missed}</div>
+        <div class="pop-sub where">${where}</div>${asks}${reply}${history}`;
     }
     const lost = scene.lost(a) ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.silence(a))))}</p>` : '';
     // On pause: why, as it or its supervisor said, or the used-up limit with when it resets.
@@ -612,7 +613,8 @@ export function mountDashboard(funnels, opts = {}) {
         <div class="pop-msg"></div></div>`
       : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : '';
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
-      <div class="pop-sub">${where}</div>${paused}${wakes}${missed}${lost}
+      <div class="pop-status">${paused}${wakes}${missed}${lost}</div>
+      <div class="pop-sub where">${where}</div>
       ${write}${history}`;
   }
 

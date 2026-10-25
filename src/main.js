@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=bbdeba8c';
-import { mountDashboard } from './dashboard.js?v=bbdeba8c';
-import { t } from './i18n.js?v=bbdeba8c';
+import { FUNNELS, SUP_RUNS } from './data.js?v=5e425976';
+import { mountDashboard } from './dashboard.js?v=5e425976';
+import { t } from './i18n.js?v=5e425976';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),

@@ -434,3 +434,6 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop .spend-list li.total { border-top: 2px solid var(--border); margin-top: 4px; padding-top: 6px; font-weight: 600; }
 #pop .spend-list li.total i { background: none; }
 .state-icon.pause { color: #F2C14E; }
+/* An agent's card: its state right under its name (wakes in…, on pause, how late), then its work. */
+#pop .pop-status .pop-note { margin: 4px 0 0; }
+#pop .pop-sub.where { margin-bottom: 12px; }
