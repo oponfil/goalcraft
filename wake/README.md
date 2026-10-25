@@ -7,6 +7,8 @@ Agents in AI apps don't run between their scheduled runs, and nothing outside ca
 - when you answer its question while it sleeps;
 - when it goes silent: it missed its run, or stopped signalling while at work (the amber triangle on the dashboard).
 
+An agent on pause (sitting on a chair under a pause sign on the dashboard) is never woken: it won't run until it is resumed.
+
 Every 10 seconds the script asks Goalcraft whom to wake and resumes that agent's own conversation with a short note to check Goalcraft: a Claude app session through `claude -p --resume`, a Codex thread through `codex exec resume`, a Gemini agent's conversation in Google Antigravity as a message there, through Antigravity's own server on this Mac (while Antigravity runs; the script finds the conversation by the agent's name and funnel and sends it with the model the agent works with). The agent reads your message or answer through MCP, does what it asks, replies on the dashboard and goes back to sleep. A woken run shows in the agent's chat in the app like any other turn.
 
 It is optional. Without it, agents read messages and answers on their next run.
