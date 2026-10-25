@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2eda80d1';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2eda80d1';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=2eda80d1';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=9cdcad2f';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=9cdcad2f';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9cdcad2f';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -227,7 +227,7 @@ export function mountDashboard(funnels, opts = {}) {
       const x = r.left + a.noteAt.x * scene.scale, y = r.top + a.noteAt.y * scene.scale;
       el.hidden = x < box.left || x > box.right || y < box.top || y > box.bottom;
       // Kept inside the window; the tail still points at the agent.
-      const w = el.offsetWidth, left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w / 2));
+      const w = el.offsetWidth, left = Math.max(8, Math.min(viewW() - w - 8, x - w / 2));
       el.style.left = left + 'px'; el.style.top = y + 'px';
       el.style.setProperty('--tail', Math.max(12, Math.min(w - 12, x - left)) + 'px');
     }
@@ -506,7 +506,7 @@ export function mountDashboard(funnels, opts = {}) {
       tip.textContent = label.charAt(0).toLocaleUpperCase(lang) + label.slice(1);  // Turkish: i → İ
     }
     tip.hidden = false;
-    tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, e.clientX + 14)) + 'px';
+    tip.style.left = Math.max(8, Math.min(viewW() - tip.offsetWidth - 8, e.clientX + 14)) + 'px';
     tip.style.top = e.clientY + 18 + 'px';
   }
   canvas.addEventListener('pointerleave', () => { tip.hidden = true; });
@@ -785,13 +785,16 @@ export function mountDashboard(funnels, opts = {}) {
     if (note && note.textContent !== wake) { note.textContent = wake; note.hidden = !wake; }
   }, 500);
 
+  // The width a card or tooltip has on the screen: the page's, without a scrollbar; the window's
+  // (innerWidth) can be wider than what is seen, and a card set by it would stick out on the right.
+  function viewW() { return document.documentElement.clientWidth || window.innerWidth; }
   function showPop(e, html) {
     pop.classList.remove('wide');
     pop.innerHTML = `<button class="close" aria-label="${esc(t('board.close'))}">×</button>` + html;
     pop.querySelector('.close').addEventListener('click', hidePop);
     pop.hidden = false;
     const pw = pop.offsetWidth, ph = pop.offsetHeight;
-    pop.style.left = Math.max(8, Math.min(window.innerWidth - pw - 8, e.clientX - pw / 2)) + 'px';
+    pop.style.left = Math.max(8, Math.min(viewW() - pw - 8, e.clientX - pw / 2)) + 'px';
     pop.style.top = Math.max(8, Math.min(window.innerHeight - ph - 8, e.clientY + 14)) + 'px';
   }
   function hidePop() { pop.hidden = true; tip.hidden = true; }
@@ -801,7 +804,7 @@ export function mountDashboard(funnels, opts = {}) {
     if (pop.hidden) return;
     const top = parseFloat(pop.style.top) || 0, left = parseFloat(pop.style.left) || 0, h = pop.offsetHeight, w = pop.offsetWidth;
     if (top + h > window.innerHeight - 8) pop.style.top = Math.max(8, window.innerHeight - h - 8) + 'px';
-    if (left + w > window.innerWidth - 8) pop.style.left = Math.max(8, window.innerWidth - w - 8) + 'px';
+    if (left + w > viewW() - 8) pop.style.left = Math.max(8, viewW() - w - 8) + 'px';
   };
   new ResizeObserver(keepPop).observe(pop);
   window.addEventListener('resize', keepPop);
@@ -810,7 +813,7 @@ export function mountDashboard(funnels, opts = {}) {
     const el = e.target.closest('[data-tip]');
     if (!el || e.pointerType === 'touch') { if (tip.classList.contains('over')) tip.hidden = true; return; }
     tip.textContent = el.dataset.tip; tip.classList.add('over'); tip.hidden = false;
-    tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, e.clientX + 14)) + 'px';
+    tip.style.left = Math.max(8, Math.min(viewW() - tip.offsetWidth - 8, e.clientX + 14)) + 'px';
     tip.style.top = Math.min(window.innerHeight - tip.offsetHeight - 8, e.clientY + 18) + 'px';
   });
   pop.addEventListener('pointerleave', () => { if (tip.classList.contains('over')) tip.hidden = true; });
