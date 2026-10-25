@@ -1,6 +1,6 @@
 // Agent miners, drawn from simple shapes on the scene's fine grid (half-unit pixels).
 // A miner fits a 20×28 box (units), faces right, and is mirrored or rotated for other poses.
-import { LOGO_SVG } from './logos.js?v=43e2cc27';
+import { LOGO_SVG } from './logos.js?v=f324ad40';
 
 // 13x13 brand marks printed on the shirt in half-unit pixels, simplified so they stay
 // recognisable at this size.
@@ -423,15 +423,12 @@ const logoImage = id => {
 // (drawLogos); without one (the deck), a logo is drawn in pixels on the shirt.
 let logoSink = null;
 export function collectLogos(list) { logoSink = list; }
-// The logos collected: each on a white badge, in its own colors. g draws in screen pixels, S of
-// them to a unit.
+// The logos collected, white on the shirt. g draws in screen pixels, S of them to a unit.
 export function drawLogos(g, list, S) {
   g.save(); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
   for (const { x, y, id } of list) {
     const img = logoImage(id);
-    g.fillStyle = '#FFFFFF';
-    g.beginPath(); g.arc(x * S, y * S, 3.4 * S, 0, Math.PI * 2); g.fill();
-    if (img?.complete && img.naturalWidth) g.drawImage(img, (x - 2.4) * S, (y - 2.4) * S, 4.8 * S, 4.8 * S);
+    if (img?.complete && img.naturalWidth) g.drawImage(img, (x - 3.25) * S, (y - 3.25) * S, 6.5 * S, 6.5 * S);
   }
   g.restore();
 }
