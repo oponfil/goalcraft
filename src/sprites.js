@@ -1,6 +1,6 @@
 // Agent miners, drawn from simple shapes on the scene's fine grid (half-unit pixels).
 // A miner fits a 20×28 box (units), faces right, and is mirrored or rotated for other poses.
-import { LOGO_SVG } from './logos.js?v=cda87acb';
+import { LOGO_SVG } from './logos.js?v=769f0b2f';
 
 // 13x13 brand marks printed on the shirt in half-unit pixels, simplified so they stay
 // recognisable at this size.
@@ -293,11 +293,16 @@ function body(c, agent, color, walk, reach, outfit = 'helmet') {
     ellipse(c, 10, 2, 4, 2.5, '#FFFFFF'); rect(c, 7, 2, 6, 3, '#FFFFFF');
     rect(c, 6.5, 4.5, 7, 1.5, '#E6E6E0'); rect(c, 8, 0.5, 1.5, 1, '#F4F4F0');
   } else if (outfit === 'blocky') {
-    // a square head over the round one in a square diamond helmet, square eyes
+    // a square head over the round one in a knight's diamond helmet: a tall dome with a ridge, a
+    // brow rim, a back plate down to the neck, a cheek guard and a nose guard; square eyes
     rect(c, 5.5, 4.5, 9.5, 8, SKIN); rect(c, 5.5, 11.5, 9.5, 1, SKIN_SHADE);
-    rect(c, 5, 2.5, 10.5, 3.5, DIAMOND); rect(c, 5, 2.5, 10.5, 0.5, DIAMOND_LIGHT);
-    rect(c, 5, 6, 2, 5, DIAMOND); rect(c, 14.5, 6, 1, 2, DIAMOND); rect(c, 5, 6, 10.5, 0.5, DIAMOND_DARK);
-    rect(c, 7, 3.5, 1, 1, DIAMOND_LIGHT);
+    rect(c, 4.5, 1.5, 11.5, 4.5, DIAMOND); rect(c, 4.5, 1.5, 11.5, 0.5, DIAMOND_LIGHT);
+    rect(c, 9.5, 0.5, 2, 1, DIAMOND_DARK); rect(c, 9.5, 0.5, 2, 0.5, DIAMOND);
+    rect(c, 4.5, 6, 2.5, 6.5, DIAMOND); rect(c, 4.5, 6, 0.5, 6.5, DIAMOND_DARK); rect(c, 4.5, 12, 2.5, 0.5, DIAMOND_DARK);
+    rect(c, 14.5, 6, 1.5, 5, DIAMOND); rect(c, 15.5, 6, 0.5, 5, DIAMOND_DARK);
+    rect(c, 4.5, 5.5, 11.5, 1, DIAMOND_DARK);
+    rect(c, 12, 6.5, 1, 3, DIAMOND); rect(c, 12, 9, 1, 0.5, DIAMOND_DARK);
+    rect(c, 6.5, 2.5, 1, 1, DIAMOND_LIGHT); rect(c, 5.5, 8, 0.5, 0.5, DIAMOND_LIGHT); rect(c, 5.5, 10, 0.5, 0.5, DIAMOND_LIGHT);
     rect(c, 10.5, 7.5, 1.5, 1.5, '#FFFFFF'); rect(c, 11, 7.5, 1, 1.5, '#3A5AA8');
     rect(c, 13, 7.5, 1.5, 1.5, '#FFFFFF'); rect(c, 13.5, 7.5, 1, 1.5, '#3A5AA8');
     rect(c, 11, 10.5, 3, 0.5, '#9A5A48');
@@ -455,7 +460,7 @@ function drawLogo(ctx, cx, cy, agent) {
 }
 
 // The top of each figure's head with its hat, in its 20×28 box: where an agent's reply note points.
-export const HEAD_TOP = { helmet: 1, goggles: 3, straw: 2, hoodie: 2, suit: 3, smith: 3, chef: -0.5, blocky: 2.5, wings: 2.5 };
+export const HEAD_TOP = { helmet: 1, goggles: 3, straw: 2, hoodie: 2, suit: 3, smith: 3, chef: -0.5, blocky: 0.5, wings: 2.5 };
 export const BOSS_TOP = { helmet: 1, goggles: 3.3, straw: 1.4, hoodie: 3, suit: -1.5, smith: 0, chef: -6, blocky: -1.5, wings: 0 };
 
 export function drawStanding(ctx, x, y, agent, color, walkFrame = -1, flip = false, reach = false, outfit = 'helmet') {
