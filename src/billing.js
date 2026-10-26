@@ -1,9 +1,9 @@
 // Paying for Pro: the site asks supabase/functions/billing for a Polar link and goes there, either
 // to pay (checkout) or to manage or cancel the subscription (portal). account() reads the person's
 // plan as the limits see it.
-import { supabase, siteUrl } from './auth.js?v=3b417a1a';
-import { t } from './i18n.js?v=3b417a1a';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=3b417a1a';
+import { supabase, siteUrl, promoCode } from './auth.js?v=9293bea7';
+import { t } from './i18n.js?v=9293bea7';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=9293bea7';
 
 export async function account() {
   const { data } = await supabase.from('accounts').select('plan, pro_until, customer_id, subscription_status').maybeSingle();
@@ -34,7 +34,8 @@ async function go(kind) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/billing/${kind}`, {
     method: 'POST',
     headers: { authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_KEY, 'content-type': 'application/json' },
-    body: JSON.stringify(kind === 'checkout' ? { embed_origin: location.origin }
+    // A discount code from the link the person came by goes with the checkout, already applied.
+    body: JSON.stringify(kind === 'checkout' ? { embed_origin: location.origin, discount_code: promoCode() }
       : kind === 'portal' ? { return_path: location.pathname + location.search } : {}),
   });
   const body = await res.json().catch(() => ({}));

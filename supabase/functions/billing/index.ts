@@ -1,9 +1,11 @@
 // Payments for Goalcraft Pro through Polar (the merchant of record: it takes the money, handles
 // taxes and sends the receipts). Three routes:
-//   POST /billing/checkout  a signed-in person starts paying: a Polar checkout link
+//   POST /billing/checkout  a signed-in person starts paying: a Polar checkout link, with the discount
+//                           a code from the link they came by names already applied
 //   POST /billing/portal    a paying person manages or cancels their subscription: a portal link
 //   POST /billing/downgrade Pro given without paying (early access) goes back to Free now
-//   POST /billing/webhook   Polar tells us what happened; this moves accounts.pro_until
+//   POST /billing/webhook   Polar tells us what happened; this moves accounts.pro_until and notes
+//                           the discounts applied (discount_uses)
 // Function secrets: POLAR_ACCESS_TOKEN (an organization access token), POLAR_WEBHOOK_SECRET (from
 // the webhook endpoint), POLAR_PRODUCT_ID (the monthly subscription), POLAR_MONTH_PRODUCT_ID (one
 // month bought once, no renewal), and POLAR_API (https://api.polar.sh/v1 by default,
@@ -23,11 +25,11 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'content-type': 'application/json' } })
 
-async function polar(path: string, body: unknown) {
+async function polar(path: string, body?: unknown) {
   const res = await fetch(API + path, {
-    method: 'POST',
+    method: body === undefined ? 'GET' : 'POST',
     headers: { authorization: `Bearer ${Deno.env.get('POLAR_ACCESS_TOKEN')}`, 'content-type': 'application/json' },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(`Polar ${path}: ${res.status} ${JSON.stringify(data).slice(0, 300)}`)
@@ -49,8 +51,11 @@ const EMBED_ORIGINS = [SITE, 'http://localhost:5173']
 async function checkout(req: Request) {
   const user = await person(req)
   if (!user) return json({ error: 'sign_in' }, 401)
-  const { embed_origin } = await req.json().catch(() => ({}))
+  const { embed_origin, discount_code } = await req.json().catch(() => ({}))
+  const discount_id = await discountOf(discount_code)
   const session = await polar('/checkouts/', {
+    // A code from the link the person came by, applied already (they can still type another).
+    ...(discount_id && { discount_id }),
     // Opened over our page rather than on Polar's site, when the page asks for it.
     ...(EMBED_ORIGINS.includes(embed_origin) && { embed_origin }),
     // The subscription first (chosen by default); one month bought once is the other choice on
@@ -125,6 +130,7 @@ async function webhook(req: Request) {
   const userId: string | undefined = o.customer?.external_id ?? o.metadata?.user_id
   if (!userId) return json({ ignored: type })
 
+  await noteDiscount('subscription', o, userId)
   const { data: account } = await admin.from('accounts').select('pro_until').eq('user_id', userId).maybeSingle()
   const until = account?.pro_until ? Date.parse(account.pro_until) : 0
   const periodEnd = o.current_period_end ? Date.parse(o.current_period_end) : 0
@@ -149,12 +155,36 @@ async function webhook(req: Request) {
   return json({ ok: type })
 }
 
+// The Polar discount a code names (case aside), when there is one; a wrong or unknown code is ignored.
+async function discountOf(code: unknown): Promise<string | null> {
+  if (typeof code !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(code)) return null
+  try {
+    const list = await polar(`/discounts/?query=${encodeURIComponent(code)}&limit=100`)
+    const found = (list.items ?? []).find((d: any) => typeof d.code === 'string' && d.code.toLowerCase() === code.toLowerCase())
+    return found?.id ?? null
+  } catch {
+    return null
+  }
+}
+
+// A discount Polar applied to an order or a subscription, kept so payments can be counted by the
+// code (and so by the channel) that brought them.
+async function noteDiscount(kind: 'order' | 'subscription', o: any, userId: string) {
+  const discountId = o.discount_id ?? o.discount?.id
+  if (!discountId || !o.id) return
+  const { error } = await admin.from('discount_uses').upsert({
+    polar_id: o.id, user_id: userId, kind, discount_id: discountId, code: o.discount?.code ?? null,
+  }, { onConflict: 'polar_id' })
+  if (error) console.error('discount_uses:', error.message)
+}
+
 // One month bought once: 30 more days of Pro, counted from today or from the end of the Pro the
 // person already has. Each order counts once, however many times Polar delivers it.
 async function oneTime(o: any) {
   const userId: string | undefined = o.customer?.external_id ?? o.metadata?.user_id
   if (!userId || o.product_id !== Deno.env.get('POLAR_MONTH_PRODUCT_ID')) return json({ ignored: 'order.paid' })
   const days = 30
+  await noteDiscount('order', o, userId)
   const { error: taken } = await admin.from('pro_orders').insert({ order_id: o.id, user_id: userId, days })
   if (taken) return json(taken.code === '23505' ? { ok: 'already counted' } : { error: taken.message }, taken.code === '23505' ? 200 : 500)
   const { data: account } = await admin.from('accounts').select('plan, pro_until').eq('user_id', userId).maybeSingle()
