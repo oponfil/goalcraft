@@ -6,13 +6,14 @@ one whose question you answered while it sleeps, or one that went silent (it mis
 stopped signalling at work). It wakes each in its own conversation with a short note to check
 Goalcraft: a Claude app session (Claude Code) through `claude -p --resume`, a Codex thread through
 `codex exec resume`, a Gemini agent's conversation in Google Antigravity through Antigravity's own
-server on this Mac (while Antigravity runs). Web chats (claude.ai, chatgpt.com) can't be woken from outside and are skipped.
+server on this Mac (while Antigravity runs). Web chats (claude.ai, chatgpt.com) can't be woken from outside and are skipped;
+so are bots in the Grok Bot app, which run in the cloud on their own schedules.
 
     python3 goalcraft-wake.py install <key>   save the key and keep the script running (macOS)
     python3 goalcraft-wake.py uninstall       stop it and remove it from the login items
     python3 goalcraft-wake.py once            one check, then exit (to try it)
     python3 goalcraft-wake.py usage           read and send the agents' token use now, and print it
-    python3 goalcraft-wake.py limit           read and send the Claude plan's limit now, and print it
+    python3 goalcraft-wake.py limit           read and send the plans' limits now (Claude, Antigravity, Grok Bot), and print them
     python3 goalcraft-wake.py run             the loop itself (what install starts)
     python3 goalcraft-wake.py version         print this script's version
 
@@ -25,7 +26,10 @@ It only lets the script ask whom to wake, and send what the agents' runs used in
 their session files here: numbers only, nothing from the conversations). Once an hour it also asks
 Anthropic how much of your Claude plan's limit is used, with Claude Code's own sign-in from this Mac's
 keychain (read here, sent only to Anthropic), and Google Antigravity (while it runs) how much of its Gemini
-quota is, from its own server on this Mac, so the dashboard can show each run's share of them.
+quota is, from its own server on this Mac, so the dashboard can show each run's share of them. For bots
+in the Grok Bot app it asks the Grok Bot servers (with Grok Bot's own sign-in from this Mac, read here
+and sent only to them) how many tokens each bot used per day and how much of the plan's weekly limit
+is used.
 Standard library only; the log is ~/.goalcraft/wake.log.
 """
 import glob
@@ -40,7 +44,7 @@ import time
 import urllib.error
 import urllib.request
 
-VERSION = '2026-10-25'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-10-26'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -740,6 +744,126 @@ def antigravity_usage(item):
     return out
 
 
+# Grok Bot (bots that run in the cloud): what they use is on its servers, per bot and per day, read with
+# the app's own sign-in from this Mac. Its sign-in is encrypted with a key kept in the keychain.
+GROK_BOT = HOME / 'Library' / 'Application Support' / 'Grok Bot'
+GROK_API = 'https://api2.cursor.sh/aiserver.v1.DashboardService/'
+GROK_STATE = DIR / 'grok.json'  # the last rows read: sent again when the servers can't be reached
+
+
+def grok_token():
+    """Grok Bot's sign-in on this Mac, while it is still valid (the app renews it while it runs)."""
+    import base64
+    import hashlib
+    try:
+        pw = subprocess.run(['security', 'find-generic-password', '-w', '-s', 'Grok Bot Safe Storage'],
+                            capture_output=True, text=True, timeout=15).stdout.strip()
+        accounts = json.loads(json.loads((GROK_BOT / 'sand-secrets.json').read_text())['cursor-accounts'])
+    except Exception:
+        return None
+    if not pw:
+        return None
+    account = accounts['accounts'].get(accounts.get('active')) or next(iter(accounts['accounts'].values()), {})
+    raw = base64.b64decode(account.get('cursor-access-token', ''))
+    if raw[:3] != b'v10':
+        return None
+    # Electron's safeStorage on macOS: AES-128-CBC, the key from the keychain's password.
+    key = hashlib.pbkdf2_hmac('sha1', pw.encode(), b'saltysalt', 1003, 16)
+    out = subprocess.run(['openssl', 'enc', '-d', '-aes-128-cbc', '-K', key.hex(), '-iv', (b' ' * 16).hex()],
+                         input=raw[3:], capture_output=True, timeout=15)
+    token = out.stdout.decode(errors='replace').strip()
+    try:
+        claims = json.loads(base64.urlsafe_b64decode(token.split('.')[1] + '=='))
+    except Exception:
+        return None
+    return token if claims.get('exp', 0) > time.time() + 60 else None
+
+
+def grok_call(token, method, body):
+    req = urllib.request.Request(GROK_API + method, data=json.dumps(body).encode(), method='POST', headers={
+        'Authorization': f'Bearer {token}', 'Content-Type': 'application/json', 'Connect-Protocol-Version': '1'})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.load(r)
+
+
+def grok_rows():
+    """Every Grok Bot bot's use over the last days, a row a day: its tokens, and its share of the plan's
+    weekly limit (the used percent spread over all bots' tokens since the window began). The servers
+    give no tokens by kind or price per bot. None when they can't be asked."""
+    token = grok_token()
+    if not token:
+        return None
+    now = time.time()
+    status = grok_call(token, 'GetSandUsageStatus', {})
+    begun = when(status.get('currentPeriodStart'))
+    days_from = min(begun or now, now - USAGE_DAYS * 86400)
+    start = int(days_from // 86400 * 86400)
+    daily = grok_call(token, 'GetDailySpendByCategory', {'periodStartMs': str(start * 1000), 'periodEndMs': str(int(now * 1000)), 'groupBy': 4})
+    days = [(d['category'], int(d['day']) / 1000, int(d.get('totalTokens') or 0)) for d in daily.get('dailySpend', [])]
+    # The window's tokens: whole days since it began, the day it began in by the part after.
+    window = sum(t * (min(1, (day + 86400 - begun) / 86400) if day < begun else 1) for _, day, t in days if day + 86400 > begun) if begun else 0
+    percent = status.get('usagePercent')
+    rate = percent / window if percent is not None and window > 0 else None
+    return {'percent': percent, 'resets': status.get('nextResetTimestampUtc'),
+            'days': [{'bot': bot, 'day': day, 'tokens': t, 'limit_used': round(t * rate, 4) if rate else None} for bot, day, t in days]}
+
+
+def grok_usage(item, read):
+    """A Grok agent's days in Grok Bot, from what grok_rows read."""
+    out = []
+    for d in read['days'] if read else []:
+        if d['bot'] != item['session'] or not d['tokens']:
+            continue
+        out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'grok', 'model': 'grok-bot',
+                    'run_key': f'grokbot:{d["bot"]}:{int(d["day"])}', 'started_at': iso(d['day']),
+                    'ended_at': iso(min(d['day'] + 86400 - 1, time.time())), 'tokens': d['tokens'], 'new_tokens': d['tokens'],
+                    'limit_used': d['limit_used'], 'limit_percent': read['percent'], 'limit_window_minutes': 7 * 1440})
+    return out
+
+
+def grok_read():
+    """grok_rows, kept for when the servers can't be reached (so its days aren't dropped meanwhile)."""
+    try:
+        read = grok_rows()
+    except Exception as e:
+        log(f'usage: Grok Bot: {e}')
+        read = None
+    if read:
+        GROK_STATE.write_text(json.dumps(read))
+        return read
+    try:
+        return json.loads(GROK_STATE.read_text())
+    except Exception:
+        return None
+
+
+def report_grok_limit(key, show=False):
+    """Read how much of the Grok Bot plan's weekly limit is used and send it to Goalcraft."""
+    token = grok_token()
+    if not token:
+        return False  # no Grok Bot on this Mac, or signed out: nothing to read
+    try:
+        status = grok_call(token, 'GetSandUsageStatus', {})
+    except Exception as e:
+        log(f'limit: could not read Grok Bot: {e}')
+        return False
+    if status.get('usagePercent') is None:
+        return False
+    row = {'app': 'grok', 'at': iso(time.time()), 'week_percent': round(status['usagePercent'], 2),
+           'week_resets_at': status.get('nextResetTimestampUtc')}
+    if show:
+        print(f'Grok Bot: {row["week_percent"]}% of the week used (resets {row["week_resets_at"]})')
+    req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={
+        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            json.load(r)
+    except Exception as e:
+        log(f'limit: could not send Grok Bot: {e}')
+        return False
+    return True
+
+
 def report_usage(key, show=False):
     """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
     req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
@@ -750,17 +874,19 @@ def report_usage(key, show=False):
         log(f'usage: could not list agents: {e}')
         return 0
     sessions = app_sessions()
+    grok = grok_read() if any(item['app'] == 'grok' for item in agents) else None
     rows = []
     for item in agents:
         try:
             rows += (claude_usage(item, sessions) if item['app'] == 'claude' else codex_usage(item) if item['app'] == 'codex'
-                     else antigravity_usage(item) if item['app'] == 'antigravity' else [])
+                     else antigravity_usage(item) if item['app'] == 'antigravity' else grok_usage(item, grok) if item['app'] == 'grok' else [])
         except Exception as e:
             log(f'usage: {item["agent"]} in {item["funnel_id"]}: {e}')
     if show:
         for r in rows:
             cost = f' ≈${r["cost_usd"]:.2f}' if r.get('cost_usd') is not None else ''
             limit = f' limit {r["limit_percent"]}% (+{r["limit_used"]})' if r.get('limit_percent') is not None else ''
+            limit = limit or (f' {r["limit_used"]}% of the limit' if r.get('limit_used') is not None else '')
             print(f'{r["funnel_id"]:>14} {r["agent"]:<18} {r["started_at"]} {r["tokens"] / 1e6:7.2f}M tokens{cost}{limit}')
     saved = 0
     # The first batch replaces what was sent before for the same days, so runs read differently
@@ -827,6 +953,7 @@ def limit_job(key):
     """One hourly reading of the Claude plan's limit; when it fails (no network, say), again in 5 minutes."""
     claude = report_limit(key)
     report_antigravity_limit(key)
+    report_grok_limit(key)
     limit_next_after(LIMIT_EVERY if claude else 5 * 60)
 
 
@@ -906,6 +1033,7 @@ if __name__ == '__main__':
         key = key_or_exit()
         print('Claude: sent' if report_limit(key, show=True) else 'Claude: failed, see ~/.goalcraft/wake.log')
         print('Antigravity: sent' if report_antigravity_limit(key, show=True) else 'Antigravity: not running or failed')
+        print('Grok Bot: sent' if report_grok_limit(key, show=True) else 'Grok Bot: not signed in here or failed')
     elif cmd == 'once':
         print('ok' if check(key_or_exit()) == 200 else 'failed: see ~/.goalcraft/wake.log')
         time.sleep(1)

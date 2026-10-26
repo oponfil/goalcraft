@@ -9,7 +9,7 @@
 //                input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd,
 //                limit_percent, limit_used, limit_window_minutes }], replace_from? }   → { saved }: what their runs
 //                used; replace_from drops what was sent before for runs that ended since then
-//   POST /wake { limits: [{ app: "claude" | "antigravity", quota?, at, week_percent, week_resets_at?, session_percent?, session_resets_at?,
+//   POST /wake { limits: [{ app: "claude" | "antigravity" | "grok", quota?, at, week_percent, week_resets_at?, session_percent?, session_resets_at?,
 //                cost_usd? }] }   → { saved }: the plan's limit as the script read it, with what every local
 //                session of that app cost since the reading before (the board turns cost into a share of it)
 //
@@ -43,6 +43,13 @@ function session(chat: string | null): { app: string, session: string } | null {
   return null
 }
 
+// A Grok agent in the Grok Bot app: its bot, by the id in its link. Its bots run in the cloud and wake
+// themselves (their own schedules), so the script only reads what they use.
+function grokBot(chat: string | null): { app: string, session: string } | null {
+  const id = chat?.match(/^grokbot:\/\/app\/v1\/agent\?id=([A-Za-z0-9_-]{1,128})$/)?.[1]
+  return id ? { app: 'grok', session: id } : null
+}
+
 // What the script resumes for an agent: its Claude or Codex session, or for a Gemini agent with no
 // such link, its conversation in Google Antigravity (the script finds it by the agent's name and funnel).
 function resumable(p: any, chat: string | null = null): { app: string, session: string | null } | null {
@@ -56,7 +63,7 @@ async function saveLimits(user: string, list: any[]) {
   const time = (v: unknown) => typeof v === 'string' && !isNaN(Date.parse(v)) ? new Date(v).toISOString() : null
   const ok = list.slice(0, 50).flatMap((r: any) => {
     const at = time(r?.at), week = num(r?.week_percent, 100)
-    if (!['claude', 'antigravity'].includes(r?.app) || !at || week == null) return []
+    if (!['claude', 'antigravity', 'grok'].includes(r?.app) || !at || week == null) return []
     const quota = typeof r.quota === 'string' && /^[a-z0-9.-]{0,40}$/.test(r.quota) ? r.quota : ''
     return [{ user_id: user, app: r.app, quota, at, week_percent: week, week_resets_at: time(r.week_resets_at),
       session_percent: num(r.session_percent, 100), session_resets_at: time(r.session_resets_at), cost_usd: num(r.cost_usd, 1e6),
@@ -83,7 +90,7 @@ async function saveUsage(user: string, body: any) {
   const ok = rows.flatMap((r: any) => {
     const funnel_id = id.get(r?.funnel_id), agent = str(r?.agent, 64), run_key = str(r?.run_key, 200)
     const started_at = time(r?.started_at), ended_at = time(r?.ended_at)
-    if (!funnel_id || !agent || !run_key || !started_at || !ended_at || !['claude', 'codex', 'antigravity'].includes(r?.app)) return []
+    if (!funnel_id || !agent || !run_key || !started_at || !ended_at || !['claude', 'codex', 'antigravity', 'grok'].includes(r?.app)) return []
     return [{
       user_id: user, funnel_id, agent, run_key, app: r.app, model: str(r.model, 64), started_at, ended_at,
       tokens: Math.round(num(r.tokens, 1e12) ?? 0), new_tokens: Math.round(num(r.new_tokens, 1e12) ?? 0),
@@ -128,9 +135,9 @@ Deno.serve(async (req) => {
       .eq('user_id', user).gte('updated_at', iso(now - 7 * 24 * 3600e3))
     if (error) return json({ error: 'failed' }, 500)
     // Gemini agents with no chat link the script can resume: it looks for them in Google Antigravity,
-    // in the conversations that mention their name and funnel.
+    // in the conversations that mention their name and funnel. Grok agents by their bot in Grok Bot.
     return json({ agents: (data ?? []).flatMap((p: any) => {
-      const s = resumable(p)
+      const s = resumable(p) ?? grokBot(p.chat_url)
       return s ? [{ agent: p.agent, funnel_id: p.funnels?.key, ...s }] : []
     }) })
   }

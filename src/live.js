@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=22478350';
+import { supabase } from './auth.js?v=4cc20b2b';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -135,7 +135,7 @@ function dayUsage(rows) {
 let limits = {};
 // Claude gives whole percents: wait until enough has been spent for the rate to mean something;
 // Antigravity's are exact.
-const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3 } };
+const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3 }, grok: { usd: 1, pct: 0.1 } };
 // Antigravity has a quota per group of models (as its settings show): Gemini 4 Argon, the other
 // Gemini models, Claude and GPT. A run counts against its model's.
 const quotaOf = model => { const m = (model || '').toLowerCase(); return m.startsWith('gemini-4-argon') ? 'gemini-4-argon' : m.startsWith('gemini') ? 'gemini' : 'claude-gpt'; };
@@ -154,7 +154,8 @@ function limitRate(rows, min) {
   const windowRate = last?.window_cost_usd > 0.5 && Number(last.week_percent) >= min.pct ? Number(last.week_percent) / Number(last.window_cost_usd) : null;
   return { perDollar: windowRate ?? (usd >= min.usd && pct >= min.pct ? pct / usd : null), week: last ? Number(last.week_percent) : null, resets: last?.week_resets_at ? Date.parse(last.week_resets_at) : null };
 }
-// A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged.
+// A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged,
+// Grok Bot's days what the wake script worked out from their tokens (Grok Bot gives no prices).
 const withLimit = r => {
   const l = limits[limitKey(r)];
   return r.limit_used == null && r.cost_usd != null && l?.perDollar != null

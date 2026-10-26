@@ -65,7 +65,7 @@ Only counts, dates and links are stored. Item lists (vacancies, people, papers) 
 | `next_run_at` | For `sleep`: when it starts again; shown as a countdown. More than 10 minutes past it with no new state from the agent, the dashboard marks it as not woken up, so call `set_agent_state(work)` first thing in every run |
 | `question` | For `ask`: what the agent needs from the person |
 | `question_id` | For `ask`: the open question; the person answers it on the dashboard |
-| `chat_url` | Link to the conversation the agent works in, opened by "Open" on the dashboard (a Gemini agent in Google Antigravity sends none: its "Open" opens Antigravity, which has no link to one conversation): a web chat (`https://claude.ai/chat/…`, `https://chatgpt.com/c/…`), a Claude app session (`claude://claude.ai/epitaxy/<CLAUDE_CODE_HOST_SESSION_ID>`) or a Codex thread (`codex://threads/<id>`, filled in by the server from the thread id Codex sends with each call) |
+| `chat_url` | Link to the conversation the agent works in, opened by "Open" on the dashboard (a Gemini agent in Google Antigravity sends none: its "Open" opens Antigravity, which has no link to one conversation): a web chat (`https://claude.ai/chat/…`, `https://chatgpt.com/c/…`), a Claude app session (`claude://claude.ai/epitaxy/<CLAUDE_CODE_HOST_SESSION_ID>`) a Codex thread (`codex://threads/<id>`, filled in by the server from the thread id Codex sends with each call) or a bot in the Grok Bot app (`grokbot://app/v1/agent?id=<bot id>`, the folder of its store) |
 
 ## Tools
 
