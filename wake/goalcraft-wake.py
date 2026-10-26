@@ -14,7 +14,7 @@ agent, which can't be resumed in one conversation from outside.
     python3 goalcraft-wake.py uninstall       stop it and remove it from the login items
     python3 goalcraft-wake.py once            one check, then exit (to try it)
     python3 goalcraft-wake.py usage           read and send the agents' token use now, and print it
-    python3 goalcraft-wake.py limit           read and send the plans' limits now (Claude, Antigravity, Grok Bot), and print them
+    python3 goalcraft-wake.py limit           read and send the plans' limits now (Claude, Antigravity, Grok Bot, Kimi), and print them
     python3 goalcraft-wake.py run             the loop itself (what install starts)
     python3 goalcraft-wake.py version         print this script's version
 
@@ -30,7 +30,8 @@ keychain (read here, sent only to Anthropic), and Google Antigravity (while it r
 quota is, from its own server on this Mac, so the dashboard can show each run's share of them. For bots
 in the Grok Bot app it asks the Grok Bot servers (with Grok Bot's own sign-in from this Mac, read here
 and sent only to them) how many tokens each bot used per day and how much of the plan's weekly limit
-is used.
+is used. For the Kimi app's Work it asks Kimi how
+much of the plan's monthly quota is used, with the sign-in the app keeps on this Mac (sent only to Kimi).
 Standard library only; the log is ~/.goalcraft/wake.log.
 """
 import glob
@@ -981,6 +982,77 @@ def kimi_usage(item):
     return out
 
 
+KIMI_CONFIG = HOME / 'Library' / 'Application Support' / 'kimi-desktop' / 'daimon-share' / 'daimon' / 'config.json'
+
+
+def kimi_window_cost(since, until):
+    """What every Kimi Work conversation here cost at API prices between two moments: the plan's
+    limit counts them all, not only Goalcraft's agents."""
+    total = 0.0
+    for f in glob.glob(str(KIMI_SESSIONS / '*' / 'conv-*' / 'agents' / '*' / 'wire.jsonl')):
+        if os.path.getmtime(f) < since:
+            continue
+        for line in open(f, errors='replace'):
+            if '"usage.record"' not in line:
+                continue
+            try:
+                d = json.loads(line)
+            except Exception:
+                continue
+            if d.get('usageScope') == 'turn' and since < (d.get('time') or 0) / 1000 <= until:
+                total += kimi_cost(d.get('model'), d.get('usage') or {}) or 0.0
+    return total
+
+
+def month_before(t):
+    """The same moment a calendar month earlier (Kimi's quota resets monthly)."""
+    g = time.gmtime(t)
+    y, m = (g.tm_year, g.tm_mon - 1) if g.tm_mon > 1 else (g.tm_year - 1, 12)
+    import calendar
+    day = min(g.tm_mday, calendar.monthrange(y, m)[1])
+    return calendar.timegm((y, m, day, g.tm_hour, g.tm_min, g.tm_sec))
+
+
+def report_kimi_limit(key, show=False):
+    """Read how much of the Kimi plan's quota is used (Kimi Code's, as the app's Work counts it) and send
+    it to Goalcraft, with what Work cost here since the quota's month began. Its sign-in is the app's
+    own (its config on this Mac), read here and sent only to Kimi."""
+    try:
+        c = json.loads(KIMI_CONFIG.read_text())['credentials']['kimiCode']
+    except Exception:
+        return False  # no Kimi app here, or not signed in to Work: nothing to read
+    req = urllib.request.Request(c.get('baseUrl', 'https://api.kimi.com/coding/v1').rstrip('/') + '/usages',
+                                 headers={'Authorization': f'Bearer {c["apiKey"]}', 'User-Agent': AGENT})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            q = json.load(r).get('totalQuota') or {}
+    except Exception as e:
+        log(f'limit: could not read Kimi: {e}')
+        return False
+    try:
+        limit, used = float(q['limit']), float(q['used'])
+    except Exception:
+        return False
+    resets = when(q.get('resetTime') or '')
+    if not limit or resets is None:
+        return False
+    now = time.time()
+    percent = round(used / limit * 100, 2)
+    window = kimi_window_cost(month_before(resets), now)
+    row = {'app': 'kimi', 'at': iso(now), 'week_percent': percent, 'week_resets_at': q['resetTime'], 'window_cost_usd': round(window, 4)}
+    if show:
+        print(f'Kimi: {percent}% of the month used (resets {q["resetTime"]}), Work here cost ≈${window:.2f} since it began')
+    req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={
+        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            json.load(r)
+    except Exception as e:
+        log(f'limit: could not send Kimi: {e}')
+        return False
+    return True
+
+
 def report_usage(key, show=False):
     """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
     req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
@@ -1071,6 +1143,7 @@ def limit_job(key):
     claude = report_limit(key)
     report_antigravity_limit(key)
     report_grok_limit(key)
+    report_kimi_limit(key)
     limit_next_after(LIMIT_EVERY if claude else 5 * 60)
 
 
@@ -1152,6 +1225,7 @@ if __name__ == '__main__':
         print('Claude: sent' if report_limit(key, show=True) else 'Claude: failed, see ~/.goalcraft/wake.log')
         print('Antigravity: sent' if report_antigravity_limit(key, show=True) else 'Antigravity: not running or failed')
         print('Grok Bot: sent' if report_grok_limit(key, show=True) else 'Grok Bot: not signed in here or failed')
+        print('Kimi: sent' if report_kimi_limit(key, show=True) else 'Kimi: not signed in here or failed')
     elif cmd == 'once':
         print('ok' if check(key_or_exit()) == 200 else 'failed: see ~/.goalcraft/wake.log')
         time.sleep(1)

@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=f7b93252';
+import { supabase } from './auth.js?v=6be89c96';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -135,7 +135,9 @@ function dayUsage(rows) {
 let limits = {};
 // Claude gives whole percents: wait until enough has been spent for the rate to mean something;
 // Antigravity's are exact.
-const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3 }, grok: { usd: 1, pct: 0.1 } };
+const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3 }, grok: { usd: 1, pct: 0.1 }, kimi: { usd: 2, pct: 1 } };
+// How many days a plan's limit lasts: a week, but Kimi's a month.
+const LIMIT_DAYS = { kimi: 30 };
 // Antigravity has a quota per group of models (as its settings show): Gemini 4 Argon, the other
 // Gemini models, Claude and GPT. A run counts against its model's.
 const quotaOf = model => { const m = (model || '').toLowerCase(); return m.startsWith('gemini-4-argon') ? 'gemini-4-argon' : m.startsWith('gemini') ? 'gemini' : 'claude-gpt'; };
@@ -159,7 +161,7 @@ function limitRate(rows, min) {
 const withLimit = r => {
   const l = limits[limitKey(r)];
   return r.limit_used == null && r.cost_usd != null && l?.perDollar != null
-    ? { ...r, limit_used: Number(r.cost_usd) * l.perDollar, limit_percent: l.week, limit_window_minutes: 7 * 1440 }
+    ? { ...r, limit_used: Number(r.cost_usd) * l.perDollar, limit_percent: l.week, limit_window_minutes: (LIMIT_DAYS[limitKey(r)] ?? 7) * 1440 }
     : r;
 };
 
