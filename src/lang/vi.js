@@ -6,7 +6,7 @@ export default {
   'nav.pricing': 'Bảng giá',
   'nav.signin': 'Đăng nhập',
   'nav.goals': 'Mục tiêu',
-  'nav.addFunnel': 'Kết nối phễu',
+  'nav.addFunnel': 'Thêm phễu',
   'nav.notify': 'Thông báo',
   'nav.notifyTitle': (e) => `Gửi email tới ${e} khi một tác tử đặt câu hỏi cho bạn`,
   'nav.profile': 'Hồ sơ',

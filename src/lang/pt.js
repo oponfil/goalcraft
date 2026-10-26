@@ -5,7 +5,7 @@ export default {
   'nav.pricing': 'Preços',
   'nav.signin': 'Entrar',
   'nav.goals': 'Metas',
-  'nav.addFunnel': 'Conectar um funil',
+  'nav.addFunnel': 'Adicionar um funil',
   'nav.notify': 'Avisos',
   'nav.notifyTitle': (e) => `Enviar um e-mail para ${e} quando um agente fizer uma pergunta`,
   'nav.profile': 'Perfil',

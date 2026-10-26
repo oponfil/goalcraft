@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=bb2e877b';
-import vi from './lang/vi.js?v=bb2e877b';
-import ja from './lang/ja.js?v=bb2e877b';
-import pt from './lang/pt.js?v=bb2e877b';
-import tr from './lang/tr.js?v=bb2e877b';
-import ko from './lang/ko.js?v=bb2e877b';
+import es from './lang/es.js?v=ede08b06';
+import vi from './lang/vi.js?v=ede08b06';
+import ja from './lang/ja.js?v=ede08b06';
+import pt from './lang/pt.js?v=ede08b06';
+import tr from './lang/tr.js?v=ede08b06';
+import ko from './lang/ko.js?v=ede08b06';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -102,7 +102,7 @@ const STRINGS = {
   'nav.pricing': L('Pricing', 'Тарифы', '价格', 'ราคา'),
   'nav.signin': L('Sign in', 'Войти', '登录', 'เข้าสู่ระบบ'),
   'nav.goals': L('Goals', 'Цели', '目标', 'เป้าหมาย'),
-  'nav.addFunnel': L('Connect a funnel', 'Подключить воронку', '连接漏斗', 'เชื่อมต่อกรวย'),
+  'nav.addFunnel': L('Add a funnel', 'Добавить воронку', '添加漏斗', 'เพิ่มกรวย'),
   'nav.notify': L('Email me', 'Письма', '邮件通知', 'แจ้งทางอีเมล'),
   'nav.notifyTitle': L((e) => `Email ${e} when an agent asks you a question`, (e) => `Присылать письмо на ${e}, когда агент задаёт вопрос`, (e) => `智能体向你提问时发邮件到 ${e}`, (e) => `ส่งอีเมลถึง ${e} เมื่อเอเจนต์ถามคำถามคุณ`),
   'nav.profile': L('Profile', 'Профиль', '个人资料', 'โปรไฟล์'),

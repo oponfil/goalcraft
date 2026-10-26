@@ -284,9 +284,8 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 .links .profile-menu .row.plan-row a:hover { text-decoration: underline; }
 .links .profile-menu a.signout { color: #B8AE9F; text-decoration: none; border-top: 1px solid var(--border); padding-top: 10px; }
 .links .profile-menu a.signout:hover { color: #F4EDE1; }
-.links .profile-menu a.add-funnel { color: #F2C14E; text-decoration: none; font-weight: 600; border-top: 1px solid var(--border); padding-top: 10px; }
+.links .profile-menu a.add-funnel { color: #F2C14E; text-decoration: none; }
 .links .profile-menu a.add-funnel:hover { text-decoration: underline; }
-.links .profile-menu a.add-funnel + a.signout { border-top: 0; padding-top: 0; }
 /* Rubik has no Vietnamese letters: Vietnamese pages use Be Vietnam Pro, a font of the same shape. */
 html:lang(vi) { --font: "Be Vietnam Pro", system-ui, sans-serif; }
 /* Japanese: Noto Sans JP before the Chinese font, so kanji take their Japanese shapes. */

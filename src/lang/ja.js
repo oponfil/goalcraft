@@ -6,7 +6,7 @@ export default {
   'nav.pricing': '料金',
   'nav.signin': 'ログイン',
   'nav.goals': '目標',
-  'nav.addFunnel': 'ファネルを接続',
+  'nav.addFunnel': 'ファネルを追加',
   'nav.notify': 'メール通知',
   'nav.notifyTitle': (e) => `エージェントから質問があったら ${e} にメールする`,
   'nav.profile': 'プロフィール',

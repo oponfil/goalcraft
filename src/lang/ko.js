@@ -5,7 +5,7 @@ export default {
   'nav.pricing': '요금제',
   'nav.signin': '로그인',
   'nav.goals': '목표',
-  'nav.addFunnel': '퍼널 연결',
+  'nav.addFunnel': '퍼널 추가',
   'nav.notify': '이메일 알림',
   'nav.notifyTitle': (e) => `에이전트가 질문하면 ${e}(으)로 이메일 보내기`,
   'nav.profile': '프로필',
