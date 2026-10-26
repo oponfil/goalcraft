@@ -5,6 +5,7 @@ export default {
   'nav.pricing': 'Precios',
   'nav.signin': 'Entrar',
   'nav.goals': 'Metas',
+  'nav.addFunnel': 'Conectar un embudo',
   'nav.notify': 'Avisos',
   'nav.notifyTitle': (e) => `Enviar un correo a ${e} cuando un agente te haga una pregunta`,
   'nav.profile': 'Perfil',

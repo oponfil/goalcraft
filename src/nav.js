@@ -2,9 +2,9 @@
 // profile button (the Google photo, or a plain silhouette) whose menu holds the rarely used
 // settings: the language, email when an agent asks, and signing out. A signed-in person's language
 // is kept in their account too.
-import { account, openBilling } from './billing.js?v=9cdcad2f';
-import { supabase, siteUrl } from './auth.js?v=9cdcad2f';
-import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved, TANK_VIEWS, tankView, setTankView, onTanksSaved } from './i18n.js?v=9cdcad2f';
+import { account, openBilling } from './billing.js?v=bb2e877b';
+import { supabase, siteUrl } from './auth.js?v=bb2e877b';
+import { t, lang, chosen, LANGS, SHORT, setLang, onLangSaved, adoptLang, FLOW_UNITS, flowUnit, setFlowUnit, onFlowSaved, TANK_VIEWS, tankView, setTankView, onTanksSaved } from './i18n.js?v=bb2e877b';
 
 // The profile button's picture for people without a Google photo.
 const SILHOUETTE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5z"/></svg>';
@@ -95,24 +95,16 @@ if (signin && session) {
   tanksPick.addEventListener('change', () => setTankView(tanksPick.checked ? 'grow' : 'fixed'));
   tanksRow.append(document.createTextNode(t('nav.tanksGrow')), tanksPick);
 
-  // Email when an agent asks a question, kept in the account so the MCP server sees it.
-  const notify = document.createElement('label');
-  notify.className = 'row check';
-  const box = document.createElement('input');
-  box.type = 'checkbox';
-  box.checked = !!meta.notify_email;
-  box.addEventListener('change', async () => {
-    box.disabled = true;
-    const { error } = await supabase.auth.updateUser({ data: { notify_email: box.checked } });
-    if (error) box.checked = !box.checked;
-    box.disabled = false;
-  });
-  notify.append(box, document.createTextNode(t('nav.notifyLong')));
+  // Connecting another funnel: seldom done, so here rather than on the board. (Emails about agents'
+  // questions are hidden for now: no switch for them here, so none are sent.)
+  const addFunnel = document.createElement('a');
+  addFunnel.className = 'add-funnel';
+  addFunnel.href = siteUrl('connect/');
+  addFunnel.textContent = `+ ${t('nav.addFunnel')}`;
   // The session can be older than a change made elsewhere: read the account's current settings.
   supabase.auth.getUser().then(({ data }) => {
     const m = data?.user?.user_metadata;
     if (!m) return;
-    if (!box.disabled) box.checked = !!m.notify_email;
     if (FLOW_UNITS.includes(m.flow_unit)) { setFlowUnit(m.flow_unit, { remote: false }); flowPick.value = m.flow_unit; }
     if (TANK_VIEWS.includes(m.tank_view)) { setTankView(m.tank_view, { remote: false }); tanksPick.checked = m.tank_view === 'grow'; }
   });
@@ -149,7 +141,7 @@ if (signin && session) {
     location.replace(siteUrl(''));
   });
 
-  menu.append(email, planRow, langRow, flowRow, tanksRow, notify, out);
+  menu.append(email, planRow, langRow, flowRow, tanksRow, addFunnel, out);
   profile.append(button, menu);
   signin.after(profile);
 

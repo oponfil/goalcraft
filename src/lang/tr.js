@@ -5,6 +5,7 @@ export default {
   'nav.pricing': 'Fiyatlar',
   'nav.signin': 'Giriş',
   'nav.goals': 'Hedefler',
+  'nav.addFunnel': 'Huni bağla',
   'nav.notify': 'E-posta',
   'nav.notifyTitle': (e) => `Bir ajan soru sorduğunda ${e} adresine e-posta gönder`,
   'nav.profile': 'Profil',
