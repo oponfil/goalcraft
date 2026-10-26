@@ -6,8 +6,7 @@
 //   goalcraft.ai/.well-known/* → discovery documents that name goalcraft.ai everywhere, and the
 //                                ChatGPT app directory's domain check (openai-apps-challenge)
 
-// Every address handed to an agent is on the domain its request came in on: goalcraft.ai, or
-// goalagents.run for agents connected before the move (it keeps working for them).
+const SITE = 'https://goalcraft.ai';
 const SUPABASE = 'https://wbnmtecgahwzwvcqenlk.supabase.co';
 const MCP = `${SUPABASE}/functions/v1/mcp`;
 
@@ -17,7 +16,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 });
 
 // The resource the agent asks access for, and who signs people in for it.
-const resourceMetadata = SITE => json({
+const resourceMetadata = () => json({
   resource: `${SITE}/mcp`,
   authorization_servers: [SITE],
   bearer_methods_supported: ['header'],
@@ -25,7 +24,7 @@ const resourceMetadata = SITE => json({
 });
 
 // Supabase's own Auth metadata with every address moved to goalcraft.ai.
-async function authMetadata(SITE) {
+async function authMetadata() {
   const res = await fetch(`${SUPABASE}/.well-known/oauth-authorization-server/auth/v1`);
   if (!res.ok) return json({ error: 'auth_metadata_unavailable' }, 502);
   const meta = await res.json();
@@ -37,7 +36,7 @@ async function authMetadata(SITE) {
 }
 
 // Pass a request on to Supabase as it is; redirects go back to the agent's browser untouched.
-async function forward(request, target, SITE) {
+async function forward(request, target) {
   const headers = new Headers(request.headers);
   headers.delete('host');
   const res = await fetch(target, {
@@ -56,7 +55,7 @@ async function forward(request, target, SITE) {
 
 export default {
   async fetch(request, env = {}) {
-    const url = new URL(request.url), path = url.pathname, SITE = url.origin;
+    const url = new URL(request.url), path = url.pathname;
     // OpenAI checks that we own the domain: the token from its developer portal, as plain text. It
     // is kept in the Worker's variable OPENAI_APPS_CHALLENGE (Cloudflare dashboard → Settings).
     if (path === '/.well-known/openai-apps-challenge') {
@@ -72,12 +71,12 @@ export default {
         'access-control-expose-headers': 'mcp-session-id, www-authenticate',
       } });
     }
-    if (path.startsWith('/.well-known/oauth-protected-resource')) return resourceMetadata(SITE);
-    if (path.startsWith('/.well-known/oauth-authorization-server') || path.startsWith('/.well-known/openid-configuration')) return authMetadata(SITE);
+    if (path.startsWith('/.well-known/oauth-protected-resource')) return resourceMetadata();
+    if (path.startsWith('/.well-known/oauth-authorization-server') || path.startsWith('/.well-known/openid-configuration')) return authMetadata();
     // A person opening /mcp in a browser goes to the connect page; agents never ask for HTML.
     if (path === '/mcp' && request.method === 'GET' && !request.headers.has('authorization') && (request.headers.get('accept') || '').includes('text/html')) return Response.redirect(SITE + '/connect/', 302);
-    if (path === '/mcp' || path.startsWith('/mcp/')) return forward(request, MCP + path.slice(4) + url.search, SITE);
-    if (path.startsWith('/auth/')) return forward(request, SUPABASE + path + url.search, SITE);
+    if (path === '/mcp' || path.startsWith('/mcp/')) return forward(request, MCP + path.slice(4) + url.search);
+    if (path.startsWith('/auth/')) return forward(request, SUPABASE + path + url.search);
     return fetch(request); // anything else: the site on GitHub Pages
   },
 };
