@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=9293bea7';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=9293bea7';
-import { themeOf } from './themes.js?v=9293bea7';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=9293bea7';
+import { agentInfo, plural } from './data.js?v=53a22f02';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=53a22f02';
+import { themeOf } from './themes.js?v=53a22f02';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=53a22f02';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -140,7 +140,7 @@ function rng(seed) {
 
 export class Scene {
   // live: the agents report counts and states; nothing is simulated, agents keep their state.
-  constructor(canvas, funnels, { live = false, sides = null, heaps = null, grow = false } = {}) {
+  constructor(canvas, funnels, { live = false, sides = null, heaps = null, grow = false, from = null } = {}) {
     this.live = live;
     this.grow = grow;
     this.canvas = canvas;
@@ -148,9 +148,12 @@ export class Scene {
     this.funnels = funnels.map(f => ({ ...f, stages: f.stages.map(s => ({ ...s })) }));
     for (const f of this.funnels) f.geo = geometry(f, grow);
     this.H = sceneHeight(this.funnels);
-    this.lo = document.createElement('canvas');
+    // The data refreshes every minute with a new scene: it draws on the old one's canvases. Safari
+    // frees a dropped canvas's memory late and, past its limit for a page, gives new ones that
+    // draw nothing (empty tanks).
+    this.lo = from?.lo ?? document.createElement('canvas');
     this.lctx = this.lo.getContext('2d');
-    this.bg = document.createElement('canvas');
+    this.bg = from?.bg ?? document.createElement('canvas');
     this.floaters = [];
     // What each tank already holds is kept when the data refreshes (a new scene), so only new pieces
     // drop in; pieces still in the air land at once. A page load starts from empty and fills up.

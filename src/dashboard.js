@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=9293bea7';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=9293bea7';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9293bea7';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=53a22f02';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=53a22f02';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=53a22f02';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -158,7 +158,9 @@ export function mountDashboard(funnels, opts = {}) {
         <button type="button" class="tasks-btn" hidden>${TASKS_ICON}<span></span></button><span class="name">${esc(f.title)}</span><span class="badge" hidden></span><span class="badge warn" hidden></span></div>`).join('');
     const h = track.parentElement.clientHeight / scale;
     track.querySelectorAll('.col-title').forEach(el => {
-      el.style.backgroundImage = `url(${scene.titleStrip(+el.dataset.fi, h).toDataURL()})`;
+      const strip = scene.titleStrip(+el.dataset.fi, h);
+      el.style.backgroundImage = `url(${strip.toDataURL()})`;
+      strip.width = strip.height = 0; // its memory back at once (Safari counts it until it is collected)
     });
     fitNames();
   }
@@ -837,7 +839,7 @@ export function mountDashboard(funnels, opts = {}) {
     // New data from the agents: rebuild the scene, keep the viewer's order and scroll.
     setFunnels(next) {
       if (!pop.hidden && pop.contains(document.activeElement)) return false; // typing an answer
-      scene = new Scene(canvas, next, { live: opts.live, sides: scene.sides, heaps: scene.heaps, grow: scene.grow });
+      scene = new Scene(canvas, next, { live: opts.live, sides: scene.sides, heaps: scene.heaps, grow: scene.grow, from: scene });
       loadOrder();
       scene.resize(scale, window.devicePixelRatio || 1);
       layout();
