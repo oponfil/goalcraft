@@ -156,15 +156,21 @@ async function webhook(req: Request) {
 }
 
 // The Polar discount a code names (case aside), when there is one; a wrong or unknown code is ignored.
+// Polar's list can't be filtered by code (its query is the discount's name), so it is read page by
+// page, newest first, a few pages at most.
 async function discountOf(code: unknown): Promise<string | null> {
   if (typeof code !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(code)) return null
+  const want = code.toLowerCase()
   try {
-    const list = await polar(`/discounts/?query=${encodeURIComponent(code)}&limit=100`)
-    const found = (list.items ?? []).find((d: any) => typeof d.code === 'string' && d.code.toLowerCase() === code.toLowerCase())
-    return found?.id ?? null
-  } catch {
-    return null
-  }
+    for (let page = 1; page <= 5; page++) {
+      const list = await polar(`/discounts/?limit=100&page=${page}`)
+      const items = list.items ?? []
+      const found = items.find((d: any) => typeof d.code === 'string' && d.code.toLowerCase() === want)
+      if (found) return found.id
+      if (items.length < 100) break
+    }
+  } catch {}
+  return null
 }
 
 // A discount Polar applied to an order or a subscription, kept so payments can be counted by the
