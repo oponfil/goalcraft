@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=f4173ab7';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=f4173ab7';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=f4173ab7';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=22478350';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=22478350';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=22478350';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -581,7 +581,10 @@ export function mountDashboard(funnels, opts = {}) {
     // A Gemini agent working in Google Antigravity (its link, or its spending read from there) opens
     // Antigravity, not the Gemini website (still the way when the app isn't on this computer).
     const inAntigravity = /^antigravity:/i.test(a.chat || '') || (!a.chat && a.usage?.app === 'antigravity');
-    const info = inAntigravity ? { ...agentInfo(a.agent), product: 'Antigravity', app: null } : agentInfo(a.agent);
+    // A Grok agent in the Grok Bot app opens its bot there ("Open Grok Bot"), or the app at least.
+    const inGrokBot = /^grokbot:/i.test(a.chat || '');
+    const info = inAntigravity ? { ...agentInfo(a.agent), product: 'Antigravity', app: null }
+      : inGrokBot ? { ...agentInfo(a.agent), product: 'Grok Bot' } : agentInfo(a.agent);
     // own: the agent's own chat, an app link (claude://, codex://, antigravity://) or a web one; web:
     // where to go when the app isn't on this computer.
     const own = a.chat || (inAntigravity ? 'antigravity://' : info.chat), web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);

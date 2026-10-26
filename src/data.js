@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=f4173ab7';
+import { lang } from './i18n.js?v=22478350';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -8,7 +8,9 @@ export const AGENTS = {
   // is one Codex conversation, which the server takes from Codex itself. A link to a ChatGPT chat
   // stays on the web, where it opens that conversation.
   chatgpt: { name: 'ChatGPT', color: '#10A37F', chat: 'https://chatgpt.com', app: url => (/^(https:\/\/chatgpt\.com\/.|codex:\/\/.)/.test(url) ? url : 'codex://') },
-  grok: { name: 'Grok', color: '#1A1A1A', chat: 'https://grok.com' },
+  // The Grok Bot desktop app (its bots run in the cloud) opens one bot from
+  // grokbot://app/v1/agent?id=<bot id>; a grok.com chat stays on the web.
+  grok: { name: 'Grok', color: '#1A1A1A', chat: 'https://grok.com', app: url => (/^(grokbot:\/\/.|https:\/\/grok\.com\/.)/.test(url) ? url : 'grokbot://') },
   gemini: { name: 'Gemini', color: '#4285F4', chat: 'https://gemini.google.com' },
   deepseek: { name: 'DeepSeek', color: '#4D6BFE', chat: 'https://chat.deepseek.com' },
   kimi: { name: 'Kimi', color: '#16161A', chat: 'https://kimi.com' },
