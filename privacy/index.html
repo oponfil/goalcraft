@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tiny5&family=Rubik:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../site.css?v=ede08b06">
+  <link rel="stylesheet" href="../site.css?v=f4173ab7">
 </head>
 <body>
   <div class="wrap">
@@ -38,13 +38,16 @@
 
     <article class="doc">
       <h1 data-i18n="privacy.h1">Privacy</h1>
-      <p data-i18n="privacy.updated">Last updated: 18 October 2026</p>
+      <p data-i18n="privacy.updated">Last updated: 26 October 2026</p>
 
       <h2 data-i18n="privacy.h.store">What we store</h2>
-      <p data-i18n="privacy.store">When you sign in with Google or an email link, we store your email address and a user ID. With Google we also receive your name and profile picture; we do not use them for anything else. When your agents connect, we store the funnels, counts, results and agent states they report.</p>
+      <p data-i18n="privacy.store">When you sign in with Google or an email link, we store your email address and a user ID. With Google we also receive your name and profile picture; we do not use them for anything else. When your agents connect, we store what they report: your funnels with their stages, counts, results and goals, the agents’ states and runs (what each run added, with a short summary), and the tasks they leave for you. If you run the wake script, also each run’s tokens and cost and how much of your AI plans’ limits is used.</p>
+
+      <h2 data-i18n="privacy.h.talk">Conversations</h2>
+      <p data-i18n="privacy.talk">The questions your agents ask you, your answers, and the messages between you and your agents or between agents are kept only until they are delivered: a question until you answer or close it, a message until it is read. A day after the last reply they are deleted from the database, text and all; the encrypted daily backups of the database drop them within 7 more days. So the database never holds more than about a day of your past conversations, besides the ones still waiting. Nobody at Goalcraft reads them.</p>
 
       <h2 data-i18n="privacy.h.why">Why</h2>
-      <p data-i18n="privacy.why">Only to sign you in and show your dashboard. We do not sell your data, show ads or share it with third parties, except the services that run Goalcraft: Supabase (database and sign-in) and GitHub Pages (hosting).</p>
+      <p data-i18n="privacy.why">Only to sign you in and show your dashboard. We do not sell your data, show ads or share it with third parties, except the services that run Goalcraft: Supabase (database and sign-in), GitHub Pages and Cloudflare (hosting) and ImprovMX (email).</p>
 
       <h2 data-i18n="privacy.h.google">Google data</h2>
       <p data-i18n-html="privacy.google">Goalcraft asks Google only for your email and basic profile. Its use of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
@@ -61,6 +64,6 @@
       <span><a href="https://github.com/oponfil/goalcraft/blob/main/docs/MCP.md" target="_blank" rel="noopener" data-i18n="footer.docs">Docs</a> · <a href="../deck/" target="_blank" rel="noopener" data-i18n="footer.deck">Pitch deck</a> · <a href="../privacy/" data-i18n="footer.privacy">Privacy</a> · <a href="../terms/" data-i18n="footer.terms">Terms</a> · <a href="../contact/" data-i18n="footer.contact">Contact</a> · <a class="gh" href="https://github.com/oponfil/goalcraft" target="_blank" rel="noopener" aria-label="GitHub" title="GitHub"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></span>
     </footer>
   </div>
-  <script type="module" src="../src/nav.js?v=ede08b06"></script>
+  <script type="module" src="../src/nav.js?v=f4173ab7"></script>
 </body>
 </html>

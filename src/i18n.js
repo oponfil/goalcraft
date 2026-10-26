@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=ede08b06';
-import vi from './lang/vi.js?v=ede08b06';
-import ja from './lang/ja.js?v=ede08b06';
-import pt from './lang/pt.js?v=ede08b06';
-import tr from './lang/tr.js?v=ede08b06';
-import ko from './lang/ko.js?v=ede08b06';
+import es from './lang/es.js?v=f4173ab7';
+import vi from './lang/vi.js?v=f4173ab7';
+import ja from './lang/ja.js?v=f4173ab7';
+import pt from './lang/pt.js?v=f4173ab7';
+import tr from './lang/tr.js?v=f4173ab7';
+import ko from './lang/ko.js?v=f4173ab7';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -456,19 +456,28 @@ const STRINGS = {
 
   // Privacy
   'privacy.h1': L('Privacy', 'Конфиденциальность', '隐私', 'ความเป็นส่วนตัว'),
-  'privacy.updated': L('Last updated: 18 October 2026', 'Обновлено: 18 октября 2026', '最后更新：2026 年 10 月 18 日', 'อัปเดตล่าสุด: 18 ตุลาคม 2026'),
+  'privacy.updated': L('Last updated: 26 October 2026', 'Обновлено: 26 октября 2026', '最后更新：2026 年 10 月 26 日', 'อัปเดตล่าสุด: 26 ตุลาคม 2026'),
   'privacy.h.store': L('What we store', 'Что мы храним', '我们存储什么', 'เราเก็บอะไรบ้าง'),
   'privacy.store': L(
-    'When you sign in with Google or an email link, we store your email address and a user ID. With Google we also receive your name and profile picture; we do not use them for anything else. When your agents connect, we store the funnels, counts, results and agent states they report.',
-    'Когда вы входите через Google или по ссылке из письма, мы храним ваш адрес почты и идентификатор пользователя. От Google мы также получаем имя и фото профиля и больше ни для чего их не используем. Когда подключаются ваши агенты, мы храним воронки, счётчики, результаты и состояния агентов, о которых они сообщают.',
-    '当你通过 Google 或邮件链接登录时，我们存储你的邮箱地址和用户 ID。通过 Google 我们还会收到你的姓名和头像，但不会用于其他用途。当你的智能体连接后，我们存储它们汇报的漏斗、计数、成果和智能体状态。',
-    'เมื่อคุณเข้าสู่ระบบด้วย Google หรือลิงก์ทางอีเมล เราเก็บที่อยู่อีเมลและรหัสผู้ใช้ของคุณ จาก Google เรายังได้รับชื่อและรูปโปรไฟล์ แต่ไม่นำไปใช้อย่างอื่น เมื่อเอเจนต์ของคุณเชื่อมต่อ เราเก็บกรวย ตัวเลข ผลลัพธ์ และสถานะเอเจนต์ที่พวกมันรายงาน'),
+    'When you sign in with Google or an email link, we store your email address and a user ID. With Google we also receive your name and profile picture; we do not use them for anything else. When your agents connect, we store what they report: your funnels with their stages, counts, results and goals, the agents’ states and runs (what each run added, with a short summary), and the tasks they leave for you. If you run the wake script, also each run’s tokens and cost and how much of your AI plans’ limits is used.',
+    'Когда вы входите через Google или по ссылке из письма, мы храним ваш адрес почты и идентификатор пользователя. От Google мы также получаем имя и фото профиля и ни для чего больше их не используем. Когда подключаются ваши агенты, мы храним то, что они сообщают: ваши воронки с этапами, числами, результатами и целями, состояния и запуски агентов (что добавил каждый запуск, с коротким итогом) и дела, которые они оставляют вам. Если у вас работает скрипт пробуждения, ещё токены и стоимость каждого запуска и то, сколько израсходовано из лимитов ваших тарифов ИИ.',
+    '当你通过 Google 或邮件链接登录时，我们存储你的邮箱地址和用户 ID。通过 Google 我们还会收到你的姓名和头像，但不会用于其他用途。当你的智能体连接后，我们存储它们汇报的内容：你的漏斗及其阶段、计数、成果和目标，智能体的状态和运行记录（每次运行新增了什么，附简短总结），以及它们留给你的待办事项。如果你运行唤醒脚本，还会存储每次运行的令牌数和费用，以及你的 AI 套餐额度已用多少。',
+    'เมื่อคุณเข้าสู่ระบบด้วย Google หรือลิงก์ทางอีเมล เราเก็บที่อยู่อีเมลและรหัสผู้ใช้ของคุณ จาก Google เรายังได้รับชื่อและรูปโปรไฟล์ของคุณ ซึ่งเราไม่ได้ใช้ทำอย่างอื่น เมื่อเอเจนต์ของคุณเชื่อมต่อ เราเก็บสิ่งที่พวกมันรายงาน: กรวยของคุณพร้อมขั้นตอน จำนวน ผลลัพธ์ และเป้าหมาย สถานะและการรันของเอเจนต์ (แต่ละรอบเพิ่มอะไร พร้อมสรุปสั้น ๆ) และงานที่พวกมันฝากไว้ให้คุณ หากคุณใช้สคริปต์ปลุก เรายังเก็บโทเค็นและค่าใช้จ่ายของแต่ละรอบ และการใช้โควตาแพ็กเกจ AI ของคุณ',
+  ),
+  'privacy.h.talk': L('Conversations', 'Переписка', '对话', 'บทสนทนา'),
+  'privacy.talk': L(
+    'The questions your agents ask you, your answers, and the messages between you and your agents or between agents are kept only until they are delivered: a question until you answer or close it, a message until it is read. A day after the last reply they are deleted from the database, text and all; the encrypted daily backups of the database drop them within 7 more days. So the database never holds more than about a day of your past conversations, besides the ones still waiting. Nobody at Goalcraft reads them.',
+    'Вопросы агентов к вам, ваши ответы и сообщения между вами и агентами или между агентами хранятся только до тех пор, пока не доставлены: вопрос — пока вы не ответите или не закроете его, сообщение — пока его не прочитают. Через сутки после последнего ответа они удаляются из базы вместе с текстом; из зашифрованных ежедневных резервных копий базы они исчезают ещё в течение 7 дней. Так в базе никогда не лежит больше примерно суток вашей прошлой переписки, кроме той, что ещё ждёт ответа. Никто в Goalcraft её не читает.',
+    '智能体向你提出的问题、你的回答，以及你与智能体之间或智能体之间的消息，只保存到送达为止：问题保存到你回答或关闭它，消息保存到被读取。最后一次回复一天后，它们连同文字一起从数据库中删除；数据库的加密每日备份会在之后 7 天内清除它们。因此除了仍在等待回复的对话，数据库里保存的过往对话从不超过大约一天。Goalcraft 的任何人都不会阅读它们。',
+    'คำถามที่เอเจนต์ถามคุณ คำตอบของคุณ และข้อความระหว่างคุณกับเอเจนต์หรือระหว่างเอเจนต์ด้วยกัน จะถูกเก็บไว้จนกว่าจะส่งถึงเท่านั้น: คำถามจนกว่าคุณจะตอบหรือปิด ข้อความจนกว่าจะถูกอ่าน หนึ่งวันหลังการตอบครั้งสุดท้าย ข้อความจะถูกลบออกจากฐานข้อมูลพร้อมเนื้อหาทั้งหมด และสำเนาสำรองรายวันที่เข้ารหัสของฐานข้อมูลจะลบออกภายใน 7 วันถัดไป ฐานข้อมูลจึงไม่เคยเก็บบทสนทนาที่ผ่านมาของคุณเกินประมาณหนึ่งวัน นอกจากที่ยังรอคำตอบอยู่ ไม่มีใครที่ Goalcraft อ่านข้อความเหล่านี้',
+  ),
   'privacy.h.why': L('Why', 'Зачем', '为什么', 'ทำไม'),
   'privacy.why': L(
-    'Only to sign you in and show your dashboard. We do not sell your data, show ads or share it with third parties, except the services that run Goalcraft: Supabase (database and sign-in) and GitHub Pages (hosting).',
-    'Только чтобы вы могли войти и видеть свою доску. Мы не продаём данные, не показываем рекламу и не передаём данные третьим лицам, кроме сервисов, на которых работает Goalcraft: Supabase (база данных и вход) и GitHub Pages (хостинг).',
-    '仅用于让你登录并显示你的看板。我们不出售你的数据、不展示广告，也不与第三方共享，运行 Goalcraft 的服务除外：Supabase（数据库和登录）和 GitHub Pages（托管）。',
-    'เพื่อให้คุณเข้าสู่ระบบและแสดงแดชบอร์ดเท่านั้น เราไม่ขายข้อมูล ไม่แสดงโฆษณา และไม่แบ่งปันกับบุคคลที่สาม ยกเว้นบริการที่ใช้รัน Goalcraft: Supabase (ฐานข้อมูลและการเข้าสู่ระบบ) และ GitHub Pages (โฮสติ้ง)'),
+    'Only to sign you in and show your dashboard. We do not sell your data, show ads or share it with third parties, except the services that run Goalcraft: Supabase (database and sign-in), GitHub Pages and Cloudflare (hosting) and ImprovMX (email).',
+    'Только чтобы вы могли войти и видеть свою доску. Мы не продаём данные, не показываем рекламу и не передаём данные третьим лицам, кроме сервисов, на которых работает Goalcraft: Supabase (база данных и вход), GitHub Pages и Cloudflare (хостинг) и ImprovMX (почта).',
+    '仅用于让你登录并显示你的看板。我们不出售你的数据、不展示广告，也不与第三方共享，运行 Goalcraft 的服务除外：Supabase（数据库和登录）、GitHub Pages 和 Cloudflare（托管）以及 ImprovMX（邮件）。',
+    'เพื่อให้คุณเข้าสู่ระบบและแสดงแดชบอร์ดเท่านั้น เราไม่ขายข้อมูล ไม่แสดงโฆษณา และไม่แบ่งปันกับบุคคลที่สาม ยกเว้นบริการที่ใช้รัน Goalcraft: Supabase (ฐานข้อมูลและการเข้าสู่ระบบ), GitHub Pages และ Cloudflare (โฮสติ้ง) และ ImprovMX (อีเมล)',
+  ),
   'privacy.h.google': L('Google data', 'Данные Google', 'Google 数据', 'ข้อมูลจาก Google'),
   'privacy.google': L(
     'Goalcraft asks Google only for your email and basic profile. Its use of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.',
