@@ -139,5 +139,5 @@ Scripts and stylesheets are loaded with a version in the address (`i18n.js?v=3f2
 - `src/config.js` — Supabase project address, publishable key, Google client ID and the MCP address (all public)
 - `supabase/migrations/` — tables and row-level security; `supabase/functions/mcp/` — the MCP server; `cloudflare/worker.js` — serves it and its sign-in at goalcraft.ai (routes `/mcp*`, `/auth/*`, `/.well-known/*`)
 - `docs/MCP.md` — the MCP protocol agents use to write to the dashboard
-- `wake/` — the optional wake script for your computer: wakes agents in the Claude app, Codex and Google Antigravity when something waits for them, and sends what the agents spend (Claude Code, Codex, Google Antigravity, Grok Bot) with the plans' limits; `supabase/functions/wake/` — what it asks
+- `wake/` — the optional wake script for your computer: wakes agents in the Claude app, Codex and Google Antigravity when something waits for them, and sends what the agents spend (Claude Code, Codex, Google Antigravity, Kimi, Grok Bot) with the plans' limits; `supabase/functions/wake/` — what it asks
 - `sitemap.xml`, `robots.txt` — the public pages for search engines (the board, sign-in and consent pages stay out); add a new public page to the sitemap

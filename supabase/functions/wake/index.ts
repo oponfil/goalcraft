@@ -50,6 +50,13 @@ function grokBot(chat: string | null): { app: string, session: string } | null {
   return id ? { app: 'grok', session: id } : null
 }
 
+// A Kimi agent with no chat link: it works in the Kimi app (Work) on this computer, where the script
+// reads what it uses from the app's conversation records (it finds them by the agent's own calls).
+// The app has no way to resume one conversation from outside, so it isn't woken.
+function kimiApp(p: any): { app: string, session: null } | null {
+  return !p.chat_url && /^kimi/i.test(p.agent) ? { app: 'kimi', session: null } : null
+}
+
 // What the script resumes for an agent: its Claude or Codex session, or for a Gemini agent with no
 // such link, its conversation in Google Antigravity (the script finds it by the agent's name and funnel).
 function resumable(p: any, chat: string | null = null): { app: string, session: string | null } | null {
@@ -90,7 +97,7 @@ async function saveUsage(user: string, body: any) {
   const ok = rows.flatMap((r: any) => {
     const funnel_id = id.get(r?.funnel_id), agent = str(r?.agent, 64), run_key = str(r?.run_key, 200)
     const started_at = time(r?.started_at), ended_at = time(r?.ended_at)
-    if (!funnel_id || !agent || !run_key || !started_at || !ended_at || !['claude', 'codex', 'antigravity', 'grok'].includes(r?.app)) return []
+    if (!funnel_id || !agent || !run_key || !started_at || !ended_at || !['claude', 'codex', 'antigravity', 'grok', 'kimi'].includes(r?.app)) return []
     return [{
       user_id: user, funnel_id, agent, run_key, app: r.app, model: str(r.model, 64), started_at, ended_at,
       tokens: Math.round(num(r.tokens, 1e12) ?? 0), new_tokens: Math.round(num(r.new_tokens, 1e12) ?? 0),
@@ -135,9 +142,10 @@ Deno.serve(async (req) => {
       .eq('user_id', user).gte('updated_at', iso(now - 7 * 24 * 3600e3))
     if (error) return json({ error: 'failed' }, 500)
     // Gemini agents with no chat link the script can resume: it looks for them in Google Antigravity,
-    // in the conversations that mention their name and funnel. Grok agents by their bot in Grok Bot.
+    // in the conversations that mention their name and funnel. Grok agents by their bot in Grok Bot,
+    // Kimi agents in the Kimi app.
     return json({ agents: (data ?? []).flatMap((p: any) => {
-      const s = resumable(p) ?? grokBot(p.chat_url)
+      const s = resumable(p) ?? grokBot(p.chat_url) ?? kimiApp(p)
       return s ? [{ agent: p.agent, funnel_id: p.funnels?.key, ...s }] : []
     }) })
   }

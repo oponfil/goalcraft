@@ -7,7 +7,8 @@ stopped signalling at work). It wakes each in its own conversation with a short 
 Goalcraft: a Claude app session (Claude Code) through `claude -p --resume`, a Codex thread through
 `codex exec resume`, a Gemini agent's conversation in Google Antigravity through Antigravity's own
 server on this Mac (while Antigravity runs). Web chats (claude.ai, chatgpt.com) can't be woken from outside and are skipped;
-so are bots in the Grok Bot app, which run in the cloud on their own schedules.
+so are bots in the Grok Bot app, which run in the cloud on their own schedules, and the Kimi app's
+agent, which can't be resumed in one conversation from outside.
 
     python3 goalcraft-wake.py install <key>   save the key and keep the script running (macOS)
     python3 goalcraft-wake.py uninstall       stop it and remove it from the login items
@@ -275,6 +276,9 @@ GEMINI_PRICES = {'gemini-4-argon': (2, 10, 0.10)}
 # Grok Bot gives each bot's tokens but not by kind, so they are priced as all read from the cache: xAI's
 # cached-input price for grok-4.7, $ per million tokens. A floor: what is new in a step costs more.
 GROK_PRICE = 0.50
+
+# Moonshot's API prices for Kimi's models, $ per million tokens (input, output, cached input).
+KIMI_PRICES = {'k3': (3, 15, 0.30)}
 
 
 def price(model, table=PRICES):
@@ -909,6 +913,74 @@ def report_grok_limit(key, show=False):
     return True
 
 
+# Kimi (the Kimi app's Work mode): its agent runs here as Kimi Code, one folder per conversation, each
+# with a record of every model call and its tokens.
+KIMI_SESSIONS = HOME / 'Library' / 'Application Support' / 'kimi-desktop' / 'daimon-share' / 'daimon' / 'runtime' / 'kimi-code' / 'home' / 'sessions'
+
+
+def kimi_owner(conv):
+    """Whose Kimi conversation this is: the agent and funnel its own Goalcraft calls name most often
+    (as antigravity_owner)."""
+    import collections
+    import re
+    calls = collections.Counter()
+    for f in glob.glob(str(pathlib.Path(conv) / 'agents' / '*' / 'wire.jsonl')):
+        raw = pathlib.Path(f).read_text(errors='replace')
+        for m in re.finditer(r'\\?"agent\\?"\s*:\s*\\?"([a-z0-9_-]+)\\?"\s*,\s*\\?"funnel_id\\?"\s*:\s*\\?"([a-z0-9-]+)', raw):
+            calls[(m.group(1), m.group(2))] += 1
+    return calls.most_common(1)[0][0] if calls else None
+
+
+def kimi_cost(model, u):
+    m = (model or '').lower()
+    p = next((v for k, v in KIMI_PRICES.items() if m.startswith(k)), None)
+    if not p:
+        return None
+    return (u.get('inputOther', 0) * p[0] + u.get('inputCacheCreation', 0) * p[0] + u.get('output', 0) * p[1]
+            + u.get('inputCacheRead', 0) * p[2]) / 1e6
+
+
+def kimi_usage(item):
+    """Runs of a Kimi agent in the Kimi app: its conversations' model calls (the main agent's and its
+    helpers'), with their tokens, split where it paused."""
+    since = time.time() - USAGE_DAYS * 86400
+    out = []
+    for conv in glob.glob(str(KIMI_SESSIONS / '*' / 'conv-*')):
+        if os.path.getmtime(conv) < since or kimi_owner(conv) != (item['agent'], item['funnel_id']):
+            continue
+        points = []
+        for f in glob.glob(str(pathlib.Path(conv) / 'agents' / '*' / 'wire.jsonl')):
+            for line in open(f, errors='replace'):
+                if '"usage.record"' not in line:
+                    continue
+                try:
+                    d = json.loads(line)
+                except Exception:
+                    continue
+                # One record a call ("turn"); "session" ones are running totals.
+                if d.get('type') == 'usage.record' and d.get('usageScope') == 'turn' and d.get('time'):
+                    points.append((d['time'] / 1000, d.get('model'), d.get('usage') or {}))
+        points.sort(key=lambda p: p[0])
+        for run in split_runs(points):
+            if run[-1][0] < since:
+                continue
+            kinds = {'input_tokens': 0, 'cache_read_tokens': 0, 'cache_write_tokens': 0, 'output_tokens': 0}
+            cost, models = 0.0, {}
+            for _, model, u in run:
+                kinds['input_tokens'] += u.get('inputOther', 0)
+                kinds['cache_read_tokens'] += u.get('inputCacheRead', 0)
+                kinds['cache_write_tokens'] += u.get('inputCacheCreation', 0)
+                kinds['output_tokens'] += u.get('output', 0)
+                models[model] = models.get(model, 0) + 1
+                c = kimi_cost(model, u)
+                cost = None if c is None or cost is None else cost + c
+            out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'kimi',
+                        'run_key': f'{pathlib.Path(conv).name}:{int(run[0][0])}', 'model': max(models, key=models.get),
+                        'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), **totals(kinds),
+                        'cost_usd': round(cost, 4) if cost is not None else None})
+    return out
+
+
 def report_usage(key, show=False):
     """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
     req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
@@ -924,7 +996,7 @@ def report_usage(key, show=False):
     for item in agents:
         try:
             rows += (claude_usage(item, sessions) if item['app'] == 'claude' else codex_usage(item) if item['app'] == 'codex'
-                     else antigravity_usage(item) if item['app'] == 'antigravity' else grok_usage(item, grok) if item['app'] == 'grok' else [])
+                     else antigravity_usage(item) if item['app'] == 'antigravity' else grok_usage(item, grok) if item['app'] == 'grok' else kimi_usage(item) if item['app'] == 'kimi' else [])
         except Exception as e:
             log(f'usage: {item["agent"]} in {item["funnel_id"]}: {e}')
     if show:

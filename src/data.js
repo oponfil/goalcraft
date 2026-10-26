@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=53a22f02';
+import { lang } from './i18n.js?v=f7b93252';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -13,7 +13,9 @@ export const AGENTS = {
   grok: { name: 'Grok', color: '#1A1A1A', chat: 'https://grok.com', app: url => (/^(grokbot:\/\/.|https:\/\/grok\.com\/.)/.test(url) ? url : 'grokbot://') },
   gemini: { name: 'Gemini', color: '#4285F4', chat: 'https://gemini.google.com' },
   deepseek: { name: 'DeepSeek', color: '#4D6BFE', chat: 'https://chat.deepseek.com' },
-  kimi: { name: 'Kimi', color: '#16161A', chat: 'https://kimi.com' },
+  // The Kimi app opens from kimi:// (it has no link to one conversation of its agent, Work); a chat on
+  // kimi.com stays on the web.
+  kimi: { name: 'Kimi', color: '#16161A', chat: 'https://kimi.com', app: url => (/^https:\/\/(www\.)?kimi\.(com|ai)\/./.test(url) ? url : 'kimi://') },
   qwen: { name: 'Qwen', color: '#615CED', chat: 'https://chat.qwen.ai' },
   mistral: { name: 'Mistral', color: '#FA520F', chat: 'https://chat.mistral.ai' },
   perplexity: { name: 'Perplexity', color: '#20808D', chat: 'https://www.perplexity.ai' },
