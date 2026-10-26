@@ -395,12 +395,36 @@ def local_claude_cost(since, until):
     return total
 
 
+ASK_AGAIN = False  # the limit command asks again for keychain entries refused before
+
+
+def keychain(service):
+    """A keychain entry's secret. The first time, macOS asks the person whether to allow it (their
+    password; Always Allow, and it won't ask again). A refusal is remembered, so they aren't asked every
+    hour: the limit command asks again."""
+    denied = limit_state().get('keychain_denied', [])
+    if service in denied and not ASK_AGAIN:
+        return None
+    try:
+        r = subprocess.run(['security', 'find-generic-password', '-s', service, '-w'], capture_output=True, text=True, timeout=120)
+    except Exception:
+        return None  # nobody answered: ask again next time
+    if r.returncode == 0:
+        if service in denied:
+            save_limit_state(keychain_denied=[d for d in denied if d != service])
+        return r.stdout.strip()
+    # The entry is there (asking about it without its secret doesn't ask the person): access was refused.
+    if subprocess.run(['security', 'find-generic-password', '-s', service], capture_output=True).returncode == 0:
+        save_limit_state(keychain_denied=sorted(set(denied) | {service}))
+        log(f'keychain: access to "{service}" was refused, so it is not asked again; '
+            f'`python3 {pathlib.Path(__file__).resolve()} limit` asks again')
+    return None
+
+
 def claude_token():
     """Claude Code's sign-in on this Mac (its keychain entry), while it is still valid."""
     try:
-        out = subprocess.run(['security', 'find-generic-password', '-s', 'Claude Code-credentials', '-w'],
-                             capture_output=True, text=True, timeout=15).stdout
-        o = json.loads(out).get('claudeAiOauth') or {}
+        o = json.loads(keychain('Claude Code-credentials') or '{}').get('claudeAiOauth') or {}
     except Exception:
         return None
     return o.get('accessToken') if o.get('expiresAt', 0) / 1000 > time.time() + 60 else None
@@ -748,7 +772,7 @@ def antigravity_usage(item):
 # the app's own sign-in from this Mac. Its sign-in is encrypted with a key kept in the keychain.
 GROK_BOT = HOME / 'Library' / 'Application Support' / 'Grok Bot'
 GROK_API = 'https://api2.cursor.sh/aiserver.v1.DashboardService/'
-GROK_STATE = DIR / 'grok.json'  # the last rows read: sent again when the servers can't be reached
+GROK_STATE = DIR / 'grok.json'  # the hours read: each asked once, and all sent again when the servers can't be reached
 
 
 def grok_token():
@@ -756,11 +780,10 @@ def grok_token():
     import base64
     import hashlib
     try:
-        pw = subprocess.run(['security', 'find-generic-password', '-w', '-s', 'Grok Bot Safe Storage'],
-                            capture_output=True, text=True, timeout=15).stdout.strip()
         accounts = json.loads(json.loads((GROK_BOT / 'sand-secrets.json').read_text())['cursor-accounts'])
     except Exception:
-        return None
+        return None  # no Grok Bot on this Mac: its keychain entry isn't asked for
+    pw = keychain('Grok Bot Safe Storage')
     if not pw:
         return None
     account = accounts['accounts'].get(accounts.get('active')) or next(iter(accounts['accounts'].values()), {})
@@ -787,42 +810,59 @@ def grok_call(token, method, body):
 
 
 def grok_rows():
-    """Every Grok Bot bot's use over the last days, a row a day: its tokens, and its share of the plan's
-    weekly limit (the used percent spread over all bots' tokens since the window began). The servers
-    give no tokens by kind or price per bot. None when they can't be asked."""
+    """Every Grok Bot bot's use over the last days, a row an hour: its tokens, and its share of the
+    plan's weekly limit (the used percent spread over all bots' tokens since the window began). The
+    servers count per day; asked for one hour, they give that hour's. Hours gone by don't change, so
+    each is asked once (kept in GROK_STATE), the last two again every time. They give no tokens by
+    kind, and no price for use within the plan. None when they can't be asked."""
     token = grok_token()
     if not token:
         return None
     now = time.time()
     status = grok_call(token, 'GetSandUsageStatus', {})
     begun = when(status.get('currentPeriodStart'))
-    days_from = min(begun or now, now - USAGE_DAYS * 86400)
-    start = int(days_from // 86400 * 86400)
-    daily = grok_call(token, 'GetDailySpendByCategory', {'periodStartMs': str(start * 1000), 'periodEndMs': str(int(now * 1000)), 'groupBy': 4})
-    days = [(d['category'], int(d['day']) / 1000, int(d.get('totalTokens') or 0)) for d in daily.get('dailySpend', [])]
-    # The window's tokens: whole days since it began, the day it began in by the part after.
-    window = sum(t * (min(1, (day + 86400 - begun) / 86400) if day < begun else 1) for _, day, t in days if day + 86400 > begun) if begun else 0
+    try:
+        hours = {k: v for k, v in json.loads(GROK_STATE.read_text()).get('hours', {}).items()}
+    except Exception:
+        hours = {}
+    first = int((now - USAGE_DAYS * 86400) // 3600 * 3600)
+    hours = {k: v for k, v in hours.items() if int(k) >= first}
+    for h in range(first, int(now), 3600):
+        if str(h) in hours and h < now - 2 * 3600:
+            continue
+        got = grok_call(token, 'GetDailySpendByCategory', {'periodStartMs': str(h * 1000), 'periodEndMs': str((h + 3600) * 1000), 'groupBy': 4})
+        hours[str(h)] = {d['category']: int(d.get('totalTokens') or 0) for d in got.get('dailySpend', [])}
+    # The window's tokens, from the daily counts: whole days since it began, the day it began in by
+    # the part after.
+    window = 0
+    if begun:
+        day0 = int(begun // 86400 * 86400)
+        daily = grok_call(token, 'GetDailySpendByCategory', {'periodStartMs': str(day0 * 1000), 'periodEndMs': str(int(now * 1000)), 'groupBy': 4})
+        for d in daily.get('dailySpend', []):
+            day, t = int(d['day']) / 1000, int(d.get('totalTokens') or 0)
+            window += t * min(1, (day + 86400 - begun) / 86400) if day < begun else t
     percent = status.get('usagePercent')
     rate = percent / window if percent is not None and window > 0 else None
-    return {'percent': percent, 'resets': status.get('nextResetTimestampUtc'),
-            'days': [{'bot': bot, 'day': day, 'tokens': t, 'limit_used': round(t * rate, 4) if rate else None} for bot, day, t in days]}
+    return {'percent': percent, 'resets': status.get('nextResetTimestampUtc'), 'hours': hours,
+            'rows': [{'bot': bot, 'at': int(h), 'tokens': t, 'limit_used': round(t * rate, 4) if rate else None}
+                     for h, bots in hours.items() for bot, t in bots.items() if t]}
 
 
 def grok_usage(item, read):
-    """A Grok agent's days in Grok Bot, from what grok_rows read."""
+    """A Grok agent's hours in Grok Bot, from what grok_rows read."""
     out = []
-    for d in read['days'] if read else []:
-        if d['bot'] != item['session'] or not d['tokens']:
+    for d in read['rows'] if read else []:
+        if d['bot'] != item['session']:
             continue
         out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'grok', 'model': 'grok-bot',
-                    'run_key': f'grokbot:{d["bot"]}:{int(d["day"])}', 'started_at': iso(d['day']),
-                    'ended_at': iso(min(d['day'] + 86400 - 1, time.time())), 'tokens': d['tokens'], 'new_tokens': d['tokens'],
+                    'run_key': f'grokbot:{d["bot"]}:{d["at"]}', 'started_at': iso(d['at']),
+                    'ended_at': iso(min(d['at'] + 3599, time.time())), 'tokens': d['tokens'], 'new_tokens': d['tokens'],
                     'limit_used': d['limit_used'], 'limit_percent': read['percent'], 'limit_window_minutes': 7 * 1440})
     return out
 
 
 def grok_read():
-    """grok_rows, kept for when the servers can't be reached (so its days aren't dropped meanwhile)."""
+    """grok_rows, kept for when the servers can't be reached (so its hours aren't dropped meanwhile)."""
     try:
         read = grok_rows()
     except Exception as e:
@@ -1031,6 +1071,7 @@ if __name__ == '__main__':
         print(VERSION)
     elif cmd == 'limit':
         key = key_or_exit()
+        ASK_AGAIN = True
         print('Claude: sent' if report_limit(key, show=True) else 'Claude: failed, see ~/.goalcraft/wake.log')
         print('Antigravity: sent' if report_antigravity_limit(key, show=True) else 'Antigravity: not running or failed')
         print('Grok Bot: sent' if report_grok_limit(key, show=True) else 'Grok Bot: not signed in here or failed')
