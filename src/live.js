@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=4cc20b2b';
+import { supabase } from './auth.js?v=3b417a1a';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -155,7 +155,7 @@ function limitRate(rows, min) {
   return { perDollar: windowRate ?? (usd >= min.usd && pct >= min.pct ? pct / usd : null), week: last ? Number(last.week_percent) : null, resets: last?.week_resets_at ? Date.parse(last.week_resets_at) : null };
 }
 // A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged,
-// Grok Bot's days what the wake script worked out from their tokens (Grok Bot gives no prices).
+// Grok Bot's hours the share the wake script worked out from their tokens.
 const withLimit = r => {
   const l = limits[limitKey(r)];
   return r.limit_used == null && r.cost_usd != null && l?.perDollar != null

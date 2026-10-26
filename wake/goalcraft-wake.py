@@ -272,6 +272,10 @@ OPENAI_PRICES = {'gpt-6.1-sol': (2, 10, 0.10, 2.5)}
 # Google's API prices for Antigravity's models, $ per million tokens (input, output with thinking, cached input).
 GEMINI_PRICES = {'gemini-4-argon': (2, 10, 0.10)}
 
+# Grok Bot gives each bot's tokens but not by kind, so they are priced as all read from the cache: xAI's
+# cached-input price for grok-4.7, $ per million tokens. A floor: what is new in a step costs more.
+GROK_PRICE = 0.50
+
 
 def price(model, table=PRICES):
     hits = [k for k in table if model and model.startswith(k)]
@@ -857,6 +861,7 @@ def grok_usage(item, read):
         out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'grok', 'model': 'grok-bot',
                     'run_key': f'grokbot:{d["bot"]}:{d["at"]}', 'started_at': iso(d['at']),
                     'ended_at': iso(min(d['at'] + 3599, time.time())), 'tokens': d['tokens'], 'new_tokens': d['tokens'],
+                    'cost_usd': round(d['tokens'] * GROK_PRICE / 1e6, 4),
                     'limit_used': d['limit_used'], 'limit_percent': read['percent'], 'limit_window_minutes': 7 * 1440})
     return out
 
