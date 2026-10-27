@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=01ad23a9';
+import { supabase } from './auth.js?v=c7f7320c';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -143,7 +143,8 @@ const LIMIT_DAYS = { kimi: 30 };
 // Gemini models, Claude and GPT. A run counts against its model's.
 const quotaOf = model => { const m = (model || '').toLowerCase(); return m.startsWith('gemini-4-argon') ? 'gemini-4-argon' : m.startsWith('gemini') ? 'gemini' : 'claude-gpt'; };
 const limitKey = r => (r.app === 'antigravity' ? `antigravity:${quotaOf(r.model)}` : r.app);
-function limitRate(rows, min) {
+function limitRate(rows, min = { usd: Infinity, pct: Infinity }) {
+  // A plan with no threshold here (Codex: its runs carry their own share) gets no rate, only its reading.
   let pct = 0, usd = 0;
   for (let i = 1; i < rows.length; i++) {
     const a = rows[i - 1], b = rows[i];
