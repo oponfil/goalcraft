@@ -448,13 +448,13 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 
 /* The plans' limits, folded under the spending list. */
 #pop details.limits { margin-top: 12px; border-top: 2px solid var(--border); padding-top: 8px; font-size: 13px; }
-#pop details.limits summary { cursor: pointer; font-weight: 600; color: var(--text); }
-#pop details.limits ul { list-style: none; margin: 8px 0 0; padding: 0; }
-#pop details.limits li { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(40px, 1fr) auto; gap: 4px 10px; align-items: center; padding: 3px 0; }
+#pop details.limits summary { cursor: pointer; color: var(--text); }
+#pop details.limits ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(40px, 1fr) auto auto; gap: 6px 10px; align-items: center; }
+#pop details.limits li { display: contents; }  /* every row on the list's own columns, so the bars line up */
 #pop details.limits .who { display: inline-flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #pop details.limits .who svg { flex: none; }
 #pop details.limits .per { color: var(--muted); }
 #pop details.limits .bar { height: 6px; background: #3A322B; }
 #pop details.limits .bar i { display: block; height: 100%; }
 #pop details.limits b { font-weight: 600; text-align: right; min-width: 44px; }
-#pop details.limits .when { grid-column: 1 / -1; color: var(--muted); font-size: 12px; margin-top: -2px; }
+#pop details.limits .when { color: var(--muted); font-size: 12px; white-space: nowrap; }
