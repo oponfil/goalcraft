@@ -160,7 +160,7 @@ export default {
   'nav.tanksGrow': 'Bể lớn theo số mục',
   'board.usageCost': (c) => `${c} theo giá API`,
   'board.usageShare': (p) => `${p} hạn mức`,
-  'board.openTip': (a, b, c, d) => `Tổng ${a} · đang xử lý ${b} · đã sang bước sau ${c} · rơi rớt ${d}`,
+  'board.openTip': (a, b, d) => `Tổng ${a} · đang xử lý ${b} · rơi rớt ${d}`,
   'board.usageLimit': (p, d) => (d === 7 ? `${p} hạn mức tuần` : `${p} hạn mức ${d} ngày`),
   'board.runNow': 'đang chạy',
   'board.supervisorName': (funnel) => `Giám sát · ${funnel}`,

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=8cfa4c54';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=8cfa4c54';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=8cfa4c54';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2c559d81';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2c559d81';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=2c559d81';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -510,10 +510,11 @@ export function mountDashboard(funnels, opts = {}) {
     else {
       const f = scene.funnels[h.fi], s = f.stages[h.j], label = plural(s.count, s.forms);
       let text = label.charAt(0).toLocaleUpperCase(lang) + label.slice(1);  // Turkish: i → İ
-      // With the open ones known: how many reached it, are still open, went on, dropped.
+      // With the open ones known: how many reached it, are still open, dropped (those that went on are
+      // the next tank's count).
       if (s.active != null) {
         const open = Math.min(s.active, s.count), next = Math.min(s.count - open, h.j + 1 < f.stages.length ? f.stages[h.j + 1].count : f.cubes ?? 0);
-        text += '\n' + t('board.openTip', fmtCount(s.count), fmtCount(open), fmtCount(next), fmtCount(Math.max(0, s.count - open - next)));
+        text += '\n' + t('board.openTip', fmtCount(s.count), fmtCount(open), fmtCount(Math.max(0, s.count - open - next)));
       }
       tip.textContent = text;
     }

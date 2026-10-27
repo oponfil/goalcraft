@@ -159,7 +159,7 @@ export default {
   'nav.tanksGrow': 'Tanklar öğeyle büyür',
   'board.usageCost': (c) => `API fiyatıyla ${c}`,
   'board.usageShare': (p) => `limitin ${p}`,
-  'board.openTip': (a, b, c, d) => `Toplam ${a} · süren ${b} · sonraki aşamaya geçen ${c} · düşen ${d}`,
+  'board.openTip': (a, b, d) => `Toplam ${a} · süren ${b} · düşen ${d}`,
   'board.usageLimit': (p, d) => (d === 7 ? `haftalık limitin ${p}` : `${d} günlük limitin ${p}`),
   'board.runNow': 'sürüyor',
   'board.supervisorName': (funnel) => `Süpervizör · ${funnel}`,

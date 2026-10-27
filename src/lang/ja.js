@@ -160,7 +160,7 @@ export default {
   'nav.tanksGrow': 'タンクを数に応じて伸ばす',
   'board.usageCost': (c) => `API価格で${c}`,
   'board.usageShare': (p) => `上限の${p}`,
-  'board.openTip': (a, b, c, d) => `合計 ${a} · 進行中 ${b} · 次へ進んだ ${c} · 脱落 ${d}`,
+  'board.openTip': (a, b, d) => `合計 ${a} · 進行中 ${b} · 脱落 ${d}`,
   'board.usageLimit': (p, d) => (d === 7 ? `週間上限の${p}` : `${d}日間の上限の${p}`),
   'board.runNow': '実行中',
   'board.supervisorName': (funnel) => `監督 · ${funnel}`,

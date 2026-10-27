@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=8cfa4c54';
-import vi from './lang/vi.js?v=8cfa4c54';
-import ja from './lang/ja.js?v=8cfa4c54';
-import pt from './lang/pt.js?v=8cfa4c54';
-import tr from './lang/tr.js?v=8cfa4c54';
-import ko from './lang/ko.js?v=8cfa4c54';
+import es from './lang/es.js?v=2c559d81';
+import vi from './lang/vi.js?v=2c559d81';
+import ja from './lang/ja.js?v=2c559d81';
+import pt from './lang/pt.js?v=2c559d81';
+import tr from './lang/tr.js?v=2c559d81';
+import ko from './lang/ko.js?v=2c559d81';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -384,7 +384,7 @@ const STRINGS = {
   'nav.tanksGrow': L('Tanks grow with items', 'Баки растут с количеством', '储罐随数量增长', 'ถังขยายตามจำนวน'),
   'board.usageCost': L((c) => `${c} at API prices`, (c) => `${c} по ценам API`, (c) => `按 API 价格 ${c}`, (c) => `${c} ตามราคา API`),
   'board.usageShare': L((p) => `${p} of limit`, (p) => `${p} лимита`, (p) => `占额度 ${p}`, (p) => `${p} ของโควตา`),
-  'board.openTip': L((a, b, c, d) => `Total ${a} · open ${b} · moved on ${c} · dropped ${d}`, (a, b, c, d) => `Всего ${a} · в работе ${b} · перешли дальше ${c} · отказ ${d}`, (a, b, c, d) => `共 ${a} · 进行中 ${b} · 已进入下一步 ${c} · 已流失 ${d}`, (a, b, c, d) => `ทั้งหมด ${a} · กำลังดำเนินการ ${b} · ไปขั้นถัดไป ${c} · หลุดไป ${d}`),
+  'board.openTip': L((a, b, d) => `Total ${a} · open ${b} · dropped ${d}`, (a, b, d) => `Всего ${a} · в работе ${b} · отказ ${d}`, (a, b, d) => `共 ${a} · 进行中 ${b} · 已流失 ${d}`, (a, b, d) => `ทั้งหมด ${a} · กำลังดำเนินการ ${b} · หลุดไป ${d}`),
   'board.usageLimit': L((p, d) => (d === 7 ? `${p} of the weekly limit` : `${p} of the ${d}-day limit`), (p, d) => (d === 7 ? `${p} недельного лимита` : `${p} лимита на ${d} дн.`), (p, d) => (d === 7 ? `每周额度已用 ${p}` : `${d} 天额度已用 ${p}`), (p, d) => (d === 7 ? `ใช้ ${p} ของโควตารายสัปดาห์` : `ใช้ ${p} ของโควตา ${d} วัน`)),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),
   // A supervisor that gave itself no name: by its funnel.
