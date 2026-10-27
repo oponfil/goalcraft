@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=6be89c96';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=6be89c96';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=6be89c96';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=8cfa4c54';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=8cfa4c54';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=8cfa4c54';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -504,11 +504,18 @@ export function mountDashboard(funnels, opts = {}) {
   let tipTimer;
   function showTip(e, h) {
     tip.classList.remove('over');
+    tip.style.whiteSpace = 'pre';
     if (h.type === 'source') tip.textContent = t('board.sheet', sheetPlace(h.url));
     else if (h.type === 'guide') tip.textContent = t('board.guide', sheetPlace(h.url));
     else {
-      const s = scene.funnels[h.fi].stages[h.j], label = plural(s.count, s.forms);
-      tip.textContent = label.charAt(0).toLocaleUpperCase(lang) + label.slice(1);  // Turkish: i → İ
+      const f = scene.funnels[h.fi], s = f.stages[h.j], label = plural(s.count, s.forms);
+      let text = label.charAt(0).toLocaleUpperCase(lang) + label.slice(1);  // Turkish: i → İ
+      // With the open ones known: how many reached it, are still open, went on, dropped.
+      if (s.active != null) {
+        const open = Math.min(s.active, s.count), next = Math.min(s.count - open, h.j + 1 < f.stages.length ? f.stages[h.j + 1].count : f.cubes ?? 0);
+        text += '\n' + t('board.openTip', fmtCount(s.count), fmtCount(open), fmtCount(next), fmtCount(Math.max(0, s.count - open - next)));
+      }
+      tip.textContent = text;
     }
     tip.hidden = false;
     tip.style.left = Math.max(8, Math.min(viewW() - tip.offsetWidth - 8, e.clientX + 14)) + 'px';

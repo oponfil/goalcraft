@@ -38,7 +38,7 @@ A funnel is one goal (e.g. "Job Search") with 2-5 stages top to bottom (jobs fou
 Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage k, zone n (below the last stage) turns the last stage into results. At most two agents per zone on Pro, one on the free plan.
 Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when you wake up and again every 5 minutes while you work. The dashboard waits twice that, 10 minutes of silence, then warns the person that you did not wake up (10 minutes past your next_run_at) or that it lost contact with you (10 minutes after your last signal).
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not. In Google Antigravity or in the Kimi app (Work) send none: the dashboard opens the app. In Grok Bot, chat_url is grokbot://app/v1/agent?id= followed by your bot's id, the folder your store is in (/home/box/sand-data/agents/<id>/).
-On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer (a question is as short as you can make it, at most 400 characters: only what the person needs to understand it and decide): while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next). A reply never asks the person for anything: if you need more from them, or can't do what was agreed and need them to act (sign in somewhere, send something themselves, decide again), ask a new question instead (set_agent_state ask), saying plainly what happened and exactly what to do, where. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
+On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts, with active: how many of each stage are still open, may go on (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer (a question is as short as you can make it, at most 400 characters: only what the person needs to understand it and decide): while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next). A reply never asks the person for anything: if you need more from them, or can't do what was agreed and need them to act (sign in somewhere, send something themselves, decide again), ask a new question instead (set_agent_state ask), saying plainly what happened and exactly what to do, where. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
 Pause: when the person asks you to stop for a while, or your plan's limit has run out so you can't work until it resets, set_agent_state(pause, reason) (and turn off your schedule if the person asked you to stop). The dashboard sits you on a chair with a pause sign, raises no warning for your silence and nothing wakes you. Any set_agent_state(work) or (sleep) resumes you. A supervisor pauses or resumes a worker of its funnel when the person tells it to, with the worker's name and zone.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. When it needs the person, it asks as every agent does: state ask with a question. It also keeps an eye on the person's tasks for the funnel (set_tasks), most urgent first, without what is done or no longer matters.
 The person's tasks: the things only the person can do for a funnel (take a test task, fill in a form, answer a recruiter), shown to them on the dashboard. Every agent of the funnel, supervisor or worker, sees the same list (list_funnels tasks) and changes it the same way with set_tasks: adds a task when the person asks or when there is something only they can do, marks what is done, keeps the order. What an agent can't go on without is a question, not a task: never both. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
@@ -99,7 +99,7 @@ const endRun = (db: Db, funnelId: string, agent: string) => openRun(db, funnelId
 async function funnels(db: Db, key?: string) {
   let q = db.from('funnels')
     .select(`key, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day, updated_at,
-      stages (key, position, label, count, fill_percent, flow_per_day),
+      stages (key, position, label, count, active, fill_percent, flow_per_day),
       presence (agent, display_name, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, pause_reason, updated_at),
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
       agent_messages (id, agent, text, sent_at, read_at),
@@ -117,7 +117,7 @@ async function funnels(db: Db, key?: string) {
     goal: { total: f.goal_total, due: f.goal_due },
     results: f.results,
     stages: f.stages.sort((a: any, b: any) => a.position - b.position)
-      .map(({ key, label, count, fill_percent, flow_per_day }: any) => ({ key, label, count, fill_percent, flow_per_day })),
+      .map(({ key, label, count, active, fill_percent, flow_per_day }: any) => ({ key, label, count, active, fill_percent, flow_per_day })),
     output_flow_per_day: f.output_flow_per_day,
     agents: f.presence.filter((p: any) => p.zone != null).map(({ status, summary, ...p }: any) => p),
     // The agent on the platform over the whole funnel, with what its last run found.
@@ -251,11 +251,14 @@ function server(db: Db, caller: Caller) {
     title: 'Report counts',
     description: 'Counts after your work, cumulative: for each stage, how many items have ever reached it (an item that moved on to the next stage still counts here), and optionally the results so far. ' +
       'The dashboard takes the conversion between stages from these counts (next stage ÷ this one; 30% while one of them is 0), so keep them cumulative. ' +
+      'Also give active: how many of a stage\'s items are open now, still waiting to go on (not moved on to the next stage, not refused or gone quiet for good); the dashboard shows it under the count. ' +
       'The dashboard computes flows and tank fill from these reports (automatic). Optionally set them yourself (manual): ' +
       'fill_percent and flow_per_day per stage; null switches that one back to automatic.',
     inputSchema: req({
       funnel_id: funnelId,
       counts: z.record(z.string(), z.number().int().nonnegative()).default({}).describe('{ stage_key: count }, cumulative: every item that ever reached the stage'),
+      active: z.record(z.string(), z.number().int().nonnegative().nullable()).optional()
+        .describe('Open items, { stage_key: n }: of the items that reached the stage, how many are still there and may go on to the next one (waiting for an answer, in talks), not moved on and not dropped (refused, no answer for good). Count them in your list as you count the stage. null clears it'),
       results: z.number().int().nonnegative().optional().describe('Results so far'),
       fill_percent: z.record(z.string(), z.number().min(0).max(100).nullable()).optional()
         .describe('Manual tank fill, { stage_key: 0-100 }: how much of what this stage needs for the whole goal is there. null = automatic'),
@@ -267,15 +270,16 @@ function server(db: Db, caller: Caller) {
         .describe('Link to the funnel\'s guide document (see upsert_funnel); null removes it'),
     }),
     annotations: { title: 'Report counts', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
-  }, async ({ funnel_id, counts, results, fill_percent, flow_per_day, source_url, guide_url }) => {
+  }, async ({ funnel_id, counts, active, results, fill_percent, flow_per_day, source_url, guide_url }) => {
     const f = await funnelRow(db, funnel_id)
     const stages = check(await db.from('stages').select('key, position').eq('funnel_id', f.id).order('position')) as { key: string, position: number }[]
     const known = stages.map(s => s.key)
-    const unknown = [...Object.keys(counts), ...Object.keys(fill_percent ?? {}), ...Object.keys(flow_per_day ?? {}).filter(k => k !== 'results')].filter(k => !known.includes(k))
+    const unknown = [...Object.keys(counts), ...Object.keys(active ?? {}), ...Object.keys(fill_percent ?? {}), ...Object.keys(flow_per_day ?? {}).filter(k => k !== 'results')].filter(k => !known.includes(k))
     if (unknown.length) fail(`Unknown stage keys: ${unknown.join(', ')}. Stages: ${known.join(', ')}`)
     for (const key of known) {
       const patch: Record<string, unknown> = {}
       if (key in counts) patch.count = counts[key]
+      if (active && key in active) patch.active = active[key]
       if (fill_percent && key in fill_percent) patch.fill_percent = fill_percent[key]
       if (flow_per_day && key in flow_per_day) patch.flow_per_day = flow_per_day[key]
       if (Object.keys(patch).length) check(await db.from('stages').update(patch).eq('funnel_id', f.id).eq('key', key))

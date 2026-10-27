@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=6be89c96';
+import { supabase } from './auth.js?v=8cfa4c54';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -43,7 +43,8 @@ function toScene(f, reports, now, usage = []) {
     result: f.result,
     source_url: f.source_url,
     guide_url: f.guide_url,
-    stages: stages.map(s => ({ key: s.key, count: Number(s.count), forms: s.label })),
+    // active: how many of them are open now (may still go on), when the agent says.
+    stages: stages.map(s => ({ key: s.key, count: Number(s.count), active: s.active == null ? null : Math.min(Number(s.active), Number(s.count)), forms: s.label })),
     // Flow per day: set by the agent, or the growth between its reports.
     flows: [...stages.map(s => (s.flow_per_day != null ? Number(s.flow_per_day) : flowOf(series(s.key), now))),
       f.output_flow_per_day != null ? Number(f.output_flow_per_day) : flowOf(series(null), now)],
@@ -176,7 +177,7 @@ export async function loadFunnels() {
   const [funnels, reports, usage] = await Promise.all([
     supabase.from('funnels')
       .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day,
-        stages (key, position, label, count, fill_percent, flow_per_day),
+        stages (key, position, label, count, active, fill_percent, flow_per_day),
         presence (agent, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, pause_reason, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
         agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),

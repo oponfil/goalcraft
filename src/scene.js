@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=6be89c96';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=6be89c96';
-import { themeOf } from './themes.js?v=6be89c96';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=6be89c96';
+import { agentInfo, plural } from './data.js?v=8cfa4c54';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=8cfa4c54';
+import { themeOf } from './themes.js?v=8cfa4c54';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=8cfa4c54';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -437,6 +437,9 @@ export class Scene {
         if (k <= 0) continue;
         f.acc[i] -= k;
         if (i === n) f.cubes += k; else f.stages[i].count += k;
+        // New items are open where they arrive, and no longer open where they came from.
+        if (i < n && f.stages[i].active != null) f.stages[i].active += k;
+        if (i > 0 && f.stages[i - 1].active != null) f.stages[i - 1].active = Math.max(0, f.stages[i - 1].active - k);
         // Results past the goal add rows: the scene grows down to fit them.
         if (i === n && this.scale && sceneHeight(this.funnels) > this.H) { this.H = sceneHeight(this.funnels); this.resize(this.scale, this.dpr); }
         // Growing tanks: a tank that needs another row makes its funnel taller.
@@ -697,16 +700,18 @@ export class Scene {
     // A number in the middle with its flow written small at its top right, like an exponent.
     // The number is centred across on x; up and down the two together are centred on y, so the
     // number sits a little low. Returns the box they take, for a click on them.
-    const withFlow = (num, flow, x, y, size, color, flowColor) => {
+    const withFlow = (num, flow, x, y, size, color, flowColor, open = '') => {
       g.font = `700 ${size * S}px ${FONT}`;
       const w = g.measureText(num).width / S;
       g.font = `700 ${size * 0.55 * S}px ${FONT}`;
-      const fw = flow ? g.measureText(flow).width / S + 1 : 0;
+      const fw = Math.max(flow ? g.measureText(flow).width / S + 1 : 0, open ? g.measureText(open).width / S + 1 : 0);
       // The number's capitals span about 0.7 of its size around its line; the flow's top reaches
       // 0.42 + 0.19 above it.
       const nx = x, ny = flow ? y + size * 0.13 : y;
       T(num, nx, ny, size, color, 'center', 700);
       if (flow) T(flow, nx + w / 2 + 1, ny - size * 0.42, size * 0.55, flowColor, 'left', 700);
+      // How many are open, written small at its bottom right, like an index.
+      if (open) T(open, nx + w / 2 + 1, ny + size * 0.36, size * 0.55, OPEN, 'left', 700);
       return { x: nx - w / 2 - 2, y: ny - size * 0.95, w: w + fw + 4, h: size * 1.5 };
     };
     this.funnels.forEach((f, fi) => {
@@ -714,9 +719,9 @@ export class Scene {
       f.stages.forEach((s, j) => {
         // The number is the same size in every tank, in its middle; at its top right, how fast the
         // tank fills (the flow of the zone above it). What the tank holds shows on hover.
-        const num = fmtCount(s.count), flow = fmtFlow(f.flows[j] ?? 0);
+        const num = fmtCount(s.count), flow = fmtFlow(f.flows[j] ?? 0), open = s.active != null ? fmtCount(Math.min(s.active, s.count)) : '';
         let box;
-        shadowed(() => { box = withFlow(num, flow, cx, f.geo.tankTop(j) + f.geo.lh(j) / 2, 15, '#FFFFFF', f.flows[j] ? '#9FE870' : STALLED); });
+        shadowed(() => { box = withFlow(num, flow, cx, f.geo.tankTop(j) + f.geo.lh(j) / 2, 15, '#FFFFFF', f.flows[j] ? '#9FE870' : STALLED, open); });
         // The number and its flow open the stage's history.
         if (box) this.hits.push({ ...box, type: 'count', fi, j });
       });
@@ -821,7 +826,11 @@ export class Scene {
       for (let r = rows - h.shown; r < rows; r++) { const hw = g.half(j, r + 1) - 1; c.rect(cx - hw, y + 1 + r, hw * 2, 1); }
       // Plain liquid up to its level: the tank's lighter top band is drawn above the clip, out of sight.
       const top = y + 1 + rows - h.shown;
-      c.clip(); theme.tank(c, x - 20, top - 2, lw + 40, h.shown + 2, j, n, t, fi * 97 + j * 13 + 5); c.restore();
+      c.clip(); theme.tank(c, x - 20, top - 2, lw + 40, h.shown + 2, j, n, t, fi * 97 + j * 13 + 5);
+      // The open part, on top: it glows light blue.
+      const st = f.stages[j], open = st.active != null && st.count > 0 ? Math.min(h.shown, Math.max(st.active > 0 ? 1 : 0, Math.round(h.shown * st.active / st.count))) : 0;
+      if (open > 0) { c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.35 + 0.1 * Math.sin(t * 2.4); c.fillStyle = OPEN; c.fillRect(x - 20, top, lw + 40, open); }
+      c.restore();
     }
     const surface = y + 1 + rows - h.shown;
     c.fillStyle = theme.drop(j, n);
@@ -884,6 +893,25 @@ export class Scene {
       h.drawn = h.shown;
     }
     c.drawImage(h.layer, bx, y, bw, lh);
+    // The open ones (still able to go on) are the newest pieces, the last to land: they glow, a
+    // light blue over their own shapes, breathing slowly.
+    const s = f.stages[j], open = s.active != null && s.count > 0 ? Math.min(h.shown, Math.max(s.active > 0 ? 1 : 0, Math.round(h.shown * s.active / s.count))) : 0;
+    if (open > 0) {
+      const glowKey = `${layerKey}|${h.shown}|${open}`;
+      if (h.glowKey !== glowKey) {
+        h.glow ??= document.createElement('canvas');
+        h.glow.width = bw * RES; h.glow.height = lh * RES;
+        const gc = h.glow.getContext('2d');
+        gc.setTransform(RES, 0, 0, RES, -bx * RES, -y * RES);
+        for (let i = h.shown - open; i < h.shown; i++) P.draw(gc, Math.round(h.cells[i].x * 2) / 2, Math.round(h.cells[i].y * 2) / 2, j, n, i);
+        gc.setTransform(1, 0, 0, 1, 0, 0);
+        gc.globalCompositeOperation = 'source-in'; gc.fillStyle = OPEN; gc.fillRect(0, 0, h.glow.width, h.glow.height);
+        gc.globalCompositeOperation = 'source-over';
+        h.glowKey = glowKey;
+      }
+      c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.5 + 0.15 * Math.sin(t * 2.4);
+      c.drawImage(h.glow, bx, y, bw, lh); c.restore();
+    }
     for (const d of h.falling) {
       const q = (t - d.born) / 0.45, sx = cx - P.w / 2, sy = y - 2;
       P.draw(c, Math.round((sx + (d.cell.x - sx) * q) * 2) / 2, Math.round((sy + (d.cell.y - sy) * q * q) * 2) / 2, j, n, h.cells.indexOf(d.cell));
@@ -952,6 +980,8 @@ function project(f, daysLeft) {
 // green — well ahead.
 // Nothing moving (+0): the same red as a "next" line far behind.
 const STALLED = '#FF5A4E';
+// Open items, still able to go on: the number under a tank's count and the glow on its pieces.
+export const OPEN = '#6CC8FF';
 function statusColor(r) {
   return r >= 1.5 ? '#3CF27A' : r >= 0.9 ? '#7BD88F' : r >= 0.5 ? '#F2C14E' : '#FF5A4E';
 }

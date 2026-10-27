@@ -159,6 +159,7 @@ export default {
   'nav.tanksGrow': '탱크가 개수에 따라 커짐',
   'board.usageCost': (c) => `API 가격 기준 ${c}`,
   'board.usageShare': (p) => `한도의 ${p}`,
+  'board.openTip': (a, b, c, d) => `전체 ${a} · 진행 중 ${b} · 다음 단계로 ${c} · 이탈 ${d}`,
   'board.usageLimit': (p, d) => (d === 7 ? `주간 한도의 ${p}` : `${d}일 한도의 ${p}`),
   'board.runNow': '진행 중',
   'board.supervisorName': (funnel) => `슈퍼바이저 · ${funnel}`,

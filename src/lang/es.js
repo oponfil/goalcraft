@@ -159,6 +159,7 @@ export default {
   'nav.tanksGrow': 'Los tanques crecen con los elementos',
   'board.usageCost': (c) => `${c} a precios de la API`,
   'board.usageShare': (p) => `${p} del límite`,
+  'board.openTip': (a, b, c, d) => `Total ${a} · en curso ${b} · avanzaron ${c} · descartados ${d}`,
   'board.usageLimit': (p, d) => (d === 7 ? `${p} del límite semanal` : `${p} del límite de ${d} días`),
   'board.runNow': 'en curso',
   'board.supervisorName': (funnel) => `Supervisor · ${funnel}`,
