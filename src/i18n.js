@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=2c559d81';
-import vi from './lang/vi.js?v=2c559d81';
-import ja from './lang/ja.js?v=2c559d81';
-import pt from './lang/pt.js?v=2c559d81';
-import tr from './lang/tr.js?v=2c559d81';
-import ko from './lang/ko.js?v=2c559d81';
+import es from './lang/es.js?v=01ad23a9';
+import vi from './lang/vi.js?v=01ad23a9';
+import ja from './lang/ja.js?v=01ad23a9';
+import pt from './lang/pt.js?v=01ad23a9';
+import tr from './lang/tr.js?v=01ad23a9';
+import ko from './lang/ko.js?v=01ad23a9';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -378,6 +378,10 @@ const STRINGS = {
   'spend.allFunnels': L('All funnels', 'Все воронки', '全部漏斗', 'ทุกกรวย'),
   'spend.pick': L('Show this funnel only', 'Показать только эту воронку', '只看这个漏斗', 'แสดงเฉพาะกรวยนี้'),
   'spend.runs': L((n) => `${n} run${n === 1 ? '' : 's'}`, (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'запуск' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'запуска' : 'запусков'}`, (n) => `${n} 次运行`, (n) => `${n} ครั้ง`),
+  'spend.limits': L('Limits', 'Лимиты', '额度', 'โควตา'),
+  'spend.perMonth': L('per month', 'в месяц', '每月', 'ต่อเดือน'),
+  'spend.resetDone': L('reset, waiting for a new reading', 'сброшен, ждём новых данных', '已重置，等待新数据', 'รีเซ็ตแล้ว รอข้อมูลใหม่'),
+  'spend.resetsAt': L((d) => `resets ${d}`, (d) => `сброс ${d}`, (d) => `${d} 重置`, (d) => `รีเซ็ต ${d}`),
   'spend.none': L('No spending yet: it comes from the wake script on your computer, which reads it from your agents\' apps.', 'Расхода пока нет: его присылает скрипт пробуждения на вашем компьютере, читая его из приложений агентов.', '还没有消耗记录：它来自你电脑上的唤醒脚本，从智能体的应用中读取。', 'ยังไม่มีค่าใช้จ่าย: สคริปต์ปลุกบนคอมพิวเตอร์ของคุณจะส่งมา โดยอ่านจากแอปของเอเจนต์'),
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.moreQuestions': L((n) => `${n} more question${n === 1 ? '' : 's'}`, (n) => `Ещё вопросов: ${n}`, (n) => `还有 ${n} 个问题`, (n) => `อีก ${n} คำถาม`),

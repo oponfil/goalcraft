@@ -14,7 +14,7 @@ agent, which can't be resumed in one conversation from outside.
     python3 goalcraft-wake.py uninstall       stop it and remove it from the login items
     python3 goalcraft-wake.py once            one check, then exit (to try it)
     python3 goalcraft-wake.py usage           read and send the agents' token use now, and print it
-    python3 goalcraft-wake.py limit           read and send the plans' limits now (Claude, Antigravity, Grok Bot, Kimi), and print them
+    python3 goalcraft-wake.py limit           read and send the plans' limits now (Claude, Codex, Antigravity, Grok Bot, Kimi), and print them
     python3 goalcraft-wake.py run             the loop itself (what install starts)
     python3 goalcraft-wake.py version         print this script's version
 
@@ -1053,6 +1053,43 @@ def report_kimi_limit(key, show=False):
     return True
 
 
+def report_codex_limit(key, show=False):
+    """Send Codex's weekly limit as its latest session logged it (used percent, when it resets), so the
+    dashboard can list it with the others."""
+    files = sorted(glob.glob(str(CODEX_SESSIONS / '*' / '*' / '*' / 'rollout-*.jsonl')), key=os.path.getmtime, reverse=True)[:5]
+    latest = None
+    for f in files:
+        for line in open(f, errors='replace'):
+            if '"rate_limits"' not in line:
+                continue
+            try:
+                d = json.loads(line)
+            except Exception:
+                continue
+            p = ((d.get('payload') or {}).get('rate_limits') or {}).get('primary') or {}
+            if p.get('used_percent') is not None and p.get('resets_at') and (p.get('window_minutes') or 0) >= 1440:
+                at = when(d.get('timestamp') or '') or 0
+                if not latest or at > latest[0]:
+                    latest = (at, p)
+        if latest:
+            break
+    if not latest:
+        return False
+    p = latest[1]
+    row = {'app': 'codex', 'at': iso(time.time()), 'week_percent': round(float(p['used_percent']), 2), 'week_resets_at': iso(p['resets_at'])}
+    if show:
+        print(f'Codex: {row["week_percent"]}% of the week used (resets {row["week_resets_at"]})')
+    req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={
+        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            json.load(r)
+    except Exception as e:
+        log(f'limit: could not send Codex: {e}')
+        return False
+    return True
+
+
 def report_usage(key, show=False):
     """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
     req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
@@ -1144,6 +1181,7 @@ def limit_job(key):
     report_antigravity_limit(key)
     report_grok_limit(key)
     report_kimi_limit(key)
+    report_codex_limit(key)
     limit_next_after(LIMIT_EVERY if claude else 5 * 60)
 
 
@@ -1226,6 +1264,7 @@ if __name__ == '__main__':
         print('Antigravity: sent' if report_antigravity_limit(key, show=True) else 'Antigravity: not running or failed')
         print('Grok Bot: sent' if report_grok_limit(key, show=True) else 'Grok Bot: not signed in here or failed')
         print('Kimi: sent' if report_kimi_limit(key, show=True) else 'Kimi: not signed in here or failed')
+        print('Codex: sent' if report_codex_limit(key, show=True) else 'Codex: no limit logged here')
     elif cmd == 'once':
         print('ok' if check(key_or_exit()) == 200 else 'failed: see ~/.goalcraft/wake.log')
         time.sleep(1)

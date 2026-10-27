@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=2c559d81';
+import { supabase } from './auth.js?v=01ad23a9';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -203,6 +203,13 @@ export async function answer(questionId, text) {
     .update({ answer: text, answered_at: new Date().toISOString() })
     .eq('id', questionId);
   return error?.message;
+}
+
+// Each plan's limit as last read, for the spending card's list: how much is used and when it resets
+// (a week, Kimi's a month). Only weekly or monthly ones: Claude's 5-hour window isn't kept here.
+export function planLimits() {
+  return Object.entries(limits).filter(([, l]) => l.week != null)
+    .map(([key, l]) => ({ key, used: l.week, resets: l.resets, days: LIMIT_DAYS[key.split(':')[0]] ?? 7 }));
 }
 
 // Every run's cost since a moment, for the spending chart: which funnel and agent, when, what it cost

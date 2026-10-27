@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=2c559d81';
-import { mountDashboard } from './dashboard.js?v=2c559d81';
-import { t } from './i18n.js?v=2c559d81';
+import { FUNNELS, SUP_RUNS } from './data.js?v=01ad23a9';
+import { mountDashboard } from './dashboard.js?v=01ad23a9';
+import { t } from './i18n.js?v=01ad23a9';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -11,6 +11,7 @@ mountDashboard(FUNNELS, {
   runs: demoRuns,
   history: demoHistory,
   spending: demoSpending,
+  limits: demoLimits,
 });
 
 // Made-up growth of a stage for its card, the same each time: about its flow per day, more on
@@ -37,6 +38,18 @@ async function demoHistory(f, j) {
 // Made-up spending of every agent for the spending chart, the same each time: two to four runs a
 // day over the last 120 days, priced as its model is (DEMO_PRICES), busier on weekdays; ChatGPT
 // (Codex) also with its share of the plan's weekly limit, Claude with its share at a made-up rate.
+// Made-up limits for the spending card's list: a few days to each reset.
+function demoLimits() {
+  const day = 864e5, now = Date.now();
+  return [
+    { key: 'claude', used: 62, resets: now + 2.4 * day, days: 7 },
+    { key: 'codex', used: 35, resets: now + 4.1 * day, days: 7 },
+    { key: 'antigravity:gemini-4-argon', used: 81, resets: now + 1.3 * day, days: 7 },
+    { key: 'grok', used: 17, resets: now + 3.7 * day, days: 7 },
+    { key: 'kimi', used: 31, resets: now + 13 * day, days: 30 },
+  ];
+}
+
 async function demoSpending(from) {
   const out = [], now = Date.now();
   for (const f of FUNNELS) {

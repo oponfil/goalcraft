@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=2c559d81';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2c559d81';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=2c559d81';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=01ad23a9';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=01ad23a9';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=01ad23a9';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -348,6 +348,22 @@ export function mountDashboard(funnels, opts = {}) {
   const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const near = (a, b) => { const [x, y] = [rgb(a), rgb(b)]; return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) < 90; };
   const spendState = { measure: '$', split: 'funnel', funnel: null };
+  // The plans' limits, folded under the spending: how much of each is used (a week, Kimi's a month)
+  // and when it resets, as the wake script last read them.
+  const resetFmt = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  function limitsBlock() {
+    const list = opts.limits?.() ?? [];
+    if (!list.length) return '';
+    const order = Object.keys(LIMIT_NAMES);
+    const rows = list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key)).map(l => {
+      const used = Math.min(100, Math.max(0, l.used)), gone = l.resets && l.resets < Date.now();
+      const color = used >= 90 ? '#FF5A4E' : used >= 70 ? '#F2A33C' : '#9FE870';
+      const when = gone ? t('spend.resetDone') : l.resets ? t('spend.resetsAt', resetFmt.format(new Date(l.resets))) : '';
+      return `<li><span class="who">${LIMIT_LOGOS[l.key] ?? ''}${esc(LIMIT_NAMES[l.key] ?? l.key)}${l.days > 7 ? ` <span class="per">${esc(t('spend.perMonth'))}</span>` : ''}</span>
+        <span class="bar"><i style="width:${gone ? 0 : used}%;background:${color}"></i></span><b>${gone ? '—' : esc(fmtPercent(used))}</b><span class="when">${esc(when)}</span></li>`;
+    }).join('');
+    return `<details class="limits"${spendState.limitsOpen ? ' open' : ''}><summary>${esc(t('spend.limits'))}</summary><ul>${rows}</ul></details>`;
+  }
   async function showSpend(e) {
     showPop(e, `<div class="pop-title">${esc(t('spend.title'))}</div><div class="hist-body"><div class="pop-loading" role="status" aria-label="${esc(t('board.loading'))}"></div></div>`);
     pop.classList.add('wide');
@@ -433,7 +449,8 @@ export function mountDashboard(funnels, opts = {}) {
             <div class="hist-bars stacked${n > 60 ? ' dense' : ''}">${bars.map((d, i) => `<span data-tip="${esc(tipOf(d, i))}">${groups.filter(k => cells[i].get(k)).map(k => `<i style="height:${(cells[i].get(k) / max) * 100}%;background:${color.get(k)}"></i>`).join('')}</span>`).join('')}</div></div></div>
         <div class="hist-axis"><span>${esc(short.format(bars[0]))}</span><span>${esc(short.format(bars[n - 1]))}</span></div>
         <ul class="spend-list">${groups.slice(0, 12).map(k => `<li${split === 'funnel' ? ` data-f="${esc(k)}" class="pick" title="${esc(t('spend.pick'))}"` : ''}><i style="background:${color.get(k)}"></i><span class="who">${esc(label(k))}</span><span class="n">${esc(t('spend.runs', runs.get(k)))}</span><b>${esc(fmt(totals.get(k)))}</b></li>`).join('')}
-          <li class="total"><i></i><span class="who">${esc(t('spend.all'))}</span><span class="n">${esc(t('spend.runs', mine.length))}</span><b>${esc(fmt(sum))}</b></li></ul>`;
+          <li class="total"><i></i><span class="who">${esc(t('spend.all'))}</span><span class="n">${esc(t('spend.runs', mine.length))}</span><b>${esc(fmt(sum))}</b></li></ul>${limitsBlock()}`;
+      body.querySelector('details.limits')?.addEventListener('toggle', e => { spendState.limitsOpen = e.target.open; });
       const on = (sel, fn) => body.querySelectorAll(sel).forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); fn(b); draw(); }));
       on('.spend-periods button', b => { period = Number(b.dataset.p); try { localStorage.setItem(periodKey(u), String(period)); } catch {} });
       on('.spend-measure button', b => { spendState.measure = b.dataset.m; });
