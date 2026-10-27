@@ -154,6 +154,7 @@ export default {
   'spend.pick': 'Mostrar só este funil',
   'spend.runs': (n) => `${n} ${n === 1 ? 'execução' : 'execuções'}`,
   'spend.limits': 'Limites',
+  'spend.perWeek': 'por semana',
   'spend.perMonth': 'por mês',
   'spend.resetDone': 'renovado, aguardando novos dados',
   'spend.resetsAt': (d) => `renova em ${d}`,

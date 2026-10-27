@@ -154,6 +154,7 @@ export default {
   'spend.pick': 'Mostrar solo este embudo',
   'spend.runs': (n) => `${n} ${n === 1 ? 'ejecución' : 'ejecuciones'}`,
   'spend.limits': 'Límites',
+  'spend.perWeek': 'a la semana',
   'spend.perMonth': 'al mes',
   'spend.resetDone': 'renovado, esperando datos nuevos',
   'spend.resetsAt': (d) => `se renueva el ${d}`,

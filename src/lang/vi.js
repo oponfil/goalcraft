@@ -155,6 +155,7 @@ export default {
   'spend.pick': 'Chỉ xem phễu này',
   'spend.runs': (n) => `${n} lần chạy`,
   'spend.limits': 'Hạn mức',
+  'spend.perWeek': 'mỗi tuần',
   'spend.perMonth': 'mỗi tháng',
   'spend.resetDone': 'đã đặt lại, chờ số liệu mới',
   'spend.resetsAt': (d) => `đặt lại ${d}`,

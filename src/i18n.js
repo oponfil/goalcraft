@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=42b00b1e';
-import vi from './lang/vi.js?v=42b00b1e';
-import ja from './lang/ja.js?v=42b00b1e';
-import pt from './lang/pt.js?v=42b00b1e';
-import tr from './lang/tr.js?v=42b00b1e';
-import ko from './lang/ko.js?v=42b00b1e';
+import es from './lang/es.js?v=49da1b32';
+import vi from './lang/vi.js?v=49da1b32';
+import ja from './lang/ja.js?v=49da1b32';
+import pt from './lang/pt.js?v=49da1b32';
+import tr from './lang/tr.js?v=49da1b32';
+import ko from './lang/ko.js?v=49da1b32';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -379,6 +379,7 @@ const STRINGS = {
   'spend.pick': L('Show this funnel only', 'Показать только эту воронку', '只看这个漏斗', 'แสดงเฉพาะกรวยนี้'),
   'spend.runs': L((n) => `${n} run${n === 1 ? '' : 's'}`, (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'запуск' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'запуска' : 'запусков'}`, (n) => `${n} 次运行`, (n) => `${n} ครั้ง`),
   'spend.limits': L('Limits', 'Лимиты', '额度', 'โควตา'),
+  'spend.perWeek': L('per week', 'в неделю', '每周', 'ต่อสัปดาห์'),
   'spend.perMonth': L('per month', 'в месяц', '每月', 'ต่อเดือน'),
   'spend.resetDone': L('reset, waiting for a new reading', 'сброшен, ждём новых данных', '已重置，等待新数据', 'รีเซ็ตแล้ว รอข้อมูลใหม่'),
   'spend.resetsAt': L((d) => `resets ${d}`, (d) => `сброс ${d}`, (d) => `${d} 重置`, (d) => `รีเซ็ต ${d}`),

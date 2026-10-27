@@ -154,6 +154,7 @@ export default {
   'spend.pick': '이 퍼널만 보기',
   'spend.runs': (n) => `${n}회`,
   'spend.limits': '한도',
+  'spend.perWeek': '주간',
   'spend.perMonth': '월간',
   'spend.resetDone': '초기화됨, 새 데이터 대기 중',
   'spend.resetsAt': (d) => `${d} 초기화`,

@@ -154,6 +154,7 @@ export default {
   'spend.pick': 'Yalnızca bu huniyi göster',
   'spend.runs': (n) => `${n} çalışma`,
   'spend.limits': 'Limitler',
+  'spend.perWeek': 'haftalık',
   'spend.perMonth': 'aylık',
   'spend.resetDone': 'sıfırlandı, yeni veri bekleniyor',
   'spend.resetsAt': (d) => `${d} sıfırlanır`,

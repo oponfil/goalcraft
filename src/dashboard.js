@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=42b00b1e';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=42b00b1e';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=42b00b1e';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=49da1b32';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=49da1b32';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=49da1b32';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -359,7 +359,7 @@ export function mountDashboard(funnels, opts = {}) {
       const used = Math.min(100, Math.max(0, l.used)), gone = l.resets && l.resets < Date.now();
       const color = used >= 90 ? '#FF5A4E' : used >= 70 ? '#F2A33C' : '#9FE870';
       const when = gone ? t('spend.resetDone') : l.resets ? t('spend.resetsAt', resetFmt.format(new Date(l.resets))) : '';
-      return `<li><span class="who">${LIMIT_LOGOS[l.key] ?? ''}${esc(LIMIT_NAMES[l.key] ?? l.key)}${l.days > 7 ? ` <span class="per">${esc(t('spend.perMonth'))}</span>` : ''}</span>
+      return `<li><span class="who">${LIMIT_LOGOS[l.key] ?? ''}${esc(LIMIT_NAMES[l.key] ?? l.key)} <span class="per">${esc(t(l.days > 7 ? 'spend.perMonth' : 'spend.perWeek'))}</span></span>
         <span class="bar"><i style="width:${gone ? 0 : used}%;background:${color}"></i></span><b>${gone ? '—' : esc(fmtPercent(used))}</b><span class="when">${esc(when)}</span></li>`;
     }).join('');
     return `<details class="limits"${spendState.limitsOpen ? ' open' : ''}><summary>${esc(t('spend.limits'))}</summary><ul>${rows}</ul></details>`;

@@ -1,9 +1,9 @@
 // Paying for Pro: the site asks supabase/functions/billing for a Polar link and goes there, either
 // to pay (checkout) or to manage or cancel the subscription (portal). account() reads the person's
 // plan as the limits see it.
-import { supabase, siteUrl, promoCode } from './auth.js?v=42b00b1e';
-import { t } from './i18n.js?v=42b00b1e';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=42b00b1e';
+import { supabase, siteUrl, promoCode } from './auth.js?v=49da1b32';
+import { t } from './i18n.js?v=49da1b32';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=49da1b32';
 
 export async function account() {
   const { data } = await supabase.from('accounts').select('plan, pro_until, customer_id, subscription_status').maybeSingle();

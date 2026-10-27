@@ -155,6 +155,7 @@ export default {
   'spend.pick': 'このファネルだけ表示',
   'spend.runs': (n) => `${n}回`,
   'spend.limits': '上限',
+  'spend.perWeek': '週間',
   'spend.perMonth': '月間',
   'spend.resetDone': 'リセット済み、新しいデータ待ち',
   'spend.resetsAt': (d) => `${d} にリセット`,
