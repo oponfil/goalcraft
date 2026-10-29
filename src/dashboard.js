@@ -1,13 +1,19 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=60d29ae6';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=60d29ae6';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=60d29ae6';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=1f1a94a5';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=1f1a94a5';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=1f1a94a5';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
 // empty tab and remember the web chat to fall back to.
 const webOf = (url, info) => (/^https?:/.test(url || '') ? url : info.chat);
+// What an "Open" button says: the app it opens ("Open in ChatGPT"), or the site, for a web chat
+// ("Open on chatgpt.com"), so it is clear where it leads.
+const openLabel = (link, info) => {
+  if (/^https?:/.test(link)) { try { return t('board.openSite', new URL(link).hostname.replace(/^www\./, '')); } catch {} }
+  return t('board.open', info.product || info.name);
+};
 const opens = (url, web) => (/^https?:/.test(url) ? 'target="_blank" rel="noopener"' : `data-web="${esc(web)}"`);
 
 // No app on this computer: the app link does nothing and the page keeps the focus, so after a
@@ -647,7 +653,7 @@ export function mountDashboard(funnels, opts = {}) {
       // agent's chat instead.
       const openBtn = url => {
         const link = chatLink(info, url);
-        return link ? `<a class="btn" href="${esc(link)}" ${opens(link, webOf(url, info))}>${esc(t('board.open', info.product || info.name))}</a>` : '';
+        return link ? `<a class="btn" href="${esc(link)}" ${opens(link, webOf(url, info))}>${esc(openLabel(link, info))}</a>` : '';
       };
       // The first question (the one asked first) shows with its answer box; the rest fold under
       // "N more questions" and open with their own boxes.
@@ -677,9 +683,9 @@ export function mountDashboard(funnels, opts = {}) {
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}">${esc(t('board.sendMessage'))}</button>${chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : ''}</div>
+        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}">${esc(t('board.sendMessage'))}</button>${chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(openLabel(chat, info))}</a>` : ''}</div>
         <div class="pop-msg"></div></div>`
-      : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.open', info.product || info.name))}</a>` : '';
+      : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(openLabel(chat, info))}</a>` : '';
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
       <div class="pop-status">${paused}${wakes}${missed}${lost}</div>
       <div class="pop-sub where">${where}</div>

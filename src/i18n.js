@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=60d29ae6';
-import vi from './lang/vi.js?v=60d29ae6';
-import ja from './lang/ja.js?v=60d29ae6';
-import pt from './lang/pt.js?v=60d29ae6';
-import tr from './lang/tr.js?v=60d29ae6';
-import ko from './lang/ko.js?v=60d29ae6';
+import es from './lang/es.js?v=1f1a94a5';
+import vi from './lang/vi.js?v=1f1a94a5';
+import ja from './lang/ja.js?v=1f1a94a5';
+import pt from './lang/pt.js?v=1f1a94a5';
+import tr from './lang/tr.js?v=1f1a94a5';
+import ko from './lang/ko.js?v=1f1a94a5';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -415,7 +415,8 @@ const STRINGS = {
   'board.starting': L((who) => `${who} is starting a shift`, (who) => `${who} начинает смену`, (who) => `${who} 开始轮班`, (who) => `${who} กำลังเริ่มกะ`),
   'board.finished': L((who) => `${who} finished a shift`, (who) => `${who} закончил смену`, (who) => `${who} 结束了轮班`, (who) => `${who} จบกะแล้ว`),
   'board.working': L((who) => `${who} is working`, (who) => `${who} работает`, (who) => `${who} 正在工作`, (who) => `${who} กำลังทำงาน`),
-  'board.open': L((who) => `Open ${who}`, (who) => `Открыть ${who}`, (who) => `打开 ${who}`, (who) => `เปิด ${who}`),
+  'board.open': L((who) => `Open in ${who}`, (who) => `Открыть в ${who}`, (who) => `在 ${who} 中打开`, (who) => `เปิดใน ${who}`),
+  'board.openSite': L((h) => `Open on ${h}`, (h) => `Открыть на ${h}`, (h) => `在 ${h} 上打开`, (h) => `เปิดบน ${h}`),
   'board.replyIn': L((who) => `Reply in ${who}`, (who) => `Ответить в ${who}`, (who) => `在 ${who} 中回复`, (who) => `ตอบใน ${who}`),
   'board.answer': L('Your answer', 'Ваш ответ', '你的回复', 'คำตอบของคุณ'),
   'board.send': L('Send answer', 'Отправить ответ', '发送回复', 'ส่งคำตอบ'),
