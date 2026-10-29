@@ -38,7 +38,7 @@ A funnel is one goal (e.g. "Job Search") with 2-5 stages top to bottom (jobs fou
 Zones: 0 is the inflow above the first stage, zone k moves stage k-1 into stage k, zone n (below the last stage) turns the last stage into results. At most two agents per zone on Pro, one on the free plan.
 Heartbeat: set_agent_state(work) is your sign of life. Send it first thing when you wake up and again every 5 minutes while you work. The dashboard waits twice that, 10 minutes of silence, then warns the person that you did not wake up (10 minutes past your next_run_at) or that it lost contact with you (10 minutes after your last signal).
 Your chat: the dashboard's "Open" button by you leads to the conversation you work in, so the person can answer you there. Send its link as chat_url with set_agent_state on every run (a scheduled run is a new conversation). In the Claude app (Claude Code or a scheduled task), the environment variable CLAUDE_CODE_HOST_SESSION_ID holds your session id (local_…): chat_url is claude://claude.ai/epitaxy/ followed by it. In a web chat, send its address when you can see it (https://claude.ai/chat/…, https://chatgpt.com/c/…). Codex sends its thread itself; you need not. In Google Antigravity or in the Kimi app (Work) send none: the dashboard opens the app. In Grok Bot, chat_url is grokbot://app/v1/agent?id= followed by your bot's id, the folder your store is in (/home/box/sand-data/agents/<id>/).
-On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts, with active: how many of each stage are still open, may go on (and add_result when a result appears); if you need the person, set_agent_state(ask, question) and poll get_answer (a question is as short as you can make it, at most 400 characters: only what the person needs to understand it and decide): while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next). A reply never asks the person for anything: if you need more from them, or can't do what was agreed and need them to act (sign in somewhere, send something themselves, decide again), ask a new question instead (set_agent_state ask), saying plainly what happened and exactly what to do, where. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
+On every run: first thing, before any other work, set_agent_state(work) in your zone (this starts the run's counter, shown by you on the dashboard), then every 5 minutes again while you work; after progress report_counts, with active: how many of each stage are still open, may go on (and add_result, with what the result is, when one appears); if you need the person, set_agent_state(ask, question) and poll get_answer (a question is as short as you can make it, at most 400 characters: only what the person needs to understand it and decide): while you are in ask the person sees you waiting and expects you to take the answer at once. If you go to sleep before it comes, the question stays on the dashboard and the person is told you will pick the answer up on your next run, so call get_answer then. Whenever you get an answer, reply to it in one short line with reply (what you do next). A reply never asks the person for anything: if you need more from them, or can't do what was agreed and need them to act (sign in somewhere, send something themselves, decide again), ask a new question instead (set_agent_state ask), saying plainly what happened and exactly what to do, where. If the person answers you somewhere else instead (in your chat), call close_question so the dashboard stops showing the question; at the end set_agent_state(sleep, next_run_at) or clear_agent.
 Pause: when the person asks you to stop for a while, or your plan's limit has run out so you can't work until it resets, set_agent_state(pause, reason) (and turn off your schedule if the person asked you to stop). The dashboard sits you on a chair with a pause sign, raises no warning for your silence and nothing wakes you. Any set_agent_state(work) or (sleep) resumes you. A supervisor pauses or resumes a worker of its funnel when the person tells it to, with the worker's name and zone.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. When it needs the person, it asks as every agent does: state ask with a question. It also keeps an eye on the person's tasks for the funnel (set_tasks), most urgent first, without what is done or no longer matters.
 The person's tasks: the things only the person can do for a funnel (take a test task, fill in a form, answer a recruiter), shown to them on the dashboard. Every agent of the funnel, supervisor or worker, sees the same list (list_funnels tasks) and changes it the same way with set_tasks: adds a task when the person asks or when there is something only they can do, marks what is done, keeps the order. What an agent can't go on without is a question, not a task: never both. The place holds one agent; if your name already works a zone of this funnel, add a suffix (claude-supervisor).
@@ -98,7 +98,7 @@ const endRun = (db: Db, funnelId: string, agent: string) => openRun(db, funnelId
 // What the person sees, in the shape the tools take.
 async function funnels(db: Db, key?: string) {
   let q = db.from('funnels')
-    .select(`key, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day, updated_at,
+    .select(`key, title, theme, source_url, guide_url, result, goal_total, goal_due, results, result_titles, output_flow_per_day, updated_at,
       stages (key, position, label, count, active, fill_percent, flow_per_day),
       presence (agent, display_name, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, pause_reason, updated_at),
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
@@ -116,6 +116,7 @@ async function funnels(db: Db, key?: string) {
     result: f.result,
     goal: { total: f.goal_total, due: f.goal_due },
     results: f.results,
+    result_titles: f.result_titles,
     stages: f.stages.sort((a: any, b: any) => a.position - b.position)
       .map(({ key, label, count, active, fill_percent, flow_per_day }: any) => ({ key, label, count, active, fill_percent, flow_per_day })),
     output_flow_per_day: f.output_flow_per_day,
@@ -260,6 +261,8 @@ function server(db: Db, caller: Caller) {
       active: z.record(z.string(), z.number().int().nonnegative().nullable()).optional()
         .describe('Open items, { stage_key: n }: of the items that reached the stage, how many are still there and may go on to the next one (waiting for an answer, in talks), not moved on and not dropped (refused, no answer for good). Count them in your list as you count the stage. null clears it'),
       results: z.number().int().nonnegative().optional().describe('Results so far'),
+      result_titles: z.array(z.union([resultTitle, z.literal('')])).max(1000).optional()
+        .describe('What each result so far is, in order, a few words each (the company of an offer, the startup, the video…; "" for one you don\'t know); replaces the list. Use it to name results added before. No emails or phone numbers'),
       fill_percent: z.record(z.string(), z.number().min(0).max(100).nullable()).optional()
         .describe('Manual tank fill, { stage_key: 0-100 }: how much of what this stage needs for the whole goal is there. null = automatic'),
       flow_per_day: z.record(z.string(), z.number().min(0).max(1e9).nullable()).optional()
@@ -270,7 +273,7 @@ function server(db: Db, caller: Caller) {
         .describe('Link to the funnel\'s guide document (see upsert_funnel); null removes it'),
     }),
     annotations: { title: 'Report counts', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
-  }, async ({ funnel_id, counts, active, results, fill_percent, flow_per_day, source_url, guide_url }) => {
+  }, async ({ funnel_id, counts, active, results, result_titles, fill_percent, flow_per_day, source_url, guide_url }) => {
     const f = await funnelRow(db, funnel_id)
     const stages = check(await db.from('stages').select('key, position').eq('funnel_id', f.id).order('position')) as { key: string, position: number }[]
     const known = stages.map(s => s.key)
@@ -286,6 +289,7 @@ function server(db: Db, caller: Caller) {
     }
     const funnelPatch: Record<string, unknown> = {}
     if (results != null) funnelPatch.results = results
+    if (result_titles) funnelPatch.result_titles = result_titles
     if (source_url !== undefined) funnelPatch.source_url = source_url
     if (guide_url !== undefined) funnelPatch.guide_url = guide_url
     if (flow_per_day && 'results' in flow_per_day) funnelPatch.output_flow_per_day = flow_per_day.results
@@ -299,13 +303,18 @@ function server(db: Db, caller: Caller) {
 
   s.registerTool('add_result', {
     title: 'Add a result',
-    description: 'One more result came out of the funnel (an offer, a paper, a term sheet…).',
-    inputSchema: req({ funnel_id: funnelId }),
+    description: 'One more result came out of the funnel (an offer, a paper, a term sheet…), with what it is: the dashboard shows the name when the person points at it.',
+    inputSchema: req({
+      funnel_id: funnelId,
+      title: resultTitle.optional().describe('What this result is, in a few words: the company of the offer, the startup, the video, the conference, the blogger\'s channel. No emails or phone numbers'),
+    }),
     annotations: { title: 'Add a result', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
-  }, async ({ funnel_id }) => {
+  }, async ({ funnel_id, title }) => {
     const f = await funnelRow(db, funnel_id)
-    const { results } = check(await db.from('funnels').select('results').eq('id', f.id).single()) as { results: number }
-    check(await db.from('funnels').update({ results: results + 1 }).eq('id', f.id))
+    const { results, result_titles } = check(await db.from('funnels').select('results, result_titles').eq('id', f.id).single()) as { results: number, result_titles: string[] }
+    // The new result's name goes to its place in the list (the results before it may have none).
+    const titles = title ? [...result_titles.slice(0, results), ...Array(Math.max(0, results - result_titles.length)).fill(''), title] : result_titles
+    check(await db.from('funnels').update({ results: results + 1, ...(title && { result_titles: titles }) }).eq('id', f.id))
     check(await db.from('count_reports').insert({ funnel_id: f.id, stage_key: null, value: results + 1 }))
     await updateRuns(db, f.id)
     return text(await one(db, funnel_id))
@@ -568,6 +577,9 @@ function server(db: Db, caller: Caller) {
 
   return s
 }
+
+// A result's name: a few words, as the dashboard shows it on hover.
+const resultTitle = z.string().trim().min(1).max(120)
 
 // Links a chat_url may hold: web chats, and the Claude, ChatGPT (Codex) and Grok Bot apps' own links.
 const CHAT_LINK = /^(https?|claude|codex|grokbot):\/\//

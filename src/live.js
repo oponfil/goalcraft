@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=49da1b32';
+import { supabase } from './auth.js?v=60d29ae6';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -51,6 +51,8 @@ function toScene(f, reports, now, usage = []) {
     // Tank fill an agent set by hand, 0-1 (null = computed).
     manualFill: stages.map(s => (s.fill_percent == null ? null : Number(s.fill_percent) / 100)),
     cubes: f.results,
+    // What each result is, when the agent said (shown on hover).
+    resultTitles: f.result_titles || [],
     goal: { total: f.goal_total, due: f.goal_due ? Date.parse(f.goal_due) : null },
     workers: f.presence.filter(p => p.zone != null).map(p => agentOf(f, p, now, usage)),
     // The supervisor (no zone): on the platform at the top, with what its last run found.
@@ -177,7 +179,7 @@ export async function loadFunnels() {
   }
   const [funnels, reports, usage] = await Promise.all([
     supabase.from('funnels')
-      .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, output_flow_per_day,
+      .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, result_titles, output_flow_per_day,
         stages (key, position, label, count, active, fill_percent, flow_per_day),
         presence (agent, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, pause_reason, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=49da1b32';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=49da1b32';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=49da1b32';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=60d29ae6';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=60d29ae6';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=60d29ae6';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -512,17 +512,18 @@ export function mountDashboard(funnels, opts = {}) {
 
   canvas.addEventListener('pointermove', e => {
     const h = scene.hitTest(...toLogical(e));
-    canvas.style.cursor = h && h.type !== 'stage' && (h.type !== 'count' || opts.history) ? 'pointer' : 'default';
+    canvas.style.cursor = h && h.type !== 'stage' && h.type !== 'result' && (h.type !== 'count' || opts.history) ? 'pointer' : 'default';
     // A tank shows only its number and flow; what it holds pops up on hover. The sheet on top says
     // where the list it opens is kept.
-    if (!['stage', 'count', 'source', 'guide'].includes(h?.type) || e.pointerType === 'touch') return (tip.hidden = true);
+    if (!['stage', 'count', 'source', 'guide', 'result'].includes(h?.type) || e.pointerType === 'touch') return (tip.hidden = true);
     showTip(e, h);
   });
   let tipTimer;
   function showTip(e, h) {
     tip.classList.remove('over');
     tip.style.whiteSpace = 'pre';
-    if (h.type === 'source') tip.textContent = t('board.sheet', sheetPlace(h.url));
+    if (h.type === 'result') tip.textContent = h.title;
+    else if (h.type === 'source') tip.textContent = t('board.sheet', sheetPlace(h.url));
     else if (h.type === 'guide') tip.textContent = t('board.guide', sheetPlace(h.url));
     else {
       const f = scene.funnels[h.fi], s = f.stages[h.j], label = plural(s.count, s.forms);
@@ -557,7 +558,7 @@ export function mountDashboard(funnels, opts = {}) {
     // A tank's number and its +N open its history: how much it grew each day.
     if (h.type === 'count' && opts.history) { tip.hidden = true; return showHistory(e, scene.funnels[h.fi], h.j); }
     // A tap elsewhere on a tank shows what it holds for a moment, as on a phone with no hover.
-    if (h.type === 'stage' || h.type === 'count') {
+    if (h.type === 'stage' || h.type === 'count' || h.type === 'result') {
       hidePop(); showTip(e, h);
       clearTimeout(tipTimer); tipTimer = setTimeout(() => { tip.hidden = true; }, 2000);
       return;

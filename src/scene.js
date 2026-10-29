@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=49da1b32';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=49da1b32';
-import { themeOf } from './themes.js?v=49da1b32';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=49da1b32';
+import { agentInfo, plural } from './data.js?v=60d29ae6';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=60d29ae6';
+import { themeOf } from './themes.js?v=60d29ae6';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=60d29ae6';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -498,8 +498,11 @@ export class Scene {
         const empty = i >= f.cubes;
         // Empty chests, flasks, pots and chips are faded so done results stand out.
         if (empty) c.globalAlpha = theme.emptyAlpha ?? 1;
-        theme.result(c, Math.round(cx - (inRow * 18 - 2) / 2 + col * 18), g.flasksY() + row * 22, empty);
+        const rx = Math.round(cx - (inRow * 18 - 2) / 2 + col * 18), ry = g.flasksY() + row * 22;
+        theme.result(c, rx, ry, empty);
         c.globalAlpha = 1;
+        // A done result the agent named says what it is on hover.
+        if (!empty && f.resultTitles?.[i]) this.hits.push({ x: rx - 1, y: ry - 1, w: 18, h: 22, type: 'result', title: f.resultTitles[i] });
       }
     });
     for (const a of this.agents) this.drawAgent(c, a);

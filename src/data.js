@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=49da1b32';
+import { lang } from './i18n.js?v=60d29ae6';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -81,6 +81,8 @@ export const FUNNELS = [
     ],
     flows: [8, 2.5, 1, 0.5, 0.15, 1 / 21],
     cubes: 1,
+    // What each result is: shown on hover.
+    resultTitles: ['Vertical Aerospace — Product Manager'],
     goal: { total: 5, every: 21 },
     // The supervisor on the platform: what its last run found.
     supervisor: { agent: 'claude', state: 'work', status: 'bottleneck', summary: 'interviews → final round' },
@@ -147,6 +149,8 @@ export const FUNNELS = [
     ],
     flows: [300, 20, 8, 3, 1.2, 0.5],
     cubes: 8,
+    // What each result is: shown on hover.
+    resultTitles: ['Anna K.', 'Mark T.', 'Lena S.', 'Ivan P.', 'Sofia R.', 'Tom W.', 'Maria G.', 'Alex D.'],
     goal: { total: 30, every: 2 },
     // The supervisor on the platform: what its last run found.
     supervisor: { agent: 'chatgpt', state: 'sleep', wakeIn: 25, status: 'ok', summary: 'on pace for the goal' },
@@ -181,6 +185,8 @@ export const FUNNELS = [
     ],
     flows: [2, 0.6, 0.3, 0.2, 0.15, 1 / 10],
     cubes: 2,
+    // What each result is: shown on hover.
+    resultTitles: ['Acme Cloud — SSRF in the image proxy', 'PayFast — IDOR in invoices'],
     goal: { total: 12, every: 7 },
     // The supervisor on the platform: what its last run found.
     supervisor: { agent: 'grok', state: 'work', status: 'recommendation', summary: 'add an agent on the inflow' },
@@ -249,6 +255,8 @@ export const FUNNELS = [
     ],
     flows: [1 / 2, 1 / 3, 1 / 5, 1 / 7, 1 / 10, 1 / 14],
     cubes: 1,
+    // What each result is: shown on hover.
+    resultTitles: ['“Agents as funnels”, arXiv'],
     goal: { total: 6, every: 21 },
     // The supervisor on the platform: what its last run found.
     supervisor: { agent: 'claude', state: 'sleep', wakeIn: 40, status: 'bottleneck', summary: 'replies come back slowly' },
@@ -275,6 +283,8 @@ export const FUNNELS = [
     ],
     flows: [6, 2, 0.6, 0.25, 0.12, 1 / 14],
     cubes: 1,
+    // What each result is: shown on hover.
+    resultTitles: ['Senior backend engineer — Daria Volkova'],
     goal: { total: 3, every: 14 },
     // The supervisor on the platform: what its last run found.
     supervisor: { agent: 'gemini', state: 'work', status: 'recommendation', summary: 'speed up the first replies' },
@@ -305,6 +315,8 @@ export const FUNNELS = [
     ],
     flows: [4, 1.2, 0.4, 0.2, 0.12, 1 / 10],
     cubes: 3,
+    // What each result is: shown on hover.
+    resultTitles: ['Northwind — landing page redesign', 'Bluepeak — onboarding emails', 'Orbit Labs — pitch deck'],
     goal: { total: 8, every: 10 },
     // The supervisor on the platform: what its last run found.
     supervisor: { agent: 'grok', state: 'sleep', wakeIn: 18, status: 'ok', summary: 'on pace for the goal' },
@@ -335,6 +347,8 @@ export const FUNNELS = [
     ],
     flows: [7, 1.5, 0.8, 0.3, 0.2, 1 / 7],
     cubes: 2,
+    // What each result is: shown on hover.
+    resultTitles: ['Lenny\'s Podcast', 'Indie Hackers'],
     goal: { total: 10, every: 7 },
     // The supervisor on the platform: what its last run found.
     supervisor: { agent: 'claude', state: 'work', status: 'recommendation', summary: 'add an agent on the inflow' },
