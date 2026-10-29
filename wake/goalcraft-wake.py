@@ -46,7 +46,7 @@ import time
 import urllib.error
 import urllib.request
 
-VERSION = '2026-10-26'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-10-29'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -560,8 +560,9 @@ def report_antigravity_limit(key, show=False):
     quotas = {}
     for c in ((status.get('userStatus') or {}).get('cascadeModelConfigData') or {}).get('clientModelConfigs', []):
         qi = c.get('quotaInfo') or {}
-        if qi.get('remainingFraction') is not None and qi.get('resetTime'):
-            quotas.setdefault(quota_of(str(c.get('label', ''))), qi)
+        if qi.get('resetTime'):
+            # Nothing left is sent as no remainingFraction at all (a zero is left out), not as 0.
+            quotas.setdefault(quota_of(str(c.get('label', ''))), {**qi, 'remainingFraction': qi.get('remainingFraction', 0)})
     now = time.time()
     before = limit_state().get('antigravity_at')
     costs = antigravity_cost(before, now) if before else {}
