@@ -597,6 +597,24 @@ function chatOf(raw: string): string | undefined {
   } catch { /* not JSON */ }
 }
 
+// For a while: what a tool call carries besides its arguments (the names of its _meta fields and
+// headers, and the values of those that look like a conversation's id), to learn whether ChatGPT on
+// chatgpt.com names its conversation as Codex does. Names only otherwise; no sign-in or arguments.
+function logCallShape(req: Request, raw: string) {
+  try {
+    const body = JSON.parse(raw)
+    for (const m of Array.isArray(body) ? body : [body]) {
+      if (m?.method !== 'tools/call') continue
+      const meta = m.params?._meta ?? {}
+      const idLike = (k: string) => /conversation|session|thread|chat|subject/i.test(k)
+      const ids = Object.fromEntries(Object.entries(meta).filter(([k, v]) => idLike(k) && typeof v === 'string').map(([k, v]) => [k, String(v).slice(0, 80)]))
+      const headers = [...req.headers.keys()].filter(h => !/authorization|cookie|apikey/i.test(h))
+      const headerIds = Object.fromEntries(headers.filter(idLike).map(h => [h, (req.headers.get(h) ?? '').slice(0, 80)]))
+      console.log('call shape', JSON.stringify({ tool: m.params?.name, ua: (req.headers.get('user-agent') ?? '').slice(0, 80), meta: Object.keys(meta), ids, headers, headerIds }))
+    }
+  } catch { /* not JSON */ }
+}
+
 Deno.serve(
   pipeline(
     [
@@ -608,6 +626,7 @@ Deno.serve(
       // Read the body once and hand the server a fresh copy of the request.
       const raw = req.method === 'POST' ? await req.text() : ''
       const fresh = raw ? new Request(req.url, { method: req.method, headers: req.headers, body: raw }) : req
+      if (raw) logCallShape(req, raw)
       return createMcpHandler(() => server(supabase, { id: userClaims.id, admin: supabaseAdmin, chat: chatOf(raw) })).fetch(fresh)
     },
   ),

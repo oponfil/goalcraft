@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=1f1a94a5';
-import vi from './lang/vi.js?v=1f1a94a5';
-import ja from './lang/ja.js?v=1f1a94a5';
-import pt from './lang/pt.js?v=1f1a94a5';
-import tr from './lang/tr.js?v=1f1a94a5';
-import ko from './lang/ko.js?v=1f1a94a5';
+import es from './lang/es.js?v=bbe76d7e';
+import vi from './lang/vi.js?v=bbe76d7e';
+import ja from './lang/ja.js?v=bbe76d7e';
+import pt from './lang/pt.js?v=bbe76d7e';
+import tr from './lang/tr.js?v=bbe76d7e';
+import ko from './lang/ko.js?v=bbe76d7e';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -417,6 +417,13 @@ const STRINGS = {
   'board.working': L((who) => `${who} is working`, (who) => `${who} работает`, (who) => `${who} 正在工作`, (who) => `${who} กำลังทำงาน`),
   'board.open': L((who) => `Open in ${who}`, (who) => `Открыть в ${who}`, (who) => `在 ${who} 中打开`, (who) => `เปิดใน ${who}`),
   'board.openSite': L((h) => `Open on ${h}`, (h) => `Открыть на ${h}`, (h) => `在 ${h} 上打开`, (h) => `เปิดบน ${h}`),
+  'board.sendMessageTip': L('The agent reads it when it next checks Goalcraft:\nat once if it is working now, otherwise on its next run.', 'Агент прочитает сообщение, когда в следующий раз заглянет в Goalcraft:\nсразу, если сейчас работает, иначе на следующем запуске.', '智能体下次查看 Goalcraft 时会读到：\n正在工作则立即读到，否则在下次运行时。', 'เอเจนต์จะอ่านเมื่อเข้ามาดู Goalcraft ครั้งถัดไป:\nทันทีถ้ากำลังทำงานอยู่ ไม่เช่นนั้นในรอบถัดไป'),
+  'board.sendAnswerTip': L('The agent gets your answer when it next checks Goalcraft:\nat once if it is working now, otherwise on its next run.', 'Агент получит ответ, когда в следующий раз заглянет в Goalcraft:\nсразу, если сейчас работает, иначе на следующем запуске.', '智能体下次查看 Goalcraft 时会收到回复：\n正在工作则立即收到，否则在下次运行时。', 'เอเจนต์จะได้รับคำตอบเมื่อเข้ามาดู Goalcraft ครั้งถัดไป:\nทันทีถ้ากำลังทำงานอยู่ ไม่เช่นนั้นในรอบถัดไป'),
+  'board.sendWake': L('If the wake script runs on its computer, it wakes the agent sooner.', 'Если на его компьютере стоит wake-скрипт, он разбудит агента раньше.', '如果它的电脑上运行着唤醒脚本，会更早唤醒它。', 'ถ้าคอมพิวเตอร์ของมันมีสคริปต์ปลุก จะปลุกเอเจนต์เร็วขึ้น'),
+  'board.chatApp': L((app, id) => `The agent works in the ${app} app · conversation ${id}`, (app, id) => `Агент работает в приложении ${app} · разговор ${id}`, (app, id) => `智能体在 ${app} 应用中工作 · 对话 ${id}`, (app, id) => `เอเจนต์ทำงานในแอป ${app} · บทสนทนา ${id}`),
+  'board.chatSite': L((h, id) => `The agent works on ${h}${id ? ` · chat ${id}` : ''}`, (h, id) => `Агент работает на сайте ${h}${id ? ` · чат ${id}` : ''}`, (h, id) => `智能体在 ${h} 上工作${id ? ` · 聊天 ${id}` : ''}`, (h, id) => `เอเจนต์ทำงานบน ${h}${id ? ` · แชต ${id}` : ''}`),
+  'board.chatAppOnly': L((app) => `The agent works in ${app}: it has no link to one conversation, so this opens the app`, (app) => `Агент работает в ${app}: ссылки на отдельный разговор там нет, откроется приложение`, (app) => `智能体在 ${app} 中工作：没有单个对话的链接，将打开应用`, (app) => `เอเจนต์ทำงานใน ${app}: ไม่มีลิงก์ไปยังบทสนทนาเดียว จึงจะเปิดแอป`),
+  'board.chatNone': L("The agent hasn't sent a link to its chat, so this opens a new one", 'Агент не прислал ссылку на свой чат: откроется новый чат', '智能体没有发送其聊天链接，将打开新聊天', 'เอเจนต์ยังไม่ได้ส่งลิงก์แชตของตน จะเปิดแชตใหม่'),
   'board.replyIn': L((who) => `Reply in ${who}`, (who) => `Ответить в ${who}`, (who) => `在 ${who} 中回复`, (who) => `ตอบใน ${who}`),
   'board.answer': L('Your answer', 'Ваш ответ', '你的回复', 'คำตอบของคุณ'),
   'board.send': L('Send answer', 'Отправить ответ', '发送回复', 'ส่งคำตอบ'),

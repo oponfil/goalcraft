@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=1f1a94a5';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=1f1a94a5';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=1f1a94a5';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=bbe76d7e';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=bbe76d7e';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=bbe76d7e';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -14,6 +14,33 @@ const openLabel = (link, info) => {
   if (/^https?:/.test(link)) { try { return t('board.openSite', new URL(link).hostname.replace(/^www\./, '')); } catch {} }
   return t('board.open', info.product || info.name);
 };
+// Where the agent works, on the Open button's hover: its app or site and which conversation there
+// ("in the ChatGPT (Codex) app · conversation 01a1351e…"), or that it sent no link to one, so the button
+// opens the app or a new chat. mine: the agent's own link (or the question's), if any. Live board
+// only: the demo's agents have no chats of their own.
+const shortId = s => (s.length > 12 ? `${s.slice(0, 8)}…` : s);
+const whereTip = (mine, info, inAntigravity) => {
+  let m;
+  if ((m = /^codex:\/\/threads\/([\w-]+)/.exec(mine || ''))) return t('board.chatApp', 'ChatGPT (Codex)', shortId(m[1]));
+  if ((m = /^claude:\/\/claude\.ai\/epitaxy\/(?:local_)?([\w-]+)/.exec(mine || ''))) return t('board.chatApp', 'Claude', shortId(m[1]));
+  if ((m = /^grokbot:.*[?&]id=([\w-]+)/.exec(mine || ''))) return t('board.chatApp', 'Grok Bot', shortId(m[1]));
+  if (/^https?:/.test(mine || '')) {
+    try {
+      const u = new URL(mine), id = u.pathname.split('/').filter(Boolean).pop();
+      return t('board.chatSite', u.hostname.replace(/^www\./, ''), id ? shortId(id) : '');
+    } catch {}
+  }
+  if (inAntigravity) return t('board.chatAppOnly', 'Google Antigravity');
+  if (!mine && info.name === 'Kimi') return t('board.chatAppOnly', 'Kimi');
+  return t('board.chatNone');
+};
+// What Send does, on its hover: nothing is pushed into the agent's chat; the agent reads the message
+// (or the answer) when it next checks Goalcraft, and an agent the wake script can resume (Claude and
+// ChatGPT apps, Antigravity) may be woken for it sooner.
+const sendTip = (key, mine, inAntigravity, live) =>
+  t(key) + (live && (/^(codex|claude):/.test(mine || '') || inAntigravity) ? `\n${t('board.sendWake')}` : '');
+const openBtnHtml = (link, web, info, tipText) =>
+  `<a class="btn" href="${esc(link)}" ${opens(link, web)}${tipText ? ` data-tip="${esc(tipText)}"` : ''}>${esc(openLabel(link, info))}</a>`;
 const opens = (url, web) => (/^https?:/.test(url) ? 'target="_blank" rel="noopener"' : `data-web="${esc(web)}"`);
 
 // No app on this computer: the app link does nothing and the page keeps the focus, so after a
@@ -651,15 +678,17 @@ export function mountDashboard(funnels, opts = {}) {
       // Each open question with its own answer box and, beside Send, the chat it was asked from (or
       // the agent's chat): an agent working in several chats asks from each. The demo links to the
       // agent's chat instead.
+      // The question's own chat, or the agent's; the site's front page alone is no chat of its own.
+      const mine = url => (url && url !== info.chat && url !== web ? url : a.chat);
       const openBtn = url => {
         const link = chatLink(info, url);
-        return link ? `<a class="btn" href="${esc(link)}" ${opens(link, webOf(url, info))}>${esc(openLabel(link, info))}</a>` : '';
+        return link ? openBtnHtml(link, webOf(url, info), info, (opts.live ? whereTip(mine(url), info, inAntigravity) : '')) : '';
       };
       // The first question (the one asked first) shows with its answer box; the rest fold under
       // "N more questions" and open with their own boxes.
       const askHtml = q => `<div class="ask" data-qid="${esc(q.id)}"><p>${esc(q.question)}</p>${opts.onAnswer
         ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
-          <div class="ask-buttons"><button class="btn primary send" style="${paint}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
+          <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(sendTip('board.sendAnswerTip', mine(q.chat || web), inAntigravity, opts.live))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
           <div class="pop-msg"></div>` : ''}</div>`;
       const [first, ...rest] = a.questions;
       const asks = (first ? askHtml(first) : '') + (rest.length
@@ -683,9 +712,9 @@ export function mountDashboard(funnels, opts = {}) {
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}">${esc(t('board.sendMessage'))}</button>${chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(openLabel(chat, info))}</a>` : ''}</div>
+        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(sendTip('board.sendMessageTip', a.chat, inAntigravity, opts.live))}">${esc(t('board.sendMessage'))}</button>${chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : '')) : ''}</div>
         <div class="pop-msg"></div></div>`
-      : chat ? `<a class="btn" href="${esc(chat)}" ${opens(chat, web)}>${esc(openLabel(chat, info))}</a>` : '';
+      : chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : '')) : '';
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
       <div class="pop-status">${paused}${wakes}${missed}${lost}</div>
       <div class="pop-sub where">${where}</div>
