@@ -196,7 +196,7 @@ export default {
   'board.chatNone': 'エージェントがチャットのリンクを送っていないため、新しいチャットが開きます',
   'board.replyIn': (who) => `${who} で返事する`,
   'board.answer': 'あなたの返事',
-  'board.send': '返事を送る',
+  'board.send': '返事する',
   'board.sheet': (where) => `${where} でリストを開く`,
   'board.guide': (where) => `${where} でメモを開く`,
   'board.close': '閉じる',

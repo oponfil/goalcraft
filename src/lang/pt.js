@@ -195,7 +195,7 @@ export default {
   'board.chatNone': 'O agente não enviou o link do seu chat: um chat novo será aberto',
   'board.replyIn': (who) => `Responder em ${who}`,
   'board.answer': 'Sua resposta',
-  'board.send': 'Enviar resposta',
+  'board.send': 'Responder',
   'board.sheet': (where) => `Abrir a lista em ${where}`,
   'board.guide': (where) => `Abrir as notas em ${where}`,
   'board.close': 'Fechar',

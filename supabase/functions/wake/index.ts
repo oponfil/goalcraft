@@ -50,18 +50,20 @@ function grokBot(chat: string | null): { app: string, session: string } | null {
   return id ? { app: 'grok', session: id } : null
 }
 
-// A Kimi agent with no chat link: it works in the Kimi app (Work) on this computer, where the script
-// reads what it uses from the app's conversation records (it finds them by the agent's own calls).
-// The app has no way to resume one conversation from outside, so it isn't woken.
+// A Kimi agent: it works in the Kimi app (Work) on this computer (its link is kimi://, or, from before
+// agents sent one, it has none and a name like "kimi-search"), where the script reads what it uses
+// from the app's conversation records (it finds them by the agent's own calls). The app has no way to
+// resume one conversation from outside, so it isn't woken.
 function kimiApp(p: any): { app: string, session: null } | null {
-  return !p.chat_url && /^kimi/i.test(p.agent) ? { app: 'kimi', session: null } : null
+  return /^kimi:/i.test(p.chat_url ?? '') || (!p.chat_url && /^kimi/i.test(p.agent)) ? { app: 'kimi', session: null } : null
 }
 
-// What the script resumes for an agent: its Claude or Codex session, or for a Gemini agent with no
-// such link, its conversation in Google Antigravity (the script finds it by the agent's name and funnel).
+// What the script resumes for an agent: its Claude or Codex session, or for an agent in Google
+// Antigravity (its link is antigravity://, or, from before agents sent one, it has none and a name
+// like "gemini-search") its conversation there (the script finds it by the agent's name and funnel).
 function resumable(p: any, chat: string | null = null): { app: string, session: string | null } | null {
   return session(chat ?? p.chat_url)
-    ?? ((!p.chat_url || /^antigravity:/i.test(p.chat_url)) && /^gemini/i.test(p.agent) ? { app: 'antigravity', session: null } : null)
+    ?? (/^antigravity:/i.test(p.chat_url ?? '') || (!p.chat_url && /^gemini/i.test(p.agent)) ? { app: 'antigravity', session: null } : null)
 }
 
 // The plan's limit as the script read it: numbers only, one row per reading.

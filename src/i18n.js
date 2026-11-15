@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=e4959a4c';
-import vi from './lang/vi.js?v=e4959a4c';
-import ja from './lang/ja.js?v=e4959a4c';
-import pt from './lang/pt.js?v=e4959a4c';
-import tr from './lang/tr.js?v=e4959a4c';
-import ko from './lang/ko.js?v=e4959a4c';
+import es from './lang/es.js?v=a29014e7';
+import vi from './lang/vi.js?v=a29014e7';
+import ja from './lang/ja.js?v=a29014e7';
+import pt from './lang/pt.js?v=a29014e7';
+import tr from './lang/tr.js?v=a29014e7';
+import ko from './lang/ko.js?v=a29014e7';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -425,7 +425,7 @@ const STRINGS = {
   'board.chatNone': L("The agent hasn't sent a link to its chat, so this opens a new one", 'Агент не прислал ссылку на свой чат: откроется новый чат', '智能体没有发送其聊天链接，将打开新聊天', 'เอเจนต์ยังไม่ได้ส่งลิงก์แชตของตน จะเปิดแชตใหม่'),
   'board.replyIn': L((who) => `Reply in ${who}`, (who) => `Ответить в ${who}`, (who) => `在 ${who} 中回复`, (who) => `ตอบใน ${who}`),
   'board.answer': L('Your answer', 'Ваш ответ', '你的回复', 'คำตอบของคุณ'),
-  'board.send': L('Send answer', 'Отправить ответ', '发送回复', 'ส่งคำตอบ'),
+  'board.send': L('Answer', 'Ответить', '回复', 'ตอบ'),
   'board.sheet': L((where) => `Open the list in ${where}`, (where) => `Открыть список в ${where}`, (where) => `在 ${where} 中打开列表`, (where) => `เปิดรายการใน ${where}`),
   'board.guide': L((where) => `Open the notes in ${where}`, (where) => `Открыть заметки в ${where}`, (where) => `在 ${where} 中打开笔记`, (where) => `เปิดโน้ตใน ${where}`),
   'board.close': L('Close', 'Закрыть', '关闭', 'ปิด'),

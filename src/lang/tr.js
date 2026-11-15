@@ -195,7 +195,7 @@ export default {
   'board.chatNone': 'Ajan sohbetinin bağlantısını göndermedi: yeni bir sohbet açılır',
   'board.replyIn': (who) => `${who} içinde cevapla`,
   'board.answer': 'Cevabınız',
-  'board.send': 'Cevabı gönder',
+  'board.send': 'Cevapla',
   'board.sheet': (where) => `Listeyi ${where} içinde aç`,
   'board.guide': (where) => `Notları ${where} içinde aç`,
   'board.close': 'Kapat',

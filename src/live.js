@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=e4959a4c';
+import { supabase } from './auth.js?v=a29014e7';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -97,6 +97,8 @@ function agentOf(f, p, now, usage = []) {
             .map(m => ({ id: 'm:' + m.id, question: null, answer: m.text, reply: m.reply, at: m.replied_at })),
         ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)),
         chat: p.chat_url,
+        // Which AI it is, as it said (its logo); none from agents that never sent it.
+        provider: p.provider,
         // Its token use over the last week (the plans' limits are weekly), as the person's wake script read it from the agent's own
         // session files (null: not known, e.g. a web chat).
         usage: dayUsage(mine),
@@ -181,7 +183,7 @@ export async function loadFunnels() {
     supabase.from('funnels')
       .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, result_titles, output_flow_per_day,
         stages (key, position, label, count, active, fill_percent, flow_per_day),
-        presence (agent, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, pause_reason, updated_at),
+        presence (agent, provider, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, pause_reason, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
         agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),
         person_tasks (id, position, title, detail, url, due_at, done_at)`)

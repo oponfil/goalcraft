@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=e4959a4c';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=e4959a4c';
-import { themeOf } from './themes.js?v=e4959a4c';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=e4959a4c';
+import { agentInfo, plural } from './data.js?v=a29014e7';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=a29014e7';
+import { themeOf } from './themes.js?v=a29014e7';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=a29014e7';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -534,12 +534,12 @@ export class Scene {
   }
 
   drawAgent(c, a) {
-    const t = this.t, info = agentInfo(a.agent), theme = themeOf(a.f), outfit = theme.outfit;
+    const t = this.t, info = agentInfo(a.agent, { provider: a.provider, chat: a.chat, app: a.usage?.app }), theme = themeOf(a.f), outfit = theme.outfit;
     if (a.sup) return this.drawSupervisor(c, a, info, outfit);
     if (a.state === 'pause') return this.drawPaused(c, a, info, outfit, this.spot(a, 'ask'), drawSitting);
     if (a.state === 'sleep') {
       const p = this.spot(a, 'rest');
-      drawLying(c, p.x, p.y, a.agent, info.color, a.side === 'R', outfit);
+      drawLying(c, p.x, p.y, info.kind, info.color, a.side === 'R', outfit);
       // Asleep with a question still open: its bubble stays, on the side toward the pipe.
       if (a.questions.length) {
         const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
@@ -554,7 +554,7 @@ export class Scene {
     }
     if (a.state === 'walk') {
       const p = this.spot(a, 'work');
-      drawStanding(c, Math.round(a.x / P) * P, p.y, a.agent, info.color, Math.floor(t * 7), a.to === 'rest' ? a.side === 'L' : a.side === 'R', false, outfit);
+      drawStanding(c, Math.round(a.x / P) * P, p.y, info.kind, info.color, Math.floor(t * 7), a.to === 'rest' ? a.side === 'L' : a.side === 'R', false, outfit);
       this.hits.push({ x: a.x - 2, y: p.y - 2, w: 24, h: 32, type: 'agent', a });
       a.noteAt = { x: Math.round(a.x / P) * P + 10, y: p.y + (HEAD_TOP[outfit] ?? 1) - 1 };
       return;
@@ -562,7 +562,7 @@ export class Scene {
     if (a.state === 'ask') {
       const p = this.spot(a, 'ask');
       const R = a.side === 'R';
-      drawStanding(c, p.x, p.y, a.agent, info.color, -1, R, false, outfit);
+      drawStanding(c, p.x, p.y, info.kind, info.color, -1, R, false, outfit);
       a.noteAt = { x: p.x + 10, y: p.y + (HEAD_TOP[outfit] ?? 1) - 1 };
       const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
       a.bubble = { x: R ? p.x + 11 * P : p.x - 9 * P - extra, y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
@@ -573,7 +573,7 @@ export class Scene {
     // Working agents face the pipe. The tool is drawn as for the left side (facing right) and
     // mirrored for the right side.
     const p = this.spot(a, 'work'), R = a.side === 'R', cx = this.cx(this.fi(a.f));
-    drawStanding(c, p.x, p.y, a.agent, info.color, -1, R, true, outfit);
+    drawStanding(c, p.x, p.y, info.kind, info.color, -1, R, true, outfit);
     const hx = p.x + 16.5, hy = p.y + 15, pipeX = R ? 2 * (p.x + 10) - (cx + 5) : cx - 5;
     c.save();
     if (R) { c.translate(2 * (p.x + 10), 0); c.scale(-1, 1); }
@@ -617,7 +617,7 @@ export class Scene {
   // On pause: sitting on a chair where it would stand, a pause sign over its head; a question it
   // left keeps its bubble. Nothing else: no timer, no warning.
   drawPaused(c, a, info, outfit, p, draw) {
-    draw(c, p.x, p.y, a.agent, info.color, outfit);
+    draw(c, p.x, p.y, info.kind, info.color, outfit);
     drawPause(c, p.x + 10, p.y - 5);
     a.noteAt = { x: p.x + 10, y: p.y - 5 };
     if (a.questions.length) {
@@ -635,7 +635,7 @@ export class Scene {
     if (a.state === 'pause') return this.drawPaused(c, a, info, outfit, this.spot(a, 'ask'), drawBossSitting);
     if (a.state === 'sleep') {
       const p = this.spot(a, 'rest');
-      drawBossLying(c, p.x, p.y, a.agent, info.color, outfit);
+      drawBossLying(c, p.x, p.y, info.kind, info.color, outfit);
       a.noteAt = { x: p.x + 14, y: p.y + 4 };
       if (a.questions.length) {
         const bx = p.x + 30;
@@ -647,7 +647,7 @@ export class Scene {
     }
     const p = this.spot(a, a.state === 'ask' ? 'ask' : 'work');
     const w = a.state !== 'ask' ? this.deckWalk(a) : { walking: false, facesLeft: false };
-    drawBoss(c, Math.round(p.x / P) * P, p.y, a.agent, info.color, outfit, w.walking ? Math.floor(t * 7) : -1, w.facesLeft);
+    drawBoss(c, Math.round(p.x / P) * P, p.y, info.kind, info.color, outfit, w.walking ? Math.floor(t * 7) : -1, w.facesLeft);
     a.noteAt = { x: p.x + 10, y: p.y + (BOSS_TOP[outfit] ?? 1) - 1 };
     if (a.state === 'ask') {
       a.bubble = { x: p.x + 11 * P, y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };

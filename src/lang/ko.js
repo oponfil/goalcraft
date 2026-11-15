@@ -195,7 +195,7 @@ export default {
   'board.chatNone': '에이전트가 채팅 링크를 보내지 않아 새 채팅이 열립니다',
   'board.replyIn': (who) => `${who}에서 답하기`,
   'board.answer': '답변',
-  'board.send': '답변 보내기',
+  'board.send': '답하기',
   'board.sheet': (where) => `${where}에서 목록 열기`,
   'board.guide': (where) => `${where}에서 메모 열기`,
   'board.close': '닫기',

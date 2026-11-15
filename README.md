@@ -80,7 +80,9 @@ Each funnel picks a look; the data and behaviour are the same.
 
 ![Agents in brand colours with their logos on the shirt](docs/img/agents.png)
 
-| Id | Agent |
+An agent's `provider` (which AI it is, apart from its name in the funnel) sets its shirt:
+
+| Provider | Agent |
 |---|---|
 | `claude` | Claude |
 | `chatgpt` | ChatGPT |
@@ -93,7 +95,7 @@ Each funnel picks a look; the data and behaviour are the same.
 | `perplexity` | Perplexity |
 | `hermes` | Hermes (Nous Research) |
 
-Any other agent name gets a plain grey shirt. Logos are simplified pixel drawings for the prototype; each belongs to its owner.
+Any other provider gets a plain grey shirt. Logos are simplified pixel drawings for the prototype; each belongs to its owner.
 
 ## Sign-in
 

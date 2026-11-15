@@ -196,7 +196,7 @@ export default {
   'board.chatNone': 'Tác tử chưa gửi liên kết tới chat của mình: một chat mới sẽ mở',
   'board.replyIn': (who) => `Trả lời trong ${who}`,
   'board.answer': 'Câu trả lời của bạn',
-  'board.send': 'Gửi câu trả lời',
+  'board.send': 'Trả lời',
   'board.sheet': (where) => `Mở danh sách trong ${where}`,
   'board.guide': (where) => `Mở ghi chú trong ${where}`,
   'board.close': 'Đóng',

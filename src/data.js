@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=e4959a4c';
+import { lang } from './i18n.js?v=a29014e7';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -22,15 +22,30 @@ export const AGENTS = {
   hermes: { name: 'Hermes', color: '#8A6E3A', chat: 'https://nousresearch.com' },
 };
 
-// Several agents of one kind tell themselves apart with a suffix: "claude-search" is a Claude,
-// shown as "Claude · search". Any other name gets a plain grey shirt without a logo.
-export function agentInfo(id) {
-  if (AGENTS[id]) return AGENTS[id];
-  const [kind, ...rest] = id.split(/[-_]/), base = AGENTS[kind];
-  // "chatgpt-search": the agent's own name for its job (several ChatGPT agents in one funnel),
-  // shown after the brand; buttons that open the app use the brand alone (product).
-  if (base && rest.length) return { ...base, name: `${base.name} · ${rest.join(' ')}`, product: base.name };
-  return { name: id, color: '#8A8F98', chat: '' };
+// An agent's provider (which AI it is), apart from its name: what it said (set_agent_state provider),
+// else where it works: its chat link (claude://, codex://, chatgpt.com…) or the app its runs were
+// counted in (the wake script's usage). Agents from before it was asked for may say it only in their
+// name ("claude-search" is a Claude).
+const LINK_PROVIDERS = [
+  [/^(claude:|https:\/\/claude\.ai)/, 'claude'], [/^(codex:|https:\/\/chatgpt\.com)/, 'chatgpt'],
+  [/^(grokbot:|https:\/\/grok\.com)/, 'grok'], [/^(antigravity:|https:\/\/gemini\.google\.com)/, 'gemini'],
+  [/^(kimi(-work)?:|https:\/\/(www\.)?kimi\.)/, 'kimi'], [/^https:\/\/chat\.deepseek\.com/, 'deepseek'],
+  [/^https:\/\/chat\.qwen\.ai/, 'qwen'], [/^https:\/\/chat\.mistral\.ai/, 'mistral'], [/^https:\/\/(www\.)?perplexity\.ai/, 'perplexity'],
+];
+const APP_PROVIDERS = { claude: 'claude', codex: 'chatgpt', antigravity: 'gemini', grok: 'grok', kimi: 'kimi' };
+const named = id => (AGENTS[id] ? id : AGENTS[id.split(/[-_]/)[0]] ? id.split(/[-_]/)[0] : null);
+export const providerOf = (id, where = {}) => where.provider
+  ?? LINK_PROVIDERS.find(([re]) => re.test(where.chat || ''))?.[1] ?? APP_PROVIDERS[where.app] ?? named(id);
+
+// Its name is its job, shown after the brand: "search" working in Claude is "Claude · search" (and so
+// is an older "claude-search"); buttons that open the app use the brand alone (product). An
+// agent whose provider is unknown gets a plain grey shirt without a logo. kind: the provider, whose
+// logo its shirt wears.
+export function agentInfo(id, where) {
+  const kind = providerOf(id, where), base = AGENTS[kind];
+  if (!base) return { name: kind && kind !== id ? `${kind} · ${id}` : id, color: '#8A8F98', chat: '', kind: kind ?? id };
+  const parts = id.split(/[-_]/), job = named(id) ? (AGENTS[id] ? [] : parts.slice(1)) : parts;
+  return job.length ? { ...base, kind, name: `${base.name} · ${job.join(' ')}`, product: base.name } : { ...base, kind };
 }
 
 // Where "Open" and "Reply" go: the agent's desktop app when it has a link scheme (Claude,

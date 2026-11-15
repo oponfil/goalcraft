@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=e4959a4c';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=e4959a4c';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=e4959a4c';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=a29014e7';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=a29014e7';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=a29014e7';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -31,7 +31,7 @@ const whereTip = (mine, info, inAntigravity) => {
     } catch {}
   }
   if (inAntigravity) return t('board.chatAppOnly', 'Google Antigravity');
-  if (!mine && info.name === 'Kimi') return t('board.chatAppOnly', 'Kimi');
+  if (/^kimi/.test(mine || '') || (!mine && (info.product || info.name) === 'Kimi')) return t('board.chatAppOnly', 'Kimi');
   return t('board.chatNone');
 };
 const openBtnHtml = (link, web, info, tipText) =>
@@ -402,7 +402,10 @@ export function mountDashboard(funnels, opts = {}) {
     if (!rows.length) { body.innerHTML = `<p class="pop-note">${esc(t('spend.none'))}</p>`; return; }
     // A run's funnel by its id (live) or title (demo); its name as on the board.
     const funnelOf = new Map(scene.funnels.map(f => [f.id ?? f.title, f]));
-    const agentName = r => agentInfo(r.agent).name;
+    // Each agent's provider, apart from its name: what it said (on the board), else the app of its runs.
+    const appOf = new Map(rows.map(r => [r.agent, r.app]));
+    const provOf = new Map(scene.agents.map(a => [`${a.agent}|${a.f.id ?? a.f.title}`, a.provider]));
+    const whereOf = k => ({ provider: provOf.get(k), app: appOf.get(k.split('|')[0]) });
     // $ at API prices, or the share of one plan's limit: Claude's, Codex's, or one of Antigravity's
     // quotas (one per group of models, as its settings show them).
     const measures = ['$', ...Object.keys(LIMIT_NAMES).filter(q => rows.some(r => r.quota === q && r.limit != null))];
@@ -425,10 +428,10 @@ export function mountDashboard(funnels, opts = {}) {
       const split = splits.includes(spendState.split) ? spendState.split : 'agent';
       const mine = rows.filter(r => r.at >= from && value(r) != null && (!spendState.funnel || r.funnel === spendState.funnel));
       const vendorId = new Map();
-      const vendor = agent => { const id = agent.split(/[-_]/)[0], name = agentInfo(id).name; vendorId.set(name, id); return name; };
-      const groupOf = r => split === 'funnel' ? r.funnel : split === 'vendor' ? vendor(r.agent) : `${r.agent}|${r.funnel}`;
+      const vendor = r => { const id = providerOf(r.agent, { ...whereOf(`${r.agent}|${r.funnel}`), app: r.app }) ?? r.agent, name = agentInfo(id).name; vendorId.set(name, id); return name; };
+      const groupOf = r => split === 'funnel' ? r.funnel : split === 'vendor' ? vendor(r) : `${r.agent}|${r.funnel}`;
       const label = k => split === 'funnel' ? funnelOf.get(k)?.title ?? '?' : split === 'vendor' ? k
-        : `${agentInfo(k.split('|')[0]).name}${spendState.funnel ? '' : ' · ' + (funnelOf.get(k.split('|').slice(1).join('|'))?.title ?? '?')}`;
+        : `${agentInfo(k.split('|')[0], whereOf(k)).name}${spendState.funnel ? '' : ' · ' + (funnelOf.get(k.split('|').slice(1).join('|'))?.title ?? '?')}`;
       // Groups, the biggest first (at the bottom of each bar, first in the legend), each with its colour.
       const totals = new Map(), runs = new Map();
       for (const r of mine) { const k = groupOf(r); totals.set(k, (totals.get(k) || 0) + value(r)); runs.set(k, (runs.get(k) || 0) + 1); }
@@ -437,7 +440,7 @@ export function mountDashboard(funnels, opts = {}) {
       // read at once: Claude orange, ChatGPT green. Funnels, a service's other agents, and a service whose
       // color another already has, take the next color of the palette not close to one in use.
       const color = new Map(), brands = [], taken = new Set();
-      const brandOf = k => split === 'funnel' ? null : (split === 'vendor' ? vendorId.get(k) : k.split('|')[0]).split(/[-_]/)[0];
+      const brandOf = k => split === 'funnel' ? null : split === 'vendor' ? vendorId.get(k) : providerOf(k.split('|')[0], whereOf(k)) ?? k.split('|')[0];
       for (const k of groups) {
         const b = brandOf(k) && brandColor(brandOf(k));
         if (b && !brands.some(c => near(c, b))) { color.set(k, b); brands.push(b); }
@@ -642,8 +645,8 @@ export function mountDashboard(funnels, opts = {}) {
     const inAntigravity = /^antigravity:/i.test(a.chat || '') || (!a.chat && a.usage?.app === 'antigravity');
     // A Grok agent in the Grok Bot app opens its bot there ("Open Grok Bot"), or the app at least.
     const inGrokBot = /^grokbot:/i.test(a.chat || '');
-    const info = inAntigravity ? { ...agentInfo(a.agent), product: 'Antigravity', app: null }
-      : inGrokBot ? { ...agentInfo(a.agent), product: 'Grok Bot' } : agentInfo(a.agent);
+    const base = agentInfo(a.agent, { provider: a.provider, chat: a.chat, app: a.usage?.app });
+    const info = inAntigravity ? { ...base, product: 'Antigravity', app: null } : inGrokBot ? { ...base, product: 'Grok Bot' } : base;
     // own: the agent's own chat, an app link (claude://, codex://, antigravity://) or a web one; web:
     // where to go when the app isn't on this computer.
     const own = a.chat || (inAntigravity ? 'antigravity://' : info.chat), web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);
@@ -782,7 +785,7 @@ export function mountDashboard(funnels, opts = {}) {
       const error = await opts.onMessage(a, text);
       if (error) { msg.textContent = error; send.disabled = false; return; }
       box.value = ''; send.disabled = false;
-      msg.textContent = t('board.messageSent', a.name || (a.sup ? t('board.supervisorName', a.f.title) : agentInfo(a.agent).name)); msg.className = 'pop-msg ok';
+      msg.textContent = t('board.messageSent', a.name || (a.sup ? t('board.supervisorName', a.f.title) : agentInfo(a.agent, { provider: a.provider, chat: a.chat, app: a.usage?.app }).name)); msg.className = 'pop-msg ok';
       // The demo has no agent to read it: a moment later it answers back as a real one would.
       if (!opts.live) setTimeout(() => { a.replies = [...(a.replies || []), { id: 'demo-' + Date.now(), question: null, answer: text, reply: t('demo.reply') }]; }, 1500);
     });
