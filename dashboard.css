@@ -105,7 +105,7 @@ body {
 #pop {
   position: fixed;
   z-index: 10;
-  width: min(360px, calc(100vw - 16px));  /* wide enough for both answer buttons side by side, also in Russian */
+  width: min(420px, calc(100vw - 16px));  /* wide enough for both buttons side by side, also in Russian with a site's name */
   /* Never taller than the window: a long card scrolls inside. */
   max-height: calc(100dvh - 16px);
   overflow-y: auto;
@@ -170,7 +170,11 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop button.btn.primary { background: #D97757; }
 #pop button.btn:disabled { opacity: 0.5; cursor: default; }
 #pop .ask + .ask { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 4px; }
-#pop .ask-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+/* Send and Open always on one line: on a narrow screen a long Open label ("Открыть на gemini.google.com")
+   shortens with an ellipsis instead of moving under Send. */
+#pop .ask-buttons { display: flex; gap: 8px; margin-bottom: 4px; }
+#pop .ask-buttons .btn { white-space: nowrap; flex: none; }
+#pop .ask-buttons a.btn { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 #pop details.runs { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 13px; }
 #pop details.runs summary { cursor: pointer; color: var(--muted); }
 #pop details.runs summary:hover { color: var(--text); }

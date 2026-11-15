@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=9c6bb8fb';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=9c6bb8fb';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9c6bb8fb';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=e4959a4c';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=e4959a4c';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=e4959a4c';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -34,11 +34,6 @@ const whereTip = (mine, info, inAntigravity) => {
   if (!mine && info.name === 'Kimi') return t('board.chatAppOnly', 'Kimi');
   return t('board.chatNone');
 };
-// What Send does, on its hover: nothing is pushed into the agent's chat; the agent reads the message
-// (or the answer) when it next checks Goalcraft, and an agent the wake script can resume (Claude and
-// ChatGPT apps, Antigravity) may be woken for it sooner (the hover says so).
-const sendTip = (key, mine, inAntigravity, live) =>
-  t(key) + (live && (/^(codex|claude):/.test(mine || '') || inAntigravity) ? `\n${t('board.sendWake')}` : '');
 const openBtnHtml = (link, web, info, tipText) =>
   `<a class="btn" href="${esc(link)}" ${opens(link, web)}${tipText ? ` data-tip="${esc(tipText)}"` : ''}>${esc(openLabel(link, info))}</a>`;
 const opens = (url, web) => (/^https?:/.test(url) ? 'target="_blank" rel="noopener"' : `data-web="${esc(web)}"`);
@@ -688,7 +683,7 @@ export function mountDashboard(funnels, opts = {}) {
       // "N more questions" and open with their own boxes.
       const askHtml = q => `<div class="ask" data-qid="${esc(q.id)}"><p>${esc(q.question)}</p>${opts.onAnswer
         ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
-          <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(sendTip('board.sendAnswerTip', mine(q.chat || web), inAntigravity, opts.live))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
+          <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
           <div class="pop-msg"></div>` : ''}</div>`;
       const [first, ...rest] = a.questions;
       const asks = (first ? askHtml(first) : '') + (rest.length
@@ -712,7 +707,7 @@ export function mountDashboard(funnels, opts = {}) {
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(sendTip('board.sendMessageTip', a.chat, inAntigravity, opts.live))}">${esc(t('board.sendMessage'))}</button>${chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : '')) : ''}</div>
+        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : '')) : ''}</div>
         <div class="pop-msg"></div></div>`
       : chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : '')) : '';
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
