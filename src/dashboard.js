@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, agentButton, chatLink, plural } from './data.js?v=bbe76d7e';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=bbe76d7e';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=bbe76d7e';
+import { agentInfo, agentButton, chatLink, plural } from './data.js?v=9c6bb8fb';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=9c6bb8fb';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9c6bb8fb';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -36,7 +36,7 @@ const whereTip = (mine, info, inAntigravity) => {
 };
 // What Send does, on its hover: nothing is pushed into the agent's chat; the agent reads the message
 // (or the answer) when it next checks Goalcraft, and an agent the wake script can resume (Claude and
-// ChatGPT apps, Antigravity) may be woken for it sooner.
+// ChatGPT apps, Antigravity) may be woken for it sooner (the hover says so).
 const sendTip = (key, mine, inAntigravity, live) =>
   t(key) + (live && (/^(codex|claude):/.test(mine || '') || inAntigravity) ? `\n${t('board.sendWake')}` : '');
 const openBtnHtml = (link, web, info, tipText) =>
