@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
     admin.from('questions').select('id, funnel_id, agent, chat_url').eq('user_id', user)
       .not('answered_at', 'is', null).is('replied_at', null).is('woken_at', null).gte('answered_at', iso(now - FRESH)),
     admin.from('agent_wakes').select('funnel_id, agent, signal_at'),
-    // A worker's reply to what the supervisor wrote to it: the supervisor wakes to read it.
+    // An agent's reply to what another agent of its funnel wrote to it: the sender wakes to read it.
     admin.from('agent_messages').select('id, funnel_id, from_agent').eq('user_id', user).not('from_agent', 'is', null)
       .not('replied_at', 'is', null).is('reply_read_at', null).is('reply_woken_at', null).gte('replied_at', iso(now - FRESH)),
   ])

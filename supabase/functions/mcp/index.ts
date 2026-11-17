@@ -47,7 +47,7 @@ Any work is a run, not only a scheduled one: the person writing to you in your c
 Pause: when the person asks you to stop for a while, or your plan's limit has run out so you can't work until it resets, set_agent_state(pause, reason) (and turn off your schedule if the person asked you to stop). The dashboard sits you on a chair with a pause sign, raises no warning for your silence and nothing wakes you. Any set_agent_state(work) or (sleep) resumes you. A supervisor pauses or resumes a worker of its funnel when the person tells it to, with the worker's name and zone.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. When it needs the person, it asks as every agent does: state ask with a question. It also keeps an eye on the person's tasks for the funnel (set_tasks), most urgent first, without what is done or no longer matters.
 The person's tasks: the things only the person can do for a funnel (take a test task, fill in a form, answer a recruiter), shown to them on the dashboard. Every agent of the funnel, supervisor or worker, sees the same list (list_funnels tasks) and changes it the same way with set_tasks: adds a task when the person asks or when there is something only they can do, marks what is done, keeps the order. What an agent can't go on without is a question, not a task: never both. The place holds one agent; if your name already works a zone of this funnel, take another name for this place (supervisor).
-Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and a funnel's supervisor can write to its workers (send_message). On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns. The script never updates itself; list_funnels shows it as wake_script. When a supervisor sees update_available, or running false for a script that was set up, it tells the person once (not on every run): on their computer it asks whether to update and, on yes, runs wake_script.update; elsewhere it adds a task for them (set_tasks) with that command.
+Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and any agent of a funnel can write to any other agent of the same funnel, the supervisor or a worker (send_message): a worker asks the supervisor or tells the next stage's agent what it handed over, the supervisor gives a worker a task. Only within one funnel. On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns. The script never updates itself; list_funnels shows it as wake_script. When a supervisor sees update_available, or running false for a script that was set up, it tells the person once (not on every run): on their computer it asks whether to update and, on yes, runs wake_script.update; elsewhere it adds a task for them (set_tasks) with that command.
 Your name: the dashboard and emails show you by your model's name (Claude, ChatGPT…) unless you give your own short name with set_agent_state(name); give one when the person asks you to rename yourself.
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
@@ -418,7 +418,7 @@ function server(db: Db, caller: Caller) {
 
   s.registerTool('get_messages', {
     title: 'Get your messages',
-    description: 'What was written to you and you have not read yet, oldest first: by the person from the dashboard, or by your funnel\'s supervisor (from). Reading marks them read. Reply to each in one short line with reply(message_id). A supervisor also gets the replies to what it sent with send_message (replies).',
+    description: 'What was written to you and you have not read yet, oldest first: by the person from the dashboard (from person), or by another agent of the same funnel, the supervisor or a worker (from: its name). Reading marks them read. Reply to each in one short line with reply(message_id). You also get the replies to what you sent with send_message (replies).',
     inputSchema: req({
       agent,
       funnel_id: funnelId.optional().describe('Only this funnel; leave out for all your funnels'),
@@ -443,20 +443,23 @@ function server(db: Db, caller: Caller) {
   })
 
   s.registerTool('send_message', {
-    title: 'Write to a worker agent',
-    description: 'For a funnel\'s supervisor: write to one of its worker agents, for example to ask why it missed its run or to give it a task. The worker reads it with get_messages (from your name) and replies in one line; you get the reply on your own next get_messages (replies). If the person runs the wake script, a worker on their computer wakes for it within seconds.',
+    title: 'Write to another agent',
+    description: 'Write to another agent of the same funnel, the supervisor or a worker: the supervisor asks a worker why it missed its run or gives it a task; a worker asks the supervisor, or tells the next stage\'s agent what it handed over. Only within one funnel. The agent reads it with get_messages (from your name) and replies in one line; you get the reply on your own next get_messages (replies). If the person runs the wake script, an agent on their computer wakes for it within seconds.',
     inputSchema: req({
       funnel_id: funnelId,
-      agent: agent.describe('You, the funnel\'s supervisor'),
-      to: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,31}$/).describe('The worker agent to write to, as it appears in list_funnels'),
+      agent: agent.describe('You, an agent of this funnel'),
+      to: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,31}$/).describe('The agent of this funnel to write to (the supervisor or a worker), by its name as it appears in list_funnels'),
       text: z.string().min(1).max(2000).describe('The message, in the person\'s language'),
     }),
-    annotations: { title: 'Write to a worker agent', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: { title: 'Write to another agent', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, async (a) => {
     const f = await funnelRow(db, a.funnel_id)
     const at = check(await db.from('presence').select('agent, zone').eq('funnel_id', f.id)) as any[]
-    if (!at.some(p => p.agent === a.agent && p.zone == null)) fail(`Only the funnel's supervisor writes to its agents, and "${a.agent}" is not the supervisor of ${a.funnel_id}`)
-    if (!at.some(p => p.agent === a.to && p.zone != null)) fail(`No worker agent "${a.to}" in ${a.funnel_id}. Agents there: ${at.filter(p => p.zone != null).map(p => p.agent).join(', ') || 'none'}`)
+    // Any agent of the funnel writes to any other agent of the same funnel; never across funnels.
+    const names = at.map(p => p.agent)
+    if (!names.includes(a.agent)) fail(`"${a.agent}" is not an agent of ${a.funnel_id}: take your place there with set_agent_state first. Only agents of the same funnel write to each other`)
+    if (a.to === a.agent) fail('That is you: write to another agent of this funnel')
+    if (!names.includes(a.to)) fail(`No agent "${a.to}" in ${a.funnel_id}. Agents there: ${names.filter(n => n !== a.agent).join(', ') || 'none'}`)
     const m = check(await db.from('agent_messages').insert({ funnel_id: f.id, agent: a.to, from_agent: a.agent, text: a.text }).select('id').single()) as { id: string }
     return text({ sent: m.id, to: a.to })
   })
@@ -497,7 +500,7 @@ function server(db: Db, caller: Caller) {
 
   s.registerTool('reply', {
     title: 'Reply to the answer',
-    description: 'A one-line note back to the person about their answer or their message, as in a chat ("Thanks, sending the application now", "Got it, skipping this one"): what you do next. The dashboard shows it over the agent until the person closes it. Give question_id for an answer, message_id for a message. It never asks the person for anything: if you need them to answer, decide or do something (say, what was agreed turned out impossible for you), ask a question with set_agent_state ask instead, saying plainly what happened and exactly what to do.',
+    description: 'A one-line note back about an answer or a message, as in a chat ("Thanks, sending the application now", "Got it, skipping this one"): what you do next. A reply to the person shows over you on the dashboard until they close it; a reply to another agent goes back to it in its get_messages. Give question_id for an answer, message_id for a message. It never asks the person for anything: if you need them to answer, decide or do something (say, what was agreed turned out impossible for you), ask a question with set_agent_state ask instead, saying plainly what happened and exactly what to do.',
     inputSchema: req({
       question_id: z.string().uuid().optional().describe('The question the person answered'),
       message_id: z.string().uuid().optional().describe('The message the person wrote to you (from get_messages)'),
