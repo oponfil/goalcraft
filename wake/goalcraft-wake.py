@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-18.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-18.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -396,8 +396,14 @@ PRICES = {
 }
 
 
-# OpenAI's API prices for Codex's models, $ per million tokens (input, output, cached input, cache write).
-OPENAI_PRICES = {'gpt-6.1-sol': (2, 10, 0.10, 2.5)}
+# OpenAI's API prices for Codex's models, $ per million tokens (input, output, cached input, cache write
+# for 30 minutes), standard tier up to 272K input tokens, as developers.openai.com/api/docs/pricing
+# gave them on 18.11.2026. A model missing here gets no cost: its runs show their tokens instead.
+OPENAI_PRICES = {
+    'gpt-6.2-sol': (2, 10, 0.10, 2.5), 'gpt-6.1-sol': (2, 10, 0.10, 2.5), 'gpt-6-sol': (2, 10, 0.20, 2.5),
+    'gpt-6.2-astra': (8, 40, 0.40, 10), 'gpt-6-astra': (10, 50, 1.00, 12.5),
+    'gpt-6.1-terra': (1, 5, 0.05, 1.25), 'gpt-6-luna': (0.1, 0.5, 0.01, 0.125),
+}
 
 # Google's API prices for Antigravity's models, $ per million tokens (input, output with thinking, cached input).
 GEMINI_PRICES = {'gemini-4-argon': (2, 10, 0.10)}
