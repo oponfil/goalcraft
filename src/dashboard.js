@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=bd7bf639';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=bd7bf639';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=bd7bf639';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=145eaa56';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=145eaa56';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=145eaa56';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -58,14 +58,17 @@ const GEMINI_LOGO = BRAND('M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.
 // Grok's mark is drawn with holes (even-odd).
 const GROK_LOGO = BRAND('M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815', 'currentColor').replace('<path ', '<path fill-rule="evenodd" ');
 const KIMI_LOGO = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M21.846 0a1.923 1.923 0 110 3.846H20.15a.226.226 0 01-.227-.226V1.923C19.923.861 20.784 0 21.846 0z" fill="#1783FF"></path><path d="M11.065 11.199l7.257-7.2c.137-.136.06-.41-.116-.41H14.3a.164.164 0 00-.117.051l-7.82 7.756c-.122.12-.302.013-.302-.179V3.82c0-.127-.083-.23-.185-.23H3.186c-.103 0-.186.103-.186.23V19.77c0 .128.083.23.186.23h2.69c.103 0 .186-.102.186-.23v-3.25c0-.069.025-.135.069-.178l2.424-2.406a.158.158 0 01.205-.023l6.484 4.772a7.677 7.677 0 003.453 1.283c.108.012.2-.095.2-.23v-3.06c0-.117-.07-.212-.164-.227a5.028 5.028 0 01-2.027-.807l-5.613-4.064c-.117-.078-.132-.279-.028-.381z" fill="#fff"></path></svg>';
-const LIMIT_LOGOS = { claude: CLAUDE_LOGO, codex: OPENAI_LOGO, 'antigravity:gemini-4-argon': GEMINI_LOGO, 'antigravity:gemini': GEMINI_LOGO, grok: GROK_LOGO, kimi: KIMI_LOGO };
+// Google Antigravity's arch (LobeHub icons, MIT), in Google's colours: its quota for Claude and GPT models.
+const ANTIGRAVITY_LOGO = BRAND('M21.751 22.607c1.34 1.005 3.35.335 1.508-1.508C17.73 15.74 18.904 1 12.037 1 5.17 1 6.342 15.74.815 21.1c-2.01 2.009.167 2.511 1.507 1.506 5.192-3.517 4.857-9.714 9.715-9.714 4.857 0 4.522 6.197 9.714 9.715z', 'url(#antigravity-grad)',
+  '<defs><linearGradient id="antigravity-grad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#00B95C"/><stop offset=".35" stop-color="#FBBC04"/><stop offset=".65" stop-color="#FC413D"/><stop offset="1" stop-color="#3186FF"/></linearGradient></defs>');
+const LIMIT_LOGOS = { claude: CLAUDE_LOGO, codex: OPENAI_LOGO, 'antigravity:gemini-4-argon': GEMINI_LOGO, 'antigravity:gemini': GEMINI_LOGO, 'antigravity:claude-gpt': ANTIGRAVITY_LOGO, grok: GROK_LOGO, kimi: KIMI_LOGO };
 // What a measure button shows on hover: "Spending in dollars", "Spending in % of the Claude limit".
 const measureTip = m => {
-  const tip = m === '$' ? t('spend.inUsd') : t('spend.inLimit', LIMIT_NAMES[m] ?? m);
+  const tip = m === '$' ? t('spend.inUsd') : t('spend.inLimit', m === 'antigravity:claude-gpt' ? 'Claude/GPT (Antigravity)' : LIMIT_NAMES[m] ?? m);
   return ` data-tip="${esc(tip)}" aria-label="${esc(tip)}"`;
 };
 // The plans' limits by their key (live.js limitKey): Claude's, Codex's, Antigravity's quotas.
-const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT (Antigravity)', grok: 'Grok Bot', kimi: 'Kimi' };
+const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT', grok: 'Grok Bot', kimi: 'Kimi' };
 const TASKS_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>';
 
 function openApp(e) {
