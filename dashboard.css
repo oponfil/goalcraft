@@ -462,7 +462,8 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.limits .bar { height: 6px; background: #3A322B; }
 #pop details.limits .bar i { display: block; height: 100%; }
 #pop details.limits b { font-weight: 600; text-align: right; min-width: 44px; }
-#pop details.scripts ul { grid-template-columns: minmax(0, 1.4fr) auto auto auto; }
+#pop details.scripts ul { grid-template-columns: minmax(120px, 1fr) auto auto auto; }
+#pop details.scripts .who { white-space: normal; overflow: visible; overflow-wrap: anywhere; }  /* the computer's name whole, on two lines if need be */
 #pop details.scripts .ok { color: #9FE870; white-space: nowrap; }
 #pop details.scripts .warn { color: #F2C14E; white-space: nowrap; }
 #pop details.scripts li.issues { display: block; grid-column: 1 / -1; }

@@ -83,7 +83,7 @@ Click **Always Allow** to be asked once. It is up to you: click **Deny** and eve
 
 ## Updates
 
-The script updates itself (from version 2026-11-18). With every check Goalcraft tells it which version is out and that file's SHA-256. When a newer one is out, the script downloads it from goalcraft.ai and puts it in place only if its hash is the one Goalcraft gave, so a changed file on the site alone can't change what runs on your computer; then it starts again (after any agent it is waking has finished). Its log says so: `updated 2026-11-18 → …`. To turn this off, add `"auto_update": false` to `~/.goalcraft/wake.json`.
+The script updates itself (from version 2026-11-18). With every check Goalcraft tells it which version is out and that file's SHA-256, once goalcraft.ai serves that file (Goalcraft checks the site first, so a release is never announced before its file is there). When a newer one is out, the script downloads it from goalcraft.ai and puts it in place only if its hash is the one Goalcraft gave, so a changed file on the site alone can't change what runs on your computer (a file that doesn't match, say one the site doesn't serve yet, is tried again 5 minutes later); then it starts again (after any agent it is waking has finished). Its log says so: `updated 2026-11-18 → …`. To turn this off, add `"auto_update": false` to `~/.goalcraft/wake.json`.
 
 Its version is the day it came out (`python3 ~/.goalcraft/goalcraft-wake.py version`). It tells Goalcraft that version and its computer's name with every request, and your agents see them in `list_funnels` as `wake_script`. A script from before 18 November 2026 doesn't update itself yet: it shows there with `update_needed` and the command that brings it up to date once (your key stays):
 

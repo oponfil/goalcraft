@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-18.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-18.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1375,8 +1375,8 @@ def check(key):
 # Updates: Goalcraft says with every check which version is out and its SHA-256. A newer one is
 # downloaded from goalcraft.ai and put in place only when its hash is that one, then the script starts
 # again (after any agent it is waking has finished). "auto_update": false in wake.json turns it off.
-UPDATE_RETRY = 60 * 60
-update_tried = {}  # version → when: a download that failed or didn't match is tried again an hour later
+UPDATE_RETRY = 5 * 60
+update_tried = {}  # version → when: a download that failed or didn't match is tried again 5 minutes later
 restart_pending = False
 
 
@@ -1392,13 +1392,14 @@ def update(script):
         return
     update_tried[latest] = time.time()
     try:
-        with urllib.request.urlopen(urllib.request.Request(URL, headers={'User-Agent': AGENT}), timeout=60) as r:
+        # The version in the address: a copy of the old file a cache in between still keeps isn't served instead.
+        with urllib.request.urlopen(urllib.request.Request(f'{URL}?v={urllib.parse.quote(latest)}', headers={'User-Agent': AGENT}), timeout=60) as r:
             data = r.read()
     except Exception as e:
         log(f'update to {latest}: could not download it: {e}')
         return
     if hashlib.sha256(data).hexdigest() != want:
-        log(f'update to {latest}: the file on goalcraft.ai is not the one Goalcraft announced; kept {VERSION}, trying again in an hour')
+        log(f'update to {latest}: the file on goalcraft.ai is not the one Goalcraft announced; kept {VERSION}, trying again in 5 minutes')
         return
     me = pathlib.Path(__file__).resolve()
     new = me.with_name(me.name + '.new')

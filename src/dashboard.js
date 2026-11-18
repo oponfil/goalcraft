@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=df74c585';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=df74c585';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=df74c585';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=9ae61e91';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=9ae61e91';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9ae61e91';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -415,7 +415,7 @@ export function mountDashboard(funnels, opts = {}) {
       const ver = current(c) ? `<span class="ver" title="${esc(c.version ?? '')}">${esc(t('wake.current'))}</span>`
         : `<span class="ver old" title="${esc(t((c.version ?? '') < SELF_UPDATING ? 'wake.manualTip' : 'wake.updatesTip', w.latest))}">${esc(t('wake.outdated'))} · ${esc(c.version ?? '?')}</span>`;
       const n = c.agents?.length ?? 0;
-      const who = n ? `<span class="n" title="${esc(t('wake.agentsTip', c.agents.join(', ')))}">${esc(t('wake.agents', n))}</span>` : `<span class="n">${esc(t('wake.noAgents'))}</span>`;
+      const who = `<span class="n" title="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span>`;
       const issues = up(c) && c.problems?.length ? `<li class="issues"><ul>${c.problems.map(p => `<li class="${p.level === 'error' ? 'off' : 'warn'}">${esc(problemText(p))}</li>`).join('')}</ul></li>` : '';
       return `<li><span class="who">${esc(c.computer || t('wake.oldComputer'))}</span>${state}${ver}${who}</li>${issues}`;
     }).join('');

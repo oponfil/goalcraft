@@ -75,6 +75,26 @@ function resumable(p: any, chat: string | null = null): { app: string, session: 
     ?? (/^antigravity:/i.test(p.chat_url ?? '') || (!p.chat_url && /^gemini/i.test(p.agent)) ? { app: 'antigravity', session: null } : null)
 }
 
+// The release the scripts may update to, once goalcraft.ai serves its file: the site is checked (with
+// the version in the address, past any cache) at most every 5 minutes until the file there has this
+// hash. Before that nothing is announced, so a release deployed here before the site has it costs no
+// failed downloads, and the order of the two deploys doesn't matter.
+let served: { at: number, ok: boolean } | null = null
+async function published() {
+  if (served?.ok) return WAKE_RELEASE
+  if (served && Date.now() - served.at < 5 * 60e3) return null
+  let ok = false
+  try {
+    const r = await fetch(`https://goalcraft.ai/wake/goalcraft-wake.py?v=${encodeURIComponent(WAKE_RELEASE.version)}`, { signal: AbortSignal.timeout(10000) })
+    if (r.ok) {
+      const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', await r.arrayBuffer()))
+      ok = [...bytes].map(b => b.toString(16).padStart(2, '0')).join('') === WAKE_RELEASE.sha256
+    }
+  } catch { /* the site didn't answer: try again later */ }
+  served = { at: Date.now(), ok }
+  return ok ? WAKE_RELEASE : null
+}
+
 // The script's problems, from its header: at most ten, each a short code, its level, the agent or
 // keychain entry it concerns, and why (a line in English). Anything else is dropped.
 function readProblems(header: string | null) {
@@ -166,7 +186,7 @@ Deno.serve(async (req) => {
   if (computer && computer !== owner.computer) {
     await admin.from('wake_keys').delete().eq('user_id', user).eq('computer', computer).neq('id', owner.id).lt('created_at', owner.created_at)
   }
-  const script = WAKE_RELEASE
+  const script = await published()
   // ?check=1: the script only checks its key (when it is installed); nobody is woken or marked.
   const params = new URL(req.url).searchParams
   if (params.has('check')) return json({ ok: true, script })
