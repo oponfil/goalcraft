@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=30ceefb6';
+import { supabase } from './auth.js?v=df74c585';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -222,7 +222,7 @@ export function planLimits() {
 // card shows them, since only runs on a computer with a running script are counted.
 export async function wakeScripts() {
   const [keys, latest, counted] = await Promise.all([
-    supabase.from('wake_keys').select('id, computer, script_version, last_used_at').not('last_used_at', 'is', null).order('last_used_at', { ascending: false }),
+    supabase.from('wake_keys').select('id, computer, script_version, last_used_at, problems').not('last_used_at', 'is', null).order('last_used_at', { ascending: false }),
     fetch(new URL('../wake/release.json', import.meta.url), { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null),
     all(() => supabase.from('agent_usage').select('wake_key_id, agent').gte('ended_at', new Date(Date.now() - 7 * DAY).toISOString()).order('ended_at')),
   ]);
@@ -232,7 +232,7 @@ export async function wakeScripts() {
   return {
     latest: latest?.version ?? null,
     computers: keys.data.map(k => ({
-      computer: k.computer, version: k.script_version, seen: Date.parse(k.last_used_at),
+      computer: k.computer, version: k.script_version, seen: Date.parse(k.last_used_at), problems: k.problems ?? [],
       agents: [...(agents.get(k.id) ?? [])].sort(),
     })),
   };

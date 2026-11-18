@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=30ceefb6';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=30ceefb6';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=30ceefb6';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=df74c585';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=df74c585';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=df74c585';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -402,16 +402,24 @@ export function mountDashboard(funnels, opts = {}) {
     if (!list.length) return `<details class="limits scripts" open><summary>${esc(t('wake.title'))}</summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
     const up = c => now - c.seen < 2 * 60e3;
     const current = c => !w.latest || (c.version ?? '') >= w.latest;
+    // Its dot: green when all is well, amber for a warning, red for an error or a script gone silent.
+    const levelOf = c => !up(c) || c.problems?.some(p => p.level === 'error') ? 'off' : c.problems?.length ? 'warn' : 'ok';
+    const problemText = p => {
+      const key = `wake.p.${p.code}`, said = t(key, p.agent ?? '', p.why ?? '');
+      return said === key ? [p.code, p.agent, p.why].filter(Boolean).join(': ') : said;
+    };
     const rows = list.map(c => {
-      const state = up(c) ? `<span class="ok">● ${esc(t('wake.running'))}</span>`
+      const level = levelOf(c);
+      const state = up(c) ? `<span class="${level}">● ${esc(t(level === 'ok' ? 'wake.running' : 'wake.troubled'))}</span>`
         : `<span class="off" title="${esc(t('wake.silentTip'))}">● ${esc(t('wake.silent', fmtDuration((now - c.seen) / 1000)))}</span>`;
       const ver = current(c) ? `<span class="ver" title="${esc(c.version ?? '')}">${esc(t('wake.current'))}</span>`
         : `<span class="ver old" title="${esc(t((c.version ?? '') < SELF_UPDATING ? 'wake.manualTip' : 'wake.updatesTip', w.latest))}">${esc(t('wake.outdated'))} · ${esc(c.version ?? '?')}</span>`;
       const n = c.agents?.length ?? 0;
       const who = n ? `<span class="n" title="${esc(t('wake.agentsTip', c.agents.join(', ')))}">${esc(t('wake.agents', n))}</span>` : `<span class="n">${esc(t('wake.noAgents'))}</span>`;
-      return `<li><span class="who">${esc(c.computer || t('wake.oldComputer'))}</span>${state}${ver}${who}</li>`;
+      const issues = up(c) && c.problems?.length ? `<li class="issues"><ul>${c.problems.map(p => `<li class="${p.level === 'error' ? 'off' : 'warn'}">${esc(problemText(p))}</li>`).join('')}</ul></li>` : '';
+      return `<li><span class="who">${esc(c.computer || t('wake.oldComputer'))}</span>${state}${ver}${who}</li>${issues}`;
     }).join('');
-    const running = list.filter(up).length, off = running < list.length || list.some(c => !current(c));
+    const running = list.filter(up).length, off = list.some(c => levelOf(c) !== 'ok' || !current(c));
     return `<details class="limits scripts"${off || spendState.scriptsOpen ? ' open' : ''}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}</summary>
       <ul>${rows}</ul><p class="pop-note">${esc(t('wake.about'))}</p></details>`;
   }

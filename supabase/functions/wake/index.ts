@@ -75,6 +75,19 @@ function resumable(p: any, chat: string | null = null): { app: string, session: 
     ?? (/^antigravity:/i.test(p.chat_url ?? '') || (!p.chat_url && /^gemini/i.test(p.agent)) ? { app: 'antigravity', session: null } : null)
 }
 
+// The script's problems, from its header: at most ten, each a short code, its level, the agent or
+// keychain entry it concerns, and why (a line in English). Anything else is dropped.
+function readProblems(header: string | null) {
+  if (header == null) return null
+  try {
+    const list = JSON.parse(decodeURIComponent(header))
+    if (!Array.isArray(list)) return null
+    const str = (v: unknown, max: number) => typeof v === 'string' && v.length ? v.slice(0, max) : undefined
+    return list.slice(0, 10).flatMap((p: any) => /^[a-z_]{1,40}$/.test(p?.code) && ['error', 'warning'].includes(p?.level)
+      ? [{ code: p.code, level: p.level, agent: str(p.agent, 64), why: str(p.why, 200) }] : [])
+  } catch { return null }
+}
+
 // The plan's limit as the script read it: numbers only, one row per reading.
 async function saveLimits(user: string, list: any[]) {
   const num = (v: unknown, max: number) => typeof v === 'number' && isFinite(v) && v >= 0 && v <= max ? v : null
@@ -146,7 +159,9 @@ Deno.serve(async (req) => {
   let named = req.headers.get('x-goalcraft-computer') ?? ''
   try { named = decodeURIComponent(named) } catch { /* as it came */ }
   const computer = named.replace(/[^\p{L}\p{N}\p{Zs}._'’()-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 64) || null
-  await admin.from('wake_keys').update({ last_used_at: iso(now), script_version: version, ...(computer ? { computer } : {}) }).eq('id', owner.id)
+  // What the script says is wrong on its computer (scripts from 2026-11-18.1 on): kept as it last said.
+  const problems = readProblems(req.headers.get('x-goalcraft-problems'))
+  await admin.from('wake_keys').update({ last_used_at: iso(now), script_version: version, problems, ...(computer ? { computer } : {}) }).eq('id', owner.id)
   // A new key on a computer replaces the ones made there before (set up again): they go.
   if (computer && computer !== owner.computer) {
     await admin.from('wake_keys').delete().eq('user_id', user).eq('computer', computer).neq('id', owner.id).lt('created_at', owner.created_at)

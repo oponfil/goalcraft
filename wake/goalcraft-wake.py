@@ -103,7 +103,33 @@ def computer_name():
 
 COMPUTER = computer_name()
 # What every request to Goalcraft says: the script's version, and its computer (encoded: a header is ASCII).
-OURS = {'User-Agent': AGENT, 'X-Goalcraft-Computer': urllib.parse.quote(COMPUTER)}
+OURS = {'User-Agent': AGENT, 'X-Goalcraft-Computer': urllib.parse.quote(COMPUTER), 'X-Goalcraft-Problems': '[]'}
+
+# What is wrong on this computer, as Goalcraft shows it under the spending (its dot turns amber for a
+# warning, red for an error): a code the dashboard words in the person's language, its level, a few
+# details (the agent; why, in English), and until when it holds unless said again. Sent with every request.
+problems = {}
+PROBLEM_HOURS = {'cant_wake': 1, 'wake_failed': 24}  # a passing trouble fades unless it happens again
+
+
+def problem(code, level=None, agent=None, why=None):
+    """Note a problem (level 'error' or 'warning'), or with no level clear it."""
+    key = f'{code}:{agent}' if agent else code
+    if level is None:
+        problems.pop(key, None)
+    else:
+        hours = PROBLEM_HOURS.get(code)
+        problems[key] = {'code': code, 'level': level, **({'agent': agent} if agent else {}),
+                         **({'why': str(why)[:160]} if why else {}), 'until': time.time() + hours * 3600 if hours else None}
+    send_problems()
+
+
+def send_problems():
+    now = time.time()
+    for k in [k for k, v in problems.items() if v['until'] and v['until'] < now]:
+        problems.pop(k)
+    shown = sorted(problems.values(), key=lambda v: v['level'] != 'error')[:10]
+    OURS['X-Goalcraft-Problems'] = urllib.parse.quote(json.dumps([{k: v for k, v in x.items() if k != 'until'} for x in shown]))
 
 
 WHY = {
@@ -267,12 +293,18 @@ def start_run(item, cmd, cwd):
             log(f'woke {who} in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if 'already has an active writer' in out.stderr:
                 log('  the ChatGPT app keeps this Codex thread open, so it cannot be resumed from outside; it gets the news on its next run')
+                problem('wake_failed', 'warning', item['agent'], 'the ChatGPT app keeps this Codex thread open')
             elif 'Failed to authenticate' in out.stdout + out.stderr or 'Not logged in' in out.stdout + out.stderr:
                 log(f'  {SIGN_IN_HINT}')
+                problem('claude_signed_out', 'error')
             elif out.returncode:
                 log('  ' + out.stderr.strip()[-500:])
+                problem('wake_failed', 'warning', item['agent'], (out.stderr.strip() or out.stdout.strip()).splitlines()[-1:][0] if (out.stderr.strip() or out.stdout.strip()) else f'exit {out.returncode}')
+            else:
+                problem('wake_failed', agent=item['agent'])
         except subprocess.TimeoutExpired:
             log(f'woke {who}: stopped after {RUN_LIMIT // 60} min')
+            problem('wake_failed', 'warning', item['agent'], f'stopped after {RUN_LIMIT // 60} min')
         except Exception as e:
             log(f'woke {who}: {e}')
         finally:
@@ -334,10 +366,12 @@ def antigravity_send(item, cascade, model, server):
         try:
             with urllib.request.urlopen(req, timeout=30, context=ctx):
                 log(f'woke {who} in Antigravity')
+                problem('wake_failed', agent=item['agent'])
                 return
         except Exception as e:
             err = e
     log(f'skip {who}: Antigravity did not take the note: {err}')
+    problem('wake_failed', 'warning', item['agent'], f'Antigravity did not take the note: {err}')
 
 
 # Token use. The agents don't know what they spend, but their apps log it on this computer: every
@@ -509,6 +543,7 @@ def keychain(service):
         return None  # only macOS has this keychain
     denied = limit_state().get('keychain_denied', [])
     if service in denied and not ASK_AGAIN:
+        problem('keychain_denied', 'warning', service)
         return None
     try:
         r = subprocess.run(['security', 'find-generic-password', '-s', service, '-w'], capture_output=True, text=True, timeout=120)
@@ -517,10 +552,12 @@ def keychain(service):
     if r.returncode == 0:
         if service in denied:
             save_limit_state(keychain_denied=[d for d in denied if d != service])
+        problem('keychain_denied', agent=service)
         return r.stdout.strip()
     # The entry is there (asking about it without its secret doesn't ask the person): access was refused.
     if subprocess.run(['security', 'find-generic-password', '-s', service], capture_output=True).returncode == 0:
         save_limit_state(keychain_denied=sorted(set(denied) | {service}))
+        problem('keychain_denied', 'warning', service)
         log(f'keychain: access to "{service}" was refused, so it is not asked again; '
             f'`python3 {pathlib.Path(__file__).resolve()} limit` asks again')
     return None
@@ -570,7 +607,9 @@ def report_limit(key, show=False):
     if not token:
         if claude_sign_in():
             log(f'limit: {SIGN_IN_HINT}')
+            problem('claude_signed_out', 'error')
         return 'signed out'  # nothing to try again soon: once an hour
+    problem('claude_signed_out')
     req = urllib.request.Request('https://api.anthropic.com/api/oauth/usage', headers={
         'Authorization': f'Bearer {token}', 'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': AGENT})
     try:
@@ -1287,6 +1326,7 @@ def report_usage(key, show=False):
 def check(key):
     """Ask Goalcraft whom to wake, take (claim) those whose conversation is on this computer, and wake
     them. The others are left for the script on the computer they work on."""
+    send_problems()  # what has faded since goes
     req = urllib.request.Request(ENDPOINT + '?claim=1', headers={'Authorization': f'Bearer {key}', **OURS})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
@@ -1310,6 +1350,10 @@ def check(key):
             passed[seen] = now
             if here:
                 log(f'skip {who_of(item)}: {why}')
+                code = ('claude_missing' if why.startswith('claude command') else 'codex_missing' if why.startswith('codex command')
+                        else 'antigravity_off' if why.startswith('Antigravity is not') else 'cant_wake')
+                problem(code, 'error' if code.endswith('_missing') else 'warning', None if code.endswith('_missing') else item['agent'],
+                        why if code == 'cant_wake' else None)
     if not ready:
         return 200
     body = json.dumps({'claim': [{'funnel_id': i['funnel_id'], 'agent': i['agent'], 'marks': i.get('marks')} for i, _ in ready]}).encode()
@@ -1322,6 +1366,8 @@ def check(key):
         return None
     for (item, job), ok in zip(ready, claimed):
         if ok:
+            problem('claude_missing' if item['app'] == 'claude' else 'codex_missing' if item['app'] == 'codex' else 'antigravity_off')
+            problem('cant_wake', agent=item['agent'])
             job()
     return 200
 

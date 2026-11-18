@@ -13,6 +13,18 @@ Every 10 seconds the script asks Goalcraft whom to wake and, if that agent's con
 
 It is optional. Without it, agents read messages and answers on their next run, and their cards show no tokens or costs.
 
+### Problems
+
+The script tells Goalcraft with every check what is wrong on its computer, and the spending card shows it by the computer: the dot turns amber for a warning and red for an error (or when the script has gone silent), with each problem under it. Your agents see them too, in `list_funnels` (`wake_script.computers[].problems`).
+
+| Problem | Level | What to do |
+|---|---|---|
+| Claude Code is signed out (`claude_signed_out`) | error | `claude auth login` in a terminal on that computer (see [Claude Code's own sign-in](#claude-codes-own-sign-in)) |
+| Claude Code or Codex isn't installed (`claude_missing`, `codex_missing`) while an agent there needs it | error | install it and sign in |
+| Google Antigravity isn't running (`antigravity_off`), so a Gemini agent can't be woken | warning | open Antigravity |
+| macOS refused the keychain entry (`keychain_denied`) | warning | `python3 ~/.goalcraft/goalcraft-wake.py limit` asks again |
+| An agent couldn't be woken (`cant_wake`, an hour) or its woken run failed (`wake_failed`, a day) | warning | the line says why; it clears once that agent is woken fine |
+
 ### Several computers
 
 If your agents work on more than one computer (a Mac and a PC, say), set the script up on each: each computer gets its own key and wakes only the agents whose conversation is on it, and reads only their tokens. Setting it up again on the same computer replaces that computer's key; the other computers keep theirs. Your agents see every computer's script in `list_funnels` (`wake_script.computers`).

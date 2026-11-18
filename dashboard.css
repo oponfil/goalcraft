@@ -464,6 +464,12 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.limits b { font-weight: 600; text-align: right; min-width: 44px; }
 #pop details.scripts ul { grid-template-columns: minmax(0, 1.4fr) auto auto auto; }
 #pop details.scripts .ok { color: #9FE870; white-space: nowrap; }
+#pop details.scripts .warn { color: #F2C14E; white-space: nowrap; }
+#pop details.scripts li.issues { display: block; grid-column: 1 / -1; }
+#pop details.scripts li.issues ul { display: block; margin: -2px 0 2px; padding: 0 0 0 14px; }
+#pop details.scripts li.issues li { display: list-item; white-space: normal; font-size: 12px; line-height: 1.4; }
+#pop details.scripts li.issues li.off { color: #FF7A70; }
+#pop details.scripts li.issues li.warn { color: #F2C14E; }
 #pop details.scripts .off { color: #FF5A4E; white-space: nowrap; cursor: help; }
 #pop details.scripts .ver { color: var(--muted); white-space: nowrap; }
 #pop details.scripts .ver.old { color: #F2A33C; cursor: help; }

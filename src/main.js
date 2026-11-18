@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=30ceefb6';
-import { mountDashboard } from './dashboard.js?v=30ceefb6';
-import { t } from './i18n.js?v=30ceefb6';
+import { FUNNELS, SUP_RUNS } from './data.js?v=df74c585';
+import { mountDashboard } from './dashboard.js?v=df74c585';
+import { t } from './i18n.js?v=df74c585';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -56,7 +56,8 @@ async function demoWakeScripts() {
   const now = Date.now();
   return { latest: '2026-11-18', computers: [
     { computer: 'MacBook Air', version: '2026-11-18', seen: now - 4e3, agents: ['claude', 'claude-search'] },
-    { computer: 'DESKTOP-PC', version: '2026-11-18', seen: now - 7e3, agents: ['codex', 'gemini'] },
+    { computer: 'DESKTOP-PC', version: '2026-11-18', seen: now - 7e3, agents: ['codex', 'gemini'],
+      problems: [{ code: 'antigravity_off', level: 'warning', agent: 'gemini' }] },
   ] };
 }
 

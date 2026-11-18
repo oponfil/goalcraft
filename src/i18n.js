@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=30ceefb6';
-import vi from './lang/vi.js?v=30ceefb6';
-import ja from './lang/ja.js?v=30ceefb6';
-import pt from './lang/pt.js?v=30ceefb6';
-import tr from './lang/tr.js?v=30ceefb6';
-import ko from './lang/ko.js?v=30ceefb6';
+import es from './lang/es.js?v=df74c585';
+import vi from './lang/vi.js?v=df74c585';
+import ja from './lang/ja.js?v=df74c585';
+import pt from './lang/pt.js?v=df74c585';
+import tr from './lang/tr.js?v=df74c585';
+import ko from './lang/ko.js?v=df74c585';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -389,6 +389,14 @@ const STRINGS = {
   'wake.about': L('Agents\' spending is counted on the computers where the wake script runs. The spending of agents in web chats (claude.ai, chatgpt.com) is not counted.', 'Расход агентов учитывается на компьютерах, где работает скрипт пробуждения. Расход агентов в веб-чатах (claude.ai, chatgpt.com) не учитывается.', '智能体的消耗在运行唤醒脚本的电脑上统计。网页聊天中的智能体（claude.ai、chatgpt.com）的消耗不计入。', 'ค่าใช้จ่ายของเอเจนต์นับบนคอมพิวเตอร์ที่สคริปต์ปลุกทำงานอยู่ ค่าใช้จ่ายของเอเจนต์ในเว็บแชต (claude.ai, chatgpt.com) จะไม่ถูกนับ'),
   'wake.none': L('No wake script yet, so the agents\' spending isn\'t counted. Ask an agent on your computer (Claude Code, Codex) to set up the Goalcraft wake script.', 'Скрипт пробуждения ещё не установлен, поэтому расход агентов не учитывается. Попросите агента на своём компьютере (Claude Code, Codex) поставить скрипт пробуждения Goalcraft.', '还没有唤醒脚本，因此不统计智能体的消耗。请让你电脑上的智能体（Claude Code、Codex）安装 Goalcraft 唤醒脚本。', 'ยังไม่มีสคริปต์ปลุก จึงไม่นับค่าใช้จ่ายของเอเจนต์ ขอให้เอเจนต์บนคอมพิวเตอร์ของคุณ (Claude Code, Codex) ติดตั้งสคริปต์ปลุก Goalcraft'),
   'wake.running': L('running', 'работает', '运行中', 'ทำงานอยู่'),
+  'wake.troubled': L('running, with problems', 'работает, есть проблемы', '运行中，有问题', 'ทำงานอยู่ มีปัญหา'),
+  'wake.p.claude_signed_out': L('Claude Code is signed out: Claude agents here aren\'t woken and the Claude limit isn\'t read. In a terminal on this computer run: claude auth login', 'Вход Claude Code истёк: агентов Claude здесь не будят, лимит Claude не читается. В терминале на этом компьютере выполните: claude auth login', 'Claude Code 已登出：这里的 Claude 智能体不会被唤醒，也读不到 Claude 额度。请在这台电脑的终端运行：claude auth login', 'Claude Code ออกจากระบบแล้ว: เอเจนต์ Claude ที่นี่จะไม่ถูกปลุก และอ่านโควตา Claude ไม่ได้ ให้รันในเทอร์มินัลบนเครื่องนี้: claude auth login'),
+  'wake.p.claude_missing': L('Claude Code isn\'t installed here: Claude agents can\'t be woken. Install it and run: claude auth login', 'Claude Code здесь не установлен: агентов Claude не разбудить. Установите его и выполните: claude auth login', '这里没有安装 Claude Code：无法唤醒 Claude 智能体。请安装后运行：claude auth login', 'ไม่ได้ติดตั้ง Claude Code ที่นี่: ปลุกเอเจนต์ Claude ไม่ได้ ติดตั้งแล้วรัน: claude auth login'),
+  'wake.p.codex_missing': L('Codex isn\'t installed here: Codex agents can\'t be woken', 'Codex здесь не установлен: агентов Codex не разбудить', '这里没有安装 Codex：无法唤醒 Codex 智能体', 'ไม่ได้ติดตั้ง Codex ที่นี่: ปลุกเอเจนต์ Codex ไม่ได้'),
+  'wake.p.antigravity_off': L((a) => `Google Antigravity isn't running: ${a} can't be woken`, (a) => `Google Antigravity не запущен: ${a} не разбудить`, (a) => `Google Antigravity 未运行：无法唤醒 ${a}`, (a) => `Google Antigravity ไม่ได้เปิดอยู่: ปลุก ${a} ไม่ได้`),
+  'wake.p.keychain_denied': L((a) => `Access to "${a}" in the keychain was refused: that plan's limit isn't read`, (a) => `Доступ к «${a}» в связке ключей запрещён: лимит этого плана не читается`, (a) => `钥匙串中“${a}”的访问被拒绝：读不到该套餐的额度`, (a) => `การเข้าถึง "${a}" ในพวงกุญแจถูกปฏิเสธ: อ่านโควตาของแผนนั้นไม่ได้`),
+  'wake.p.cant_wake': L((a, why) => `Can't wake ${a}: ${why}`, (a, why) => `Не разбудить ${a}: ${why}`, (a, why) => `无法唤醒 ${a}：${why}`, (a, why) => `ปลุก ${a} ไม่ได้: ${why}`),
+  'wake.p.wake_failed': L((a, why) => `Waking ${a} failed: ${why}`, (a, why) => `Не удалось разбудить ${a}: ${why}`, (a, why) => `唤醒 ${a} 失败：${why}`, (a, why) => `ปลุก ${a} ไม่สำเร็จ: ${why}`),
   'wake.silent': L((d) => `silent for ${d}`, (d) => `не на связи ${d}`, (d) => `已 ${d} 未联系`, (d) => `ขาดการติดต่อ ${d}`),
   'wake.silentTip': L('Its computer is off or asleep, or the script stopped: the spending of runs there is not counted meanwhile.', 'Компьютер выключен или спит, либо скрипт остановился: расход запусков там пока не учитывается.', '电脑关机或休眠，或脚本已停止：期间那里运行的消耗不会被统计。', 'คอมพิวเตอร์ปิดหรือหลับอยู่ หรือสคริปต์หยุดทำงาน: ระหว่างนี้ค่าใช้จ่ายของการรันที่นั่นจะไม่ถูกนับ'),
   'wake.current': L('up to date', 'актуальная', '最新', 'ล่าสุด'),
