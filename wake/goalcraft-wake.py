@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-18.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-18.5'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -799,6 +799,15 @@ def totals(kinds):
     return {**kinds, 'tokens': total, 'new_tokens': total - kinds['cache_read_tokens']}
 
 
+def codex_window(rl):
+    """Of Codex's limits as it logged them, the one a run's share is counted against: the week's (or the
+    month's) window, primary or secondary (a plan with a 5-hour limit has the week's in secondary), else
+    whichever it logged."""
+    slots = [w for w in (rl.get('primary') or {}, rl.get('secondary') or {}) if w.get('used_percent') is not None]
+    long = [w for w in slots if (w.get('window_minutes') or 0) >= 1440]
+    return min(long, key=lambda w: w['window_minutes']) if long else (slots[0] if slots else {})
+
+
 def codex_usage(item):
     """Runs of a Codex thread from its rollout file: the running token totals, and the plan's limit
     as Codex last saw it."""
@@ -829,7 +838,7 @@ def codex_usage(item):
                 total = (pl.get('info') or {}).get('total_token_usage')
                 t = when(d.get('timestamp') or '')
                 if pl.get('type') == 'token_count' and total and t is not None:
-                    points.append((t, total, (pl.get('rate_limits') or {}).get('primary') or {}, model))
+                    points.append((t, total, codex_window(pl.get('rate_limits') or {}), model))
         before, limit_before = {}, None
         known = next((p[3] for p in points if p[3]), None)
         for run in split_runs(points):
@@ -1492,11 +1501,17 @@ def limit_next_after(seconds):
 
 def limit_job(key):
     """One hourly reading of the Claude plan's limit; when it fails (no network, say), again in 5 minutes."""
-    claude = report_limit(key)
-    report_antigravity_limit(key)
-    report_grok_limit(key)
-    report_kimi_limit(key)
-    report_codex_limit(key)
+    def read(name, fn):
+        # Each plan on its own: one that fails (an app's answer changed, say) doesn't stop the others.
+        try:
+            return fn(key)
+        except Exception as e:
+            log(f'limit: {name}: {e!r}')
+            return False
+    claude = read('Claude', report_limit)
+    for name, fn in (('Antigravity', report_antigravity_limit), ('Grok Bot', report_grok_limit),
+                     ('Kimi', report_kimi_limit), ('Codex', report_codex_limit)):
+        read(name, fn)
     limit_next_after(LIMIT_EVERY if claude else 5 * 60)  # signed out counts as done: no reading every 5 minutes
 
 
