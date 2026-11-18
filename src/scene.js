@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=54fa3542';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=54fa3542';
-import { themeOf } from './themes.js?v=54fa3542';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=54fa3542';
+import { agentInfo, plural } from './data.js?v=52264832';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=52264832';
+import { themeOf } from './themes.js?v=52264832';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=52264832';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -230,7 +230,8 @@ export class Scene {
     if (a.sup) {
       const cx = this.cx(this.fi(a.f)), left = cx - DECK_HALF, right = cx + DECK_HALF - 20;
       if (kind === 'rest') return { x: left, y: DECK_Y - 10 * P };
-      return { x: kind === 'ask' ? left : left + (right - left) * this.deckWalk(a).k, y: DECK_Y - MINER_H };
+      // Asking, or gone silent at work: it stands still at the left end instead of walking the deck.
+      return { x: kind === 'ask' || this.lost(a) ? left : left + (right - left) * this.deckWalk(a).k, y: DECK_Y - MINER_H };
     }
         // Agents stand level with the bottom of the plate, also in the output zone where it is lifted.
     const out = a.zone === a.f.stages.length - 1;
@@ -570,6 +571,15 @@ export class Scene {
       this.hits.push({ x: R ? p.x - 2 : p.x - 20 - extra, y: p.y - 6, w: 44 + extra, h: 36, type: 'ask', a });
       return;
     }
+    // At work but silent for too long: it stands still by the pipe, tool down, under its triangle, so
+    // only an agent that is heard from keeps working on the board.
+    if (this.lost(a)) {
+      const p = this.spot(a, 'work');
+      drawStanding(c, p.x, p.y, info.kind, info.color, -1, a.side === 'R', false, outfit);
+      this.hits.push({ x: p.x - 2, y: p.y - 4, w: 24, h: 34, type: 'agent', a });
+      a.noteAt = { x: p.x + 10, y: p.y + (HEAD_TOP[outfit] ?? 1) - 1 };
+      return;
+    }
     // Working agents face the pipe. The tool is drawn as for the left side (facing right) and
     // mirrored for the right side.
     const p = this.spot(a, 'work'), R = a.side === 'R', cx = this.cx(this.fi(a.f));
@@ -646,6 +656,13 @@ export class Scene {
       return;
     }
     const p = this.spot(a, a.state === 'ask' ? 'ask' : 'work');
+    // Silent at work: standing still at the end of the deck, no spyglass, under its triangle.
+    if (this.lost(a)) {
+      drawBoss(c, Math.round(p.x / P) * P, p.y, info.kind, info.color, outfit, -1, false);
+      a.noteAt = { x: p.x + 10, y: p.y + (BOSS_TOP[outfit] ?? 1) - 1 };
+      this.hits.push({ x: p.x - 2, y: p.y - 4, w: 24, h: 32, type: 'agent', a });
+      return;
+    }
     const w = a.state !== 'ask' ? this.deckWalk(a) : { walking: false, facesLeft: false };
     drawBoss(c, Math.round(p.x / P) * P, p.y, info.kind, info.color, outfit, w.walking ? Math.floor(t * 7) : -1, w.facesLeft);
     a.noteAt = { x: p.x + 10, y: p.y + (BOSS_TOP[outfit] ?? 1) - 1 };
