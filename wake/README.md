@@ -42,6 +42,18 @@ Your agent sets it up; you only agree. The supervisor's prompt on [goalcraft.ai/
 
 The agents' command-line tools must be signed in once: `claude` (Claude Code) and/or `codex`; the script uses them to resume the agents' chats. On a Mac Codex needs no separate install: the script finds the one inside the ChatGPT app. Windows needs Python 3 (from python.org, or the Microsoft Store).
 
+### Claude Code's own sign-in
+
+To wake an agent in the Claude app, the script runs Claude Code from the command line (`claude -p --resume`), and to read the Claude plan's limit it uses Claude Code's sign-in. That sign-in is Claude Code's own, apart from the Claude app's: the app neither uses nor renews it. So on each computer, once:
+
+```bash
+claude auth login
+```
+
+The script looks for `claude` on the PATH and in `~/.local/bin` (where Claude Code installs itself), on Windows also among npm's tools; failing that, it takes the newest copy the Claude app keeps for itself (`claude-code/<version>/…` in the app's folder: `%APPDATA%\Claude` on Windows, `~/Library/Application Support/Claude` on a Mac), which changes with every update of the app. Either way it runs with Claude Code's sign-in.
+
+The sign-in's access token lasts hours and Claude Code renews it only when it runs, which here is seldom (only to wake an agent). So when it has run out, the script asks Claude Code to renew it (`claude auth status`, which costs no tokens), at most once an hour. If even the renewal has run out (Claude Code not run for weeks), nothing can renew it but a new `claude auth login`: the log says so (`Claude Code is signed out on this computer…`), agents there aren't woken, and the Claude limit isn't read until then.
+
 A new key on a computer replaces that computer's old key, and the script installed with the old one stops with a note in its log.
 
 ### macOS asks for your password
@@ -90,7 +102,7 @@ On Windows run the same commands with `py` (or `python`) instead of `python3`; t
 - The key only lets the script ask Goalcraft which of your agents to wake (agent, funnel, chat link), mark the ones it wakes, and send their token counts. It can't read your messages or change anything else.
 - What runs on your computer changes only to a version whose SHA-256 Goalcraft's own server gave; you can turn updates off.
 - The note an agent gets is fixed text ("The person wrote to you on the Goalcraft dashboard. Check Goalcraft now…"); your message itself reaches the agent only through MCP.
-- A woken Claude agent may use its Goalcraft tools; beyond that it keeps the permission mode its session already has in the app.
+- A woken Claude agent may use its Goalcraft tools, and keeps the permission mode its session has in the app (auto, bypassPermissions, acceptEdits, plan… whatever Claude Code takes): what it may do there without asking, it may do when woken. A session in the default mode gets only the Goalcraft tools, since nobody is there to approve the rest.
 - Each agent is woken once per message, per answer, and per silence (until it signals again). An agent that is working now is left alone: it finds messages on its own heartbeat.
 - A woken run that takes more than 30 minutes is stopped.
 

@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-18'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-18.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -166,18 +166,49 @@ def app_session(session):
     return next((s for s in app_sessions() if s.get('cliSessionId') == cli), None)
 
 
+def find_claude():
+    """Claude Code's command: one installed on its own (PATH, ~/.local/bin) first, else the one the Claude
+    app keeps for itself (its folder changes with every update of the app, so the newest is taken)."""
+    found = find('claude')
+    if found:
+        return found
+    pattern = '*/*/claude.exe' if WINDOWS else '*/*/claude.app/Contents/MacOS/claude' if MAC else '*/*/claude'
+    bundled = [f for f in glob.glob(str(APP_DATA / 'Claude' / 'claude-code' / pattern)) if os.access(f, os.X_OK) or WINDOWS]
+    return max(bundled, key=os.path.getmtime) if bundled else None
+
+
+modes_of = {}  # claude command → the permission modes it takes
+
+
+def claude_modes(claude):
+    """The permission modes this claude takes (its --help lists them), so a woken session keeps its own."""
+    if claude not in modes_of:
+        try:
+            text = subprocess.run([claude, '--help'], capture_output=True, encoding='utf-8', errors='replace',
+                                  timeout=30, creationflags=NO_WINDOW).stdout
+            part = text.split('--permission-mode', 1)[1].split('--', 1)[0]
+            modes_of[claude] = set(re.findall(r'"([A-Za-z]+)"', part))
+        except Exception:
+            modes_of[claude] = set()
+        modes_of[claude] = modes_of[claude] or {'acceptEdits', 'auto', 'bypassPermissions', 'dontAsk', 'plan'}
+    return modes_of[claude]
+
+
 def claude_command(item):
     """`claude -p --resume` for a Claude app session: its local_ id maps to the Claude Code session it runs.
     None and why not when the session isn't on this computer (here False) or claude can't be run."""
     s = app_session(item['session'])
     if not s:
         return None, f'no Claude app session {item["session"]} on this computer', False
-    claude = find('claude')
+    claude = find_claude()
     if not claude:
-        return None, 'claude command not found (install Claude Code and sign in with `claude`)', True
+        return None, 'claude command not found (install Claude Code and sign in with `claude auth login`)', True
     cmd = [claude, '-p', '--resume', s['cliSessionId'], '--allowedTools', *GOALCRAFT_TOOLS]
-    if s.get('permissionMode') in ('acceptEdits', 'bypassPermissions', 'plan'):
-        cmd += ['--permission-mode', s['permissionMode']]
+    # The session's own permission mode (auto, bypassPermissions…), so the woken agent may do what it does
+    # in the app; without it only Goalcraft's tools are allowed, as nobody is there to approve the rest.
+    mode = s.get('permissionMode')
+    if mode and mode not in ('default', 'manual') and mode in claude_modes(claude):
+        cmd += ['--permission-mode', mode]
     if s.get('model'):
         cmd += ['--model', s['model']]
     cwd = s.get('cwd') if s.get('cwd') and os.path.isdir(s['cwd']) else str(HOME)
@@ -236,6 +267,8 @@ def start_run(item, cmd, cwd):
             log(f'woke {who} in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if 'already has an active writer' in out.stderr:
                 log('  the ChatGPT app keeps this Codex thread open, so it cannot be resumed from outside; it gets the news on its next run')
+            elif 'Failed to authenticate' in out.stdout + out.stderr or 'Not logged in' in out.stdout + out.stderr:
+                log(f'  {SIGN_IN_HINT}')
             elif out.returncode:
                 log('  ' + out.stderr.strip()[-500:])
         except subprocess.TimeoutExpired:
@@ -493,14 +526,40 @@ def keychain(service):
     return None
 
 
-def claude_token():
-    """Claude Code's sign-in on this computer while it is still valid: its keychain entry on a Mac, its
-    file (~/.claude/.credentials.json) on Windows and Linux."""
+SIGN_IN_HINT = ('Claude Code is signed out on this computer, so its agents can\'t be woken and the Claude limit isn\'t read: '
+                'run `claude auth login` once in a terminal here (the Claude app\'s own sign-in doesn\'t count for it)')
+renewed_at = 0  # when Claude Code was last asked to renew its sign-in
+
+
+def claude_sign_in():
+    """Claude Code's own sign-in (claudeAiOauth): its keychain entry on a Mac, its file
+    (~/.claude/.credentials.json) on Windows and Linux. The Claude app keeps its own apart and doesn't
+    renew this one: only Claude Code does, when it runs."""
     try:
         raw = keychain('Claude Code-credentials') if MAC else (HOME / '.claude' / '.credentials.json').read_text(encoding='utf-8')
-        o = json.loads(raw or '{}').get('claudeAiOauth') or {}
+        return json.loads(raw or '{}').get('claudeAiOauth') or {}
+    except Exception:
+        return {}
+
+
+def claude_token():
+    """Claude Code's sign-in while it is still valid. Its access token lasts hours, and Claude Code renews
+    it only when it runs; here it seldom does (only to wake an agent). So when it has run out, Claude Code
+    is asked to renew it (`claude auth status`, which costs no tokens), at most hourly; a sign-in whose
+    renewal has run out too needs `claude auth login` (SIGN_IN_HINT)."""
+    global renewed_at
+    o = claude_sign_in()
+    if o.get('expiresAt', 0) / 1000 > time.time() + 60:
+        return o.get('accessToken')
+    claude = find_claude()
+    if not o or not claude or time.time() - renewed_at < LIMIT_EVERY:
+        return None
+    renewed_at = time.time()
+    try:
+        subprocess.run([claude, 'auth', 'status'], capture_output=True, timeout=60, cwd=str(HOME), creationflags=NO_WINDOW)
     except Exception:
         return None
+    o = claude_sign_in()
     return o.get('accessToken') if o.get('expiresAt', 0) / 1000 > time.time() + 60 else None
 
 
@@ -509,8 +568,9 @@ def report_limit(key, show=False):
     session cost since the reading before."""
     token = claude_token()
     if not token:
-        log('limit: no valid Claude Code sign-in on this computer; skipped')
-        return False
+        if claude_sign_in():
+            log(f'limit: {SIGN_IN_HINT}')
+        return 'signed out'  # nothing to try again soon: once an hour
     req = urllib.request.Request('https://api.anthropic.com/api/oauth/usage', headers={
         'Authorization': f'Bearer {token}', 'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': AGENT})
     try:
@@ -1383,7 +1443,7 @@ def limit_job(key):
     report_grok_limit(key)
     report_kimi_limit(key)
     report_codex_limit(key)
-    limit_next_after(LIMIT_EVERY if claude else 5 * 60)
+    limit_next_after(LIMIT_EVERY if claude else 5 * 60)  # signed out counts as done: no reading every 5 minutes
 
 
 def run():
@@ -1508,7 +1568,8 @@ if __name__ == '__main__':
     elif cmd == 'limit':
         key = key_or_exit()
         ASK_AGAIN = True
-        print('Claude: sent' if report_limit(key, show=True) else 'Claude: failed, see ~/.goalcraft/wake.log')
+        got = report_limit(key, show=True)
+        print('Claude: sent' if got is True else f'Claude: {SIGN_IN_HINT}' if got == 'signed out' else 'Claude: failed, see ~/.goalcraft/wake.log')
         print('Antigravity: sent' if report_antigravity_limit(key, show=True) else 'Antigravity: not running or failed')
         print('Grok Bot: sent' if report_grok_limit(key, show=True) else 'Grok Bot: not signed in here or failed')
         print('Kimi: sent' if report_kimi_limit(key, show=True) else 'Kimi: not signed in here or failed')
