@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=b2a0e26e';
-import vi from './lang/vi.js?v=b2a0e26e';
-import ja from './lang/ja.js?v=b2a0e26e';
-import pt from './lang/pt.js?v=b2a0e26e';
-import tr from './lang/tr.js?v=b2a0e26e';
-import ko from './lang/ko.js?v=b2a0e26e';
+import es from './lang/es.js?v=30ceefb6';
+import vi from './lang/vi.js?v=30ceefb6';
+import ja from './lang/ja.js?v=30ceefb6';
+import pt from './lang/pt.js?v=30ceefb6';
+import tr from './lang/tr.js?v=30ceefb6';
+import ko from './lang/ko.js?v=30ceefb6';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -386,7 +386,7 @@ const STRINGS = {
   'spend.none': L('No spending yet: it comes from the wake script on your computer, which reads it from your agents\' apps.', 'Расхода пока нет: его присылает скрипт пробуждения на вашем компьютере, читая его из приложений агентов.', '还没有消耗记录：它来自你电脑上的唤醒脚本，从智能体的应用中读取。', 'ยังไม่มีค่าใช้จ่าย: สคริปต์ปลุกบนคอมพิวเตอร์ของคุณจะส่งมา โดยอ่านจากแอปของเอเจนต์'),
   'wake.title': L('Wake scripts', 'Скрипты пробуждения', '唤醒脚本', 'สคริปต์ปลุก'),
   'wake.count': L((a, b) => `running: ${a} of ${b}`, (a, b) => `работают: ${a} из ${b}`, (a, b) => `运行中：${a}/${b}`, (a, b) => `ทำงาน: ${a} จาก ${b}`),
-  'wake.about': L('Tokens and limits come from the wake script on each computer your agents work on: the spending of runs on a computer where it isn\'t running is not counted. The spending of agents in web chats (claude.ai, chatgpt.com) is not counted.', 'Токены и лимиты присылает скрипт пробуждения на каждом компьютере, где работают агенты: расход запусков на компьютере, где он не работает, не учитывается. Расход агентов в веб-чатах (claude.ai, chatgpt.com) не учитывается.', '令牌和额度来自智能体所在每台电脑上的唤醒脚本：脚本未运行的电脑上的运行不计入消耗。网页聊天中的智能体（claude.ai、chatgpt.com）的消耗不计入。', 'โทเค็นและโควตามาจากสคริปต์ปลุกบนคอมพิวเตอร์แต่ละเครื่องที่เอเจนต์ทำงาน: ค่าใช้จ่ายของการรันบนเครื่องที่สคริปต์ไม่ทำงานจะไม่ถูกนับ ค่าใช้จ่ายของเอเจนต์ในเว็บแชต (claude.ai, chatgpt.com) จะไม่ถูกนับ'),
+  'wake.about': L('Agents\' spending is counted on the computers where the wake script runs. The spending of agents in web chats (claude.ai, chatgpt.com) is not counted.', 'Расход агентов учитывается на компьютерах, где работает скрипт пробуждения. Расход агентов в веб-чатах (claude.ai, chatgpt.com) не учитывается.', '智能体的消耗在运行唤醒脚本的电脑上统计。网页聊天中的智能体（claude.ai、chatgpt.com）的消耗不计入。', 'ค่าใช้จ่ายของเอเจนต์นับบนคอมพิวเตอร์ที่สคริปต์ปลุกทำงานอยู่ ค่าใช้จ่ายของเอเจนต์ในเว็บแชต (claude.ai, chatgpt.com) จะไม่ถูกนับ'),
   'wake.none': L('No wake script yet, so the agents\' spending isn\'t counted. Ask an agent on your computer (Claude Code, Codex) to set up the Goalcraft wake script.', 'Скрипт пробуждения ещё не установлен, поэтому расход агентов не учитывается. Попросите агента на своём компьютере (Claude Code, Codex) поставить скрипт пробуждения Goalcraft.', '还没有唤醒脚本，因此不统计智能体的消耗。请让你电脑上的智能体（Claude Code、Codex）安装 Goalcraft 唤醒脚本。', 'ยังไม่มีสคริปต์ปลุก จึงไม่นับค่าใช้จ่ายของเอเจนต์ ขอให้เอเจนต์บนคอมพิวเตอร์ของคุณ (Claude Code, Codex) ติดตั้งสคริปต์ปลุก Goalcraft'),
   'wake.running': L('running', 'работает', '运行中', 'ทำงานอยู่'),
   'wake.silent': L((d) => `silent for ${d}`, (d) => `не на связи ${d}`, (d) => `已 ${d} 未联系`, (d) => `ขาดการติดต่อ ${d}`),
