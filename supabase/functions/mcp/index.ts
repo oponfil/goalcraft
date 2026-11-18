@@ -617,13 +617,15 @@ const resultTitle = z.string().trim().min(1).max(120)
 const CHAT_LINK = /^(https?|claude|codex|grokbot|antigravity|kimi):\/\//
 
 // The conversation a call came from, when the agent's app names it: Codex sends its thread id with
-// every tool call, and the ChatGPT app opens that thread from codex://threads/<id>.
-function chatOf(raw: string): string | undefined {
+// every tool call (as threadId or in x-codex-turn-metadata before, as sessionId since November 2026),
+// and the ChatGPT app opens that thread from codex://threads/<id>.
+function chatOf(raw: string, ua: string): string | undefined {
   try {
     const body = JSON.parse(raw)
+    const codex = /\(Codex\)|codex/i.test(ua)
     for (const m of Array.isArray(body) ? body : [body]) {
       const meta = m?.params?._meta
-      const thread = meta?.threadId ?? meta?.['x-codex-turn-metadata']?.thread_id
+      const thread = meta?.threadId ?? meta?.['x-codex-turn-metadata']?.thread_id ?? (codex ? meta?.sessionId : undefined)
       if (typeof thread === 'string' && /^[0-9a-f-]{36}$/i.test(thread)) return `codex://threads/${thread}`
     }
   } catch { /* not JSON */ }
@@ -659,7 +661,7 @@ Deno.serve(
       const raw = req.method === 'POST' ? await req.text() : ''
       const fresh = raw ? new Request(req.url, { method: req.method, headers: req.headers, body: raw }) : req
       if (raw) logCallShape(req, raw)
-      return createMcpHandler(() => server(supabase, { id: userClaims.id, admin: supabaseAdmin, chat: chatOf(raw) })).fetch(fresh)
+      return createMcpHandler(() => server(supabase, { id: userClaims.id, admin: supabaseAdmin, chat: chatOf(raw, req.headers.get('user-agent') ?? '') })).fetch(fresh)
     },
   ),
 )
