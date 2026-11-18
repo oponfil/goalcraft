@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=9ae61e91';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=9ae61e91';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9ae61e91';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=54fa3542';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=54fa3542';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=54fa3542';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -402,24 +402,30 @@ export function mountDashboard(funnels, opts = {}) {
     if (!list.length) return `<details class="limits scripts" open><summary>${esc(t('wake.title'))}</summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
     const up = c => now - c.seen < 2 * 60e3;
     const current = c => !w.latest || (c.version ?? '') >= w.latest;
-    // Its dot: green when all is well, amber for a warning, red for an error or a script gone silent.
-    const levelOf = c => !up(c) || c.problems?.some(p => p.level === 'error') ? 'off' : c.problems?.length ? 'warn' : 'ok';
     const problemText = p => {
       const key = `wake.p.${p.code}`, said = t(key, p.agent ?? '', p.why ?? '');
       return said === key ? [p.code, p.agent, p.why].filter(Boolean).join(': ') : said;
     };
+    // One status a computer, its details on hover: gone silent (red), an error (red), a warning or an
+    // old version (amber), or all well (green). Hovering its name shows its version.
+    const statusOf = c => {
+      if (!up(c)) return ['off', t('wake.silent', fmtDuration((now - c.seen) / 1000)), t('wake.silentTip')];
+      const old = current(c) ? [] : [t((c.version ?? '') < SELF_UPDATING ? 'wake.manualTip' : 'wake.updatesTip', w.latest)];
+      const said = [...(c.problems ?? []).map(problemText), ...old].join('\n');
+      if (c.problems?.some(p => p.level === 'error')) return ['off', t('wake.troubled'), said];
+      if (c.problems?.length) return ['warn', t('wake.troubled'), said];
+      if (old.length) return ['warn', t('wake.oldVersion'), said];
+      return ['ok', t('wake.running'), t('wake.allGood')];
+    };
     const rows = list.map(c => {
-      const level = levelOf(c);
-      const state = up(c) ? `<span class="${level}">● ${esc(t(level === 'ok' ? 'wake.running' : 'wake.troubled'))}</span>`
-        : `<span class="off" title="${esc(t('wake.silentTip'))}">● ${esc(t('wake.silent', fmtDuration((now - c.seen) / 1000)))}</span>`;
-      const ver = current(c) ? `<span class="ver" title="${esc(c.version ?? '')}">${esc(t('wake.current'))}</span>`
-        : `<span class="ver old" title="${esc(t((c.version ?? '') < SELF_UPDATING ? 'wake.manualTip' : 'wake.updatesTip', w.latest))}">${esc(t('wake.outdated'))} · ${esc(c.version ?? '?')}</span>`;
+      const [level, text, tip] = statusOf(c);
+      const version = t(current(c) ? 'wake.versionCurrent' : 'wake.versionOld', c.version ?? '?', w.latest ?? '');
       const n = c.agents?.length ?? 0;
-      const who = `<span class="n" title="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span>`;
-      const issues = up(c) && c.problems?.length ? `<li class="issues"><ul>${c.problems.map(p => `<li class="${p.level === 'error' ? 'off' : 'warn'}">${esc(problemText(p))}</li>`).join('')}</ul></li>` : '';
-      return `<li><span class="who">${esc(c.computer || t('wake.oldComputer'))}</span>${state}${ver}${who}</li>${issues}`;
+      return `<li><span class="who" title="${esc(version)}">${esc(c.computer || t('wake.oldComputer'))}</span>`
+        + `<span class="${level}" title="${esc(tip)}">● ${esc(text)}</span>`
+        + `<span class="n" title="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span></li>`;
     }).join('');
-    const running = list.filter(up).length, off = list.some(c => levelOf(c) !== 'ok' || !current(c));
+    const running = list.filter(up).length, off = list.some(c => statusOf(c)[0] !== 'ok');
     return `<details class="limits scripts"${off || spendState.scriptsOpen ? ' open' : ''}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}</summary>
       <ul>${rows}</ul><p class="pop-note">${esc(t('wake.about'))}</p></details>`;
   }

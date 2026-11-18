@@ -15,7 +15,7 @@ It is optional. Without it, agents read messages and answers on their next run, 
 
 ### Problems
 
-The script tells Goalcraft with every check what is wrong on its computer, and the spending card shows it by the computer: the dot turns amber for a warning and red for an error (or when the script has gone silent), with each problem under it. Your agents see them too, in `list_funnels` (`wake_script.computers[].problems`).
+The script tells Goalcraft with every check what is wrong on its computer, and the spending card shows it by the computer: its status turns amber for a warning (or an old version) and red for an error (or when the script has gone silent); hovering the status shows each problem and what to do. Your agents see them too, in `list_funnels` (`wake_script.computers[].problems`).
 
 | Problem | Level | What to do |
 |---|---|---|
