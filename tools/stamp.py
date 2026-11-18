@@ -48,3 +48,7 @@ text = ('// Written by tools/stamp.py from wake/goalcraft-wake.py: the version t
 if not out.exists() or out.read_text() != text:
     out.write_text(text)
     print(f'wake script {release}: release.ts written; deploy the wake function')
+# The same version for the dashboard, which shows whether each computer's script is up to date.
+site = ROOT / 'wake' / 'release.json'
+if not site.exists() or site.read_text() != f'{{"version": "{release}"}}\n':
+    site.write_text(f'{{"version": "{release}"}}\n')

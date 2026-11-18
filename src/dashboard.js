@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=597001e3';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=597001e3';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=597001e3';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=5f9d88ce';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=5f9d88ce';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=5f9d88ce';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -392,14 +392,39 @@ export function mountDashboard(funnels, opts = {}) {
     }).join('');
     return `<details class="limits"${spendState.limitsOpen ? ' open' : ''}><summary>${esc(t('spend.limits'))}</summary><ul>${rows}</ul></details>`;
   }
+  // The wake scripts, one per computer, under the spending: only runs on a computer whose script runs
+  // are counted, so each shows whether it runs, whether its version is the latest, and whose runs it
+  // counted. Open by itself when something is off (none yet, one silent or outdated).
+  const SELF_UPDATING = '2026-11-18';  // the first version that updates itself
+  function scriptsBlock(w) {
+    if (!w) return '';
+    const now = Date.now(), list = w.computers ?? [];
+    if (!list.length) return `<details class="limits scripts" open><summary>${esc(t('wake.title'))}</summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
+    const up = c => now - c.seen < 2 * 60e3;
+    const current = c => !w.latest || (c.version ?? '') >= w.latest;
+    const rows = list.map(c => {
+      const state = up(c) ? `<span class="ok">● ${esc(t('wake.running'))}</span>`
+        : `<span class="off" title="${esc(t('wake.silentTip'))}">● ${esc(t('wake.silent', fmtDuration((now - c.seen) / 1000)))}</span>`;
+      const ver = current(c) ? `<span class="ver" title="${esc(c.version ?? '')}">${esc(t('wake.current'))}</span>`
+        : `<span class="ver old" title="${esc(t((c.version ?? '') < SELF_UPDATING ? 'wake.manualTip' : 'wake.updatesTip', w.latest))}">${esc(t('wake.outdated'))} · ${esc(c.version ?? '?')}</span>`;
+      const n = c.agents?.length ?? 0;
+      const who = n ? `<span class="n" title="${esc(t('wake.agentsTip', c.agents.join(', ')))}">${esc(t('wake.agents', n))}</span>` : `<span class="n">${esc(t('wake.noAgents'))}</span>`;
+      return `<li><span class="who">${esc(c.computer || t('wake.oldComputer'))}</span>${state}${ver}${who}</li>`;
+    }).join('');
+    const running = list.filter(up).length, off = running < list.length || list.some(c => !current(c));
+    return `<details class="limits scripts"${off || spendState.scriptsOpen ? ' open' : ''}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}</summary>
+      <ul>${rows}</ul><p class="pop-note">${esc(t('wake.about'))}</p></details>`;
+  }
   async function showSpend(e) {
     showPop(e, `<div class="pop-title">${esc(t('spend.title'))}</div><div class="hist-body"><div class="pop-loading" role="status" aria-label="${esc(t('board.loading'))}"></div></div>`);
     pop.classList.add('wide');
     const body = pop.querySelector('.hist-body');
-    let rows;
-    try { rows = await opts.spending(Date.now() - 366 * 864e5); } catch { body.innerHTML = `<p class="pop-note">${esc(t('hist.failed'))}</p>`; return; }
+    let rows, scripts;
+    try {
+      [rows, scripts] = await Promise.all([opts.spending(Date.now() - 366 * 864e5), opts.wakeScripts ? opts.wakeScripts().catch(() => null) : null]);
+    } catch { body.innerHTML = `<p class="pop-note">${esc(t('hist.failed'))}</p>`; return; }
     if (!body.isConnected) return;
-    if (!rows.length) { body.innerHTML = `<p class="pop-note">${esc(t('spend.none'))}</p>`; return; }
+    if (!rows.length) { body.innerHTML = `<p class="pop-note">${esc(t('spend.none'))}</p>${scriptsBlock(scripts)}`; return; }
     // A run's funnel by its id (live) or title (demo); its name as on the board.
     const funnelOf = new Map(scene.funnels.map(f => [f.id ?? f.title, f]));
     // Each agent's provider, apart from its name: what it said (on the board), else the app of its runs.
@@ -480,8 +505,9 @@ export function mountDashboard(funnels, opts = {}) {
             <div class="hist-bars stacked${n > 60 ? ' dense' : ''}">${bars.map((d, i) => `<span data-tip="${esc(tipOf(d, i))}">${groups.filter(k => cells[i].get(k)).map(k => `<i style="height:${(cells[i].get(k) / max) * 100}%;background:${color.get(k)}"></i>`).join('')}</span>`).join('')}</div></div></div>
         <div class="hist-axis"><span>${esc(short.format(bars[0]))}</span><span>${esc(short.format(bars[n - 1]))}</span></div>
         <ul class="spend-list">${groups.slice(0, 12).map(k => `<li${split === 'funnel' ? ` data-f="${esc(k)}" class="pick" title="${esc(t('spend.pick'))}"` : ''}><i style="background:${color.get(k)}"></i><span class="who">${esc(label(k))}</span><span class="n">${esc(t('spend.runs', runs.get(k)))}</span><b>${esc(fmt(totals.get(k)))}</b></li>`).join('')}
-          <li class="total"><i></i><span class="who">${esc(t('spend.all'))}</span><span class="n">${esc(t('spend.runs', mine.length))}</span><b>${esc(fmt(sum))}</b></li></ul>${limitsBlock()}`;
-      body.querySelector('details.limits')?.addEventListener('toggle', e => { spendState.limitsOpen = e.target.open; });
+          <li class="total"><i></i><span class="who">${esc(t('spend.all'))}</span><span class="n">${esc(t('spend.runs', mine.length))}</span><b>${esc(fmt(sum))}</b></li></ul>${limitsBlock()}${scriptsBlock(scripts)}`;
+      body.querySelector('details.limits:not(.scripts)')?.addEventListener('toggle', e => { spendState.limitsOpen = e.target.open; });
+      body.querySelector('details.scripts')?.addEventListener('toggle', e => { spendState.scriptsOpen = e.target.open; });
       const on = (sel, fn) => body.querySelectorAll(sel).forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); fn(b); draw(); }));
       on('.spend-periods button', b => { period = Number(b.dataset.p); try { localStorage.setItem(periodKey(u), String(period)); } catch {} });
       on('.spend-measure button', b => { spendState.measure = b.dataset.m; });

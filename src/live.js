@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=597001e3';
+import { supabase } from './auth.js?v=5f9d88ce';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -215,6 +215,27 @@ export async function answer(questionId, text) {
 export function planLimits() {
   return Object.entries(limits).filter(([, l]) => l.week != null)
     .map(([key, l]) => ({ key, used: l.week, resets: l.resets, days: LIMIT_DAYS[key.split(':')[0]] ?? 7 }));
+}
+
+// The person's wake scripts, one per computer: whether each runs (it checks in every 10 seconds), its
+// version against the latest, and the agents whose runs it counted over the last week. The spending
+// card shows them, since only runs on a computer with a running script are counted.
+export async function wakeScripts() {
+  const [keys, latest, counted] = await Promise.all([
+    supabase.from('wake_keys').select('id, computer, script_version, last_used_at').not('last_used_at', 'is', null).order('last_used_at', { ascending: false }),
+    fetch(new URL('../wake/release.json', import.meta.url), { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null),
+    all(() => supabase.from('agent_usage').select('wake_key_id, agent').gte('ended_at', new Date(Date.now() - 7 * DAY).toISOString()).order('ended_at')),
+  ]);
+  if (keys.error) throw keys.error;
+  const agents = new Map();
+  for (const r of counted.data ?? []) if (r.wake_key_id) agents.set(r.wake_key_id, new Set([...(agents.get(r.wake_key_id) ?? []), r.agent]));
+  return {
+    latest: latest?.version ?? null,
+    computers: keys.data.map(k => ({
+      computer: k.computer, version: k.script_version, seen: Date.parse(k.last_used_at),
+      agents: [...(agents.get(k.id) ?? [])].sort(),
+    })),
+  };
 }
 
 // Every run's cost since a moment, for the spending chart: which funnel and agent, when, what it cost

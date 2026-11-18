@@ -462,4 +462,12 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.limits .bar { height: 6px; background: #3A322B; }
 #pop details.limits .bar i { display: block; height: 100%; }
 #pop details.limits b { font-weight: 600; text-align: right; min-width: 44px; }
+#pop details.scripts ul { grid-template-columns: minmax(0, 1.4fr) auto auto auto; }
+#pop details.scripts .ok { color: #9FE870; white-space: nowrap; }
+#pop details.scripts .off { color: #FF5A4E; white-space: nowrap; cursor: help; }
+#pop details.scripts .ver { color: var(--muted); white-space: nowrap; }
+#pop details.scripts .ver.old { color: #F2A33C; cursor: help; }
+#pop details.scripts .n { color: var(--muted); white-space: nowrap; text-align: right; }
+#pop details.scripts .n[title] { cursor: help; }
+#pop details.scripts .pop-note { margin: 8px 0 0; font-size: 12px; }
 #pop details.limits .when { color: var(--muted); font-size: 12px; white-space: nowrap; }

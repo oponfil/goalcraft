@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=597001e3';
-import vi from './lang/vi.js?v=597001e3';
-import ja from './lang/ja.js?v=597001e3';
-import pt from './lang/pt.js?v=597001e3';
-import tr from './lang/tr.js?v=597001e3';
-import ko from './lang/ko.js?v=597001e3';
+import es from './lang/es.js?v=5f9d88ce';
+import vi from './lang/vi.js?v=5f9d88ce';
+import ja from './lang/ja.js?v=5f9d88ce';
+import pt from './lang/pt.js?v=5f9d88ce';
+import tr from './lang/tr.js?v=5f9d88ce';
+import ko from './lang/ko.js?v=5f9d88ce';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -384,6 +384,21 @@ const STRINGS = {
   'spend.resetDone': L('reset, waiting for a new reading', 'сброшен, ждём новых данных', '已重置，等待新数据', 'รีเซ็ตแล้ว รอข้อมูลใหม่'),
   'spend.resetsAt': L((d) => `resets ${d}`, (d) => `сброс ${d}`, (d) => `${d} 重置`, (d) => `รีเซ็ต ${d}`),
   'spend.none': L('No spending yet: it comes from the wake script on your computer, which reads it from your agents\' apps.', 'Расхода пока нет: его присылает скрипт пробуждения на вашем компьютере, читая его из приложений агентов.', '还没有消耗记录：它来自你电脑上的唤醒脚本，从智能体的应用中读取。', 'ยังไม่มีค่าใช้จ่าย: สคริปต์ปลุกบนคอมพิวเตอร์ของคุณจะส่งมา โดยอ่านจากแอปของเอเจนต์'),
+  'wake.title': L('Wake scripts', 'Скрипты пробуждения', '唤醒脚本', 'สคริปต์ปลุก'),
+  'wake.count': L((a, b) => `running: ${a} of ${b}`, (a, b) => `работают: ${a} из ${b}`, (a, b) => `运行中：${a}/${b}`, (a, b) => `ทำงาน: ${a} จาก ${b}`),
+  'wake.about': L('Spending and limits come from the wake script on each computer your agents work on: runs on a computer without a running script are not counted. Agents in web chats (claude.ai, chatgpt.com) are never counted.', 'Расход и лимиты присылает скрипт пробуждения на каждом компьютере, где работают агенты: запуски на компьютере, где он не работает, не учитываются. Агенты в веб-чатах (claude.ai, chatgpt.com) не учитываются никогда.', '消耗和额度来自智能体所在每台电脑上的唤醒脚本：在脚本未运行的电脑上的运行不会被统计。网页聊天中的智能体（claude.ai、chatgpt.com）从不统计。', 'ค่าใช้จ่ายและโควตามาจากสคริปต์ปลุกบนคอมพิวเตอร์แต่ละเครื่องที่เอเจนต์ทำงาน: การรันบนเครื่องที่สคริปต์ไม่ทำงานจะไม่ถูกนับ เอเจนต์ในเว็บแชต (claude.ai, chatgpt.com) จะไม่ถูกนับเลย'),
+  'wake.none': L('No wake script yet, so the agents\' spending isn\'t counted. Ask an agent on your computer (Claude Code, Codex) to set up the Goalcraft wake script.', 'Скрипт пробуждения ещё не установлен, поэтому расход агентов не учитывается. Попросите агента на своём компьютере (Claude Code, Codex) поставить скрипт пробуждения Goalcraft.', '还没有唤醒脚本，因此不统计智能体的消耗。请让你电脑上的智能体（Claude Code、Codex）安装 Goalcraft 唤醒脚本。', 'ยังไม่มีสคริปต์ปลุก จึงไม่นับค่าใช้จ่ายของเอเจนต์ ขอให้เอเจนต์บนคอมพิวเตอร์ของคุณ (Claude Code, Codex) ติดตั้งสคริปต์ปลุก Goalcraft'),
+  'wake.running': L('running', 'работает', '运行中', 'ทำงานอยู่'),
+  'wake.silent': L((d) => `silent for ${d}`, (d) => `не на связи ${d}`, (d) => `已 ${d} 未联系`, (d) => `ขาดการติดต่อ ${d}`),
+  'wake.silentTip': L('Its computer is off or asleep, or the script stopped: runs there are not counted meanwhile.', 'Компьютер выключен или спит, либо скрипт остановился: запуски там пока не учитываются.', '电脑关机或休眠，或脚本已停止：期间那里的运行不会被统计。', 'คอมพิวเตอร์ปิดหรือหลับอยู่ หรือสคริปต์หยุดทำงาน: ระหว่างนี้การรันที่นั่นจะไม่ถูกนับ'),
+  'wake.current': L('up to date', 'актуальная', '最新', 'ล่าสุด'),
+  'wake.outdated': L('outdated', 'устарела', '已过时', 'ล้าสมัย'),
+  'wake.updatesTip': L((v) => `Latest: ${v}. It updates itself within minutes.`, (v) => `Новая: ${v}. Обновится сама в течение нескольких минут.`, (v) => `最新：${v}。几分钟内会自动更新。`, (v) => `ล่าสุด: ${v} จะอัปเดตเองภายในไม่กี่นาที`),
+  'wake.manualTip': L((v) => `Latest: ${v}. This version doesn't update itself yet: ask an agent on that computer to update the Goalcraft wake script once.`, (v) => `Новая: ${v}. Эта версия сама ещё не обновляется: попросите агента на этом компьютере один раз обновить скрипт пробуждения Goalcraft.`, (v) => `最新：${v}。此版本还不能自动更新：请让那台电脑上的智能体手动更新一次 Goalcraft 唤醒脚本。`, (v) => `ล่าสุด: ${v} เวอร์ชันนี้ยังอัปเดตเองไม่ได้: ขอให้เอเจนต์บนเครื่องนั้นอัปเดตสคริปต์ปลุก Goalcraft หนึ่งครั้ง`),
+  'wake.agents': L((n) => `${n} agent${n === 1 ? '' : 's'}`, (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'агент' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'агента' : 'агентов'}`, (n) => `${n} 个智能体`, (n) => `${n} เอเจนต์`),
+  'wake.agentsTip': L((list) => `Runs counted here over the last week: ${list}`, (list) => `Запуски, учтённые здесь за неделю: ${list}`, (list) => `近一周在此统计的运行：${list}`, (list) => `การรันที่นับที่นี่ในสัปดาห์ที่ผ่านมา: ${list}`),
+  'wake.noAgents': L('no runs counted this week', 'за неделю запусков не было', '本周没有统计到运行', 'ไม่มีการรันในสัปดาห์นี้'),
+  'wake.oldComputer': L('A computer (old script)', 'Компьютер (старый скрипт)', '一台电脑（旧脚本）', 'คอมพิวเตอร์ (สคริปต์เก่า)'),
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.moreQuestions': L((n) => `${n} more question${n === 1 ? '' : 's'}`, (n) => `Ещё вопросов: ${n}`, (n) => `还有 ${n} 个问题`, (n) => `อีก ${n} คำถาม`),
   'nav.tanksGrow': L('Tanks grow with items', 'Баки растут с количеством', '储罐随数量增长', 'ถังขยายตามจำนวน'),

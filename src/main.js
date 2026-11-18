@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=597001e3';
-import { mountDashboard } from './dashboard.js?v=597001e3';
-import { t } from './i18n.js?v=597001e3';
+import { FUNNELS, SUP_RUNS } from './data.js?v=5f9d88ce';
+import { mountDashboard } from './dashboard.js?v=5f9d88ce';
+import { t } from './i18n.js?v=5f9d88ce';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -12,6 +12,7 @@ mountDashboard(FUNNELS, {
   history: demoHistory,
   spending: demoSpending,
   limits: demoLimits,
+  wakeScripts: demoWakeScripts,
 });
 
 // Made-up growth of a stage for its card, the same each time: about its flow per day, more on
@@ -48,6 +49,15 @@ function demoLimits() {
     { key: 'grok', used: 17, resets: now + 3.7 * day, days: 7 },
     { key: 'kimi', used: 31, resets: now + 13 * day, days: 30 },
   ];
+}
+
+// Made-up wake scripts for the spending card: a Mac and a PC, both running the latest.
+async function demoWakeScripts() {
+  const now = Date.now();
+  return { latest: '2026-11-18', computers: [
+    { computer: 'MacBook Air', version: '2026-11-18', seen: now - 4e3, agents: ['claude', 'claude-search'] },
+    { computer: 'DESKTOP-PC', version: '2026-11-18', seen: now - 7e3, agents: ['codex', 'gemini'] },
+  ] };
 }
 
 async function demoSpending(from) {
