@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=145eaa56';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=145eaa56';
-import { themeOf } from './themes.js?v=145eaa56';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=145eaa56';
+import { agentInfo, plural } from './data.js?v=2f55e7e1';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=2f55e7e1';
+import { themeOf } from './themes.js?v=2f55e7e1';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=2f55e7e1';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -140,7 +140,7 @@ function rng(seed) {
 
 export class Scene {
   // live: the agents report counts and states; nothing is simulated, agents keep their state.
-  constructor(canvas, funnels, { live = false, sides = null, heaps = null, grow = false, from = null } = {}) {
+  constructor(canvas, funnels, { live = false, heaps = null, grow = false, from = null } = {}) {
     this.live = live;
     this.grow = grow;
     this.canvas = canvas;
@@ -166,33 +166,18 @@ export class Scene {
     this.days = 0;
     const r = rng(7);
     this.agents = [];
-    // Two places per zone: left and right of the pipe; extra agents are not shown. An agent keeps
-    // the side it had in the previous scene (sides: its map), so redraws don't swap agents around;
-    // newcomers take the free side, in name order.
-    const before = sides || new Map();
-    this.sides = new Map();
+    // Two places per zone: left and right of the pipe, in the agents' name order (the first on the
+    // left), so every page and every device shows them the same way, a reload too; extra agents are
+    // not shown.
     const place = [];
     this.funnels.forEach(f => {
       const zones = new Map();
       for (const w of f.workers) zones.set(w.zone, [...(zones.get(w.zone) || []), w]);
       for (const ws of zones.values()) {
-        const sorted = [...ws].sort((p, q) => p.agent.localeCompare(q.agent)), used = new Set();
-        const sideOf = new Map();
-        for (const w of sorted) {
-          const was = before.get(`${f.id ?? f.title}|${w.agent}`);
-          if (was && !used.has(was)) { sideOf.set(w, was); used.add(was); }
-        }
-        for (const w of sorted) {
-          if (sideOf.has(w)) continue;
-          const free = ['L', 'R'].find(x => !used.has(x));
-          if (!free) continue;
-          sideOf.set(w, free); used.add(free);
-        }
-        for (const w of ws) if (sideOf.has(w)) place.push([f, w, sideOf.get(w)]);
+        [...ws].sort((p, q) => p.agent.localeCompare(q.agent)).slice(0, 2).forEach((w, i) => place.push([f, w, i ? 'R' : 'L']));
       }
     });
     place.forEach(([f, w, side]) => {
-      this.sides.set(`${f.id ?? f.title}|${w.agent}`, side);
       const a = { ...w, f, side, rand: r, hitAt: 1 + r() * 3, phase: r() };
       // Open questions, oldest first (the demo gives one as a plain string).
       a.questions = w.questions ?? (w.question ? [{ id: w.question_id ?? `demo-${w.agent}-${w.zone}`, question: w.question }] : []);
