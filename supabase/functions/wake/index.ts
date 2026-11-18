@@ -3,6 +3,11 @@
 // on their computer (a Claude app session or a Codex thread) with a short note to check Goalcraft.
 //
 //   GET /wake   Authorization: Bearer <wake key>   → { wake: [{ agent, funnel_id, funnel, reasons, app, session }] }
+//   GET /wake?claim=1   → { wake: [{ …, marks }], script }: the same, but nothing is marked yet. Each computer's
+//                          script wakes only the agents whose conversation is on it, so it takes those first:
+//   POST /wake { claim: [{ funnel_id, agent, marks }] }   → { claimed: [true|false, …] }: marks them as woken;
+//                          false when another computer took it first. script: the latest version and its
+//                          SHA-256, so the script can update itself (wake/goalcraft-wake.py on goalcraft.ai)
 //   GET /wake?agents=1   → { agents: [{ agent, funnel_id, app, session }] }: the agents on this computer whose
 //                          token use the script reads (nobody is woken or marked)
 //   POST /wake { usage: [{ funnel_id, agent, run_key, app, model, started_at, ended_at, tokens, new_tokens,
@@ -13,13 +18,17 @@
 //                cost_usd? }] }   → { saved }: the plan's limit as the script read it, with what every local
 //                session of that app cost since the reading before (the board turns cost into a share of it)
 //
-// An agent is woken once for each reason: a message it has not read (from the person, or for a
-// worker from its supervisor), an answer to its question while it sleeps, for a supervisor a worker's
-// reply to its message, or a silence (it missed its run, or stopped signalling at work) since
+// Each script says which computer it runs on (X-Goalcraft-Computer): a person may run it on several,
+// each with its own key, and a new key on the same computer replaces the one before.
+//
+// An agent is woken once for each reason: a message it has not read (from the person or from another
+// agent of its funnel), an answer to its question while it sleeps, another agent's reply to its
+// message, or a silence (it missed its run, or stopped signalling at work) since
 // its last signal. An agent at work that signalled lately is left alone: it reads messages on its
 // heartbeat and takes answers while it waits. Only agents whose chat is a link the script can resume
 // are listed; each listing marks what it wakes for, so the next one does not repeat it.
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2'
+import { WAKE_RELEASE } from './release.ts'
 
 const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 const SILENT = 10 * 60e3 // the dashboard's own threshold for an amber triangle
@@ -87,7 +96,7 @@ async function saveLimits(user: string, list: any[]) {
 
 // What the script read from the agents' session files: one row per run, upserted by its key. Only
 // for the key owner's own funnels; numbers only, nothing from the conversations.
-async function saveUsage(user: string, body: any) {
+async function saveUsage(user: string, keyId: string, body: any) {
   const rows = Array.isArray(body?.usage) ? body.usage.slice(0, 500) : null
   if (!rows) return json({ error: 'bad_body' }, 400)
   const { data: funnels, error } = await admin.from('funnels').select('id, key').eq('user_id', user)
@@ -107,13 +116,15 @@ async function saveUsage(user: string, body: any) {
       limit_window_minutes: num(r.limit_window_minutes, 1e6), limit_used: num(r.limit_used, 100),
       input_tokens: num(r.input_tokens, 1e12), cache_read_tokens: num(r.cache_read_tokens, 1e12),
       cache_write_tokens: num(r.cache_write_tokens, 1e12), output_tokens: num(r.output_tokens, 1e12),
-      updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(), wake_key_id: keyId,
     }]
   })
-  // replace_from: the script sends all it read of these days, so what it sent before for them goes.
+  // replace_from: the script sends all it read of these days, so what it sent before for them goes:
+  // what this computer sent (and rows from before computers were told apart; their computer sends them again).
   const from = time(body?.replace_from)
   if (from) {
     const { error: e } = await admin.from('agent_usage').delete().eq('user_id', user).gte('ended_at', from)
+      .or(`wake_key_id.eq.${keyId},wake_key_id.is.null`)
     if (e) return json({ error: 'failed' }, 500)
   }
   if (ok.length) {
@@ -126,18 +137,28 @@ async function saveUsage(user: string, body: any) {
 Deno.serve(async (req) => {
   const key = (req.headers.get('authorization') ?? '').replace(/^Bearer /, '').trim()
   if (!key) return json({ error: 'no_key' }, 401)
-  const { data: owner } = await admin.from('wake_keys').select('user_id').eq('key_hash', await sha256(key)).maybeSingle()
+  const { data: owner } = await admin.from('wake_keys').select('id, user_id, computer, created_at').eq('key_hash', await sha256(key)).maybeSingle()
   if (!owner) return json({ error: 'bad_key' }, 401)
   const user = owner.user_id, now = Date.now(), iso = (t: number) => new Date(t).toISOString()
   // The script's version, from its User-Agent ("goalcraft-wake/2026-10-24"); older ones say "1".
   const version = /^goalcraft-wake\/([\w.-]{1,20})$/.exec(req.headers.get('user-agent') ?? '')?.[1] ?? null
-  await admin.from('wake_keys').update({ last_used_at: iso(now), script_version: version }).eq('user_id', user)
+  // The computer it runs on, by its name (scripts from before 18 November 2026 don't say).
+  let named = req.headers.get('x-goalcraft-computer') ?? ''
+  try { named = decodeURIComponent(named) } catch { /* as it came */ }
+  const computer = named.replace(/[^\p{L}\p{N}\p{Zs}._'’()-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 64) || null
+  await admin.from('wake_keys').update({ last_used_at: iso(now), script_version: version, ...(computer ? { computer } : {}) }).eq('id', owner.id)
+  // A new key on a computer replaces the ones made there before (set up again): they go.
+  if (computer && computer !== owner.computer) {
+    await admin.from('wake_keys').delete().eq('user_id', user).eq('computer', computer).neq('id', owner.id).lt('created_at', owner.created_at)
+  }
+  const script = WAKE_RELEASE
   // ?check=1: the script only checks its key (when it is installed); nobody is woken or marked.
   const params = new URL(req.url).searchParams
-  if (params.has('check')) return json({ ok: true })
+  if (params.has('check')) return json({ ok: true, script })
   if (req.method === 'POST') {
     const body = await req.json().catch(() => null)
-    return Array.isArray(body?.limits) ? saveLimits(user, body.limits) : saveUsage(user, body)
+    if (Array.isArray(body?.claim)) return claim(user, body.claim)
+    return Array.isArray(body?.limits) ? saveLimits(user, body.limits) : saveUsage(user, owner.id, body)
   }
   if (params.has('agents')) {
     const { data, error } = await admin.from('presence').select('agent, chat_url, funnels (key)')
@@ -168,45 +189,74 @@ Deno.serve(async (req) => {
   const wokeAfter = new Map((wakes.data ?? []).map((w: any) => [`${w.funnel_id}|${w.agent}`, Date.parse(w.signal_at)]))
 
   const wake = new Map<string, any>()
-  const add = (p: any, reason: string, chat: string | null) => {
+  const add = (p: any, reason: string, chat: string | null, mark: (m: any) => void) => {
     if (p.state === 'pause') return false  // paused: it won't run until resumed, so nothing wakes it
     const s = resumable(p, chat)
     if (!s) return false
     const k = `${p.funnel_id}|${p.agent}`
-    const w = wake.get(k) ?? { agent: p.agent, funnel_id: p.funnels?.key, funnel: p.funnels?.title, reasons: [], ...s }
+    const w = wake.get(k) ?? { agent: p.agent, funnel_id: p.funnels?.key, funnel: p.funnels?.title, reasons: [], ...s,
+      marks: { messages: [], answers: [], replies: [], silent: null } }
     if (!w.reasons.includes(reason)) w.reasons.push(reason)
+    mark(w.marks)
     wake.set(k, w)
     return true
   }
   const at = new Map((presence.data ?? []).map((p: any) => [`${p.funnel_id}|${p.agent}`, p]))
   // At work and heard from lately: it is running and finds messages and answers itself.
   const busy = (p: any) => p.state !== 'sleep' && now - Date.parse(p.updated_at) < SILENT
-  const woke = { messages: [] as string[], answers: [] as string[], replies: [] as string[], silent: [] as any[] }
 
   for (const m of messages.data ?? []) {
     const p = at.get(`${m.funnel_id}|${m.agent}`)
-    if (p && !busy(p) && add(p, 'message', null)) woke.messages.push(m.id)
+    if (p && !busy(p)) add(p, 'message', null, k => k.messages.push(m.id))
   }
   for (const q of answers.data ?? []) {
     const p = at.get(`${q.funnel_id}|${q.agent}`)
-    if (p && !busy(p) && add(p, 'answer', q.chat_url)) woke.answers.push(q.id)
+    if (p && !busy(p)) add(p, 'answer', q.chat_url, k => k.answers.push(q.id))
   }
   for (const m of replies.data ?? []) {
     const p = at.get(`${m.funnel_id}|${m.from_agent}`)
-    if (p && !busy(p) && add(p, 'reply', null)) woke.replies.push(m.id)
+    if (p && !busy(p)) add(p, 'reply', null, k => k.replies.push(m.id))
   }
   for (const p of presence.data ?? []) {
     const overdue = p.state === 'sleep' && p.next_run_at && now - Date.parse(p.next_run_at) > SILENT
     const lost = p.state !== 'sleep' && p.state !== 'pause' && now - Date.parse(p.updated_at) > SILENT
     const already = wokeAfter.get(`${p.funnel_id}|${p.agent}`) === Date.parse(p.updated_at)
-    if ((overdue || lost) && !already && add(p, overdue ? 'overdue' : 'silent', null)) woke.silent.push(p)
+    if ((overdue || lost) && !already) add(p, overdue ? 'overdue' : 'silent', null, k => { k.silent = p.updated_at })
   }
 
-  const t = iso(now)
-  if (woke.messages.length) await admin.from('agent_messages').update({ woken_at: t }).in('id', woke.messages)
-  if (woke.answers.length) await admin.from('questions').update({ woken_at: t }).in('id', woke.answers)
-  if (woke.replies.length) await admin.from('agent_messages').update({ reply_woken_at: t }).in('id', woke.replies)
-  if (woke.silent.length) await admin.from('agent_wakes').upsert(
-    woke.silent.map(p => ({ funnel_id: p.funnel_id, agent: p.agent, signal_at: p.updated_at, woken_at: t })), { onConflict: 'funnel_id,agent' })
-  return json({ wake: [...wake.values()] })
+  // ?claim=1: the script wakes only what is on its computer, and claims that first (POST claim).
+  if (params.has('claim')) return json({ wake: [...wake.values()], script })
+  // Scripts from before 18 November 2026: all is marked as listed.
+  const all = [...wake.values()].map(w => ({ funnel_id: w.funnel_id, agent: w.agent, marks: w.marks }))
+  await claim(user, all)
+  return json({ wake: [...wake.values()].map(({ marks: _, ...w }) => w) })
 })
+
+// Mark what a script is about to wake an agent for, so no other check (or computer) wakes it again.
+// Each item is claimed when at least one of its reasons was still unmarked.
+async function claim(user: string, list: any[]) {
+  const t = new Date().toISOString()
+  const ids = (v: unknown) => Array.isArray(v) ? v.filter(x => typeof x === 'string' && /^[0-9a-f-]{36}$/.test(x)).slice(0, 200) : []
+  const claimed: boolean[] = []
+  for (const item of list.slice(0, 50)) {
+    const m = item?.marks ?? {}
+    let took = false
+    const mark = async (q: any) => { const { data } = await q.select('id'); if (data?.length) took = true }
+    const msgs = ids(m.messages), answers = ids(m.answers), replies = ids(m.replies)
+    if (msgs.length) await mark(admin.from('agent_messages').update({ woken_at: t }).eq('user_id', user).in('id', msgs).is('woken_at', null))
+    if (answers.length) await mark(admin.from('questions').update({ woken_at: t }).eq('user_id', user).in('id', answers).is('woken_at', null))
+    if (replies.length) await mark(admin.from('agent_messages').update({ reply_woken_at: t }).eq('user_id', user).in('id', replies).is('reply_woken_at', null))
+    if (typeof m.silent === 'string' && !isNaN(Date.parse(m.silent)) && typeof item.funnel_id === 'string' && typeof item.agent === 'string') {
+      const { data: f } = await admin.from('funnels').select('id').eq('user_id', user).eq('key', item.funnel_id).maybeSingle()
+      if (f) {
+        const { data: w } = await admin.from('agent_wakes').select('signal_at').eq('funnel_id', f.id).eq('agent', item.agent).maybeSingle()
+        if (!w || Date.parse(w.signal_at) !== Date.parse(m.silent)) {
+          const { error } = await admin.from('agent_wakes').upsert({ funnel_id: f.id, agent: item.agent, signal_at: m.silent, woken_at: t }, { onConflict: 'funnel_id,agent' })
+          if (!error) took = true
+        }
+      }
+    }
+    claimed.push(took)
+  }
+  return json({ claimed })
+}

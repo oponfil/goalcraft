@@ -23,6 +23,10 @@ const agent = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,31}$/)
 const provider = z.string().regex(/^[a-z0-9][a-z0-9-]{0,31}$/)
   .describe('Which AI you are: claude, chatgpt, grok, gemini, deepseek, kimi, qwen, mistral, perplexity, hermes, or another lowercase name. Shown as your logo and colour on the dashboard')
 
+// The first wake script that updates itself, and the command that brings an older one (always on a Mac) to it.
+const SELF_UPDATING = '2026-11-18'
+const UPDATE_MAC = 'curl -fsSL https://goalcraft.ai/wake/goalcraft-wake.py -o ~/.goalcraft/goalcraft-wake.py && launchctl kickstart -k gui/$(id -u)/ai.goalcraft.wake'
+
 // The wake script's latest version: the VERSION line of the file on goalcraft.ai, read at most hourly.
 let wakeLatest: { at: number, version: string | null } | null = null
 async function latestWake() {
@@ -47,7 +51,7 @@ Any work is a run, not only a scheduled one: the person writing to you in your c
 Pause: when the person asks you to stop for a while, or your plan's limit has run out so you can't work until it resets, set_agent_state(pause, reason) (and turn off your schedule if the person asked you to stop). The dashboard sits you on a chair with a pause sign, raises no warning for your silence and nothing wakes you. Any set_agent_state(work) or (sleep) resumes you. A supervisor pauses or resumes a worker of its funnel when the person tells it to, with the worker's name and zone.
 Supervisor: one agent per funnel may stand over the whole funnel instead of working a zone, on the platform at its top: the person's own agent that checks the funnel, finds the bottleneck and answers their questions about it. It takes the place with set_agent_state(zone "supervisor") and names itself after its funnel in the person's language (name, e.g. "Супервайзер поиска работы", "Job Search supervisor"), and follows the same heartbeat, questions and sleep. It adds no items; instead each run ends with what it found: status (ok, bottleneck, recommendation) and summary (one short line), given with set_agent_state, shown by it on the dashboard and kept in its run history. When it needs the person, it asks as every agent does: state ask with a question. It also keeps an eye on the person's tasks for the funnel (set_tasks), most urgent first, without what is done or no longer matters.
 The person's tasks: the things only the person can do for a funnel (take a test task, fill in a form, answer a recruiter), shown to them on the dashboard. Every agent of the funnel, supervisor or worker, sees the same list (list_funnels tasks) and changes it the same way with set_tasks: adds a task when the person asks or when there is something only they can do, marks what is done, keeps the order. What an agent can't go on without is a question, not a task: never both. The place holds one agent; if your name already works a zone of this funnel, take another name for this place (supervisor).
-Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and any agent of a funnel can write to any other agent of the same funnel, the supervisor or a worker (send_message): a worker asks the supervisor or tells the next stage's agent what it handed over, the supervisor gives a worker a task. Only within one funnel. On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex) may offer to set that script up: with the person's OK it calls create_wake_key and runs the install command it returns. The script never updates itself; list_funnels shows it as wake_script. When a supervisor sees update_available, or running false for a script that was set up, it tells the person once (not on every run): on their computer it asks whether to update and, on yes, runs wake_script.update; elsewhere it adds a task for them (set_tasks) with that command.
+Messages: the person can write to you from your card on the dashboard at any time, not only answer your questions, and any agent of a funnel can write to any other agent of the same funnel, the supervisor or a worker (send_message): a worker asks the supervisor or tells the next stage's agent what it handed over, the supervisor gives a worker a task. Only within one funnel. On every run, after set_agent_state(work), call get_messages with your agent name (its answer to set_agent_state also says how many wait for you: new_messages); read them, do what they ask, and reply to each in one short line with reply(message_id). The person may run a script that wakes your conversation when a message or an answer comes, or when you missed your run: then you get a short note to check Goalcraft; do so as above. An agent on the person's own computer (Claude Code, Codex; macOS or Windows) may offer to set that script up there: with the person's OK it calls create_wake_key and runs the install command it returns for that system. Each computer the agents work on needs its own (it wakes only the agents whose conversation is on it); list_funnels shows them as wake_script.computers. The script updates itself. When a supervisor sees a computer with update_needed (an old script), or running false for one that was set up, it tells the person once (not on every run): on that computer it asks whether to update and, on yes, runs its update command; elsewhere it adds a task for them (set_tasks) with that command.
 Your name: the dashboard and emails show you by your model's name (Claude, ChatGPT…) unless you give your own short name with set_agent_state(name); give one when the person asks you to rename yourself.
 Delete a funnel (delete_funnel) only when the person asks for it.
 Plans: free has up to 3 funnels with up to 3 stages each and one agent per zone; Pro has up to 10 funnels with up to 5 stages each and two agents per zone. list_funnels tells which plan the person has.
@@ -176,25 +180,33 @@ function server(db: Db, caller: Caller) {
     ],
   }, { instructions: INSTRUCTIONS })
 
-  // The person's wake script, if they have one: its version (it says it with every request), the
-  // latest on goalcraft.ai, whether it runs, and how to update it. It never updates itself.
+  // The person's wake scripts, one per computer they set it up on: each one's version (it says it with
+  // every request), whether it runs, and the latest on goalcraft.ai. Scripts from 18 November 2026 on
+  // update themselves; an older one needs the update command once.
   async function wakeScript() {
-    const { data } = await db.from('wake_keys').select('script_version, last_used_at').maybeSingle()
-    if (!data) return null
+    const { data } = await db.from('wake_keys').select('computer, script_version, last_used_at').not('last_used_at', 'is', null)
+      .order('last_used_at', { ascending: false })
+    if (!data?.length) return null
     const latest = await latestWake()
-    const seen = data.last_used_at ? Date.parse(data.last_used_at) : null
     return {
-      version: data.script_version, latest,
-      running: seen != null && Date.now() - seen < 5 * 60e3, last_seen_at: data.last_used_at,
-      // Versions are dates (2026-10-24), so they compare as text; the oldest scripts say "1".
-      update_available: !!latest && (data.script_version ?? '') < latest,
-      update: 'curl -fsSL https://goalcraft.ai/wake/goalcraft-wake.py -o ~/.goalcraft/goalcraft-wake.py && launchctl kickstart -k gui/$(id -u)/ai.goalcraft.wake',
+      latest,
+      computers: data.map(k => {
+        const seen = k.last_used_at ? Date.parse(k.last_used_at) : null
+        // Versions are dates (2026-10-24), so they compare as text; the oldest scripts say "1".
+        const old = (k.script_version ?? '') < SELF_UPDATING
+        return {
+          computer: k.computer ?? 'a computer (its script is from before scripts named their computer)',
+          version: k.script_version, running: seen != null && Date.now() - seen < 5 * 60e3, last_seen_at: k.last_used_at,
+          updates_itself: !old,
+          ...(old ? { update_needed: true, update: { macos: UPDATE_MAC } } : {}),
+        }
+      }),
     }
   }
 
   s.registerTool('list_funnels', {
     title: 'List funnels',
-    description: 'The person\'s plan with its limits, their wake script if they set one up (wake_script: its version, the latest, whether it runs, the update command), and their goal funnels: stages with counts, results, goal, agents present, open questions, and answers you still owe a short reply to (answers_to_reply).',
+    description: 'The person\'s plan with its limits, their wake scripts if they set them up (wake_script: one per computer, with its version, whether it runs and, for an old one that doesn\'t update itself yet, the update command), and their goal funnels: stages with counts, results, goal, agents present, open questions, and answers you still owe a short reply to (answers_to_reply).',
     inputSchema: req({}),
     annotations: { title: 'List funnels', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, async () => text({ ...(await plan(db)), wake_script: await wakeScript(), funnels: await funnels(db) }))
@@ -556,17 +568,25 @@ function server(db: Db, caller: Caller) {
 
   s.registerTool('create_wake_key', {
     title: 'Create a wake key',
-    description: 'Only when you run on the person\'s own computer (Claude Code, Codex) and the person agreed: a key for the Goalcraft wake script, which wakes their agents here within seconds when they write to one, answer a question or an agent misses its run. Returns the key and the one shell command that installs the script with it (macOS). Run that command, then tell the person it is on and where its log is. A new key replaces the old one, which stops the script installed with it.',
+    description: 'Only when you run on the person\'s own computer (Claude Code, Codex; macOS or Windows) and the person agreed: a key for the Goalcraft wake script on this computer, which wakes their agents here within seconds when they write to one, answer a question or an agent misses its run, and shows what the agents here spend. Returns the key and the one command that installs the script with it: install for macOS (and Linux), install_windows for Windows PowerShell. Run the one for this computer, then tell the person it is on and where its log is. Each computer has its own key: a new one replaces only the key made before on the same computer. The script updates itself.',
     inputSchema: req({}),
     annotations: { title: 'Create a wake key', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, async () => {
     const bytes = crypto.getRandomValues(new Uint8Array(24))
     const key = 'gck_' + [...bytes].map(b => b.toString(16).padStart(2, '0')).join('')
     const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key)))].map(b => b.toString(16).padStart(2, '0')).join('')
-    check(await db.from('wake_keys').upsert({ user_id: caller.id, key_hash: hash, created_at: new Date().toISOString() }, { onConflict: 'user_id' }))
+    // A key per computer: the script names its computer on its first request, and the keys made on
+    // that computer before go then. Keys never used are dropped after a day, and ten at most are kept.
+    check(await db.from('wake_keys').delete().is('last_used_at', null).lt('created_at', new Date(Date.now() - 24 * 3600e3).toISOString()))
+    check(await db.from('wake_keys').insert({ user_id: caller.id, key_hash: hash, created_at: new Date().toISOString() }))
+    const { data: keys } = await db.from('wake_keys').select('id').order('last_used_at', { ascending: false, nullsFirst: true }).order('created_at', { ascending: false })
+    const extra = (keys ?? []).slice(10).map((k: any) => k.id)
+    if (extra.length) check(await db.from('wake_keys').delete().in('id', extra))
     return text({
       key,
       install: `mkdir -p ~/.goalcraft && curl -fsSL https://goalcraft.ai/wake/goalcraft-wake.py -o ~/.goalcraft/goalcraft-wake.py && python3 ~/.goalcraft/goalcraft-wake.py install ${key}`,
+      install_windows: `New-Item -ItemType Directory -Force "$HOME\\.goalcraft" | Out-Null; Invoke-WebRequest https://goalcraft.ai/wake/goalcraft-wake.py -OutFile "$HOME\\.goalcraft\\goalcraft-wake.py"; py "$HOME\\.goalcraft\\goalcraft-wake.py" install ${key}`,
+      windows_note: 'Needs Python 3 from python.org (py) or the Microsoft Store (then python instead of py). In Git Bash (Claude Code on Windows) the install command works too, with python instead of python3.',
       log: '~/.goalcraft/wake.log',
       remove: 'python3 ~/.goalcraft/goalcraft-wake.py uninstall',
       about: 'https://github.com/oponfil/goalcraft/tree/main/wake',

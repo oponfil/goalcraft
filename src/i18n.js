@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=a29014e7';
-import vi from './lang/vi.js?v=a29014e7';
-import ja from './lang/ja.js?v=a29014e7';
-import pt from './lang/pt.js?v=a29014e7';
-import tr from './lang/tr.js?v=a29014e7';
-import ko from './lang/ko.js?v=a29014e7';
+import es from './lang/es.js?v=597001e3';
+import vi from './lang/vi.js?v=597001e3';
+import ja from './lang/ja.js?v=597001e3';
+import pt from './lang/pt.js?v=597001e3';
+import tr from './lang/tr.js?v=597001e3';
+import ko from './lang/ko.js?v=597001e3';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -210,7 +210,7 @@ const STRINGS = {
 
 4. Make yourself regular. Ask me how you should be woken: in this same chat, if this app can wake you here (you remember our conversation, but the timer lives only while the chat is open), or as a separate scheduled task (a new chat each time, but reliable). If the app has no scheduling at all, tell me.
 
-5. Wake up at once. If you run on my own computer (Claude Code, Codex), offer to set up the Goalcraft wake script: it wakes you and the other agents here within seconds when I write to one of you, answer a question, or an agent misses its run. With my OK, set it up through Goalcraft; if it is already installed, skip this.
+5. Wake up at once. If you run on my own computer (Claude Code, Codex), offer to set up the Goalcraft wake script: it wakes you and the other agents here within seconds when I write to one of you, answer a question, or an agent misses its run. With my OK, set it up through Goalcraft; if it already runs on this computer, skip this (each computer my agents work on needs its own).
 
 6. On every run (how to show that you are working, asking or asleep is in Goalcraft's instructions):
 - Start with the funnel's notes. Keep them current and short: write down what we agreed and everything important, and remove what is outdated or unimportant.

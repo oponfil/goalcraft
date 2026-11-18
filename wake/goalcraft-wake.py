@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Goalcraft wake script: wakes your agents on this computer as soon as something waits for them.
 
-Every 10 seconds it asks Goalcraft which of your agents to wake: one you wrote to from the dashboard,
+Every 10 seconds it asks Goalcraft which of your agents to wake: one you or another agent wrote to,
 one whose question you answered while it sleeps, or one that went silent (it missed its run, or
-stopped signalling at work). It wakes each in its own conversation with a short note to check
-Goalcraft: a Claude app session (Claude Code) through `claude -p --resume`, a Codex thread through
-`codex exec resume`, a Gemini agent's conversation in Google Antigravity through Antigravity's own
-server on this Mac (while Antigravity runs). Web chats (claude.ai, chatgpt.com) can't be woken from outside and are skipped;
-so are bots in the Grok Bot app, which run in the cloud on their own schedules, and the Kimi app's
-agent, which can't be resumed in one conversation from outside.
+stopped signalling at work). It wakes those whose conversation is on this computer, each in its own
+conversation with a short note to check Goalcraft: a Claude app session (Claude Code) through
+`claude -p --resume`, a Codex thread through `codex exec resume`, a Gemini agent's conversation in
+Google Antigravity through Antigravity's own server here (while Antigravity runs). The others are left
+for the script on the computer they work on: you can run it on several (a Mac and a PC), each with its
+own key. Web chats (claude.ai, chatgpt.com) can't be woken from outside and are skipped; so are bots in
+the Grok Bot app, which run in the cloud on their own schedules, and the Kimi app's agent, which can't
+be resumed in one conversation from outside.
 
-    python3 goalcraft-wake.py install <key>   save the key and keep the script running (macOS)
+    python3 goalcraft-wake.py install <key>   save the key and keep the script running (macOS, Windows)
     python3 goalcraft-wake.py uninstall       stop it and remove it from the login items
     python3 goalcraft-wake.py once            one check, then exit (to try it)
     python3 goalcraft-wake.py usage           read and send the agents' token use now, and print it
@@ -18,35 +20,40 @@ agent, which can't be resumed in one conversation from outside.
     python3 goalcraft-wake.py run             the loop itself (what install starts)
     python3 goalcraft-wake.py version         print this script's version
 
-The script never updates itself. It tells Goalcraft its version with every request, so an agent sees
-in list_funnels (wake_script) when a newer one is out, and can update it with your OK: the same
-download, then a restart (your key stays).
+It updates itself: with every check Goalcraft says which version is out and its SHA-256; a newer one
+is downloaded from goalcraft.ai and put in place only if its hash is that one (so the file on the site
+alone can't change what runs here), then the script starts again. "auto_update": false in
+~/.goalcraft/wake.json turns that off.
 
 The key comes from the Goalcraft MCP tool create_wake_key (your agent calls it and runs install for you).
 It only lets the script ask whom to wake, and send what the agents' runs used in tokens (read from
 their session files here: numbers only, nothing from the conversations). Once an hour it also asks
-Anthropic how much of your Claude plan's limit is used, with Claude Code's own sign-in from this Mac's
-keychain (read here, sent only to Anthropic), and Google Antigravity (while it runs) how much of its Gemini
-quota is, from its own server on this Mac, so the dashboard can show each run's share of them. For bots
-in the Grok Bot app it asks the Grok Bot servers (with Grok Bot's own sign-in from this Mac, read here
-and sent only to them) how many tokens each bot used per day and how much of the plan's weekly limit
-is used. For the Kimi app's Work it asks Kimi how
-much of the plan's monthly quota is used, with the sign-in the app keeps on this Mac (sent only to Kimi).
+Anthropic how much of your Claude plan's limit is used, with Claude Code's own sign-in on this computer
+(the macOS keychain, or its file on Windows; read here, sent only to Anthropic), and Google Antigravity
+(while it runs) how much of its Gemini quota is, from its own server here, so the dashboard can show
+each run's share of them. On a Mac with the Grok Bot app it asks the Grok Bot servers (with Grok Bot's
+own sign-in, read here and sent only to them) how many tokens each bot used per day and how much of
+the plan's weekly limit is used. For the Kimi app's Work it asks Kimi how much of the plan's monthly
+quota is used, with the sign-in the app keeps here (sent only to Kimi).
 Standard library only; the log is ~/.goalcraft/wake.log.
 """
 import glob
+import hashlib
 import json
 import os
 import pathlib
+import re
+import socket
 import shutil
 import subprocess
 import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
-VERSION = '2026-10-29'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-18'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -56,18 +63,52 @@ CONFIG = DIR / 'wake.json'
 LOG = DIR / 'wake.log'
 LABEL = 'ai.goalcraft.wake'
 PLIST = HOME / 'Library' / 'LaunchAgents' / f'{LABEL}.plist'
-SESSIONS = HOME / 'Library' / 'Application Support' / 'Claude' / 'claude-code-sessions'
+MAC, WINDOWS = sys.platform == 'darwin', sys.platform == 'win32'
+# Where desktop apps keep their data: Application Support on a Mac, AppData\Roaming on Windows.
+APP_DATA = (HOME / 'Library' / 'Application Support' if MAC
+            else pathlib.Path(os.environ.get('APPDATA') or HOME / 'AppData' / 'Roaming') if WINDOWS
+            else pathlib.Path(os.environ.get('XDG_CONFIG_HOME') or HOME / '.config'))
+SESSIONS = APP_DATA / 'Claude' / 'claude-code-sessions'
+# Windows: started at sign-in from the Startup folder, with no window.
+STARTUP = APP_DATA / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'Startup' / 'goalcraft-wake.vbs'
+LOCK = DIR / 'wake.lock'  # one script at a time on a computer
+PIDFILE = DIR / 'wake.pid'
+NO_WINDOW = 0x08000000 if WINDOWS else 0  # Windows: the agents' tools run without a console window popping up
+URL = 'https://goalcraft.ai/wake/goalcraft-wake.py'  # where new versions come from
 # Where the agents' command-line tools usually are: launchd starts the script with a bare PATH.
 BINS = [HOME / '.local' / 'bin', pathlib.Path('/opt/homebrew/bin'), pathlib.Path('/usr/local/bin'), HOME / '.npm-global' / 'bin',
         # Codex as it comes inside the ChatGPT app on macOS.
-        pathlib.Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin')]
+        pathlib.Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin'),
+        # Windows: npm's global tools.
+        pathlib.Path(os.environ.get('APPDATA') or HOME / 'AppData' / 'Roaming') / 'npm']
 # The Goalcraft MCP server under the names it usually has: as a claude.ai connector, or added by hand.
 GOALCRAFT_TOOLS = ['mcp__claude_ai_Goalcraft', 'mcp__goalcraft', 'mcp__goalagents']
 RUN_LIMIT = 30 * 60  # a woken run that takes longer is stopped
 
+
+def computer_name():
+    """This computer's name as its owner knows it ("Oleg's MacBook Air", "DESKTOP-4F2K"): a person may run
+    the script on several (a Mac and a PC), each with its own key."""
+    name = None
+    if MAC:
+        try:
+            name = subprocess.run(['scutil', '--get', 'ComputerName'], capture_output=True, text=True, timeout=5).stdout.strip()
+        except Exception:
+            pass
+    elif WINDOWS:
+        name = os.environ.get('COMPUTERNAME')
+    name = name or socket.gethostname().split('.')[0]
+    return re.sub(r'\s+', ' ', name).strip()[:64] or 'computer'
+
+
+COMPUTER = computer_name()
+# What every request to Goalcraft says: the script's version, and its computer (encoded: a header is ASCII).
+OURS = {'User-Agent': AGENT, 'X-Goalcraft-Computer': urllib.parse.quote(COMPUTER)}
+
+
 WHY = {
-    'message': 'Someone wrote to you in Goalcraft (the person from the dashboard, or your funnel\'s supervisor).',
-    'reply': 'A worker agent replied to your message in Goalcraft.',
+    'message': 'Someone wrote to you in Goalcraft (the person from the dashboard, or another agent of your funnel).',
+    'reply': 'Another agent of your funnel replied to your message in Goalcraft.',
     'answer': 'The person answered your question on the Goalcraft dashboard.',
     'overdue': 'You missed your scheduled run: Goalcraft has not heard from you since.',
     'silent': 'Goalcraft has not heard from you for over 10 minutes while you were at work.',
@@ -78,7 +119,7 @@ def log(text):
     DIR.mkdir(exist_ok=True)
     if LOG.exists() and LOG.stat().st_size > 1_000_000:
         LOG.replace(DIR / 'wake.log.1')
-    with LOG.open('a') as f:
+    with LOG.open('a', encoding='utf-8') as f:
         f.write(time.strftime('%Y-%m-%d %H:%M:%S ') + text + '\n')
 
 
@@ -87,18 +128,21 @@ def find(tool):
     if path:
         return path
     for d in BINS:
-        if (d / tool).exists():
-            return str(d / tool)
+        for name in ([tool + '.exe', tool + '.cmd'] if WINDOWS else [tool]):
+            if (d / name).exists():
+                return str(d / name)
     return None
 
 
 def note(item):
     """The fixed note the agent gets: what happened and what to do. Nothing from the dashboard's text."""
     why = ' '.join(WHY[r] for r in item['reasons'] if r in WHY)
-    return (f'{why} Check Goalcraft now for the funnel "{item.get("funnel") or item["funnel_id"]}" '
+    text = (f'{why} Check Goalcraft now for the funnel "{item.get("funnel") or item["funnel_id"]}" '
             f'(funnel_id {item["funnel_id"]}) as agent "{item["agent"]}": set_agent_state(work), then get_messages '
             f'and get_answer for your answered questions, reply to each in one short line with reply, and do what they ask. '
             f'When done, set your state as usual (sleep with next_run_at, or clear_agent).')
+    # Windows hands a .cmd tool its arguments through cmd.exe, where a double quote can end one early.
+    return text.replace('"', "'") if WINDOWS else text
 
 
 def app_sessions():
@@ -106,7 +150,7 @@ def app_sessions():
     out = []
     for f in glob.glob(str(SESSIONS / '*' / '*' / 'local_*.json')):
         try:
-            out.append(json.loads(pathlib.Path(f).read_text()))
+            out.append(json.loads(pathlib.Path(f).read_text(encoding='utf-8')))
         except Exception:
             pass
     return out
@@ -117,58 +161,77 @@ def app_session(session):
     give its Claude Code session id there instead (local_<cliSessionId>), so that is looked up too."""
     files = glob.glob(str(SESSIONS / '*' / '*' / f'{session}.json'))
     if files:
-        return json.loads(pathlib.Path(files[0]).read_text())
+        return json.loads(pathlib.Path(files[0]).read_text(encoding='utf-8'))
     cli = session.removeprefix('local_')
     return next((s for s in app_sessions() if s.get('cliSessionId') == cli), None)
 
 
 def claude_command(item):
-    """`claude -p --resume` for a Claude app session: its local_ id maps to the Claude Code session it runs."""
-    claude = find('claude')
-    if not claude:
-        return None, 'claude command not found (install Claude Code and sign in with `claude`)'
+    """`claude -p --resume` for a Claude app session: its local_ id maps to the Claude Code session it runs.
+    None and why not when the session isn't on this computer (here False) or claude can't be run."""
     s = app_session(item['session'])
     if not s:
-        return None, f'no Claude app session {item["session"]} on this computer'
+        return None, f'no Claude app session {item["session"]} on this computer', False
+    claude = find('claude')
+    if not claude:
+        return None, 'claude command not found (install Claude Code and sign in with `claude`)', True
     cmd = [claude, '-p', '--resume', s['cliSessionId'], '--allowedTools', *GOALCRAFT_TOOLS]
     if s.get('permissionMode') in ('acceptEdits', 'bypassPermissions', 'plan'):
         cmd += ['--permission-mode', s['permissionMode']]
     if s.get('model'):
         cmd += ['--model', s['model']]
     cwd = s.get('cwd') if s.get('cwd') and os.path.isdir(s['cwd']) else str(HOME)
-    return (cmd + [note(item)], cwd), None
+    return (cmd + [note(item)], cwd), None, True
 
 
 def codex_command(item):
     """`codex exec resume` for a Codex thread. Run from the home folder: a login item may not read
     ~/Documents, where the Codex app keeps its threads' folders."""
+    if not glob.glob(str(CODEX_SESSIONS / '*' / '*' / '*' / f'rollout-*{item["session"]}.jsonl')):
+        return None, f'no Codex thread {item["session"]} on this computer', False
     codex = find('codex')
     if not codex:
-        return None, 'codex command not found'
-    return ([codex, 'exec', 'resume', '--skip-git-repo-check', item['session'], note(item)], str(HOME)), None
+        return None, 'codex command not found', True
+    return ([codex, 'exec', 'resume', '--skip-git-repo-check', item['session'], note(item)], str(HOME)), None, True
 
 
 running = set()  # sessions being woken now: one run at a time per conversation
+passed = {}  # agents not woken here lately (not on this computer, or something missing) → when: not looked at again for a while
+PASS_FOR = 10 * 60
 
 
-def wake(item):
+def who_of(item):
+    return f'{item["agent"]} in {item["funnel_id"]} ({", ".join(item["reasons"])})'
+
+
+def prepare(item):
+    """How to wake an agent on this computer: a function that does it, or None when it can't be woken
+    here (its conversation is on another computer, or a tool or app is missing: then logged, once)."""
     if item['app'] == 'antigravity':
-        return antigravity_wake(item)
-    key = item['session']
-    if key in running:
-        return
-    made, err = (claude_command if item['app'] == 'claude' else codex_command)(item)
-    who = f'{item["agent"]} in {item["funnel_id"]} ({", ".join(item["reasons"])})'
-    if err:
-        log(f'skip {who}: {err}')
-        return
-    cmd, cwd = made
+        cascade, model = antigravity_conversation(item)
+        if not cascade:
+            return None, 'its Antigravity conversation is not on this computer', False
+        server = antigravity_server()
+        if not server or not model:
+            return None, 'Antigravity is not running' if not server else 'no model found in its Antigravity conversation', True
+        return (lambda: antigravity_send(item, cascade, model, server)), None, True
+    if item['session'] in running:
+        return None, None, True
+    made, err, here = (claude_command if item['app'] == 'claude' else codex_command)(item)
+    if not made:
+        return None, err, here
+    return (lambda: start_run(item, *made)), None, True
+
+
+def start_run(item, cmd, cwd):
+    key, who = item['session'], who_of(item)
     running.add(key)
 
     def go():
         started = time.time()
         try:
-            out = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=RUN_LIMIT)
+            out = subprocess.run(cmd, cwd=cwd, capture_output=True, encoding='utf-8', errors='replace',
+                                 timeout=RUN_LIMIT, creationflags=NO_WINDOW)
             last = (out.stdout.strip().splitlines() or [''])[-1][:200]
             log(f'woke {who} in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if 'already has an active writer' in out.stderr:
@@ -177,6 +240,8 @@ def wake(item):
                 log('  ' + out.stderr.strip()[-500:])
         except subprocess.TimeoutExpired:
             log(f'woke {who}: stopped after {RUN_LIMIT // 60} min')
+        except Exception as e:
+            log(f'woke {who}: {e}')
         finally:
             running.discard(key)
     threading.Thread(target=go, daemon=True).start()
@@ -218,21 +283,17 @@ def antigravity_conversation(item):
     return pathlib.Path(f).stem, model
 
 
-def antigravity_wake(item):
+def antigravity_send(item, cascade, model, server):
     """Wake a Gemini agent in Google Antigravity: the note goes into its conversation as the person's
-    message, through Antigravity's own server on this Mac, with the model the agent works with (without
-    one Antigravity only files the message and doesn't run the agent)."""
+    message, through Antigravity's own server on this computer, with the model the agent works with
+    (without one Antigravity only files the message and doesn't run the agent)."""
     import ssl
-    who = f'{item["agent"]} in {item["funnel_id"]} ({", ".join(item["reasons"])})'
-    cascade, model = antigravity_conversation(item)
-    server = antigravity_server()
-    if not cascade or not model or not server:
-        log(f'skip {who}: ' + ('Antigravity is not running' if not server else 'its Antigravity conversation was not found'))
-        return
+    who = who_of(item)
     body = {'cascadeId': cascade, 'items': [{'text': note(item)}],
             'cascadeConfig': {'plannerConfig': {'requestedModel': {'model': model}}}}
     ctx = ssl.create_default_context()
     ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE  # its own certificate, on 127.0.0.1
+    err = None
     for port in server['ports']:
         req = urllib.request.Request(f'https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/SendUserCascadeMessage',
                                      data=json.dumps(body).encode(), method='POST', headers={
@@ -325,7 +386,7 @@ def claude_usage(item, sessions):
             if os.path.getmtime(f) < since:
                 continue
             seen, points = set(), []
-            with open(f, errors='ignore') as fh:
+            with open(f, encoding='utf-8', errors='ignore') as fh:
                 for line in fh:
                     if '"usage"' not in line:
                         continue
@@ -385,7 +446,7 @@ def local_claude_cost(since, until):
     for f in glob.glob(str(PROJECTS / '*' / '*.jsonl')):
         if os.path.getmtime(f) < since:
             continue
-        with open(f, errors='ignore') as fh:
+        with open(f, encoding='utf-8', errors='ignore') as fh:
             for line in fh:
                 if '"usage"' not in line:
                     continue
@@ -411,6 +472,8 @@ def keychain(service):
     """A keychain entry's secret. The first time, macOS asks the person whether to allow it (their
     password; Always Allow, and it won't ask again). A refusal is remembered, so they aren't asked every
     hour: the limit command asks again."""
+    if not MAC:
+        return None  # only macOS has this keychain
     denied = limit_state().get('keychain_denied', [])
     if service in denied and not ASK_AGAIN:
         return None
@@ -431,9 +494,11 @@ def keychain(service):
 
 
 def claude_token():
-    """Claude Code's sign-in on this Mac (its keychain entry), while it is still valid."""
+    """Claude Code's sign-in on this computer while it is still valid: its keychain entry on a Mac, its
+    file (~/.claude/.credentials.json) on Windows and Linux."""
     try:
-        o = json.loads(keychain('Claude Code-credentials') or '{}').get('claudeAiOauth') or {}
+        raw = keychain('Claude Code-credentials') if MAC else (HOME / '.claude' / '.credentials.json').read_text(encoding='utf-8')
+        o = json.loads(raw or '{}').get('claudeAiOauth') or {}
     except Exception:
         return None
     return o.get('accessToken') if o.get('expiresAt', 0) / 1000 > time.time() + 60 else None
@@ -444,7 +509,7 @@ def report_limit(key, show=False):
     session cost since the reading before."""
     token = claude_token()
     if not token:
-        log('limit: no valid Claude Code sign-in in the keychain; skipped')
+        log('limit: no valid Claude Code sign-in on this computer; skipped')
         return False
     req = urllib.request.Request('https://api.anthropic.com/api/oauth/usage', headers={
         'Authorization': f'Bearer {token}', 'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': AGENT})
@@ -468,7 +533,7 @@ def report_limit(key, show=False):
               + (f', local sessions since the last reading ≈${cost:.2f}' if cost is not None else ''))
     body = json.dumps({'limits': [row]}).encode()
     req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={
-        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+        'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             json.load(r)
@@ -481,18 +546,20 @@ def report_limit(key, show=False):
 
 def limit_state():
     try:
-        return json.loads(LIMIT_STATE.read_text())
+        return json.loads(LIMIT_STATE.read_text(encoding='utf-8'))
     except Exception:
         return {}
 
 
 def save_limit_state(**changes):
-    LIMIT_STATE.write_text(json.dumps({**limit_state(), **changes}))
+    LIMIT_STATE.write_text(json.dumps({**limit_state(), **changes}), encoding='utf-8')
 
 
 def antigravity_server():
-    """Antigravity's language server on this Mac, while the app runs: its local ports and the token the
-    app itself uses with it (from the process's command line; it never leaves this computer)."""
+    """Antigravity's language server on this computer, while the app runs: its local ports and the token
+    the app itself uses with it (from the process's command line; it never leaves this computer)."""
+    if WINDOWS:
+        return antigravity_server_windows()
     try:
         ps = subprocess.run(['ps', '-axo', 'pid=,command='], capture_output=True, text=True, timeout=10).stdout
     except Exception:
@@ -507,6 +574,30 @@ def antigravity_server():
         except Exception:
             continue
         ports = [l.split()[8].rsplit(':', 1)[1] for l in out.splitlines()[1:] if len(l.split()) > 8]
+        return {'token': token, 'ports': ports}
+    return None
+
+
+def antigravity_server_windows():
+    """antigravity_server on Windows: the process from PowerShell, its ports from netstat."""
+    try:
+        ps = subprocess.run(['powershell', '-NoProfile', '-Command',
+                             "Get-CimInstance Win32_Process -Filter \"Name like 'language_server%'\" | "
+                             "ForEach-Object { \"$($_.ProcessId) $($_.CommandLine)\" }"],
+                            capture_output=True, text=True, errors='replace', timeout=30, creationflags=NO_WINDOW).stdout
+    except Exception:
+        return None
+    for line in ps.splitlines():
+        if 'antigravity' not in line.lower() or '--csrf_token' not in line:
+            continue
+        pid = line.split()[0]
+        token = line.split('--csrf_token', 1)[1].strip(' ="').split()[0].strip('"')
+        try:
+            out = subprocess.run(['netstat', '-ano', '-p', 'TCP'], capture_output=True, text=True, errors='replace', timeout=20, creationflags=NO_WINDOW).stdout
+        except Exception:
+            continue
+        ports = [l.split()[1].rsplit(':', 1)[1] for l in out.splitlines()
+                 if len(l.split()) >= 5 and l.split()[3].upper() == 'LISTENING' and l.split()[4] == pid and l.split()[1].startswith(('127.0.0.1:', '0.0.0.0:'))]
         return {'token': token, 'ports': ports}
     return None
 
@@ -586,7 +677,7 @@ def report_antigravity_limit(key, show=False):
         save_limit_state(antigravity_at=now)
         return True
     req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': rows}).encode(), method='POST', headers={
-        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+        'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             json.load(r)
@@ -613,7 +704,7 @@ def codex_usage(item):
         if os.path.getmtime(f) < since:
             continue
         points, model = [], None
-        with open(f, errors='ignore') as fh:
+        with open(f, encoding='utf-8', errors='ignore') as fh:
             for line in fh:
                 # The thread's model: set when the thread starts, and again when it changes.
                 if '"thread_settings_applied"' in line or '"turn_context"' in line:
@@ -780,7 +871,7 @@ def antigravity_usage(item):
 
 # Grok Bot (bots that run in the cloud): what they use is on its servers, per bot and per day, read with
 # the app's own sign-in from this Mac. Its sign-in is encrypted with a key kept in the keychain.
-GROK_BOT = HOME / 'Library' / 'Application Support' / 'Grok Bot'
+GROK_BOT = APP_DATA / 'Grok Bot'
 GROK_API = 'https://api2.cursor.sh/aiserver.v1.DashboardService/'
 GROK_STATE = DIR / 'grok.json'  # the hours read: each asked once, and all sent again when the servers can't be reached
 
@@ -788,9 +879,10 @@ GROK_STATE = DIR / 'grok.json'  # the hours read: each asked once, and all sent 
 def grok_token():
     """Grok Bot's sign-in on this Mac, while it is still valid (the app renews it while it runs)."""
     import base64
-    import hashlib
+    if not MAC:
+        return None  # elsewhere its sign-in is sealed in a way only the app (or a library beyond Python's own) opens
     try:
-        accounts = json.loads(json.loads((GROK_BOT / 'sand-secrets.json').read_text())['cursor-accounts'])
+        accounts = json.loads(json.loads((GROK_BOT / 'sand-secrets.json').read_text(encoding='utf-8'))['cursor-accounts'])
     except Exception:
         return None  # no Grok Bot on this Mac: its keychain entry isn't asked for
     pw = keychain('Grok Bot Safe Storage')
@@ -832,7 +924,7 @@ def grok_rows():
     status = grok_call(token, 'GetSandUsageStatus', {})
     begun = when(status.get('currentPeriodStart'))
     try:
-        hours = {k: v for k, v in json.loads(GROK_STATE.read_text()).get('hours', {}).items()}
+        hours = {k: v for k, v in json.loads(GROK_STATE.read_text(encoding='utf-8')).get('hours', {}).items()}
     except Exception:
         hours = {}
     first = int((now - USAGE_DAYS * 86400) // 3600 * 3600)
@@ -883,7 +975,7 @@ def grok_read():
         GROK_STATE.write_text(json.dumps(read))
         return read
     try:
-        return json.loads(GROK_STATE.read_text())
+        return json.loads(GROK_STATE.read_text(encoding='utf-8'))
     except Exception:
         return None
 
@@ -905,7 +997,7 @@ def report_grok_limit(key, show=False):
     if show:
         print(f'Grok Bot: {row["week_percent"]}% of the week used (resets {row["week_resets_at"]})')
     req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={
-        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+        'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             json.load(r)
@@ -917,7 +1009,7 @@ def report_grok_limit(key, show=False):
 
 # Kimi (the Kimi app's Work mode): its agent runs here as Kimi Code, one folder per conversation, each
 # with a record of every model call and its tokens.
-KIMI_SESSIONS = HOME / 'Library' / 'Application Support' / 'kimi-desktop' / 'daimon-share' / 'daimon' / 'runtime' / 'kimi-code' / 'home' / 'sessions'
+KIMI_SESSIONS = APP_DATA / 'kimi-desktop' / 'daimon-share' / 'daimon' / 'runtime' / 'kimi-code' / 'home' / 'sessions'
 
 
 def kimi_owner(conv):
@@ -927,7 +1019,7 @@ def kimi_owner(conv):
     import re
     calls = collections.Counter()
     for f in glob.glob(str(pathlib.Path(conv) / 'agents' / '*' / 'wire.jsonl')):
-        raw = pathlib.Path(f).read_text(errors='replace')
+        raw = pathlib.Path(f).read_text(encoding='utf-8', errors='replace')
         for m in re.finditer(r'\\?"agent\\?"\s*:\s*\\?"([a-z0-9_-]+)\\?"\s*,\s*\\?"funnel_id\\?"\s*:\s*\\?"([a-z0-9-]+)', raw):
             calls[(m.group(1), m.group(2))] += 1
     return calls.most_common(1)[0][0] if calls else None
@@ -952,7 +1044,7 @@ def kimi_usage(item):
             continue
         points = []
         for f in glob.glob(str(pathlib.Path(conv) / 'agents' / '*' / 'wire.jsonl')):
-            for line in open(f, errors='replace'):
+            for line in open(f, encoding='utf-8', errors='replace'):
                 if '"usage.record"' not in line:
                     continue
                 try:
@@ -983,7 +1075,7 @@ def kimi_usage(item):
     return out
 
 
-KIMI_CONFIG = HOME / 'Library' / 'Application Support' / 'kimi-desktop' / 'daimon-share' / 'daimon' / 'config.json'
+KIMI_CONFIG = APP_DATA / 'kimi-desktop' / 'daimon-share' / 'daimon' / 'config.json'
 
 
 def kimi_window_cost(since, until):
@@ -993,7 +1085,7 @@ def kimi_window_cost(since, until):
     for f in glob.glob(str(KIMI_SESSIONS / '*' / 'conv-*' / 'agents' / '*' / 'wire.jsonl')):
         if os.path.getmtime(f) < since:
             continue
-        for line in open(f, errors='replace'):
+        for line in open(f, encoding='utf-8', errors='replace'):
             if '"usage.record"' not in line:
                 continue
             try:
@@ -1019,7 +1111,7 @@ def report_kimi_limit(key, show=False):
     it to Goalcraft, with what Work cost here since the quota's month began. Its sign-in is the app's
     own (its config on this Mac), read here and sent only to Kimi."""
     try:
-        c = json.loads(KIMI_CONFIG.read_text())['credentials']['kimiCode']
+        c = json.loads(KIMI_CONFIG.read_text(encoding='utf-8'))['credentials']['kimiCode']
     except Exception:
         return False  # no Kimi app here, or not signed in to Work: nothing to read
     req = urllib.request.Request(c.get('baseUrl', 'https://api.kimi.com/coding/v1').rstrip('/') + '/usages',
@@ -1044,7 +1136,7 @@ def report_kimi_limit(key, show=False):
     if show:
         print(f'Kimi: {percent}% of the month used (resets {q["resetTime"]}), Work here cost ≈${window:.2f} since it began')
     req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={
-        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+        'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             json.load(r)
@@ -1060,7 +1152,7 @@ def report_codex_limit(key, show=False):
     files = sorted(glob.glob(str(CODEX_SESSIONS / '*' / '*' / '*' / 'rollout-*.jsonl')), key=os.path.getmtime, reverse=True)[:5]
     latest = None
     for f in files:
-        for line in open(f, errors='replace'):
+        for line in open(f, encoding='utf-8', errors='replace'):
             if '"rate_limits"' not in line:
                 continue
             try:
@@ -1081,7 +1173,7 @@ def report_codex_limit(key, show=False):
     if show:
         print(f'Codex: {row["week_percent"]}% of the week used (resets {row["week_resets_at"]})')
     req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={
-        'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+        'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             json.load(r)
@@ -1093,7 +1185,7 @@ def report_codex_limit(key, show=False):
 
 def report_usage(key, show=False):
     """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
-    req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
+    req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', **OURS})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             agents = json.load(r).get('agents', [])
@@ -1123,7 +1215,7 @@ def report_usage(key, show=False):
     for i in range(0, len(rows), 400):
         body = json.dumps({'usage': rows[i:i + 400], **({'replace_from': since} if i == 0 else {})}).encode()
         req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={
-            'Authorization': f'Bearer {key}', 'User-Agent': AGENT, 'Content-Type': 'application/json'})
+            'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 saved += json.load(r).get('saved', 0)
@@ -1132,26 +1224,134 @@ def report_usage(key, show=False):
     return saved
 
 
-def check(key, wake_them=True):
-    req = urllib.request.Request(ENDPOINT, headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
+def check(key):
+    """Ask Goalcraft whom to wake, take (claim) those whose conversation is on this computer, and wake
+    them. The others are left for the script on the computer they work on."""
+    req = urllib.request.Request(ENDPOINT + '?claim=1', headers={'Authorization': f'Bearer {key}', **OURS})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
-            items = json.load(r).get('wake', [])
+            got = json.load(r)
     except urllib.error.HTTPError as e:
         log(f'check failed: HTTP {e.code} {e.read()[:200]!r}')
         return e.code
     except Exception as e:  # offline, timeout: try again next time
         log(f'check failed: {e}')
         return None
-    if wake_them:
-        for item in items:
-            wake(item)
+    update(got.get('script'))
+    now, ready = time.time(), []
+    for item in got.get('wake', []):
+        seen = f'{item["funnel_id"]}|{item["agent"]}|{",".join(item["reasons"])}'
+        if passed.get(seen, 0) > now - PASS_FOR:
+            continue
+        job, why, here = prepare(item)
+        if job:
+            ready.append((item, job))
+        elif why:
+            passed[seen] = now
+            if here:
+                log(f'skip {who_of(item)}: {why}')
+    if not ready:
+        return 200
+    body = json.dumps({'claim': [{'funnel_id': i['funnel_id'], 'agent': i['agent'], 'marks': i.get('marks')} for i, _ in ready]}).encode()
+    req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            claimed = json.load(r).get('claimed', [])
+    except Exception as e:
+        log(f'claim failed: {e}')
+        return None
+    for (item, job), ok in zip(ready, claimed):
+        if ok:
+            job()
     return 200
+
+
+# Updates: Goalcraft says with every check which version is out and its SHA-256. A newer one is
+# downloaded from goalcraft.ai and put in place only when its hash is that one, then the script starts
+# again (after any agent it is waking has finished). "auto_update": false in wake.json turns it off.
+UPDATE_RETRY = 60 * 60
+update_tried = {}  # version → when: a download that failed or didn't match is tried again an hour later
+restart_pending = False
+
+
+def update(script):
+    global restart_pending
+    try:
+        if restart_pending or not isinstance(script, dict) or json.loads(CONFIG.read_text(encoding='utf-8')).get('auto_update') is False:
+            return
+    except Exception:
+        return
+    latest, want = str(script.get('version') or ''), str(script.get('sha256') or '')
+    if not latest or latest <= VERSION or len(want) != 64 or update_tried.get(latest, 0) > time.time() - UPDATE_RETRY:
+        return
+    update_tried[latest] = time.time()
+    try:
+        with urllib.request.urlopen(urllib.request.Request(URL, headers={'User-Agent': AGENT}), timeout=60) as r:
+            data = r.read()
+    except Exception as e:
+        log(f'update to {latest}: could not download it: {e}')
+        return
+    if hashlib.sha256(data).hexdigest() != want:
+        log(f'update to {latest}: the file on goalcraft.ai is not the one Goalcraft announced; kept {VERSION}, trying again in an hour')
+        return
+    me = pathlib.Path(__file__).resolve()
+    new = me.with_name(me.name + '.new')
+    new.write_bytes(data)
+    os.replace(new, me)
+    log(f'updated {VERSION} → {latest}: starting again')
+    restart_pending = True
+
+
+def restart():
+    """Start this script again, now its file is the new version (the same process on macOS and Linux)."""
+    release_lock()
+    if WINDOWS:
+        subprocess.Popen([pythonw(), str(pathlib.Path(__file__).resolve()), 'run'], cwd=str(HOME),
+                         creationflags=0x00000008 | 0x00000200 | NO_WINDOW, close_fds=True)  # detached, its own group
+        os._exit(0)
+    os.execv(sys.executable, [sys.executable, str(pathlib.Path(__file__).resolve()), 'run'])
+
+
+lock_file = None
+
+
+def take_lock():
+    """One script at a time on a computer: False when another already runs."""
+    global lock_file
+    DIR.mkdir(exist_ok=True)
+    lock_file = open(LOCK, 'a+')
+    try:
+        if WINDOWS:
+            import msvcrt
+            lock_file.seek(0)
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        lock_file.close()
+        lock_file = None
+        return False
+    PIDFILE.write_text(str(os.getpid()))
+    return True
+
+
+def release_lock():
+    global lock_file
+    if lock_file:
+        lock_file.close()  # closing the file lets the lock go
+        lock_file = None
+
+
+def pythonw():
+    """Windows: the Python that runs without a console window."""
+    w = pathlib.Path(sys.executable).with_name('pythonw.exe')
+    return str(w) if w.exists() else sys.executable
 
 
 def verify(key):
     """Whether Goalcraft knows the key, without asking whom to wake (that would mark them as woken)."""
-    req = urllib.request.Request(ENDPOINT + '?check=1', headers={'Authorization': f'Bearer {key}', 'User-Agent': AGENT})
+    req = urllib.request.Request(ENDPOINT + '?check=1', headers={'Authorization': f'Bearer {key}', **OURS})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
             return r.status
@@ -1163,7 +1363,7 @@ def verify(key):
 
 def key_or_exit():
     try:
-        return json.loads(CONFIG.read_text())['key']
+        return json.loads(CONFIG.read_text(encoding='utf-8'))['key']
     except Exception:
         sys.exit('No key yet: ask your agent to set up the Goalcraft wake script (it calls create_wake_key and installs it)')
 
@@ -1188,18 +1388,29 @@ def limit_job(key):
 
 def run():
     key = key_or_exit()
-    log('started')
+    if not take_lock():
+        print('The wake script already runs on this computer.')
+        return
+    log(f'started {VERSION} on {COMPUTER}')
     counted = 0
     while True:
-        if check(key) == 401:
-            log('the key was replaced or removed: stopping. Ask your agent to set up the wake script again (create_wake_key).')
-            return
-        if time.time() - counted > USAGE_EVERY:
-            counted = time.time()
-            threading.Thread(target=report_usage, args=(key,), daemon=True).start()
-        if time.time() >= limit_next:
-            limit_next_after(LIMIT_EVERY)  # until this reading ends; a failed one is tried again sooner
-            threading.Thread(target=limit_job, args=(key,), daemon=True).start()
+        try:
+            if restart_pending:
+                if not running:
+                    restart()
+                time.sleep(EVERY)
+                continue
+            if check(key) == 401:
+                log('the key was replaced or removed: stopping. Ask your agent to set up the wake script again (create_wake_key).')
+                return
+            if time.time() - counted > USAGE_EVERY:
+                counted = time.time()
+                threading.Thread(target=report_usage, args=(key,), daemon=True).start()
+            if time.time() >= limit_next:
+                limit_next_after(LIMIT_EVERY)  # until this reading ends; a failed one is tried again sooner
+                threading.Thread(target=limit_job, args=(key,), daemon=True).start()
+        except Exception as e:  # one bad check doesn't stop the script
+            log(f'error: {e!r}')
         time.sleep(EVERY)
 
 
@@ -1207,17 +1418,32 @@ def install(key):
     if not key.startswith('gck_'):
         sys.exit('That does not look like a Goalcraft wake key (gck_…): the MCP tool create_wake_key makes one.')
     DIR.mkdir(exist_ok=True)
-    CONFIG.write_text(json.dumps({'key': key}))
+    try:
+        before = json.loads(CONFIG.read_text(encoding='utf-8'))
+    except Exception:
+        before = {}
+    CONFIG.write_text(json.dumps({**before, 'key': key}), encoding='utf-8')
     CONFIG.chmod(0o600)
     me = DIR / 'goalcraft-wake.py'
     if pathlib.Path(__file__).resolve() != me.resolve():
         shutil.copy(__file__, me)
-    # Only check the key here: the service started below does the waking, and logs it.
+    # Only check the key here: the script started below does the waking, and logs it.
     if verify(key) == 401:
         sys.exit('Goalcraft does not know this key: the MCP tool create_wake_key makes a new one.')
-    if sys.platform != 'darwin':
+    if WINDOWS:
+        install_windows(me)
+    elif MAC:
+        install_mac(me)
+    else:
         print(f'Key saved. Keep `python3 {me} run` running (for example from cron or a service).')
         return
+    print(f'Goalcraft wake is on ({COMPUTER}): it checks every 10 seconds, starts again after a restart and updates itself.')
+    print(f'Log: {LOG}. To stop it: python3 {me} uninstall')
+    if not find('claude') and not find('codex'):
+        print('Note: neither `claude` (Claude Code) nor `codex` was found on this computer, so there is nothing to wake yet.')
+
+
+def install_mac(me):
     PLIST.parent.mkdir(parents=True, exist_ok=True)
     PLIST.write_text(f'''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -1232,17 +1458,38 @@ def install(key):
     uid = os.getuid()
     subprocess.run(['launchctl', 'bootout', f'gui/{uid}/{LABEL}'], capture_output=True)
     subprocess.run(['launchctl', 'bootstrap', f'gui/{uid}', str(PLIST)], check=True)
-    print('Goalcraft wake is on: it checks every 10 seconds and starts again after a restart.')
-    print(f'Log: {LOG}. To stop it: python3 {me} uninstall')
-    if not find('claude') and not find('codex'):
-        print('Note: neither `claude` (Claude Code) nor `codex` was found on this computer, so there is nothing to wake yet.')
+
+
+def install_windows(me):
+    """Windows: a script in the Startup folder starts it at sign-in with no window; it starts now too."""
+    STARTUP.parent.mkdir(parents=True, exist_ok=True)
+    STARTUP.write_text(f'CreateObject("WScript.Shell").Run """{pythonw()}"" ""{me}"" run", 0, False\r\n', encoding='utf-8')
+    stop_windows()
+    subprocess.Popen([pythonw(), str(me), 'run'], cwd=str(HOME), creationflags=0x00000008 | 0x00000200 | NO_WINDOW, close_fds=True)
+
+
+def stop_windows():
+    """Stop the script running on this Windows computer (the process its pid file names, if it is Python)."""
+    try:
+        pid = int(PIDFILE.read_text().strip())
+    except Exception:
+        return
+    found = subprocess.run(['tasklist', '/FI', f'PID eq {pid}', '/FO', 'CSV', '/NH'], capture_output=True, text=True,
+                           creationflags=NO_WINDOW).stdout.lower()
+    if 'python' in found:
+        subprocess.run(['taskkill', '/PID', str(pid), '/F'], capture_output=True, creationflags=NO_WINDOW)
+        time.sleep(1)
 
 
 def uninstall():
-    if sys.platform == 'darwin':
+    if MAC:
         subprocess.run(['launchctl', 'bootout', f'gui/{os.getuid()}/{LABEL}'], capture_output=True)
         if PLIST.exists():
             PLIST.unlink()
+    elif WINDOWS:
+        if STARTUP.exists():
+            STARTUP.unlink()
+        stop_windows()
     print('Goalcraft wake is off. The key stays in ~/.goalcraft/wake.json until a new one replaces it.')
 
 

@@ -6,7 +6,7 @@ could run with an old script, and a missing export stops the whole page. With th
 address, a changed file is a new address and a page always loads the files it was made with. The
 version is a hash of all the scripts and stylesheets, so it changes whenever any of them does.
 
-Run before each commit that touches src/, the pages or the CSS:  python3 tools/stamp.py
+Run before each commit that touches src/, the pages, the CSS or the wake script:  python3 tools/stamp.py
 """
 import hashlib, pathlib, re, subprocess
 
@@ -36,3 +36,15 @@ for f in files:
         f.write_text(new)
         changed += 1
 print(f'version {version}: {changed} files stamped')
+
+# The wake script's release, for the wake endpoint: the version and SHA-256 of wake/goalcraft-wake.py as
+# goalcraft.ai serves it. Scripts update themselves to it, and only to a file with this hash, so the
+# file on the site alone can't change what runs on people's computers. Deploy the wake function after.
+script = (ROOT / 'wake' / 'goalcraft-wake.py').read_bytes()
+release = re.search(rb"^VERSION = '([\w.-]+)'", script, re.M).group(1).decode()
+out = ROOT / 'supabase' / 'functions' / 'wake' / 'release.ts'
+text = ('// Written by tools/stamp.py from wake/goalcraft-wake.py: the version the scripts update themselves to.\n'
+        f"export const WAKE_RELEASE = {{ version: '{release}', sha256: '{hashlib.sha256(script).hexdigest()}' }}\n")
+if not out.exists() or out.read_text() != text:
+    out.write_text(text)
+    print(f'wake script {release}: release.ts written; deploy the wake function')
