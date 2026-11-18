@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-18.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-18.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1246,8 +1246,10 @@ def report_kimi_limit(key, show=False):
 
 
 def report_codex_limit(key, show=False):
-    """Send Codex's weekly limit as its latest session logged it (used percent, when it resets), so the
-    dashboard can list it with the others."""
+    """Send Codex's weekly (or monthly) limit as Codex last logged it, so the dashboard can list it with
+    the others. Its newest note of the limits is what holds now (the plan may have changed: a month's
+    limit then, a week's and 5 hours' now); of those, the one of a day or longer (the week's before the
+    month's). It goes with the time Codex noted it, so another computer's newer note isn't overwritten."""
     files = sorted(glob.glob(str(CODEX_SESSIONS / '*' / '*' / '*' / 'rollout-*.jsonl')), key=os.path.getmtime, reverse=True)[:5]
     latest = None
     for f in files:
@@ -1258,17 +1260,16 @@ def report_codex_limit(key, show=False):
                 d = json.loads(line)
             except Exception:
                 continue
-            p = ((d.get('payload') or {}).get('rate_limits') or {}).get('primary') or {}
-            if p.get('used_percent') is not None and p.get('resets_at') and (p.get('window_minutes') or 0) >= 1440:
-                at = when(d.get('timestamp') or '') or 0
-                if not latest or at > latest[0]:
-                    latest = (at, p)
-        if latest:
-            break
-    if not latest:
-        return False
+            rl = (d.get('payload') or {}).get('rate_limits') or {}
+            long = [w for w in (rl.get('primary') or {}, rl.get('secondary') or {})
+                    if w.get('used_percent') is not None and w.get('resets_at') and (w.get('window_minutes') or 0) >= 1440]
+            at = when(d.get('timestamp') or '') or 0
+            if long and (not latest or at > latest[0]):
+                latest = (at, min(long, key=lambda w: w['window_minutes']))
+    if not latest or latest[1]['resets_at'] < time.time():
+        return False  # nothing logged, or the limit has reset since: nothing true to send
     p = latest[1]
-    row = {'app': 'codex', 'at': iso(time.time()), 'week_percent': round(float(p['used_percent']), 2), 'week_resets_at': iso(p['resets_at'])}
+    row = {'app': 'codex', 'at': iso(latest[0]), 'week_percent': round(float(p['used_percent']), 2), 'week_resets_at': iso(p['resets_at'])}
     if show:
         print(f'Codex: {row["week_percent"]}% of the week used (resets {row["week_resets_at"]})')
     req = urllib.request.Request(ENDPOINT, data=json.dumps({'limits': [row]}).encode(), method='POST', headers={

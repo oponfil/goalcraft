@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=2924c04a';
+import { supabase } from './auth.js?v=bd7bf639';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -173,8 +173,10 @@ const withLimit = r => {
 
 export async function loadFunnels() {
   const now = Date.now();
-  const readings = await supabase.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, cost_usd, window_cost_usd')
-    .gte('at', new Date(now - 8 * DAY).toISOString()).order('at');
+  // All of them, page by page: a week of readings from two computers is more than one page (1000), and
+  // the newest, which say how much is used now, come last.
+  const readings = await all(() => supabase.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, cost_usd, window_cost_usd')
+    .gte('at', new Date(now - 8 * DAY).toISOString()).order('at').order('app').order('quota'));
   if (!readings.error) {
     const keys = [...new Set(readings.data.map(r => (r.quota ? `${r.app}:${r.quota}` : r.app)))];
     limits = Object.fromEntries(keys.map(k => [k, limitRate(readings.data.filter(r => (r.quota ? `${r.app}:${r.quota}` : r.app) === k), LIMIT_MIN[k.split(':')[0]])]));
