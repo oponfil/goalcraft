@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=5f9d88ce';
-import vi from './lang/vi.js?v=5f9d88ce';
-import ja from './lang/ja.js?v=5f9d88ce';
-import pt from './lang/pt.js?v=5f9d88ce';
-import tr from './lang/tr.js?v=5f9d88ce';
-import ko from './lang/ko.js?v=5f9d88ce';
+import es from './lang/es.js?v=3e43e6ce';
+import vi from './lang/vi.js?v=3e43e6ce';
+import ja from './lang/ja.js?v=3e43e6ce';
+import pt from './lang/pt.js?v=3e43e6ce';
+import tr from './lang/tr.js?v=3e43e6ce';
+import ko from './lang/ko.js?v=3e43e6ce';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -386,11 +386,11 @@ const STRINGS = {
   'spend.none': L('No spending yet: it comes from the wake script on your computer, which reads it from your agents\' apps.', 'Расхода пока нет: его присылает скрипт пробуждения на вашем компьютере, читая его из приложений агентов.', '还没有消耗记录：它来自你电脑上的唤醒脚本，从智能体的应用中读取。', 'ยังไม่มีค่าใช้จ่าย: สคริปต์ปลุกบนคอมพิวเตอร์ของคุณจะส่งมา โดยอ่านจากแอปของเอเจนต์'),
   'wake.title': L('Wake scripts', 'Скрипты пробуждения', '唤醒脚本', 'สคริปต์ปลุก'),
   'wake.count': L((a, b) => `running: ${a} of ${b}`, (a, b) => `работают: ${a} из ${b}`, (a, b) => `运行中：${a}/${b}`, (a, b) => `ทำงาน: ${a} จาก ${b}`),
-  'wake.about': L('Spending and limits come from the wake script on each computer your agents work on: runs on a computer without a running script are not counted. Agents in web chats (claude.ai, chatgpt.com) are never counted.', 'Расход и лимиты присылает скрипт пробуждения на каждом компьютере, где работают агенты: запуски на компьютере, где он не работает, не учитываются. Агенты в веб-чатах (claude.ai, chatgpt.com) не учитываются никогда.', '消耗和额度来自智能体所在每台电脑上的唤醒脚本：在脚本未运行的电脑上的运行不会被统计。网页聊天中的智能体（claude.ai、chatgpt.com）从不统计。', 'ค่าใช้จ่ายและโควตามาจากสคริปต์ปลุกบนคอมพิวเตอร์แต่ละเครื่องที่เอเจนต์ทำงาน: การรันบนเครื่องที่สคริปต์ไม่ทำงานจะไม่ถูกนับ เอเจนต์ในเว็บแชต (claude.ai, chatgpt.com) จะไม่ถูกนับเลย'),
+  'wake.about': L('Tokens and limits come from the wake script on each computer your agents work on: the spending of runs on a computer where it isn\'t running is not counted. For agents in web chats (claude.ai, chatgpt.com) it can\'t be read at all; their work on the funnels counts as usual.', 'Токены и лимиты присылает скрипт пробуждения на каждом компьютере, где работают агенты: расход запусков на компьютере, где он не работает, не учитывается. У агентов в веб-чатах (claude.ai, chatgpt.com) расход прочитать нельзя совсем; их работа на воронках учитывается как обычно.', '令牌和额度来自智能体所在每台电脑上的唤醒脚本：脚本未运行的电脑上的运行不计入消耗。网页聊天中的智能体（claude.ai、chatgpt.com）的消耗完全无法读取；它们在漏斗上的工作照常计入。', 'โทเค็นและโควตามาจากสคริปต์ปลุกบนคอมพิวเตอร์แต่ละเครื่องที่เอเจนต์ทำงาน: ค่าใช้จ่ายของการรันบนเครื่องที่สคริปต์ไม่ทำงานจะไม่ถูกนับ สำหรับเอเจนต์ในเว็บแชต (claude.ai, chatgpt.com) อ่านค่าใช้จ่ายไม่ได้เลย แต่งานของพวกเขาในกรวยยังนับตามปกติ'),
   'wake.none': L('No wake script yet, so the agents\' spending isn\'t counted. Ask an agent on your computer (Claude Code, Codex) to set up the Goalcraft wake script.', 'Скрипт пробуждения ещё не установлен, поэтому расход агентов не учитывается. Попросите агента на своём компьютере (Claude Code, Codex) поставить скрипт пробуждения Goalcraft.', '还没有唤醒脚本，因此不统计智能体的消耗。请让你电脑上的智能体（Claude Code、Codex）安装 Goalcraft 唤醒脚本。', 'ยังไม่มีสคริปต์ปลุก จึงไม่นับค่าใช้จ่ายของเอเจนต์ ขอให้เอเจนต์บนคอมพิวเตอร์ของคุณ (Claude Code, Codex) ติดตั้งสคริปต์ปลุก Goalcraft'),
   'wake.running': L('running', 'работает', '运行中', 'ทำงานอยู่'),
   'wake.silent': L((d) => `silent for ${d}`, (d) => `не на связи ${d}`, (d) => `已 ${d} 未联系`, (d) => `ขาดการติดต่อ ${d}`),
-  'wake.silentTip': L('Its computer is off or asleep, or the script stopped: runs there are not counted meanwhile.', 'Компьютер выключен или спит, либо скрипт остановился: запуски там пока не учитываются.', '电脑关机或休眠，或脚本已停止：期间那里的运行不会被统计。', 'คอมพิวเตอร์ปิดหรือหลับอยู่ หรือสคริปต์หยุดทำงาน: ระหว่างนี้การรันที่นั่นจะไม่ถูกนับ'),
+  'wake.silentTip': L('Its computer is off or asleep, or the script stopped: the spending of runs there is not counted meanwhile.', 'Компьютер выключен или спит, либо скрипт остановился: расход запусков там пока не учитывается.', '电脑关机或休眠，或脚本已停止：期间那里运行的消耗不会被统计。', 'คอมพิวเตอร์ปิดหรือหลับอยู่ หรือสคริปต์หยุดทำงาน: ระหว่างนี้ค่าใช้จ่ายของการรันที่นั่นจะไม่ถูกนับ'),
   'wake.current': L('up to date', 'актуальная', '最新', 'ล่าสุด'),
   'wake.outdated': L('outdated', 'устарела', '已过时', 'ล้าสมัย'),
   'wake.updatesTip': L((v) => `Latest: ${v}. It updates itself within minutes.`, (v) => `Новая: ${v}. Обновится сама в течение нескольких минут.`, (v) => `最新：${v}。几分钟内会自动更新。`, (v) => `ล่าสุด: ${v} จะอัปเดตเองภายในไม่กี่นาที`),
