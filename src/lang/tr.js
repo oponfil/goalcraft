@@ -225,7 +225,7 @@ export default {
   'pricing.free3': 'Her hunide <b>1</b> süpervizör + <b>4</b> çalışan ajan',
   'pricing.pro1': '<b>10</b> hedef hunisi',
   'pricing.pro2': 'Her hunide <b>5</b> aşama',
-  'pricing.pro3': 'Her hunide <b>1</b> süpervizör + <b>12</b> çalışan ajan',
+  'pricing.pro3': 'Her hunide <b>1</b> süpervizör + <b>24</b> çalışan ajan',
   'pricing.any': 'Claude, ChatGPT, Gemini ve her MCP ajanı',
   'pricing.live': 'Canlı panel, dokuz temanın tümü',
   'pricing.themes': '<b>9</b> görsel tema',

@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=2f55e7e1';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=2f55e7e1';
-import { themeOf } from './themes.js?v=2f55e7e1';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=2f55e7e1';
+import { agentInfo, plural } from './data.js?v=39b8ab68';
+import { MINER_W, drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=39b8ab68';
+import { themeOf } from './themes.js?v=39b8ab68';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=39b8ab68';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -119,6 +119,8 @@ const outPlateTop = k => plateTop(k) - OUT_LIFT;
 // Below the last tank there is no tank to sit on: the plate moves up so the pipe runs on past it
 // to where results drip out.
 const OUT_LIFT = 5;
+// A zone holds up to four agents (Pro), two each side of the pipe.
+const MAX_PER_ZONE = 4;
 export const DAY_SECONDS = 2;
 const PER_ROW = 10;  // result items per row under a funnel, the same for every theme
 // As on the page: Vietnamese needs Be Vietnam Pro (Rubik has no Vietnamese letters), Japanese takes
@@ -166,19 +168,22 @@ export class Scene {
     this.days = 0;
     const r = rng(7);
     this.agents = [];
-    // Two places per zone: left and right of the pipe, in the agents' name order (the first on the
-    // left), so every page and every device shows them the same way, a reload too; extra agents are
-    // not shown.
+    // Up to four places per zone, two each side of the pipe, taken in the agents' name order: the
+    // first left of the pipe, the second right, the third and fourth farther out on the left and the
+    // right. So every page and every device shows them the same way, a reload too, and a new agent
+    // whose name sorts last moves no one. pair: its side has two, slot 1 the outer one. More are not
+    // shown.
     const place = [];
     this.funnels.forEach(f => {
       const zones = new Map();
       for (const w of f.workers) zones.set(w.zone, [...(zones.get(w.zone) || []), w]);
       for (const ws of zones.values()) {
-        [...ws].sort((p, q) => p.agent.localeCompare(q.agent)).slice(0, 2).forEach((w, i) => place.push([f, w, i ? 'R' : 'L']));
+        const sorted = [...ws].sort((p, q) => p.agent.localeCompare(q.agent)).slice(0, MAX_PER_ZONE);
+        sorted.forEach((w, i) => place.push([f, w, i % 2 ? 'R' : 'L', i >> 1, sorted.length > (i % 2) + 2]));
       }
     });
-    place.forEach(([f, w, side]) => {
-      const a = { ...w, f, side, rand: r, hitAt: 1 + r() * 3, phase: r() };
+    place.forEach(([f, w, side, slot, pair]) => {
+      const a = { ...w, f, side, slot, pair, rand: r, hitAt: 1 + r() * 3, phase: r() };
       // Open questions, oldest first (the demo gives one as a plain string).
       a.questions = w.questions ?? (w.question ? [{ id: w.question_id ?? `demo-${w.agent}-${w.zone}`, question: w.question }] : []);
       a.replies = w.replies ?? [];
@@ -221,9 +226,33 @@ export class Scene {
         // Agents stand level with the bottom of the plate, also in the output zone where it is lifted.
     const out = a.zone === a.f.stages.length - 1;
     const cx = this.cx(this.fi(a.f)), floor = a.f.geo.zoneTop(a.zone) + ZH - (out ? OUT_LIFT : 0), R = a.side === 'R';
+    // x as for the left side, mirrored for the right: w is the figure's width (lying, it is longer).
+    const at = (x, w) => cx + (R ? -x - w : x);
+    if (a.pair) {
+      // Two on a side: the inner one by the pipe, the outer one a figure farther out. Each asks where
+      // it works, and lies down by its own spot.
+      if (kind === 'rest') return { x: at(a.slot ? -80 : -44, 28), y: floor - 10 * P };
+      return { x: at(a.slot ? -64 : -38, MINER_W), y: floor - MINER_H };
+    }
     if (kind === 'work') return { x: R ? cx + 18 : cx - 38, y: floor - MINER_H };
     if (kind === 'ask') return { x: R ? cx + 26 : cx - 46, y: floor - MINER_H };
     return { x: R ? cx + 52 : cx - 66, y: floor - 10 * P };
+  }
+  // Which way from an agent its marks go (a question's bubble, its sleep, what it added): a lone
+  // agent puts each where it has always been (lone: 'in' toward the pipe or 'out'); of two on a
+  // side, the inner one puts them all toward the pipe and the outer one away from it, so neither
+  // covers the other. Returns whether that is to the agent's left.
+  marksLeft(a, lone) {
+    const dir = a.pair ? (a.slot ? 'out' : 'in') : lone;
+    return (a.side === 'R') === (dir === 'in');
+  }
+  // Where a question's bubble w wide goes, x given for a lone agent: of two on a side, the inner
+  // one's bubble sits between it and the pipe, up to the pipe and no further, so the bubbles of
+  // both sides never meet.
+  bubbleX(a, w, x) {
+    if (!a.pair || a.slot) return x;
+    const cx = this.cx(this.fi(a.f));
+    return a.side === 'R' ? cx + 3 : cx - 3 - w;
   }
 
   // Switch between fixed and growing tanks (the profile menu's choice).
@@ -529,10 +558,11 @@ export class Scene {
       // Asleep with a question still open: its bubble stays, on the side toward the pipe.
       if (a.questions.length) {
         const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
-        const bx = a.side === 'R' ? p.x - 16 - extra : p.x + 30;
+        const bx = this.bubbleX(a, 14 + extra, this.marksLeft(a, 'in') ? p.x - 16 - extra : p.x + 30);
         drawBubble(c, bx, p.y - 14, a.questions.length, bx > p.x);
         a.bubble = { x: bx, y: p.y - 14 };
-        this.hits.push({ x: Math.min(p.x, bx) - 4, y: p.y - 16, w: 52 + extra, h: 38, type: 'ask', a });
+        const x0 = Math.min(p.x, bx) - 4;
+        this.hits.push({ x: x0, y: p.y - 16, w: Math.max(p.x + 32, bx + 18 + extra) - x0, h: 38, type: 'ask', a });
       } else this.hits.push({ x: p.x - 4, y: p.y - 14, w: 34, h: 36, type: 'agent', a });
       // Where the page pins the tip of the agent's reply note: right at its head.
       a.noteAt = { x: p.x + 14, y: p.y + 4 };
@@ -547,13 +577,15 @@ export class Scene {
     }
     if (a.state === 'ask') {
       const p = this.spot(a, 'ask');
-      const R = a.side === 'R';
-      drawStanding(c, p.x, p.y, info.kind, info.color, -1, R, false, outfit);
+      const L = this.marksLeft(a, 'out');
+      // It faces its bubble.
+      drawStanding(c, p.x, p.y, info.kind, info.color, -1, !L, false, outfit);
       a.noteAt = { x: p.x + 10, y: p.y + (HEAD_TOP[outfit] ?? 1) - 1 };
       const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
-      a.bubble = { x: R ? p.x + 11 * P : p.x - 9 * P - extra, y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
+      a.bubble = { x: this.bubbleX(a, 14 + extra, L ? p.x - 9 * P - extra : p.x + 11 * P), y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
       drawBubble(c, a.bubble.x, a.bubble.y, a.questions.length, a.bubble.x > p.x);
-      this.hits.push({ x: R ? p.x - 2 : p.x - 20 - extra, y: p.y - 6, w: 44 + extra, h: 36, type: 'ask', a });
+      const x0 = Math.min(p.x - 2, a.bubble.x - 4);
+      this.hits.push({ x: x0, y: p.y - 6, w: Math.max(p.x + 22, a.bubble.x + 18 + extra) - x0, h: 36, type: 'ask', a });
       return;
     }
     // At work but silent for too long: it stands still by the pipe, tool down, under its triangle, so
@@ -617,8 +649,8 @@ export class Scene {
     a.noteAt = { x: p.x + 10, y: p.y - 5 };
     if (a.questions.length) {
       const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
-      const left = a.sup || a.side !== 'R';
-      const bx = left ? p.x + 24 : p.x - 20 - extra;
+      const left = a.sup || !this.marksLeft(a, 'in');
+      const bx = a.sup ? p.x + 24 : this.bubbleX(a, 14 + extra, left ? p.x + 24 : p.x - 20 - extra);
       drawBubble(c, bx, p.y - 6, a.questions.length, left);
       a.bubble = { x: bx, y: p.y - 6 };
       this.hits.push({ x: Math.min(p.x, bx) - 4, y: p.y - 12, w: 48 + extra, h: 44, type: 'ask', a });
@@ -762,7 +794,7 @@ export class Scene {
       for (let i = 0; i < 2; i++) {
         const q = ((t * 0.6 + i * 0.5) % 1);
         g.globalAlpha = 1 - q;
-        const hx = a.side === 'R' ? p.x + 30 + q * 4 : p.x - 2 - q * 4;
+        const hx = this.marksLeft(a, 'out') ? p.x - 2 - q * 4 : p.x + 30 + q * 4;
         T('z', hx, p.y - 2 - q * 12, 7 + q * 3, '#BFD7FF', 'center', 700);
         g.globalAlpha = 1;
       }
@@ -774,8 +806,8 @@ export class Scene {
     // What each agent added this run (the last run's while it sleeps), next to it.
     for (const a of this.agents) {
       if (!a.added || a.state === 'walk') continue;
-      const R = a.side === 'R', p = this.spot(a, a.state === 'sleep' ? 'rest' : a.state);
-      const x = a.state === 'sleep' ? (R ? p.x + 33 : p.x - 5) : R ? p.x + 26 : p.x - 6;
+      const p = this.spot(a, a.state === 'sleep' ? 'rest' : a.state), L = this.marksLeft(a, 'out');
+      const x = a.state === 'sleep' ? (L ? p.x - 5 : p.x + 33) : L ? p.x - 6 : p.x + 26;
       const y = a.state === 'sleep' ? p.y + 8 : p.y + 4;
       shadowed(() => T('+' + fmtCount(a.added), x, y, 8, '#9FE870', 'center', 700));
     }

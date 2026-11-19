@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=2f55e7e1';
+import { lang } from './i18n.js?v=39b8ab68';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -66,7 +66,7 @@ export function agentButton(info) {
 // null means not reported yet (shown as +0).
 // goal: total — how many results the goal needs; every — the pace, one result per N days.
 // These are the only targets an agent sets. theme: look of the column (src/themes.js).
-// Workers: state work | sleep | ask; at most two per zone (left and right of the pipe).
+// Workers: state work | sleep | ask; at most four per zone, two each side of the pipe.
 // zone -1 is the inflow above the first tank (zone 0 in docs/MCP.md), zone k sits below stage k;
 // zone n - 1 is the output zone, where agents turn the last stage into results.
 // The demo runs DAY_SECONDS (src/scene.js) per day: zones move items at their flow, slower
@@ -104,6 +104,8 @@ export const FUNNELS = [
     workers: [
       { agent: 'chatgpt', zone: -1, state: 'work' },
       { agent: 'perplexity', zone: -1, state: 'work' },
+      { agent: 'kimi', zone: -1, state: 'work' },
+      { agent: 'hermes', zone: -1, state: 'sleep', wakeIn: 14 },
       {
         agent: 'claude', zone: 0, state: 'ask',
         // Three open questions: the card shows the first, the rest folded under it.
@@ -116,6 +118,7 @@ export const FUNNELS = [
       { agent: 'gemini', zone: 0, state: 'work' },
       { agent: 'grok', zone: 1, state: 'sleep', wakeIn: 12 },
       { agent: 'deepseek', zone: 1, state: 'work' },
+      { agent: 'qwen', zone: 1, state: 'work' },
       { agent: 'mistral', zone: 2, state: 'work' },
       { agent: 'qwen', zone: 3, state: 'work' },
       { agent: 'claude', zone: 4, state: 'work' },
@@ -178,6 +181,7 @@ export const FUNNELS = [
       },
       { agent: 'gemini', zone: 1, state: 'work' },
       { agent: 'kimi', zone: 1, state: 'sleep', wakeIn: 10 },
+      { agent: 'qwen', zone: 1, state: 'work' },
       { agent: 'hermes', zone: 2, state: 'work' },
       { agent: 'claude', zone: 2, state: 'sleep', wakeIn: 18 },
       { agent: 'perplexity', zone: 3, state: 'work' },
@@ -209,6 +213,8 @@ export const FUNNELS = [
       { agent: 'deepseek', zone: -1, state: 'work' },
       { agent: 'claude', zone: 0, state: 'work' },
       { agent: 'hermes', zone: 0, state: 'work' },
+      { agent: 'mistral', zone: 0, state: 'work' },
+      { agent: 'perplexity', zone: 0, state: 'sleep', wakeIn: 16 },
       {
         agent: 'chatgpt', zone: 1, state: 'ask',
         question: 'This finding looks close to a public report from March. Submit it anyway?',
@@ -244,6 +250,7 @@ export const FUNNELS = [
     workers: [
       { agent: 'chatgpt', zone: -1, state: 'work' },
       { agent: 'perplexity', zone: -1, state: 'work' },
+      { agent: 'kimi', zone: -1, state: 'work' },
       { agent: 'gemini', zone: 0, state: 'work' },
       {
         agent: 'claude', zone: 1, state: 'ask',
@@ -279,6 +286,7 @@ export const FUNNELS = [
       { agent: 'perplexity', zone: -1, state: 'work' },
       { agent: 'claude', zone: 0, state: 'work' },
       { agent: 'deepseek', zone: 0, state: 'work' },
+      { agent: 'gemini', zone: 0, state: 'work' },
       { agent: 'qwen', zone: 1, state: 'work' },
       { agent: 'chatgpt', zone: 2, state: 'work' },
       { agent: 'grok', zone: 3, state: 'sleep', wakeIn: 20 },

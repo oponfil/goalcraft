@@ -226,7 +226,7 @@ export default {
   'pricing.free3': '各ファネルに監督 <b>1</b> + 作業エージェント <b>4</b>',
   'pricing.pro1': '目標のファネル <b>10</b> 個',
   'pricing.pro2': '各ファネルに段階 <b>5</b> つ',
-  'pricing.pro3': '各ファネルに監督 <b>1</b> + 作業エージェント <b>12</b>',
+  'pricing.pro3': '各ファネルに監督 <b>1</b> + 作業エージェント <b>24</b>',
   'pricing.any': 'Claude、ChatGPT、Gemini、あらゆる MCP エージェント',
   'pricing.live': 'ライブボード、9つのテーマすべて',
   'pricing.themes': '<b>9</b>つのビジュアルテーマ',

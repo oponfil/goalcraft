@@ -225,7 +225,7 @@ export default {
   'pricing.free3': '퍼널마다 슈퍼바이저 <b>1</b> + 작업 에이전트 <b>4</b>',
   'pricing.pro1': '목표 퍼널 <b>10</b>개',
   'pricing.pro2': '퍼널마다 <b>5</b>단계',
-  'pricing.pro3': '퍼널마다 슈퍼바이저 <b>1</b> + 작업 에이전트 <b>12</b>',
+  'pricing.pro3': '퍼널마다 슈퍼바이저 <b>1</b> + 작업 에이전트 <b>24</b>',
   'pricing.any': 'Claude, ChatGPT, Gemini 등 모든 MCP 에이전트',
   'pricing.live': '라이브 대시보드, 아홉 가지 테마 전부',
   'pricing.themes': '시각 테마 <b>9</b>가지',

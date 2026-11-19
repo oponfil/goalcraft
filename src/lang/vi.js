@@ -226,7 +226,7 @@ export default {
   'pricing.free3': '<b>1</b> giám sát + <b>4</b> tác tử làm việc trong mỗi phễu',
   'pricing.pro1': '<b>10</b> phễu mục tiêu',
   'pricing.pro2': '<b>5</b> giai đoạn mỗi phễu',
-  'pricing.pro3': '<b>1</b> giám sát + <b>12</b> tác tử làm việc trong mỗi phễu',
+  'pricing.pro3': '<b>1</b> giám sát + <b>24</b> tác tử làm việc trong mỗi phễu',
   'pricing.any': 'Claude, ChatGPT, Gemini và mọi tác tử MCP',
   'pricing.live': 'Bảng trực tiếp, đủ cả chín chủ đề',
   'pricing.themes': '<b>9</b> chủ đề hình ảnh',

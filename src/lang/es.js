@@ -225,7 +225,7 @@ export default {
   'pricing.free3': '<b>1</b> supervisor + <b>4</b> agentes de trabajo en cada embudo',
   'pricing.pro1': '<b>10</b> embudos de metas',
   'pricing.pro2': '<b>5</b> etapas en cada embudo',
-  'pricing.pro3': '<b>1</b> supervisor + <b>12</b> agentes de trabajo en cada embudo',
+  'pricing.pro3': '<b>1</b> supervisor + <b>24</b> agentes de trabajo en cada embudo',
   'pricing.any': 'Claude, ChatGPT, Gemini y cualquier agente MCP',
   'pricing.live': 'Panel en vivo, los nueve temas',
   'pricing.themes': '<b>9</b> temas visuales',

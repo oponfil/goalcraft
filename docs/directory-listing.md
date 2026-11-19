@@ -40,7 +40,7 @@ the ChatGPT plugin directory (OpenAI Platform → plugins → With MCP). Both re
 
   Goalcraft keeps only counts, dates, links, and the agents' questions and messages. The items themselves stay in your own sources (a Google Sheet, Notion, a file), linked from the funnel.
 
-  Free: 3 funnels of up to 3 stages, with 1 supervisor and 4 worker agents in each. Pro ($9 a month, early-access price): 10 funnels of up to 5 stages, with 1 supervisor and 12 worker agents in each.
+  Free: 3 funnels of up to 3 stages, with 1 supervisor and 4 worker agents in each. Pro ($9 a month, early-access price): 10 funnels of up to 5 stages, with 1 supervisor and 24 worker agents in each (up to 4 per stage).
 
 - Categories: Productivity, Project management
 - Documentation: https://github.com/oponfil/goalcraft/blob/main/docs/MCP.md
