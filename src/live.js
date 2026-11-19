@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=d14a624f';
+import { supabase } from './auth.js?v=8b7d3372';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -145,7 +145,8 @@ const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3
 const LIMIT_DAYS = { kimi: 30 };
 // Antigravity has a quota per group of models (as its settings show): Gemini 4 Argon, the other
 // Gemini models, Claude and GPT. A run counts against its model's.
-const quotaOf = model => { const m = (model || '').toLowerCase(); return m.startsWith('gemini-4-argon') ? 'gemini-4-argon' : m.startsWith('gemini') ? 'gemini' : 'claude-gpt'; };
+// (The Gemini group also holds Antigravity's orchestrator, on Neon.)
+const quotaOf = model => { const m = (model || '').toLowerCase(); return m.startsWith('gemini-4-argon') ? 'gemini-4-argon' : m.startsWith('gemini') || m.startsWith('orchestrator') ? 'gemini' : 'claude-gpt'; };
 const limitKey = r => (r.app === 'antigravity' ? `antigravity:${quotaOf(r.model)}` : r.app);
 function limitRate(rows, min = { usd: Infinity, pct: Infinity }) {
   // A plan with no threshold here (Codex: its runs carry their own share) gets no rate, only its reading.
@@ -158,8 +159,12 @@ function limitRate(rows, min = { usd: Infinity, pct: Infinity }) {
     usd += Number(b.cost_usd);
   }
   const last = rows[rows.length - 1];
-  // With the cost since the window began (Antigravity, whose percent is exact): the used percent over it.
-  const windowRate = last?.window_cost_usd > 0.5 && Number(last.week_percent) >= min.pct ? Number(last.week_percent) / Number(last.window_cost_usd) : null;
+  // With the cost since the window began (Antigravity, whose percent is exact): the used percent over it,
+  // from the newest reading of this window by a computer whose runs cost something (another computer
+  // reads the same quota, but with none of those runs it can't tell their cost).
+  const same = r => r.week_resets_at && last?.week_resets_at && Math.abs(Date.parse(r.week_resets_at) - Date.parse(last.week_resets_at)) < 3600e3;
+  const ref = rows.findLast(r => Number(r.window_cost_usd) > 0.5 && same(r));
+  const windowRate = ref && Number(ref.week_percent) >= min.pct ? Number(ref.week_percent) / Number(ref.window_cost_usd) : null;
   return { perDollar: windowRate ?? (usd >= min.usd && pct >= min.pct ? pct / usd : null), week: last ? Number(last.week_percent) : null, resets: last?.week_resets_at ? Date.parse(last.week_resets_at) : null };
 }
 // A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged,

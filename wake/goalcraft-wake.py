@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-19'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-19.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -721,7 +721,10 @@ def quota_of(name):
     by the model a call logged ("gemini-4-argon-trial"): Gemini 4 Argon has its own, the other Gemini
     models share one, Claude and GPT share one."""
     n = name.lower().replace(' ', '-')
-    return 'gemini-4-argon' if n.startswith('gemini-4-argon') else 'gemini' if n.startswith('gemini') else 'claude-gpt'
+    if n.startswith('gemini-4-argon'):
+        return 'gemini-4-argon'
+    # The Gemini group also holds Antigravity's orchestrator (on Neon).
+    return 'gemini' if n.startswith('gemini') or n.startswith('orchestrator') else 'claude-gpt'
 
 
 def antigravity_cost(since, until):
@@ -746,47 +749,65 @@ def report_antigravity_limit(key, show=False):
         return False  # the app isn't running: nothing to read, and nothing to log every hour
     ctx = ssl.create_default_context()
     ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE  # its own certificate, on 127.0.0.1
-    status = None
-    for port in server['ports']:
-        req = urllib.request.Request(f'https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/GetUserStatus',
-                                     data=b'{}', method='POST', headers={'Content-Type': 'application/json', 'Connect-Protocol-Version': '1',
-                                                                          'X-Codeium-Csrf-Token': server['token']})
-        try:
-            with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
-                status = json.load(r)
-            break
-        except Exception:
-            continue
-    if not status:
-        log('limit: Antigravity is running but did not answer')
-        return False
-    # Each quota as its models show it: the window that binds now. Only a weekly one (resetting more
-    # than a day ahead) is sent: the board spreads it over a week of runs.
+    def ask(method):
+        for port in server['ports']:
+            req = urllib.request.Request(f'https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/{method}',
+                                         data=b'{}', method='POST', headers={'Content-Type': 'application/json', 'Connect-Protocol-Version': '1',
+                                                                              'X-Codeium-Csrf-Token': server['token']})
+            try:
+                with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
+                    return json.load(r)
+            except Exception:
+                continue
+        return None
+    # Each quota (a group of models) with its weekly and 5-hour limits, as the app's Models settings
+    # show them: { quota: { 'weekly': {remainingFraction, resetTime}, '5h': … } }. Nothing left comes as
+    # no remainingFraction at all (a zero is left out), not as 0.
     quotas = {}
-    for c in ((status.get('userStatus') or {}).get('cascadeModelConfigData') or {}).get('clientModelConfigs', []):
-        qi = c.get('quotaInfo') or {}
-        if qi.get('resetTime'):
-            # Nothing left is sent as no remainingFraction at all (a zero is left out), not as 0.
-            quotas.setdefault(quota_of(str(c.get('label', ''))), {**qi, 'remainingFraction': qi.get('remainingFraction', 0)})
+    summary = ask('RetrieveUserQuotaSummary')
+    for g in ((summary or {}).get('response') or {}).get('groups') or []:
+        name = str(g.get('displayName', '')).lower()
+        for b in g.get('buckets') or []:
+            bucket = str(b.get('bucketId', '')).lower()
+            q = ('gemini-4-argon' if 'argon' in bucket or 'argon' in name
+                 else 'claude-gpt' if bucket.startswith('3p') or 'claude' in name or 'gpt' in name else 'gemini')
+            if b.get('resetTime') and b.get('window') in ('weekly', '5h'):
+                quotas.setdefault(q, {})[b['window']] = {'remainingFraction': b.get('remainingFraction', 0), 'resetTime': b['resetTime']}
+    if not quotas:
+        # An older Antigravity: only each model's quota, the window that binds now (weekly if it resets
+        # more than a day ahead).
+        status = ask('GetUserStatus')
+        if not status:
+            log('limit: Antigravity is running but did not answer')
+            return False
+        for c in ((status.get('userStatus') or {}).get('cascadeModelConfigData') or {}).get('clientModelConfigs', []):
+            qi = c.get('quotaInfo') or {}
+            resets = when(qi.get('resetTime') or '')
+            if resets:
+                window = 'weekly' if resets - time.time() > 86400 else '5h'
+                quotas.setdefault(quota_of(str(c.get('label', ''))), {}).setdefault(
+                    window, {'remainingFraction': qi.get('remainingFraction', 0), 'resetTime': qi['resetTime']})
     now = time.time()
     before = limit_state().get('antigravity_at')
     costs = antigravity_cost(before, now) if before else {}
     rows = []
-    for q, qi in quotas.items():
-        resets = when(qi['resetTime'])
-        weekly = resets is not None and resets - now > 86400
+    used = lambda qi: round((1 - qi['remainingFraction']) * 100, 2)
+    for q, windows in quotas.items():
+        week, five = windows.get('weekly'), windows.get('5h')
         if show:
-            print(f'Antigravity {q}: {round((1 - qi["remainingFraction"]) * 100, 2)}% used, resets {qi["resetTime"]}'
-                  + ('' if weekly else ' (a short window: not sent)') + (f', since the last reading ≈${costs.get(q, 0):.2f}' if before else ''))
-        if weekly:
-            # What its models cost here since its window began (a week before it resets): the board
-            # divides the used percent by it, exact from the first reading.
-            window = antigravity_cost(resets - 7 * 86400, now).get(q, 0.0)
-            rows.append({'app': 'antigravity', 'quota': q, 'at': iso(now), 'week_percent': round((1 - qi['remainingFraction']) * 100, 2),
-                         'week_resets_at': qi['resetTime'], 'cost_usd': round(costs.get(q, 0.0), 4) if before else None,
-                         'window_cost_usd': round(window, 4)})
-            if show:
-                print(f'  {q}: its models cost ≈${window:.2f} here since the window began')
+            print(f'Antigravity {q}: ' + ', '.join(f'{w} {used(qi)}% used, resets {qi["resetTime"]}' for w, qi in windows.items())
+                  + (f'; since the last reading ≈${costs.get(q, 0):.2f}' if before else ''))
+        if not week:
+            continue  # the board spreads a week's limit over a week of runs: no week, nothing to send
+        # What its models cost here since its window began (a week before it resets): the board divides
+        # the used percent by it, exact from the first reading.
+        resets = when(week['resetTime'])
+        window = antigravity_cost(resets - 7 * 86400, now).get(q, 0.0) if resets else 0.0
+        rows.append({'app': 'antigravity', 'quota': q, 'at': iso(now), 'week_percent': used(week), 'week_resets_at': week['resetTime'],
+                     **({'session_percent': used(five), 'session_resets_at': five['resetTime']} if five else {}),
+                     'cost_usd': round(costs.get(q, 0.0), 4) if before else None, 'window_cost_usd': round(window, 4)})
+        if show:
+            print(f'  {q}: its models cost ≈${window:.2f} here since the week began')
     if not rows:
         save_limit_state(antigravity_at=now)
         return True
