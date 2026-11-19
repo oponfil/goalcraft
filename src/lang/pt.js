@@ -225,7 +225,7 @@ export default {
   'pricing.free3': '<b>1</b> supervisor + <b>4</b> agentes de trabalho em cada funil',
   'pricing.pro1': '<b>10</b> funis de metas',
   'pricing.pro2': '<b>5</b> etapas em cada funil',
-  'pricing.pro3': '<b>1</b> supervisor + <b>24</b> agentes de trabalho em cada funil',
+  'pricing.pro3': '<b>1</b> supervisor + <b>36</b> agentes de trabalho em cada funil',
   'pricing.any': 'Claude, ChatGPT, Gemini e qualquer agente MCP',
   'pricing.live': 'Painel ao vivo, os nove temas',
   'pricing.themes': '<b>9</b> temas visuais',

@@ -1,14 +1,17 @@
-import { agentInfo, plural } from './data.js?v=39b8ab68';
-import { MINER_W, drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=39b8ab68';
-import { themeOf } from './themes.js?v=39b8ab68';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=39b8ab68';
+import { agentInfo, plural } from './data.js?v=cdba041f';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=cdba041f';
+import { themeOf } from './themes.js?v=cdba041f';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=cdba041f';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
 // The scene is tall enough for 5 tanks; shorter funnels end higher up. Titles live in the page header.
 export const CW = 200;
 // ZH: the height of a work zone between two tanks, the same as from the supervisor's platform down to
-// the first tank.
+// the first tank. A zone with more than two agents is taller: a tier more, TIER_H high, for each two
+// more, up to MAX_TIERS (six agents). The tiers are only how the board draws them: agents just have a
+// zone.
+const TIER_H = 44, MAX_TIERS = 3, MAX_PER_ZONE = MAX_TIERS * 2;
 const ZW = 164, TOP = 54, ZH = 45, LH = 40, MAX_STAGES = 5;  // TOP: just room over the supervisor's head for its warning triangle (an even number: the pixel grid is 2)
 // The supervisor's platform: a small deck on top of the pipe; the supervisor walks from one end to
 // the other and looks down from each.
@@ -39,14 +42,6 @@ export const sceneHeight = funnels => Math.max(H, ...funnels.map(f =>
   f.geo.flasksY() + Math.ceil(slots(f) / PER_ROW) * 22 + 52));
 // Result items under a funnel: one per result the goal needs, and more once agents go past it.
 const slots = f => Math.max(f.goal?.total || 0, f.cubes || 0);
-// The tanks make one funnel: their sides lie on two straight lines, from 184 wide at the top of the
-// first tank to 26 at the bottom of the last, as wide as the work piece under it, so the
-// gaps between the tanks cut one funnel. The angle follows the number of stages.
-const tankHalf = (j, n, r) => {
-  const y = j * (LH + ZH) + r, span = (n - 1) * (LH + ZH) + LH - 1;
-  return Math.round(92 - 79 * y / span);
-};
-const tankW = (j, n) => tankHalf(j, n, 0) * 2;
 // How many pieces each row of a tank lh tall holds, bottom row first, its half width at row r given
 // by half(r): the heap's grid of CELL squares.
 function rowsFit(half, lh) {
@@ -62,7 +57,7 @@ function rowsFit(half, lh) {
 // A funnel's geometry. Fixed (the usual view): every tank LH tall at its place. Growing (the
 // person's choice in the profile menu): each tank just tall enough for what it holds, at least
 // MIN_ROWS rows so its number fits and at most MAX_ROWS. In both, the tanks' sides lie on two
-// straight lines, from 184 wide at the top of the first tank to 26 at the bottom of the last, and a
+// straight lines, from 164 wide at the top of the first tank to 26 at the bottom of the last, and a
 // tank that grows pushes everything below it down.
 const MIN_ROWS = 3, MAX_ROWS = 30;  // 30 rows: about five fixed tanks tall; past that a tank is full
 // What a growing tank holds at a given height and place on its funnel's lines, worked out once.
@@ -71,16 +66,28 @@ const capacity = (key, half, h) => {
   if (!capacities.has(key)) capacities.set(key, rowsFit(half, h).reduce((x, y) => x + y, 0));
   return capacities.get(key);
 };
+// The tanks make one funnel: their sides lie on two straight lines, from 164 wide at the top of the
+// first tank (as wide as the planks agents stand on) to 26 at the bottom of the last, as wide as the work piece under it, so the gaps between
+// the tanks cut one funnel. The angle follows the funnel's height: its stages and zones.
 // Half the width of a funnel at y units below the first tank's top, the funnel span units tall.
-const lineHalf = (y, span) => Math.round(92 - 79 * y / span);
+const lineHalf = (y, span) => Math.round(ZW / 2 - (ZW / 2 - 13) * y / span);
+// How many agents each zone of a funnel has (zone -1 is the inflow), and so its tiers: one for
+// every two agents there.
+function agentsOf(f) {
+  const count = new Map();
+  for (const w of f.workers || []) count.set(w.zone, (count.get(w.zone) || 0) + 1);
+  return k => count.get(k) || 0;
+}
 function geometry(f, grow) {
-  const n = f.stages.length;
+  const agents = agentsOf(f), tiers = k => Math.min(MAX_TIERS, Math.max(1, Math.ceil(agents(k) / 2)));
+  const n = f.stages.length, zh = k => ZH + (tiers(k) - 1) * TIER_H;
   let lh = f.stages.map(() => (grow ? MIN_ROWS * CELL + 3 : LH));
-  // Where each tank starts below the first one's top, and how tall the whole funnel is.
+  // Where each tank starts below the first one's top, and how tall the whole funnel is (a taller
+  // zone between two tanks makes the funnel's lines steeper, as a taller tank does).
   const place = hs => {
     const at = []; let y = 0;
-    for (const h of hs) { at.push(y); y += h + ZH; }
-    return { at, span: y - ZH - 1 };
+    hs.forEach((h, j) => { at.push(y); y += h + zh(j); });
+    return { at, span: y - zh(n - 1) - 1 };
   };
   // Heights and widths depend on each other: lay the funnel out again until the heights settle.
   for (let pass = 0; grow && pass < 8; pass++) {
@@ -95,32 +102,33 @@ function geometry(f, grow) {
     lh = next;
   }
   const { at, span } = place(lh);
-  const half = (j, h, r) => (grow ? lineHalf(at[j] + r, span) : tankHalf(j, n, r));
+  const half = (j, h, r) => lineHalf(at[j] + r, span);
   const tops = [];
-  for (let j = 0, y = TOP + ZH; j < n; j++) { tops.push(y); y += lh[j] + ZH; }
+  for (let j = 0, y = TOP + zh(-1); j < n; j++) { tops.push(y); y += lh[j] + zh(j); }
   const g = {
-    key: lh.join(','),
+    key: lh.join(',') + '|' + [...Array(n + 1)].map((_, i) => tiers(i - 1)).join(''),
     lh: j => lh[j],
     tankTop: j => tops[j],
     zoneTop: k => (k < 0 ? TOP : tops[k] + lh[k]),
+    zoneH: zh,
+    tiers,
+    agents,
     half: (j, r) => half(j, lh[j], r),
   };
   g.tankW = j => g.half(j, 0) * 2;
-  g.flasksY = () => g.zoneTop(n - 1) + ZH + 9;
-  g.plateTop = k => g.zoneTop(k) + ZH - PLATE_H;
-  g.outPlateTop = k => g.plateTop(k) - OUT_LIFT;
+  g.flasksY = () => g.zoneTop(n - 1) + zh(n - 1) + 9;
+  // Where the agents of tier t stand (0: the lowest, on the tank below), and their work piece on the
+  // pipe; in the output zone the lowest one is lifted, the pipe running on past it.
+  g.floor = (k, t = 0) => g.zoneTop(k) + zh(k) - t * TIER_H - (k === n - 1 && !t ? OUT_LIFT : 0);
+  g.plateTop = (k, t = 0) => g.floor(k, t) - PLATE_H;
   return g;
 }
 // The work piece in each zone (ore rock, flower bed…) sits on the pipe right above the tank below;
 // agents stand on the tank's top edge as on a floor.
 const PLATE_H = 11;
-const plateTop = k => zoneTop(k) + ZH - PLATE_H;
-const outPlateTop = k => plateTop(k) - OUT_LIFT;
 // Below the last tank there is no tank to sit on: the plate moves up so the pipe runs on past it
 // to where results drip out.
 const OUT_LIFT = 5;
-// A zone holds up to four agents (Pro), two each side of the pipe.
-const MAX_PER_ZONE = 4;
 export const DAY_SECONDS = 2;
 const PER_ROW = 10;  // result items per row under a funnel, the same for every theme
 // As on the page: Vietnamese needs Be Vietnam Pro (Rubik has no Vietnamese letters), Japanese takes
@@ -168,22 +176,20 @@ export class Scene {
     this.days = 0;
     const r = rng(7);
     this.agents = [];
-    // Up to four places per zone, two each side of the pipe, taken in the agents' name order: the
-    // first left of the pipe, the second right, the third and fourth farther out on the left and the
-    // right. So every page and every device shows them the same way, a reload too, and a new agent
-    // whose name sorts last moves no one. pair: its side has two, slot 1 the outer one. More are not
-    // shown.
+    // Two places per tier of a zone, left and right of the pipe, taken in the agents' name order: the
+    // first two on the lowest tier (left, then right), the next two on the tier above, and so on. So
+    // every page and every device shows them the same way, a reload too, and a new agent whose name
+    // sorts last moves no one. More than the tiers hold are not shown.
     const place = [];
     this.funnels.forEach(f => {
       const zones = new Map();
       for (const w of f.workers) zones.set(w.zone, [...(zones.get(w.zone) || []), w]);
       for (const ws of zones.values()) {
-        const sorted = [...ws].sort((p, q) => p.agent.localeCompare(q.agent)).slice(0, MAX_PER_ZONE);
-        sorted.forEach((w, i) => place.push([f, w, i % 2 ? 'R' : 'L', i >> 1, sorted.length > (i % 2) + 2]));
+        [...ws].sort((p, q) => p.agent.localeCompare(q.agent)).slice(0, MAX_PER_ZONE).forEach((w, i) => place.push([f, w, i % 2 ? 'R' : 'L', i >> 1]));
       }
     });
-    place.forEach(([f, w, side, slot, pair]) => {
-      const a = { ...w, f, side, slot, pair, rand: r, hitAt: 1 + r() * 3, phase: r() };
+    place.forEach(([f, w, side, tier]) => {
+      const a = { ...w, f, side, tier, rand: r, hitAt: 1 + r() * 3, phase: r() };
       // Open questions, oldest first (the demo gives one as a plain string).
       a.questions = w.questions ?? (w.question ? [{ id: w.question_id ?? `demo-${w.agent}-${w.zone}`, question: w.question }] : []);
       a.replies = w.replies ?? [];
@@ -224,35 +230,11 @@ export class Scene {
       return { x: kind === 'ask' || this.lost(a) ? left : left + (right - left) * this.deckWalk(a).k, y: DECK_Y - MINER_H };
     }
         // Agents stand level with the bottom of the plate, also in the output zone where it is lifted.
-    const out = a.zone === a.f.stages.length - 1;
-    const cx = this.cx(this.fi(a.f)), floor = a.f.geo.zoneTop(a.zone) + ZH - (out ? OUT_LIFT : 0), R = a.side === 'R';
-    // x as for the left side, mirrored for the right: w is the figure's width (lying, it is longer).
-    const at = (x, w) => cx + (R ? -x - w : x);
-    if (a.pair) {
-      // Two on a side: the inner one by the pipe, the outer one a figure farther out. Each asks where
-      // it works, and lies down by its own spot.
-      if (kind === 'rest') return { x: at(a.slot ? -80 : -44, 28), y: floor - 10 * P };
-      return { x: at(a.slot ? -64 : -38, MINER_W), y: floor - MINER_H };
-    }
+    const cx = this.cx(this.fi(a.f)), floor = a.f.geo.floor(a.zone, a.tier), R = a.side === 'R';
     if (kind === 'work') return { x: R ? cx + 18 : cx - 38, y: floor - MINER_H };
     if (kind === 'ask') return { x: R ? cx + 26 : cx - 46, y: floor - MINER_H };
-    return { x: R ? cx + 52 : cx - 66, y: floor - 10 * P };
-  }
-  // Which way from an agent its marks go (a question's bubble, its sleep, what it added): a lone
-  // agent puts each where it has always been (lone: 'in' toward the pipe or 'out'); of two on a
-  // side, the inner one puts them all toward the pipe and the outer one away from it, so neither
-  // covers the other. Returns whether that is to the agent's left.
-  marksLeft(a, lone) {
-    const dir = a.pair ? (a.slot ? 'out' : 'in') : lone;
-    return (a.side === 'R') === (dir === 'in');
-  }
-  // Where a question's bubble w wide goes, x given for a lone agent: of two on a side, the inner
-  // one's bubble sits between it and the pipe, up to the pipe and no further, so the bubbles of
-  // both sides never meet.
-  bubbleX(a, w, x) {
-    if (!a.pair || a.slot) return x;
-    const cx = this.cx(this.fi(a.f));
-    return a.side === 'R' ? cx + 3 : cx - 3 - w;
+    // Asleep at the ends of the plank, its head a little past the end.
+    return { x: R ? cx + ZW / 2 - 24 : cx - ZW / 2 - 4, y: floor - 10 * P };
   }
 
   // Switch between fixed and growing tanks (the profile menu's choice).
@@ -313,11 +295,15 @@ export class Scene {
       for (let k = -1; k < n; k++) {
         // No room around a zone: agents work in the open, on top of the tank below.
         const y = g.zoneTop(k);
+        // Agents stand on a plank across the zone, the pipe running through it: on every tier, the
+        // lowest one too (there it goes on from the tank's top edge on both sides, the tank as wide
+        // as ever), so no agent hangs in the air.
+        if (g.agents(k)) for (let t = 0; t < g.tiers(k); t++) this.plank(c, cx, g.floor(k, t), theme);
         // The pipe runs from the tank above (or the platform on top) down to the tank below.
-        this.pipe(c, cx, k < 0 ? y + 4 : y, y + ZH, theme);
+        this.pipe(c, cx, k < 0 ? y + 4 : y, y + g.zoneH(k), theme);
         // On top: the pipe goes on up to the supervisor's platform, with the funnel's documents on it.
         if (k < 0) {
-          this.pipe(c, cx, DECK_Y + 3, y + 4, theme);
+          this.pipe(c, cx, DECK_Y + 1, y + 4, theme);
           this.deck(c, fi * CW, theme);
           if (f.guide_url) this.guideDoc(c, cx + GUIDE_X + 1, DOC_Y);
           if (f.source_url) this.sheets(c, cx + SHEET_X + 1, DOC_Y);
@@ -338,8 +324,8 @@ export class Scene {
         }
       });
       // Below the last tank the pipe just ends; results drip out of it.
-      c.fillStyle = theme.pipe[0]; c.fillRect(cx - 4, g.zoneTop(n - 1) + ZH, 9, 3);
-      c.fillStyle = theme.pipe[1]; c.fillRect(cx - 2, g.zoneTop(n - 1) + ZH, 5, 2);
+      c.fillStyle = theme.pipe[0]; c.fillRect(cx - 4, g.zoneTop(n - 1) + g.zoneH(n - 1), 9, 3);
+      c.fillStyle = theme.pipe[1]; c.fillRect(cx - 2, g.zoneTop(n - 1) + g.zoneH(n - 1), 5, 2);
     });
   }
 
@@ -357,10 +343,15 @@ export class Scene {
 
   // The supervisor's platform on top of the pipe, in the theme's frame colour: a floor with a darker
   // underside.
+  // The floor of a tier: a thin line, as thick as a tank's outline and in its colour, ZW wide: from
+  // the head of an agent asleep on the left to the head of one asleep on the right.
+  plank(c, cx, y, theme) {
+    c.fillStyle = theme.frame; c.fillRect(cx - ZW / 2, y, ZW, 1);
+  }
+
   deck(c, x0, theme) {
-    const R = (col, ...r) => { c.fillStyle = col; c.fillRect(...r); };
-    const cx = x0 + CW / 2, y = DECK_Y, under = shade(theme.frame, 0.55);
-    R(under, cx - PLANK_HALF, y + 1, PLANK_HALF * 2 + 1, 2.5); R(theme.frame, cx - PLANK_HALF, y, PLANK_HALF * 2 + 1, 1.5);
+    // A thin line, as thick as the tiers' floors, but short: just the supervisor's walk.
+    c.fillStyle = theme.frame; c.fillRect(x0 + CW / 2 - PLANK_HALF, DECK_Y, PLANK_HALF * 2 + 1, 1);
   }
 
   // A funnel whose agents keep its list behind a link: a spreadsheet file (folded corner, white
@@ -489,10 +480,10 @@ export class Scene {
       for (let k = -1; k < n; k++) {
         const y = g.zoneTop(k), fl = f.flows[k + 1];
         // Below the last tank the drops run a little past the pipe's end, dripping out of it.
-        this.drops(c, cx, y + 4, y + ZH + (k === n - 1 ? 9 : 0), fl, fi * 3 + k);
-        // The plate in each zone is what the agents work on; only the output zone's has text
-        // on it: when the next result is due.
-        theme.plate(c, cx - 13, k === n - 1 ? g.outPlateTop(k) : g.plateTop(k), 26, PLATE_H);
+        this.drops(c, cx, y + 4, y + g.zoneH(k) + (k === n - 1 ? 9 : 0), fl, fi * 3 + k);
+        // The plate in each zone is what the agents work on, one on each of its tiers; only the
+        // output zone's has text on it: when the next result is due.
+        for (let t = g.tiers(k) - 1; t >= 0; t--) theme.plate(c, cx - 13, g.plateTop(k, t), 26, PLATE_H);
       }
       const pr = project(f, this.daysLeft(f));
       f.stages.forEach((s, j) => {
@@ -558,11 +549,10 @@ export class Scene {
       // Asleep with a question still open: its bubble stays, on the side toward the pipe.
       if (a.questions.length) {
         const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
-        const bx = this.bubbleX(a, 14 + extra, this.marksLeft(a, 'in') ? p.x - 16 - extra : p.x + 30);
+        const bx = a.side === 'R' ? p.x - 16 - extra : p.x + 30;
         drawBubble(c, bx, p.y - 14, a.questions.length, bx > p.x);
         a.bubble = { x: bx, y: p.y - 14 };
-        const x0 = Math.min(p.x, bx) - 4;
-        this.hits.push({ x: x0, y: p.y - 16, w: Math.max(p.x + 32, bx + 18 + extra) - x0, h: 38, type: 'ask', a });
+        this.hits.push({ x: Math.min(p.x, bx) - 4, y: p.y - 16, w: 52 + extra, h: 38, type: 'ask', a });
       } else this.hits.push({ x: p.x - 4, y: p.y - 14, w: 34, h: 36, type: 'agent', a });
       // Where the page pins the tip of the agent's reply note: right at its head.
       a.noteAt = { x: p.x + 14, y: p.y + 4 };
@@ -577,15 +567,13 @@ export class Scene {
     }
     if (a.state === 'ask') {
       const p = this.spot(a, 'ask');
-      const L = this.marksLeft(a, 'out');
-      // It faces its bubble.
-      drawStanding(c, p.x, p.y, info.kind, info.color, -1, !L, false, outfit);
+      const R = a.side === 'R';
+      drawStanding(c, p.x, p.y, info.kind, info.color, -1, R, false, outfit);
       a.noteAt = { x: p.x + 10, y: p.y + (HEAD_TOP[outfit] ?? 1) - 1 };
       const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
-      a.bubble = { x: this.bubbleX(a, 14 + extra, L ? p.x - 9 * P - extra : p.x + 11 * P), y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
+      a.bubble = { x: R ? p.x + 11 * P : p.x - 9 * P - extra, y: p.y - 2 - Math.round(Math.abs(Math.sin(t * 4)) * 2) * P };
       drawBubble(c, a.bubble.x, a.bubble.y, a.questions.length, a.bubble.x > p.x);
-      const x0 = Math.min(p.x - 2, a.bubble.x - 4);
-      this.hits.push({ x: x0, y: p.y - 6, w: Math.max(p.x + 22, a.bubble.x + 18 + extra) - x0, h: 36, type: 'ask', a });
+      this.hits.push({ x: R ? p.x - 2 : p.x - 20 - extra, y: p.y - 6, w: 44 + extra, h: 36, type: 'ask', a });
       return;
     }
     // At work but silent for too long: it stands still by the pipe, tool down, under its triangle, so
@@ -649,8 +637,8 @@ export class Scene {
     a.noteAt = { x: p.x + 10, y: p.y - 5 };
     if (a.questions.length) {
       const extra = (Math.min(4, a.questions.length) - 1) * BUBBLE_STEP;
-      const left = a.sup || !this.marksLeft(a, 'in');
-      const bx = a.sup ? p.x + 24 : this.bubbleX(a, 14 + extra, left ? p.x + 24 : p.x - 20 - extra);
+      const left = a.sup || a.side !== 'R';
+      const bx = left ? p.x + 24 : p.x - 20 - extra;
       drawBubble(c, bx, p.y - 6, a.questions.length, left);
       a.bubble = { x: bx, y: p.y - 6 };
       this.hits.push({ x: Math.min(p.x, bx) - 4, y: p.y - 12, w: 48 + extra, h: 44, type: 'ask', a });
@@ -694,7 +682,7 @@ export class Scene {
     // side it stands.
     const ex = w.facesLeft ? p.x + 6 : p.x + 14, ey = p.y + 8, cx = this.cx(this.fi(a.f)), n = a.f.stages.length;
     const look = (x, y) => Math.atan2(y - ey, x - ex);
-    const top = look(cx, a.f.geo.zoneTop(-1) - 16), bottom = look(w.facesLeft ? cx + 28 : cx - 28, a.f.geo.zoneTop(n - 1) + ZH - 14);
+    const top = look(cx, a.f.geo.zoneTop(-1) - 16), bottom = look(w.facesLeft ? cx + 28 : cx - 28, a.f.geo.zoneTop(n - 1) + a.f.geo.zoneH(n - 1) - 14);
     const k = 0.5 - 0.5 * Math.cos(t * 0.9 + a.phase * 9);
     drawSpyglass(c, ex, ey, top + (bottom - top) * k);
     this.hits.push({ x: p.x - 2, y: p.y - 4, w: 34, h: 34, type: 'agent', a });
@@ -794,7 +782,7 @@ export class Scene {
       for (let i = 0; i < 2; i++) {
         const q = ((t * 0.6 + i * 0.5) % 1);
         g.globalAlpha = 1 - q;
-        const hx = this.marksLeft(a, 'out') ? p.x - 2 - q * 4 : p.x + 30 + q * 4;
+        const hx = a.side === 'R' ? p.x + 30 + q * 4 : p.x - 2 - q * 4;
         T('z', hx, p.y - 2 - q * 12, 7 + q * 3, '#BFD7FF', 'center', 700);
         g.globalAlpha = 1;
       }
@@ -806,8 +794,8 @@ export class Scene {
     // What each agent added this run (the last run's while it sleeps), next to it.
     for (const a of this.agents) {
       if (!a.added || a.state === 'walk') continue;
-      const p = this.spot(a, a.state === 'sleep' ? 'rest' : a.state), L = this.marksLeft(a, 'out');
-      const x = a.state === 'sleep' ? (L ? p.x - 5 : p.x + 33) : L ? p.x - 6 : p.x + 26;
+      const R = a.side === 'R', p = this.spot(a, a.state === 'sleep' ? 'rest' : a.state);
+      const x = a.state === 'sleep' ? (R ? p.x + 33 : p.x - 5) : R ? p.x + 26 : p.x - 6;
       const y = a.state === 'sleep' ? p.y + 8 : p.y + 4;
       shadowed(() => T('+' + fmtCount(a.added), x, y, 8, '#9FE870', 'center', 700));
     }

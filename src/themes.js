@@ -80,12 +80,13 @@ function backCode(c, x, w, h) {
   for (let gy = 0; gy < h; gy += 8) rect(c, x, gy, w, 0.5, '#0F1A16');
 }
 function backMoney(c, x, w, h) {
-  // Deep banknote green with the fine diagonal lattice printed on banknotes.
-  rect(c, x, 0, w, h, '#11211A');
+  // Deep banknote green-teal with the fine diagonal lattice printed on banknotes: darker and bluer than the
+  // garden's green, greener than the lab's blue-grey.
+  rect(c, x, 0, w, h, '#0B231D');
   for (let d = -h; d < w; d += 6) for (let yy = 0; yy < h; yy += 1) {
     const a = x + d + yy, b = x + d + h - yy;
-    if (a >= x && a < x + w) rect(c, a, yy, 0.5, 0.5, '#1E3D2E');
-    if (b >= x && b < x + w) rect(c, b, yy, 0.5, 0.5, '#1E3D2E');
+    if (a >= x && a < x + w) rect(c, a, yy, 0.5, 0.5, '#1B4C3E');
+    if (b >= x && b < x + w) rect(c, b, yy, 0.5, 0.5, '#1B4C3E');
   }
 }
 
@@ -380,10 +381,11 @@ function resultBag(c, x, y, empty) {
 // --- Garden theme: backdrop, tanks, the flower bed in each zone, flower pots ---
 
 function backGarden(c, x, w, h, r) {
-  rect(c, x, 0, w, h, '#142012');
+  // Leafy green, lighter and greener than the bank's dark teal.
+  rect(c, x, 0, w, h, '#1A3416');
   for (let i = 0; i < w * h / 40; i++) {
     const v = r();
-    rect(c, x + (Math.floor(r() * w) & ~1), Math.floor(r() * h) & ~1, v < 0.5 ? 2 : 1, 1, v < 0.6 ? '#1A2A17' : v < 0.95 ? '#22361D' : '#3A2A40');
+    rect(c, x + (Math.floor(r() * w) & ~1), Math.floor(r() * h) & ~1, v < 0.5 ? 2 : 1, 1, v < 0.6 ? '#21401C' : v < 0.95 ? '#2A5023' : '#4A2E52');
   }
 }
 
@@ -490,12 +492,13 @@ const pieceMoney = {
 // --- Forge: smiths at an anvil ---
 
 function backForge(c, x, w, h, r) {
-  // A soot-dark brick wall, a few bricks lit by the fire.
-  rect(c, x, 0, w, h, '#1E1714');
+  // A dark red brick wall, a few bricks lit by the fire: red, so it doesn't pass for the bakery's
+  // brown or the garden's and the bank's greens.
+  rect(c, x, 0, w, h, '#2A1210');
   for (let by = 0, row = 0; by < h; by += 5, row++) {
     for (let bx = x - (row % 2 ? 5 : 0); bx < x + w; bx += 10) {
       const v = r();
-      rect(c, Math.max(x, bx), by, Math.min(9.5, x + w - Math.max(x, bx), bx + 9.5 - x), 4.5, v < 0.85 ? '#251C18' : v < 0.97 ? '#2E211B' : '#3A2418');
+      rect(c, Math.max(x, bx), by, Math.min(9.5, x + w - Math.max(x, bx), bx + 9.5 - x), 4.5, v < 0.85 ? '#35160F' : v < 0.97 ? '#431C12' : '#622814');
     }
   }
 }
@@ -544,9 +547,9 @@ function resultCrown(c, x, y, empty) {
 // --- Bakery: bakers rolling dough ---
 
 function backBakery(c, x, w, h) {
-  // Warm kitchen tiles.
-  rect(c, x, 0, w, h, '#2A1F18');
-  for (let ty = 0; ty < h; ty += 8) for (let tx = x + ((ty / 8) % 2 ? 4 : 0); tx < x + w; tx += 8) rect(c, tx, ty, 7.5, 7.5, '#30241C');
+  // Warm caramel kitchen tiles: yellower and lighter than the forge's red bricks.
+  rect(c, x, 0, w, h, '#33240E');
+  for (let ty = 0; ty < h; ty += 8) for (let tx = x + ((ty / 8) % 2 ? 4 : 0); tx < x + w; tx += 8) rect(c, tx, ty, 7.5, 7.5, '#412F14');
 }
 
 function plateBakery(c, x, y, w, h) {
