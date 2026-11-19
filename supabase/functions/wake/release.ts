@@ -1,2 +1,2 @@
 // Written by tools/stamp.py from wake/goalcraft-wake.py: the version the scripts update themselves to.
-export const WAKE_RELEASE = { version: '2026-11-19.2', sha256: '9e5819e0bd947f4e8b427882df9e2afeffbf381a23998df182e8bc7f62154f9e' }
+export const WAKE_RELEASE = { version: '2026-11-20', sha256: 'a13b1a2c884b269fdd91d7d25f713297065d11be1ebd89d46fe695e309d2d8a5' }

@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=29d690f1';
+import { supabase } from './auth.js?v=b9f4850c';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -133,7 +133,7 @@ function dayUsage(rows) {
   };
 }
 
-// The plans' limits the wake script reads hourly (Claude's weekly limit, Antigravity's Gemini quota):
+// The plans' limits the wake script reads every 10 minutes (Claude's weekly limit, Antigravity's Gemini quota):
 // what share of each $1 at API prices takes (the rise of the used percent over what every local
 // session of that app cost meanwhile, over the last week, within one window), and how much is used
 // now. Neither app logs it per run as Codex does, so a run's share is its cost times this rate.

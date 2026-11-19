@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-19.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-20'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -379,8 +379,8 @@ def antigravity_send(item, cascade, model, server):
 # totals and plan limit in its rollout files (~/.codex/sessions/…). Every few minutes the script sums
 # them per run and sends Goalcraft the numbers only, nothing from the conversations.
 USAGE_EVERY = 5 * 60
-LIMIT_EVERY = 60 * 60  # the Claude plan's limit is read hourly
-ANTIGRAVITY_EVERY = 10 * 60  # Antigravity's from the app on this computer, a local call: every 10 minutes
+LIMIT_EVERY = 10 * 60  # the plans' limits are read every 10 minutes: agents spend them fast
+RENEW_EVERY = 60 * 60  # Claude Code is asked to renew its sign-in at most hourly
 LIMIT_STATE = DIR / 'limit.json'  # when it was last read: the cost of every session since then goes with the next reading
 USAGE_DAYS = 2      # runs ended this recently are (re)sent
 RUN_GAP = 5 * 60    # a pause this long in one session starts a new run
@@ -605,7 +605,7 @@ def claude_token():
     if o.get('expiresAt', 0) / 1000 > time.time() + 60:
         return o.get('accessToken')
     claude = find_claude()
-    if not o or not claude or time.time() - renewed_at < LIMIT_EVERY:
+    if not o or not claude or time.time() - renewed_at < RENEW_EVERY:
         return None
     renewed_at = time.time()
     try:
@@ -622,9 +622,10 @@ def report_limit(key, show=False):
     token = claude_token()
     if not token:
         if claude_sign_in():
-            log(f'limit: {SIGN_IN_HINT}')
+            if 'claude_signed_out' not in problems:
+                log(f'limit: {SIGN_IN_HINT}')  # once, not with every reading
             problem('claude_signed_out', 'error')
-        return 'signed out'  # nothing to try again soon: once an hour
+        return 'signed out'  # nothing to try again soon: at the next reading
     problem('claude_signed_out')
     req = urllib.request.Request('https://api.anthropic.com/api/oauth/usage', headers={
         'Authorization': f'Bearer {token}', 'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': AGENT})
@@ -747,7 +748,7 @@ def report_antigravity_limit(key, show=False):
     import ssl
     server = antigravity_server()
     if not server:
-        return False  # the app isn't running: nothing to read, and nothing to log every hour
+        return False  # the app isn't running: nothing to read, and nothing to log every reading
     ctx = ssl.create_default_context()
     ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE  # its own certificate, on 127.0.0.1
     def ask(method, body=b'{}'):
@@ -1538,7 +1539,7 @@ def limit_next_after(seconds):
 
 
 def limit_job(key):
-    """One hourly reading of the Claude plan's limit; when it fails (no network, say), again in 5 minutes."""
+    """One reading of the plans' limits (every 10 minutes); when Claude's fails (no network, say), again in 5."""
     def read(name, fn):
         # Each plan on its own: one that fails (an app's answer changed, say) doesn't stop the others.
         try:
@@ -1547,18 +1548,10 @@ def limit_job(key):
             log(f'limit: {name}: {e!r}')
             return False
     claude = read('Claude', report_limit)
-    for name, fn in (('Grok Bot', report_grok_limit),
+    for name, fn in (('Antigravity', report_antigravity_limit), ('Grok Bot', report_grok_limit),
                      ('Kimi', report_kimi_limit), ('Codex', report_codex_limit)):
         read(name, fn)
     limit_next_after(LIMIT_EVERY if claude else 5 * 60)  # signed out counts as done: no reading every 5 minutes
-
-
-def antigravity_job(key):
-    """Antigravity's quotas, every 10 minutes while the app runs: its agents spend them fast."""
-    try:
-        report_antigravity_limit(key)
-    except Exception as e:
-        log(f'limit: Antigravity: {e!r}')
 
 
 def run():
@@ -1567,7 +1560,7 @@ def run():
         print('The wake script already runs on this computer.')
         return
     log(f'started {VERSION} on {COMPUTER}')
-    counted = antigravity_read = 0
+    counted = 0
     while True:
         try:
             if restart_pending:
@@ -1584,9 +1577,6 @@ def run():
             if time.time() >= limit_next:
                 limit_next_after(LIMIT_EVERY)  # until this reading ends; a failed one is tried again sooner
                 threading.Thread(target=limit_job, args=(key,), daemon=True).start()
-            if time.time() - antigravity_read > ANTIGRAVITY_EVERY:
-                antigravity_read = time.time()
-                threading.Thread(target=antigravity_job, args=(key,), daemon=True).start()
         except Exception as e:  # one bad check doesn't stop the script
             log(f'error: {e!r}')
         time.sleep(EVERY)
