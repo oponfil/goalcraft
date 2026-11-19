@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=b3320ffd';
-import vi from './lang/vi.js?v=b3320ffd';
-import ja from './lang/ja.js?v=b3320ffd';
-import pt from './lang/pt.js?v=b3320ffd';
-import tr from './lang/tr.js?v=b3320ffd';
-import ko from './lang/ko.js?v=b3320ffd';
+import es from './lang/es.js?v=b8f6082e';
+import vi from './lang/vi.js?v=b8f6082e';
+import ja from './lang/ja.js?v=b8f6082e';
+import pt from './lang/pt.js?v=b8f6082e';
+import tr from './lang/tr.js?v=b8f6082e';
+import ko from './lang/ko.js?v=b8f6082e';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -478,10 +478,10 @@ const STRINGS = {
   'pricing.forever': L('forever', 'навсегда', '永久', 'ตลอดไป'),
   'pricing.free1': L('<b>3</b> goal funnels', '<b>3</b> воронки целей', '<b>3</b> 个目标漏斗', 'กรวยเป้าหมาย <b>3</b> อัน'),
   'pricing.free2': L('<b>3</b> stages in each funnel', '<b>3</b> этапа в каждой воронке', '每个漏斗 <b>3</b> 个阶段', '<b>3</b> ขั้นในแต่ละกรวย'),
-  'pricing.free3': L('<b>1</b> supervisor + <b>4</b> worker agents in each funnel', '<b>1</b> супервайзер + <b>4</b> рабочих агента в каждой воронке', '每个漏斗 <b>1</b> 个主管 + <b>4</b> 个工作智能体', 'ผู้ดูแล <b>1</b> + เอเจนต์ทำงาน <b>4</b> ในแต่ละกรวย'),
+  'pricing.free3': L('<b>1</b> supervisor + <b>4</b> worker agents in each funnel, <b>1</b> per stage', '<b>1</b> супервайзер + <b>4</b> рабочих агента в каждой воронке, <b>1</b> на этапе', '每个漏斗 <b>1</b> 个主管 + <b>4</b> 个工作智能体，每个阶段 <b>1</b> 个', 'ผู้ดูแล <b>1</b> + เอเจนต์ทำงาน <b>4</b> ในแต่ละกรวย ขั้นละ <b>1</b>'),
   'pricing.pro1': L('<b>10</b> goal funnels', '<b>10</b> воронок целей', '<b>10</b> 个目标漏斗', 'กรวยเป้าหมาย <b>10</b> อัน'),
   'pricing.pro2': L('<b>5</b> stages in each funnel', '<b>5</b> этапов в каждой воронке', '每个漏斗 <b>5</b> 个阶段', '<b>5</b> ขั้นในแต่ละกรวย'),
-  'pricing.pro3': L('<b>1</b> supervisor + <b>36</b> worker agents in each funnel', '<b>1</b> супервайзер + <b>36</b> рабочих агентов в каждой воронке', '每个漏斗 <b>1</b> 个主管 + <b>36</b> 个工作智能体', 'ผู้ดูแล <b>1</b> + เอเจนต์ทำงาน <b>36</b> ในแต่ละกรวย'),
+  'pricing.pro3': L('<b>1</b> supervisor + <b>36</b> worker agents in each funnel, up to <b>6</b> per stage', '<b>1</b> супервайзер + <b>36</b> рабочих агентов в каждой воронке, до <b>6</b> на этапе', '每个漏斗 <b>1</b> 个主管 + <b>36</b> 个工作智能体，每个阶段最多 <b>6</b> 个', 'ผู้ดูแล <b>1</b> + เอเจนต์ทำงาน <b>36</b> ในแต่ละกรวย ขั้นละไม่เกิน <b>6</b>'),
   'pricing.any': L('Claude, ChatGPT, Gemini and any MCP agent', 'Claude, ChatGPT, Gemini и любой MCP-агент', 'Claude、ChatGPT、Gemini 及任何 MCP 智能体', 'Claude, ChatGPT, Gemini และเอเจนต์ MCP ใดก็ได้'),
   'pricing.live': L('Live dashboard, all nine themes', 'Живая доска, все девять тем', '实时看板，全部九种主题', 'แดชบอร์ดสด ครบทั้งเก้าธีม'),
   'pricing.themes': L('<b>9</b> visual themes', '<b>9</b> визуальных тем', '<b>9</b> 种视觉主题', 'ธีมภาพ <b>9</b> แบบ'),
