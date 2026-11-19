@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=8b7d3372';
-import { mountDashboard } from './dashboard.js?v=8b7d3372';
-import { t } from './i18n.js?v=8b7d3372';
+import { FUNNELS, SUP_RUNS } from './data.js?v=6041ad50';
+import { mountDashboard } from './dashboard.js?v=6041ad50';
+import { t } from './i18n.js?v=6041ad50';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -45,6 +45,8 @@ function demoLimits() {
   return [
     { key: 'claude', used: 62, resets: now + 2.4 * day, days: 7 },
     { key: 'codex', used: 35, resets: now + 4.1 * day, days: 7 },
+    { key: 'antigravity:gemini', used: 24, resets: now + 5.2 * day, days: 7 },
+    { key: 'antigravity:claude-gpt', used: 8, resets: now + 5.2 * day, days: 7 },
     { key: 'antigravity:gemini-4-argon', used: 81, resets: now + 1.3 * day, days: 7 },
     { key: 'grok', used: 17, resets: now + 3.7 * day, days: 7 },
     { key: 'kimi', used: 31, resets: now + 13 * day, days: 30 },

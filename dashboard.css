@@ -461,6 +461,8 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.limits .per { color: var(--muted); }
 #pop details.limits .bar { height: 6px; background: #3A322B; }
 #pop details.limits .bar i { display: block; height: 100%; }
+#pop details.limits .bar.split { display: flex; gap: 2px; background: none; }  /* Antigravity: a part per quota, its percent on hover */
+#pop details.limits .bar.split > span { flex: 1; height: 100%; background: #3A322B; cursor: help; }
 #pop details.limits b { font-weight: 600; text-align: right; min-width: 44px; }
 #pop details.scripts ul { grid-template-columns: minmax(120px, 1fr) auto auto; }
 #pop details.scripts .who { white-space: normal; overflow: visible; overflow-wrap: anywhere; cursor: help; }  /* the computer's name whole; its version on hover */

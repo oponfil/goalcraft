@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=8b7d3372';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=8b7d3372';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=8b7d3372';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=6041ad50';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=6041ad50';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=6041ad50';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -68,7 +68,7 @@ const measureTip = m => {
   return ` data-tip="${esc(tip)}" aria-label="${esc(tip)}"`;
 };
 // The plans' limits by their key (live.js limitKey): Claude's, Codex's, Antigravity's quotas.
-const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT', grok: 'Grok Bot', kimi: 'Kimi' };
+const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', grok: 'Grok Bot', kimi: 'Kimi' };
 const TASKS_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>';
 
 function openApp(e) {
@@ -386,12 +386,23 @@ export function mountDashboard(funnels, opts = {}) {
     const list = opts.limits?.() ?? [];
     if (!list.length) return '';
     const order = Object.keys(LIMIT_NAMES);
-    const rows = list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key)).map(l => {
-      const used = Math.min(100, Math.max(0, l.used)), gone = l.resets && l.resets < Date.now();
-      const color = used >= 90 ? '#FF5A4E' : used >= 70 ? '#F2A33C' : '#9FE870';
-      const when = gone ? t('spend.resetDone') : l.resets ? t('spend.resetsAt', resetFmt.format(new Date(l.resets))) : '';
-      return `<li><span class="who">${LIMIT_LOGOS[l.key] ?? ''}${esc(LIMIT_NAMES[l.key] ?? l.key)} <span class="per">${esc(t(l.days > 7 ? 'spend.perMonth' : 'spend.perWeek'))}</span></span>
-        <span class="bar"><i style="width:${gone ? 0 : used}%;background:${color}"></i></span><b>${gone ? '—' : esc(fmtPercent(used))}</b><span class="when">${esc(when)}</span></li>`;
+    const used = l => Math.min(100, Math.max(0, l.used)), gone = l => l.resets && l.resets < Date.now();
+    const color = u => u >= 90 ? '#FF5A4E' : u >= 70 ? '#F2A33C' : '#9FE870';
+    const when = l => gone(l) ? t('spend.resetDone') : l.resets ? t('spend.resetsAt', resetFmt.format(new Date(l.resets))) : '';
+    const row = (logo, name, l, bar) => `<li><span class="who">${logo}${esc(name)} <span class="per">${esc(t(l.days > 7 ? 'spend.perMonth' : 'spend.perWeek'))}</span></span>
+        ${bar}<b>${gone(l) ? '—' : esc(fmtPercent(used(l)))}</b><span class="when">${esc(when(l))}</span></li>`;
+    const sorted = list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+    // Antigravity's quotas (Gemini, Claude/GPT, Gemini 4 Argon) share one line: its bar split into one
+    // part each, every part's own percent and reset on hover; the line's percent is the most used one's.
+    const ag = sorted.filter(l => l.key.startsWith('antigravity:'));
+    const agRow = () => {
+      const top = ag.reduce((m, l) => (gone(l) ? 0 : used(l)) > (gone(m) ? 0 : used(m)) ? l : m);
+      const parts = ag.map(l => `<span title="${esc(`${LIMIT_NAMES[l.key] ?? l.key}: ${gone(l) ? '—' : fmtPercent(used(l))}${when(l) ? ', ' + when(l) : ''}`)}"><i style="width:${gone(l) ? 0 : used(l)}%;background:${color(used(l))}"></i></span>`).join('');
+      return row(ANTIGRAVITY_LOGO, 'Antigravity', top, `<span class="bar split">${parts}</span>`);
+    };
+    const rows = sorted.map(l => {
+      if (l.key.startsWith('antigravity:')) return l === ag[0] ? agRow() : '';
+      return row(LIMIT_LOGOS[l.key] ?? '', LIMIT_NAMES[l.key] ?? l.key, l, `<span class="bar"><i style="width:${gone(l) ? 0 : used(l)}%;background:${color(used(l))}"></i></span>`);
     }).join('');
     return `<details class="limits"${spendState.limitsOpen ? ' open' : ''}><summary>${esc(t('spend.limits'))}</summary><ul>${rows}</ul></details>`;
   }
