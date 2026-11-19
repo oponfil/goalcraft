@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=b8f6082e';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=b8f6082e';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=b8f6082e';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=d14a624f';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=d14a624f';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=d14a624f';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -397,12 +397,14 @@ export function mountDashboard(funnels, opts = {}) {
   }
   // The wake scripts, one per computer, under the spending: only runs on a computer whose script runs
   // are counted, so each shows whether it runs, whether its version is the latest, and whose runs it
-  // counted. Open by itself when something is off (none yet, one silent or outdated).
+  // counted. Folded until the viewer opens it; when something is off (none yet, one silent, in trouble or
+  // outdated), its title carries the worst one's dot.
   const SELF_UPDATING = '2026-11-18';  // the first version that updates itself
   function scriptsBlock(w) {
     if (!w) return '';
     const now = Date.now(), list = w.computers ?? [];
-    if (!list.length) return `<details class="limits scripts" open><summary>${esc(t('wake.title'))}</summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
+    const open = spendState.scriptsOpen ? ' open' : '';
+    if (!list.length) return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} <span class="warn">●</span></summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
     const up = c => now - c.seen < 2 * 60e3;
     const current = c => !w.latest || (c.version ?? '') >= w.latest;
     const problemText = p => {
@@ -428,8 +430,9 @@ export function mountDashboard(funnels, opts = {}) {
         + `<span class="${level}" title="${esc(tip)}">● ${esc(text)}</span>`
         + `<span class="n" title="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span></li>`;
     }).join('');
-    const running = list.filter(up).length, off = list.some(c => statusOf(c)[0] !== 'ok');
-    return `<details class="limits scripts"${off || spendState.scriptsOpen ? ' open' : ''}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}</summary>
+    const running = list.filter(up).length, levels = list.map(c => statusOf(c)[0]);
+    const worst = levels.includes('off') ? 'off' : levels.includes('warn') ? 'warn' : '';
+    return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}${worst ? ` <span class="${worst}">●</span>` : ''}</summary>
       <ul>${rows}</ul><p class="pop-note">${esc(t('wake.about'))}</p></details>`;
   }
   async function showSpend(e) {
