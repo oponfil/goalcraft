@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=cdba041f';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=cdba041f';
-import { themeOf } from './themes.js?v=cdba041f';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=cdba041f';
+import { agentInfo, plural } from './data.js?v=b3320ffd';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=b3320ffd';
+import { themeOf } from './themes.js?v=b3320ffd';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=b3320ffd';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -9,7 +9,7 @@ import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=cdba041f';
 export const CW = 200;
 // ZH: the height of a work zone between two tanks, the same as from the supervisor's platform down to
 // the first tank. A zone with more than two agents is taller: a tier more, TIER_H high, for each two
-// more, up to MAX_TIERS (six agents). The tiers are only how the board draws them: agents just have a
+// more, up to MAX_TIERS (six agents). Tiers are only how the board draws them: agents just have a
 // zone.
 const TIER_H = 44, MAX_TIERS = 3, MAX_PER_ZONE = MAX_TIERS * 2;
 const ZW = 164, TOP = 54, ZH = 45, LH = 40, MAX_STAGES = 5;  // TOP: just room over the supervisor's head for its warning triangle (an even number: the pixel grid is 2)
