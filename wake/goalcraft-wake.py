@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-19.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-19.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -380,6 +380,7 @@ def antigravity_send(item, cascade, model, server):
 # them per run and sends Goalcraft the numbers only, nothing from the conversations.
 USAGE_EVERY = 5 * 60
 LIMIT_EVERY = 60 * 60  # the Claude plan's limit is read hourly
+ANTIGRAVITY_EVERY = 10 * 60  # Antigravity's from the app on this computer, a local call: every 10 minutes
 LIMIT_STATE = DIR / 'limit.json'  # when it was last read: the cost of every session since then goes with the next reading
 USAGE_DAYS = 2      # runs ended this recently are (re)sent
 RUN_GAP = 5 * 60    # a pause this long in one session starts a new run
@@ -749,10 +750,10 @@ def report_antigravity_limit(key, show=False):
         return False  # the app isn't running: nothing to read, and nothing to log every hour
     ctx = ssl.create_default_context()
     ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE  # its own certificate, on 127.0.0.1
-    def ask(method):
+    def ask(method, body=b'{}'):
         for port in server['ports']:
             req = urllib.request.Request(f'https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/{method}',
-                                         data=b'{}', method='POST', headers={'Content-Type': 'application/json', 'Connect-Protocol-Version': '1',
+                                         data=body, method='POST', headers={'Content-Type': 'application/json', 'Connect-Protocol-Version': '1',
                                                                               'X-Codeium-Csrf-Token': server['token']})
             try:
                 with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
@@ -764,7 +765,9 @@ def report_antigravity_limit(key, show=False):
     # show them: { quota: { 'weekly': {remainingFraction, resetTime}, '5h': … } }. Nothing left comes as
     # no remainingFraction at all (a zero is left out), not as 0.
     quotas = {}
-    summary = ask('RetrieveUserQuotaSummary')
+    # forceRefresh: an app that has run for hours otherwise answers with what it read long ago (on
+    # 19.11.2026 the PC sent 5.7% used while its Models settings showed 13%).
+    summary = ask('RetrieveUserQuotaSummary', b'{"forceRefresh": true}')
     for g in ((summary or {}).get('response') or {}).get('groups') or []:
         name = str(g.get('displayName', '')).lower()
         for b in g.get('buckets') or []:
@@ -1544,10 +1547,18 @@ def limit_job(key):
             log(f'limit: {name}: {e!r}')
             return False
     claude = read('Claude', report_limit)
-    for name, fn in (('Antigravity', report_antigravity_limit), ('Grok Bot', report_grok_limit),
+    for name, fn in (('Grok Bot', report_grok_limit),
                      ('Kimi', report_kimi_limit), ('Codex', report_codex_limit)):
         read(name, fn)
     limit_next_after(LIMIT_EVERY if claude else 5 * 60)  # signed out counts as done: no reading every 5 minutes
+
+
+def antigravity_job(key):
+    """Antigravity's quotas, every 10 minutes while the app runs: its agents spend them fast."""
+    try:
+        report_antigravity_limit(key)
+    except Exception as e:
+        log(f'limit: Antigravity: {e!r}')
 
 
 def run():
@@ -1556,7 +1567,7 @@ def run():
         print('The wake script already runs on this computer.')
         return
     log(f'started {VERSION} on {COMPUTER}')
-    counted = 0
+    counted = antigravity_read = 0
     while True:
         try:
             if restart_pending:
@@ -1573,6 +1584,9 @@ def run():
             if time.time() >= limit_next:
                 limit_next_after(LIMIT_EVERY)  # until this reading ends; a failed one is tried again sooner
                 threading.Thread(target=limit_job, args=(key,), daemon=True).start()
+            if time.time() - antigravity_read > ANTIGRAVITY_EVERY:
+                antigravity_read = time.time()
+                threading.Thread(target=antigravity_job, args=(key,), daemon=True).start()
         except Exception as e:  # one bad check doesn't stop the script
             log(f'error: {e!r}')
         time.sleep(EVERY)
