@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-18.5'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-19'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -405,8 +405,17 @@ OPENAI_PRICES = {
     'gpt-6.1-terra': (1, 5, 0.05, 1.25), 'gpt-6-luna': (0.1, 0.5, 0.01, 0.125),
 }
 
-# Google's API prices for Antigravity's models, $ per million tokens (input, output with thinking, cached input).
-GEMINI_PRICES = {'gemini-4-argon': (2, 10, 0.10)}
+# Google's API prices for Antigravity's models, $ per million tokens (input, output with thinking, cached
+# input), Standard tier, as aistudio.google.com/docs/pricing gave them on 19.11.2026; Argon and Carbon cost
+# twice as much from 1 December 2026, so a call is priced as of its day. A model missing here gets no
+# cost: its runs show their tokens instead.
+GEMINI_PRICES = {
+    'gemini-4-argon': (2, 10, 0.10), 'gemini-4-carbon': (2, 10, 0.10),
+    'gemini-4-neon': (3, 15, 0.15), 'gemini-4-hydrogen': (1.5, 7.5, 0.075),
+}
+GEMINI_PRICES_FROM = [  # (from this UTC day on, the prices that change)
+    ('2026-12-01', {'gemini-4-argon': (4, 20, 0.20), 'gemini-4-carbon': (4, 20, 0.20)}),
+]
 
 # Grok Bot gives each bot's tokens but not by kind, so they are priced as all read from the cache: xAI's
 # cached-input price for grok-4.7, $ per million tokens. A floor: what is new in a step costs more.
@@ -724,7 +733,7 @@ def antigravity_cost(since, until):
         for t, model, u in antigravity_calls(f):
             if since < t <= until:
                 q = quota_of(model)
-                total[q] = total.get(q, 0.0) + (gemini_cost(model, u) or 0.0)
+                total[q] = total.get(q, 0.0) + (gemini_cost(model, u, t) or 0.0)
     return total
 
 
@@ -945,9 +954,14 @@ def antigravity_calls(f, facts=False):
     return sorted(points, key=lambda p: p[0])
 
 
-def gemini_cost(model, u):
-    """One Antigravity model call at API prices, or None for a model with no price."""
-    pr = price(model, GEMINI_PRICES)
+def gemini_cost(model, u, t=None):
+    """One Antigravity model call at API prices as of its time t, or None for a model with no price."""
+    day = time.strftime('%Y-%m-%d', time.gmtime(t if t is not None else time.time()))
+    table = dict(GEMINI_PRICES)
+    for since, changed in GEMINI_PRICES_FROM:
+        if day >= since:
+            table.update(changed)
+    pr = price(model, table)
     if pr is None:
         return None
     n = lambda field: (u.get(field) or [0])[0]
@@ -967,14 +981,14 @@ def antigravity_usage(item):
                 continue
             kinds = {'input_tokens': 0, 'cache_read_tokens': 0, 'cache_write_tokens': 0, 'output_tokens': 0}
             cost, models = 0.0, {}
-            for _, model, u in run:
+            for at, model, u in run:
                 n = lambda field: (u.get(field) or [0])[0]
                 kinds['input_tokens'] += n(2)
                 kinds['output_tokens'] += n(3)
                 kinds['cache_write_tokens'] += n(4)
                 kinds['cache_read_tokens'] += n(5)
                 models[model] = models.get(model, 0) + 1
-                c = gemini_cost(model, u)
+                c = gemini_cost(model, u, at)
                 cost = None if c is None or cost is None else cost + c
             out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'antigravity',
                         'run_key': f'{cascade}:{int(run[0][0])}', 'model': max(models, key=models.get),
