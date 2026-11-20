@@ -156,7 +156,7 @@ export default {
   'spend.limits': '한도',
   'spend.perWeek': '주간',
   'spend.perMonth': '월간',
-  'spend.resetDone': '초기화됨, 새 데이터 대기 중',
+  'spend.resetDone': (d) => `${d} 초기화됨`,
   'spend.resetsAt': (d) => `${d} 초기화`,
   'spend.none': '아직 사용량이 없습니다. 컴퓨터의 깨우기 스크립트가 에이전트 앱에서 읽어 보냅니다.',
   'hist.failed': '기록을 불러오지 못했습니다.',

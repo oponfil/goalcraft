@@ -156,7 +156,7 @@ export default {
   'spend.limits': 'Limitler',
   'spend.perWeek': 'haftalık',
   'spend.perMonth': 'aylık',
-  'spend.resetDone': 'sıfırlandı, yeni veri bekleniyor',
+  'spend.resetDone': (d) => `${d} sıfırlandı`,
   'spend.resetsAt': (d) => `${d} sıfırlanır`,
   'spend.none': 'Henüz harcama yok: bilgisayarınızdaki uyandırma betiği bunu ajanların uygulamalarından okuyup gönderir.',
   'hist.failed': 'Geçmiş yüklenemedi.',

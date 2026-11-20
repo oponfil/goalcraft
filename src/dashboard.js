@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=b9f4850c';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=b9f4850c';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=b9f4850c';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7ccf7782';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=7ccf7782';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7ccf7782';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -386,23 +386,25 @@ export function mountDashboard(funnels, opts = {}) {
     const list = opts.limits?.() ?? [];
     if (!list.length) return '';
     const order = Object.keys(LIMIT_NAMES);
-    const used = l => Math.min(100, Math.max(0, l.used)), gone = l => l.resets && l.resets < Date.now();
+    // A limit whose reset time has passed is at 0% (its next reset isn't known until a new reading:
+    // Codex's window starts with the first run after it), so it says when it reset.
+    const gone = l => l.resets && l.resets < Date.now(), used = l => gone(l) ? 0 : Math.min(100, Math.max(0, l.used));
     const color = u => u >= 90 ? '#FF5A4E' : u >= 70 ? '#F2A33C' : '#9FE870';
-    const when = l => gone(l) ? t('spend.resetDone') : l.resets ? t('spend.resetsAt', resetFmt.format(new Date(l.resets))) : '';
+    const when = l => gone(l) ? t('spend.resetDone', resetFmt.format(new Date(l.resets))) : l.resets ? t('spend.resetsAt', resetFmt.format(new Date(l.resets))) : '';
     const row = (logo, name, l, bar) => `<li><span class="who">${logo}${esc(name)} <span class="per">${esc(t(l.days > 7 ? 'spend.perMonth' : 'spend.perWeek'))}</span></span>
-        ${bar}<b>${gone(l) ? '—' : esc(fmtPercent(used(l)))}</b><span class="when">${esc(when(l))}</span></li>`;
+        ${bar}<b>${esc(fmtPercent(used(l)))}</b><span class="when">${esc(when(l))}</span></li>`;
     const sorted = list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
     // Antigravity's quotas (Gemini, Claude/GPT, Gemini 4 Argon) share one line: its bar split into one
     // part each, every part's own percent and reset on hover; the line's percent is the most used one's.
     const ag = sorted.filter(l => l.key.startsWith('antigravity:'));
     const agRow = () => {
-      const top = ag.reduce((m, l) => (gone(l) ? 0 : used(l)) > (gone(m) ? 0 : used(m)) ? l : m);
-      const parts = ag.map(l => `<span title="${esc(`${LIMIT_NAMES[l.key] ?? l.key}: ${gone(l) ? '—' : fmtPercent(used(l))}${when(l) ? ', ' + when(l) : ''}`)}"><i style="width:${gone(l) ? 0 : used(l)}%;background:${color(used(l))}"></i></span>`).join('');
+      const top = ag.reduce((m, l) => used(l) > used(m) ? l : m);
+      const parts = ag.map(l => `<span title="${esc(`${LIMIT_NAMES[l.key] ?? l.key}: ${fmtPercent(used(l))}${when(l) ? ', ' + when(l) : ''}`)}"><i style="width:${used(l)}%;background:${color(used(l))}"></i></span>`).join('');
       return row(ANTIGRAVITY_LOGO, 'Antigravity', top, `<span class="bar split">${parts}</span>`);
     };
     const rows = sorted.map(l => {
       if (l.key.startsWith('antigravity:')) return l === ag[0] ? agRow() : '';
-      return row(LIMIT_LOGOS[l.key] ?? '', LIMIT_NAMES[l.key] ?? l.key, l, `<span class="bar"><i style="width:${gone(l) ? 0 : used(l)}%;background:${color(used(l))}"></i></span>`);
+      return row(LIMIT_LOGOS[l.key] ?? '', LIMIT_NAMES[l.key] ?? l.key, l, `<span class="bar"><i style="width:${used(l)}%;background:${color(used(l))}"></i></span>`);
     }).join('');
     return `<details class="limits"${spendState.limitsOpen ? ' open' : ''}><summary>${esc(t('spend.limits'))}</summary><ul>${rows}</ul></details>`;
   }

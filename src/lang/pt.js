@@ -156,7 +156,7 @@ export default {
   'spend.limits': 'Limites',
   'spend.perWeek': 'por semana',
   'spend.perMonth': 'por mês',
-  'spend.resetDone': 'renovado, aguardando novos dados',
+  'spend.resetDone': (d) => `renovado em ${d}`,
   'spend.resetsAt': (d) => `renova em ${d}`,
   'spend.none': 'Ainda não há gasto: ele vem do script de ativação do seu computador, que o lê dos apps dos seus agentes.',
   'hist.failed': 'Não foi possível carregar o histórico.',
