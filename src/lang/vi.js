@@ -157,7 +157,6 @@ export default {
   'spend.limits': 'Hạn mức',
   'spend.perWeek': 'mỗi tuần',
   'spend.perMonth': 'mỗi tháng',
-  'spend.resetDone': (d) => `đã đặt lại ${d}`,
   'spend.resetsAt': (d) => `đặt lại ${d}`,
   'spend.none': 'Chưa có chi phí: script đánh thức trên máy bạn gửi lên, đọc từ ứng dụng của các agent.',
   'hist.failed': 'Không tải được lịch sử.',

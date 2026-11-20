@@ -156,7 +156,6 @@ export default {
   'spend.limits': 'Límites',
   'spend.perWeek': 'a la semana',
   'spend.perMonth': 'al mes',
-  'spend.resetDone': (d) => `renovado el ${d}`,
   'spend.resetsAt': (d) => `se renueva el ${d}`,
   'spend.none': 'Aún no hay gasto: lo envía el script de activación de tu ordenador, que lo lee de las apps de tus agentes.',
   'hist.failed': 'No se pudo cargar el historial.',

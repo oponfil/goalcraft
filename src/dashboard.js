@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7ccf7782';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=7ccf7782';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7ccf7782';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=2ab90f9a';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=2ab90f9a';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=2ab90f9a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -386,11 +386,16 @@ export function mountDashboard(funnels, opts = {}) {
     const list = opts.limits?.() ?? [];
     if (!list.length) return '';
     const order = Object.keys(LIMIT_NAMES);
-    // A limit whose reset time has passed is at 0% (its next reset isn't known until a new reading:
-    // Codex's window starts with the first run after it), so it says when it reset.
+    // Every line says how much is used and when it resets next. A limit whose reset time has passed is
+    // at 0% until a new reading, and resets next a week (Kimi's a month) after that, or later still.
     const gone = l => l.resets && l.resets < Date.now(), used = l => gone(l) ? 0 : Math.min(100, Math.max(0, l.used));
+    const nextReset = l => {
+      const d = new Date(l.resets);
+      while (d < Date.now()) { if (l.days > 7) d.setMonth(d.getMonth() + 1); else d.setDate(d.getDate() + l.days); }
+      return d;
+    };
     const color = u => u >= 90 ? '#FF5A4E' : u >= 70 ? '#F2A33C' : '#9FE870';
-    const when = l => gone(l) ? t('spend.resetDone', resetFmt.format(new Date(l.resets))) : l.resets ? t('spend.resetsAt', resetFmt.format(new Date(l.resets))) : '';
+    const when = l => l.resets ? t('spend.resetsAt', resetFmt.format(nextReset(l))) : '';
     const row = (logo, name, l, bar) => `<li><span class="who">${logo}${esc(name)} <span class="per">${esc(t(l.days > 7 ? 'spend.perMonth' : 'spend.perWeek'))}</span></span>
         ${bar}<b>${esc(fmtPercent(used(l)))}</b><span class="when">${esc(when(l))}</span></li>`;
     const sorted = list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));

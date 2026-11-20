@@ -157,7 +157,6 @@ export default {
   'spend.limits': '上限',
   'spend.perWeek': '週間',
   'spend.perMonth': '月間',
-  'spend.resetDone': (d) => `${d} にリセット済み`,
   'spend.resetsAt': (d) => `${d} にリセット`,
   'spend.none': 'まだ消費の記録がありません。お使いのコンピューターのウェイクスクリプトが、エージェントのアプリから読み取って送ります。',
   'hist.failed': '履歴を読み込めませんでした。',
