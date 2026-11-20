@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=0cd2e601';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=0cd2e601';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=0cd2e601';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=731382e0';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=731382e0';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=731382e0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -101,13 +101,37 @@ export function mountDashboard(funnels, opts = {}) {
   tip.id = 'tip'; tip.hidden = true; document.body.append(tip);
   let scene = new Scene(canvas, funnels, { live: opts.live, grow: tankView === 'grow' });
 
-  // Funnel order is the viewer's own arrangement, kept in this browser only.
+  // The funnels' order, as the viewer drags them by their titles. Live (opts.onOrder), it is the
+  // person's, kept in the database: the funnels come in it, and a new one is sent there, so every
+  // browser shows the same; until the data says so too, the board keeps the one just dragged. The
+  // demo keeps its order in this browser.
   const ORDER_KEY = opts.orderKey || 'goalcraft-order';
+  let dragged = null;
+  const saved = () => { try { const o = JSON.parse(localStorage.getItem(ORDER_KEY)); return Array.isArray(o) ? o : null; } catch { return null; } };
   const loadOrder = () => {
-    try { const saved = JSON.parse(localStorage.getItem(ORDER_KEY)); if (Array.isArray(saved)) scene.applyOrder(saved); } catch {}
+    if (!opts.onOrder) { const o = saved(); if (o) scene.applyOrder(o); return; }
+    if (dragged) {
+      if (scene.ids().join() === dragged.join()) dragged = null;
+      else scene.applyIds(dragged);
+    }
   };
-  const saveOrder = () => { try { localStorage.setItem(ORDER_KEY, JSON.stringify(scene.order())); } catch {} };
+  const sendOrder = () => {
+    dragged = scene.ids();
+    Promise.resolve(opts.onOrder(dragged)).catch(e => { console.error(e); dragged = null; });
+  };
+  const saveOrder = () => {
+    if (opts.onOrder) sendOrder();
+    else try { localStorage.setItem(ORDER_KEY, JSON.stringify(scene.order())); } catch {}
+  };
   loadOrder();
+  // Live, the first time: funnels never placed in the database take the order this browser kept
+  // before it was kept there.
+  if (opts.onOrder && scene.funnels.every(f => f.position == null) && saved()) {
+    const before = scene.ids().join();
+    scene.applyOrder(saved());
+    if (scene.ids().join() !== before) sendOrder();
+    try { localStorage.removeItem(ORDER_KEY); } catch {}
+  }
 
   // The scene has a fixed size, the same on every screen, a phone too: 100% is always the same, and
   // as many funnels show as fit, the rest reached with horizontal scroll. The viewer's zoom (the −

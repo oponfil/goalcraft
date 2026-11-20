@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=0cd2e601';
+import { supabase } from './auth.js?v=731382e0';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -36,6 +36,8 @@ function toScene(f, reports, now, usage = []) {
   return {
     id: f.id,
     title: f.title,
+    // Its place on the board, as the person dragged it (null: not placed yet).
+    position: f.position,
     // The person's tasks, most urgent first, as the supervisor keeps them; done ones are gone.
     tasks: (f.person_tasks || []).filter(x => !x.done_at).sort((a, b) => a.position - b.position)
       .map(({ id, title, detail, url, due_at }) => ({ id, title, detail, url, due_at })),
@@ -191,13 +193,14 @@ export async function loadFunnels() {
   }
   const [funnels, reports, usage] = await Promise.all([
     supabase.from('funnels')
-      .select(`id, title, theme, source_url, guide_url, result, goal_total, goal_due, results, result_titles, output_flow_per_day,
+      .select(`id, title, position, theme, source_url, guide_url, result, goal_total, goal_due, results, result_titles, output_flow_per_day,
         stages (key, position, label, count, active, fill_percent, flow_per_day),
         presence (agent, provider, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, pause_reason, updated_at),
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
         agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),
         person_tasks (id, position, title, detail, url, due_at, done_at)`)
-      .order('created_at'),
+      // In the person's order (see saveFunnelOrder); new ones, not placed yet, after them by age.
+      .order('position', { nullsFirst: false }).order('created_at'),
     all(() => supabase.from('count_reports')
       .select('funnel_id, stage_key, value, at')
       .gte('at', new Date(now - WINDOW_DAYS * DAY).toISOString())
@@ -211,6 +214,13 @@ export async function loadFunnels() {
   if (reports.error) throw reports.error;
   // Token use is extra: without it (say, before the table exists) the board still loads.
   return funnels.data.map(f => toScene(f, reports.data, now, usage.error ? [] : usage.data.map(withLimit)));
+}
+
+// The person dragged their funnels into a new order: kept in the database, so every browser and
+// computer shows it (the others redraw when the change reaches them).
+export async function saveFunnelOrder(ids) {
+  const { error } = await supabase.rpc('set_funnel_order', { ids });
+  if (error) throw error;
 }
 
 export async function answer(questionId, text) {

@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=0cd2e601';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=0cd2e601';
-import { themeOf } from './themes.js?v=0cd2e601';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=0cd2e601';
+import { agentInfo, plural } from './data.js?v=731382e0';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=731382e0';
+import { themeOf } from './themes.js?v=731382e0';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=731382e0';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -277,6 +277,12 @@ export class Scene {
     this.drawBackground();
   }
   order() { return this.funnels.map(f => f.title); }
+  ids() { return this.funnels.map(f => f.id); }
+  applyIds(ids) {
+    const rank = id => { const i = ids.indexOf(id); return i < 0 ? 1e9 : i; };
+    this.funnels.sort((a, b) => rank(a.id) - rank(b.id));
+    this.drawBackground();
+  }
   applyOrder(titles) {
     const rank = t => { const i = titles.indexOf(t); return i < 0 ? 1e9 : i; };
     this.funnels.sort((a, b) => rank(a.title) - rank(b.title));
