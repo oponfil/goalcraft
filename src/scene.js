@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=2ab90f9a';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=2ab90f9a';
-import { themeOf } from './themes.js?v=2ab90f9a';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=2ab90f9a';
+import { agentInfo, plural } from './data.js?v=0cd2e601';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=0cd2e601';
+import { themeOf } from './themes.js?v=0cd2e601';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=0cd2e601';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -295,12 +295,12 @@ export class Scene {
       for (let k = -1; k < n; k++) {
         // No room around a zone: agents work in the open, on top of the tank below.
         const y = g.zoneTop(k);
-        // Agents stand on a plank across the zone, the pipe running through it: on every tier, the
-        // lowest one too (there it goes on from the tank's top edge on both sides, the tank as wide
-        // as ever), so no agent hangs in the air.
-        if (g.agents(k)) for (let t = 0; t < g.tiers(k); t++) this.plank(c, cx, g.floor(k, t), theme);
         // The pipe runs from the tank above (or the platform on top) down to the tank below.
         this.pipe(c, cx, k < 0 ? y + 4 : y, y + g.zoneH(k), theme);
+        // Agents stand on a plank across the zone: on every tier, the lowest one too (there it goes on
+        // from the tank's top edge on both sides, the tank as wide as ever), so no agent hangs in the
+        // air. It is drawn over the pipe, unbroken like a tank's top edge, across its joints too.
+        if (g.agents(k)) for (let t = 0; t < g.tiers(k); t++) this.plank(c, cx, g.floor(k, t), theme);
         // On top: the pipe goes on up to the supervisor's platform, with the funnel's documents on it.
         if (k < 0) {
           this.pipe(c, cx, DECK_Y + 1, y + 4, theme);
