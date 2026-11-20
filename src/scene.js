@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=731382e0';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=731382e0';
-import { themeOf } from './themes.js?v=731382e0';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=731382e0';
+import { agentInfo, plural } from './data.js?v=eddb7ad0';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=eddb7ad0';
+import { themeOf } from './themes.js?v=eddb7ad0';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=eddb7ad0';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -874,9 +874,9 @@ export class Scene {
   drawHeap(c, f, fi, j, cx, y, share, theme) {
     const n = f.stages.length, P = sameSize(theme.piece), key = `${f.id ?? f.title}|${j}`, g = f.geo, lh = g.lh(j);
     let h = this.heaps.get(key);
-    // The cells are laid out for the tank's size and place: again when a growing tank changes, its
-    // pieces kept.
-    if (!h || !h.cells || h.lh !== lh || h.y !== y) {
+    // The cells are laid out for the tank's size and place: again when a growing tank changes or the
+    // funnel is dragged to another column, its pieces kept.
+    if (!h || !h.cells || h.lh !== lh || h.y !== y || h.cx !== cx) {
       const cells = [], rows = Math.floor((lh - 3) / P.h);
       for (let r = 0; r < rows; r++) {
         const top = y + lh - 2 - (r + 1) * P.h, hw = g.half(j, Math.max(1, Math.round(top - y))) - 1.5;
@@ -889,7 +889,7 @@ export class Scene {
       }
       cells.sort((a, b) => a.score - b.score);
       // Pieces in the air land at once in the new layout.
-      h = h ? Object.assign(h, { cells, lh, y, shown: h.shown + h.falling.length, falling: [] }) : { cells, lh, y, shown: 0, falling: [], next: 0 };
+      h = h ? Object.assign(h, { cells, lh, y, cx, shown: h.shown + h.falling.length, falling: [] }) : { cells, lh, y, cx, shown: 0, falling: [], next: 0 };
       this.heaps.set(key, h);
     }
     const t = this.t, want = Math.min(h.cells.length, f.stages[j].count);
