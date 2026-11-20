@@ -123,6 +123,22 @@
       // Flows and timers move with time even when nobody writes.
       setInterval(refresh, 60e3);
       document.addEventListener('focusout', () => { if (pending) refresh(); });
+      // A board left open for days keeps the code it loaded with: every 5 minutes it asks the site
+      // for this page (past the caches) and reloads once a new version is out, unless the person is
+      // typing an answer.
+      const stamp = s => /live\.js\?v=([0-9a-f]+)/.exec(s)?.[1];
+      const mine = stamp(document.querySelector('script[type=module]:not([src])').textContent);
+      let newer = false;
+      const reloadIfNewer = () => { if (newer && !pending && !document.getElementById('pop').contains(document.activeElement)) location.reload(); };
+      setInterval(async () => {
+        try {
+          const r = await fetch(`${location.pathname}?v=${Date.now()}`, { cache: 'no-store' });
+          const latest = r.ok ? stamp(await r.text()) : null;
+          newer = !!(mine && latest && latest !== mine);
+          reloadIfNewer();
+        } catch { /* offline: try again later */ }
+      }, 5 * 60e3);
+      document.addEventListener('focusout', reloadIfNewer);
     }
   </script>
   <script type="module" src="../src/nav.js?v=eddb7ad0"></script>
