@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=62b87ad4';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=62b87ad4';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=62b87ad4';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=c3f2c1e0';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c3f2c1e0';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c3f2c1e0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -386,7 +386,7 @@ export function mountDashboard(funnels, opts = {}) {
       const when = d => u === 'w' ? `${short.format(d)} – ${short.format(new Date(nextBar(u, d) - 864e5))}` : fmt.format(d);
       // Hour, day or week, a letter each, on the right: the same switch as Flows in the profile menu,
       // for the whole board; hovering names it in full.
-      const units = `<div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" title="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div>`;
+      const units = `<div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" data-tip="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div>`;
       body.innerHTML = `<div class="hist-controls">${periods.length > 1 ? `<div class="hist-periods">${periods.map(p => `<button type="button" data-p="${p}" class="${p === shown ? 'on' : ''}">${esc(periodLabel(u, p))}</button>`).join('')}</div>` : '<span></span>'}${units}</div>
         <p class="pop-note">${esc(t('hist.total', fmtCount(sum), avgFmt.format(sum / n), t('flow.' + u)))}</p>
         <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(fmtCount(v))}</span>`).join('')}</div>
@@ -447,7 +447,7 @@ export function mountDashboard(funnels, opts = {}) {
     const ag = sorted.filter(l => l.key.startsWith('antigravity:'));
     const agRow = () => {
       const top = ag.reduce((m, l) => used(l) > used(m) ? l : m);
-      const parts = ag.map(l => `<span title="${esc(`${LIMIT_NAMES[l.key] ?? l.key}: ${fmtPercent(used(l))}${when(l) ? ', ' + when(l) : ''}`)}"><i style="width:${used(l)}%;background:${color(used(l))}"></i></span>`).join('');
+      const parts = ag.map(l => `<span data-tip="${esc(`${LIMIT_NAMES[l.key] ?? l.key}: ${fmtPercent(used(l))}${when(l) ? ', ' + when(l) : ''}`)}"><i style="width:${used(l)}%;background:${color(used(l))}"></i></span>`).join('');
       return row(ANTIGRAVITY_LOGO, 'Antigravity', top, `<span class="bar split">${parts}</span>`);
     };
     const rows = sorted.map(l => {
@@ -487,9 +487,9 @@ export function mountDashboard(funnels, opts = {}) {
       const [level, text, tip] = statusOf(c);
       const version = t(current(c) ? 'wake.versionCurrent' : 'wake.versionOld', c.version ?? '?', w.latest ?? '');
       const n = c.agents?.length ?? 0;
-      return `<li><span class="who" title="${esc(version)}">${esc(c.computer || t('wake.oldComputer'))}</span>`
-        + `<span class="${level}" title="${esc(tip)}">● ${esc(text)}</span>`
-        + `<span class="n" title="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span></li>`;
+      return `<li><span class="who" data-tip="${esc(version)}">${esc(c.computer || t('wake.oldComputer'))}</span>`
+        + `<span class="${level}" data-tip="${esc(tip)}">● ${esc(text)}</span>`
+        + `<span class="n" data-tip="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span></li>`;
     }).join('');
     const running = list.filter(up).length, levels = list.map(c => statusOf(c)[0]);
     const worst = levels.includes('off') ? 'off' : levels.includes('warn') ? 'warn' : '';
@@ -578,14 +578,14 @@ export function mountDashboard(funnels, opts = {}) {
       const filtered = spendState.funnel ? funnelOf.get(spendState.funnel)?.title : null;
       body.innerHTML = `${filtered ? `<p class="spend-filter"><span>${esc(filtered)}</span> <button type="button" class="link spend-all">${esc(t('spend.allFunnels'))}</button></p>` : ''}
         <div class="hist-controls">${periods.length > 1 ? `<div class="hist-periods spend-periods">${btns(periods.map(String), String(shown), 'p', p => periodLabel(u, Number(p)))}</div>` : '<span></span>'}
-          <div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" title="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div></div>
+          <div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" data-tip="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div></div>
         <div class="hist-controls">${measures.length > 1 ? `<div class="hist-periods spend-measure">${measures.map(m => `<button type="button" data-m="${esc(m)}" class="${m === spendState.measure ? 'on' : ''}"${measureTip(m)}>${m === '$' ? '$' : `%${LIMIT_LOGOS[m] || ' ' + esc(LIMIT_NAMES[m])}`}</button>`).join('')}</div>` : '<span></span>'}
           <div class="hist-periods spend-split">${btns(splits, split, 's', s => t({ funnel: 'spend.byFunnel', agent: 'spend.byAgent', vendor: 'spend.byVendor' }[s]))}</div></div>
         <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(spendState.measure === '$' ? '$' + fmtCount(v) : v + '%')}</span>`).join('')}</div>
           <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}
             <div class="hist-bars stacked${n > 60 ? ' dense' : ''}">${bars.map((d, i) => `<span data-tip="${esc(tipOf(d, i))}">${groups.filter(k => cells[i].get(k)).map(k => `<i style="height:${(cells[i].get(k) / max) * 100}%;background:${color.get(k)}"></i>`).join('')}</span>`).join('')}</div></div></div>
         <div class="hist-axis"><span>${esc(short.format(bars[0]))}</span><span>${esc(short.format(bars[n - 1]))}</span></div>
-        <ul class="spend-list">${groups.slice(0, 12).map(k => `<li${split === 'funnel' ? ` data-f="${esc(k)}" class="pick" title="${esc(t('spend.pick'))}"` : ''}><i style="background:${color.get(k)}"></i><span class="who">${esc(label(k))}</span><span class="n">${esc(t('spend.runs', runs.get(k)))}</span><b>${esc(fmt(totals.get(k)))}</b></li>`).join('')}
+        <ul class="spend-list">${groups.slice(0, 12).map(k => `<li${split === 'funnel' ? ` data-f="${esc(k)}" class="pick" data-tip="${esc(t('spend.pick'))}"` : ''}><i style="background:${color.get(k)}"></i><span class="who">${esc(label(k))}</span><span class="n">${esc(t('spend.runs', runs.get(k)))}</span><b>${esc(fmt(totals.get(k)))}</b></li>`).join('')}
           <li class="total"><i></i><span class="who">${esc(t('spend.all'))}</span><span class="n">${esc(t('spend.runs', mine.length))}</span><b>${esc(fmt(sum))}</b></li></ul>${limitsBlock()}${scriptsBlock(scripts)}`;
       body.querySelector('details.limits:not(.scripts)')?.addEventListener('toggle', e => { spendState.limitsOpen = e.target.open; });
       body.querySelector('details.scripts')?.addEventListener('toggle', e => { spendState.scriptsOpen = e.target.open; });
@@ -937,7 +937,7 @@ export function mountDashboard(funnels, opts = {}) {
   function agentTitle(a, named) {
     const state = agentState(a), who = esc(named);
     return STATE_ICONS[state]
-      ? `${who}<span class="state-icon ${{ 'board.resting': 'sleep', 'board.paused': 'pause' }[state] ?? 'work'}" role="img" title="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
+      ? `${who}<span class="state-icon ${{ 'board.resting': 'sleep', 'board.paused': 'pause' }[state] ?? 'work'}" role="img" data-tip="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
       : t(state, who);
   }
   // Asleep on time: when it wakes up.
@@ -983,14 +983,30 @@ export function mountDashboard(funnels, opts = {}) {
   new ResizeObserver(keepPop).observe(pop);
   window.addEventListener('resize', keepPop);
   // A cost in the card shows its tokens by kind on hover, in the board's tooltip.
+  // Every hint in a card is the board's own (data-tip), not the browser's (title): that one waits
+  // for the mouse to stand still, often for seconds, and hides on its own. This shows a tenth of a
+  // second after the mouse comes onto the thing, and follows it.
+  let tipFor = null, tipAt = null, tipWait = 0;
+  const placeTip = () => {
+    tip.style.left = Math.max(8, Math.min(viewW() - tip.offsetWidth - 8, tipAt.x + 14)) + 'px';
+    tip.style.top = Math.min(window.innerHeight - tip.offsetHeight - 8, tipAt.y + 18) + 'px';
+  };
+  const dropTip = () => { clearTimeout(tipWait); tipFor = null; if (tip.classList.contains('over')) tip.hidden = true; };
   pop.addEventListener('pointermove', e => {
     const el = e.target.closest('[data-tip]');
-    if (!el || e.pointerType === 'touch') { if (tip.classList.contains('over')) tip.hidden = true; return; }
-    tip.textContent = el.dataset.tip; tip.classList.add('over'); tip.hidden = false;
-    tip.style.left = Math.max(8, Math.min(viewW() - tip.offsetWidth - 8, e.clientX + 14)) + 'px';
-    tip.style.top = Math.min(window.innerHeight - tip.offsetHeight - 8, e.clientY + 18) + 'px';
+    if (!el || e.pointerType === 'touch') return dropTip();
+    tipAt = { x: e.clientX, y: e.clientY };
+    // The same thing, or the same hint on its redrawn copy (the card's title redraws as the agent goes
+    // on): it stays and moves with the mouse.
+    const shown = !tip.hidden && tip.classList.contains('over');
+    if (el === tipFor || (shown && tip.textContent === el.dataset.tip)) { tipFor = el; if (shown) placeTip(); return; }
+    dropTip(); tipFor = el;
+    tipWait = setTimeout(() => {
+      if (tipFor !== el || !el.isConnected) return;
+      tip.textContent = el.dataset.tip; tip.classList.add('over'); tip.hidden = false; placeTip();
+    }, 100);
   });
-  pop.addEventListener('pointerleave', () => { if (tip.classList.contains('over')) tip.hidden = true; });
+  pop.addEventListener('pointerleave', dropTip);
   // A link in the card (Appoint a supervisor, Open in Claude…) takes the person elsewhere: the card
   // closes, so it isn't still open when they come back.
   pop.addEventListener('click', e => { if (e.target.closest('a[href]')) hidePop(); });

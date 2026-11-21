@@ -101,7 +101,7 @@ body {
 /* Over a card: a cost's tokens by kind, one per line, above the card. */
 #tip.over { z-index: 40; white-space: pre; line-height: 1.5; }
 #pop [data-tip] { cursor: help; }
-#pop .btn[data-tip] { cursor: pointer; }
+#pop .btn[data-tip], #pop button[data-tip], #pop .pick[data-tip] { cursor: pointer; }
 #pop {
   position: fixed;
   z-index: 10;
