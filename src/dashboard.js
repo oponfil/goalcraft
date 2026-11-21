@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=a61a6194';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=a61a6194';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=a61a6194';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=275efcda';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=275efcda';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=275efcda';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -734,9 +734,12 @@ export function mountDashboard(funnels, opts = {}) {
     u.cache_read_tokens != null && t('board.tokCacheRead', fmtTokens(u.cache_read_tokens)),
     u.cache_write_tokens > 0 && t('board.tokCacheWrite', fmtTokens(u.cache_write_tokens)),
     u.output_tokens != null && t('board.tokOut', fmtTokens(u.output_tokens)),
-    t('board.tokTotal', fmtTokens(u.tokens)),
+    counted(u) && t('board.tokTotal', fmtTokens(u.tokens)),
     limit != null && t('board.usageLimit', limit, u.limitDays),
   ].filter(Boolean).join('\n');
+  // Whether a use has a cost or tokens to show. Grok Bot's servers give neither per bot (since November
+  // 2026), only its share of the plan's limit: such a use shows that share alone, not "0 tokens".
+  const counted = u => u.cost != null || u.tokens > 0;
   const supStatus = s => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
 
   function content(h) {
@@ -834,6 +837,7 @@ export function mountDashboard(funnels, opts = {}) {
     if (!u) return '';
     const share = u.limit_used != null ? fmtPercent(u.limit_used) : null;
     const tip = [u.cost != null && t('board.usageCost', fmtCost(u.cost)), usageTip(u, share)].filter(Boolean).join('\n');
+    if (!counted(u)) return share ? `<p class="pop-note usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', t('board.usageShare', share)))}</p>` : '';
     const what = u.cost != null ? fmtCost(u.cost) : t('board.tokens', fmtTokens(u.tokens));
     // One line: "Spent in 7 days: $695 · 31.1% of limit"; the prices and tokens behind it on hover.
     return `<p class="pop-note usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', what))}${share ? ` · ${esc(t('board.usageShare', share))}` : ''}</p>`;
@@ -872,8 +876,9 @@ export function mountDashboard(funnels, opts = {}) {
           // A supervisor's run says what it found; a worker's run, what it added.
           const what = a.sup ? `<span>${r.status ? supStatus(r.status) : ''}</span>`
             : `<span><b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}</span>`;
-          const ru = r.usage, tok = ru ? `<span class="tok" data-tip="${esc(usageTip(ru, runLimit(ru)))}">${esc(
-            ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)))}</span>` : '';
+          const ru = r.usage, share = ru && runLimit(ru);
+          const tok = ru && (counted(ru) || share) ? `<span class="tok" data-tip="${esc(usageTip(ru, share))}">${esc(
+            ru.cost != null ? fmtCost(ru.cost) : counted(ru) ? t('board.tokens', fmtTokens(ru.tokens)) : t('board.usageShare', share))}</span>` : '';
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
             ${what}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
