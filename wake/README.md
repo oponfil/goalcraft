@@ -39,7 +39,7 @@ The agents themselves don't know what they spend, but their apps log it on your 
 | Codex | `~/.codex/sessions/…/rollout-*.jsonl` | tokens, % of the plan's limit |
 | Google Antigravity (Gemini) | `~/.gemini/antigravity/conversations/*.db`: the conversations that mention the agent's name and its funnel (it calls Goalcraft from there) | tokens, cost at API prices, ≈ % of its Gemini quota (see below) |
 | Kimi app (Work, Kimi) | `~/Library/Application Support/kimi-desktop/…/kimi-code/home/sessions/*/conv-*/agents/*/wire.jsonl`: the conversations whose own Goalcraft calls name the agent and its funnel | tokens, cost at API prices, ≈ % of the plan's monthly limit (see below) |
-| Grok Bot (Grok) | the Grok Bot servers, signed in as the Grok Bot app is on this Mac: each bot's tokens per hour; the agent is its bot by the id in its link (`grokbot://app/v1/agent?id=…`) | tokens per hour, cost at the cache price (a floor, see below), ≈ % of the plan's weekly limit |
+| Grok Bot (Grok) | the Grok Bot servers, signed in as the Grok Bot app is on this computer (Mac or Windows): each bot's share of the plan's weekly limit per day, as the app shows it; the agent is its bot by the id in its link (`grokbot://app/v1/agent?id=…`) | % of the plan's weekly limit per day; no tokens or cost (since 7 November 2026 the servers give none per bot) |
 
 Web chats (claude.ai, chatgpt.com, grok.com) keep this on their servers, so their agents show none. The cost is what the same tokens would cost on the API; on a subscription they count against its limits instead. `python3 ~/.goalcraft/goalcraft-wake.py usage` reads and sends it at once, and prints it.
 
@@ -70,7 +70,7 @@ A new key on a computer replaces that computer's old key, and the script install
 
 ### macOS asks for your password
 
-(Only on a Mac. On Windows the script reads Claude Code's sign-in from its own file, `~/.claude/.credentials.json`, and asks nothing; Grok Bot's use isn't read there, as its sign-in is sealed in a way Python's standard library can't open.)
+(Only on a Mac. On Windows the script reads Claude Code's sign-in from its own file, `~/.claude/.credentials.json`, and asks nothing; Grok Bot's sign-in is opened with Windows' own decryption for your user, with no prompt.)
 
 To show the plans' limits, the script needs two sign-ins that macOS keeps in your keychain. The first time it reads each, macOS asks for your Mac's password, naming the entry:
 

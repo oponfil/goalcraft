@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-21.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-21.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -455,10 +455,6 @@ GEMINI_PRICES = {
 GEMINI_PRICES_FROM = [  # (from this UTC day on, the prices that change)
     ('2026-12-01', {'gemini-4-argon': (4, 20, 0.20), 'gemini-4-carbon': (4, 20, 0.20)}),
 ]
-
-# Grok Bot gives each bot's tokens but not by kind, so they are priced as all read from the cache: xAI's
-# cached-input price for grok-4.7, $ per million tokens. A floor: what is new in a step costs more.
-GROK_PRICE = 0.50
 
 # Moonshot's API prices for Kimi's models, $ per million tokens (input, output, cached input).
 KIMI_PRICES = {'k3': (3, 15, 0.30)}
@@ -1068,38 +1064,100 @@ def antigravity_usage(item):
 
 
 # Grok Bot (bots that run in the cloud): what they use is on its servers, per bot and per day, read with
-# the app's own sign-in from this Mac. Its sign-in is encrypted with a key kept in the keychain.
+# the app's own sign-in. It is encrypted as Electron's safeStorage does it: on a Mac with a key kept in
+# the keychain, on Windows with a key that Windows itself keeps for this user (DPAPI).
 GROK_BOT = APP_DATA / 'Grok Bot'
 GROK_API = 'https://api2.cursor.sh/aiserver.v1.DashboardService/'
-GROK_STATE = DIR / 'grok.json'  # the hours read: each asked once, and all sent again when the servers can't be reached
+GROK_STATE = DIR / 'grok.json'  # the days read, sent again when the servers can't be reached or a new week has begun
 
 
 def grok_token():
-    """Grok Bot's sign-in on this Mac, while it is still valid (the app renews it while it runs)."""
+    """Grok Bot's sign-in on this computer, while it is still valid (the app renews it while it runs)."""
     import base64
-    if not MAC:
-        return None  # elsewhere its sign-in is sealed in a way only the app (or a library beyond Python's own) opens
+    if not (MAC or WINDOWS):
+        return None
     try:
         accounts = json.loads(json.loads((GROK_BOT / 'sand-secrets.json').read_text(encoding='utf-8'))['cursor-accounts'])
     except Exception:
-        return None  # no Grok Bot on this Mac: its keychain entry isn't asked for
-    pw = keychain('Grok Bot Safe Storage')
-    if not pw:
-        return None
+        return None  # no Grok Bot on this computer: its keychain entry isn't asked for
     account = accounts['accounts'].get(accounts.get('active')) or next(iter(accounts['accounts'].values()), {})
     raw = base64.b64decode(account.get('cursor-access-token', ''))
     if raw[:3] != b'v10':
         return None
-    # Electron's safeStorage on macOS: AES-128-CBC, the key from the keychain's password.
-    key = hashlib.pbkdf2_hmac('sha1', pw.encode(), b'saltysalt', 1003, 16)
-    out = subprocess.run(['openssl', 'enc', '-d', '-aes-128-cbc', '-K', key.hex(), '-iv', (b' ' * 16).hex()],
-                         input=raw[3:], capture_output=True, timeout=15)
-    token = out.stdout.decode(errors='replace').strip()
+    if WINDOWS:
+        try:
+            state = json.loads((GROK_BOT / 'Local State').read_text(encoding='utf-8'))
+            key = windows_unprotect(base64.b64decode(state['os_crypt']['encrypted_key'])[5:])  # after "DPAPI"
+            # Electron's safeStorage on Windows: AES-256-GCM, a 12-byte nonce first and the 16-byte tag last.
+            token = windows_aes_gcm(key, raw[3:15], raw[15:-16], raw[-16:]).decode(errors='replace').strip()
+        except Exception as e:
+            log(f'Grok Bot: could not open its sign-in: {e}')
+            return None
+    else:
+        pw = keychain('Grok Bot Safe Storage')
+        if not pw:
+            return None
+        # Electron's safeStorage on macOS: AES-128-CBC, the key from the keychain's password.
+        key = hashlib.pbkdf2_hmac('sha1', pw.encode(), b'saltysalt', 1003, 16)
+        out = subprocess.run(['openssl', 'enc', '-d', '-aes-128-cbc', '-K', key.hex(), '-iv', (b' ' * 16).hex()],
+                             input=raw[3:], capture_output=True, timeout=15)
+        token = out.stdout.decode(errors='replace').strip()
     try:
         claims = json.loads(base64.urlsafe_b64decode(token.split('.')[1] + '=='))
     except Exception:
         return None
     return token if claims.get('exp', 0) > time.time() + 60 else None
+
+
+def windows_unprotect(data):
+    """Windows' own decryption of what was encrypted for this user (CryptUnprotectData)."""
+    import ctypes
+    from ctypes import wintypes
+
+    class Blob(ctypes.Structure):
+        _fields_ = [('size', wintypes.DWORD), ('data', ctypes.POINTER(ctypes.c_char))]
+    buf = ctypes.create_string_buffer(data, len(data))
+    src, out = Blob(len(data), ctypes.cast(buf, ctypes.POINTER(ctypes.c_char))), Blob()
+    if not ctypes.windll.crypt32.CryptUnprotectData(ctypes.byref(src), None, None, None, None, 0, ctypes.byref(out)):
+        raise OSError('Windows refused to decrypt the key')
+    try:
+        return ctypes.string_at(out.data, out.size)
+    finally:
+        ctypes.windll.kernel32.LocalFree(out.data)
+
+
+def windows_aes_gcm(key, nonce, data, tag):
+    """AES-GCM decryption with Windows' own cryptography (BCrypt): Python's standard library has none."""
+    import ctypes
+    from ctypes import wintypes
+
+    class AuthInfo(ctypes.Structure):  # BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
+        _fields_ = [('cbSize', wintypes.ULONG), ('dwInfoVersion', wintypes.ULONG), ('pbNonce', ctypes.c_void_p),
+                    ('cbNonce', wintypes.ULONG), ('pbAuthData', ctypes.c_void_p), ('cbAuthData', wintypes.ULONG),
+                    ('pbTag', ctypes.c_void_p), ('cbTag', wintypes.ULONG), ('pbMacContext', ctypes.c_void_p),
+                    ('cbMacContext', wintypes.ULONG), ('cbAAD', wintypes.ULONG), ('cbData', ctypes.c_ulonglong),
+                    ('dwFlags', wintypes.ULONG)]
+    bcrypt = ctypes.windll.bcrypt
+
+    def ok(status):
+        if status:
+            raise OSError(f'BCrypt error {status & 0xffffffff:#x}')
+    alg, handle = ctypes.c_void_p(), ctypes.c_void_p()
+    ok(bcrypt.BCryptOpenAlgorithmProvider(ctypes.byref(alg), 'AES', None, 0))
+    try:
+        mode = 'ChainingModeGCM'.encode('utf-16-le') + b'\0\0'
+        ok(bcrypt.BCryptSetProperty(alg, 'ChainingMode', mode, len(mode), 0))
+        ok(bcrypt.BCryptGenerateSymmetricKey(alg, ctypes.byref(handle), None, 0, key, len(key), 0))
+        n, t = ctypes.create_string_buffer(nonce, len(nonce)), ctypes.create_string_buffer(tag, len(tag))
+        info = AuthInfo(ctypes.sizeof(AuthInfo), 1, ctypes.cast(n, ctypes.c_void_p), len(nonce), None, 0,
+                        ctypes.cast(t, ctypes.c_void_p), len(tag), None, 0, 0, 0, 0)
+        out, got = ctypes.create_string_buffer(len(data)), wintypes.ULONG()
+        ok(bcrypt.BCryptDecrypt(handle, data, len(data), ctypes.byref(info), None, 0, out, len(data), ctypes.byref(got), 0))
+        return out.raw[:got.value]
+    finally:
+        if handle:
+            bcrypt.BCryptDestroyKey(handle)
+        bcrypt.BCryptCloseAlgorithmProvider(alg, 0)
 
 
 def grok_call(token, method, body):
@@ -1110,60 +1168,54 @@ def grok_call(token, method, body):
 
 
 def grok_rows():
-    """Every Grok Bot bot's use over the last days, a row an hour: its tokens, and its share of the
-    plan's weekly limit (the used percent spread over all bots' tokens since the window began). The
-    servers count per day; asked for one hour, they give that hour's. Hours gone by don't change, so
-    each is asked once (kept in GROK_STATE), the last two again every time. They give no tokens by
-    kind, and no price for use within the plan. None when they can't be asked."""
+    """Every Grok Bot bot's use, a row a day: its share of the plan's weekly limit, as the app shows it
+    (GetGrokBotUsageBreakdown). Since 7 November 2026 the servers give no tokens per bot any more
+    (GetDailySpendByCategory answers nothing), only this share, and only for the current week: so the
+    days read are kept (GROK_STATE) and sent again for USAGE_DAYS. A day split by the week's reset is two
+    rows, one in each week. A bot's "dreams" (dream-<bot id>-...) count as the bot's. None when they
+    can't be asked."""
     token = grok_token()
     if not token:
         return None
     now = time.time()
     status = grok_call(token, 'GetSandUsageStatus', {})
-    begun = when(status.get('currentPeriodStart'))
-    try:
-        hours = {k: v for k, v in json.loads(GROK_STATE.read_text(encoding='utf-8')).get('hours', {}).items()}
-    except Exception:
-        hours = {}
-    first = int((now - USAGE_DAYS * 86400) // 3600 * 3600)
-    hours = {k: v for k, v in hours.items() if int(k) >= first}
-    for h in range(first, int(now), 3600):
-        if str(h) in hours and h < now - 2 * 3600:
+    week = grok_call(token, 'GetGrokBotUsageBreakdown', {}).get('weeklyLimitPpm') or {}
+    start, end = int(week.get('periodStartMs') or 0) / 1000, int(week.get('periodEndMs') or 0) / 1000
+    fresh = {}
+    for d in week.get('byBot', []):
+        bot = re.sub(r'^dream-([0-9a-f-]{36})-\d+$', r'\1', d.get('botId') or '')
+        day = int(d.get('dayMs') or 0) / 1000
+        if not bot or not day:
             continue
-        got = grok_call(token, 'GetDailySpendByCategory', {'periodStartMs': str(h * 1000), 'periodEndMs': str((h + 3600) * 1000), 'groupBy': 4})
-        hours[str(h)] = {d['category']: int(d.get('totalTokens') or 0) for d in got.get('dailySpend', [])}
-    # The window's tokens, from the daily counts: whole days since it began, the day it began in by
-    # the part after.
-    window = 0
-    if begun:
-        day0 = int(begun // 86400 * 86400)
-        daily = grok_call(token, 'GetDailySpendByCategory', {'periodStartMs': str(day0 * 1000), 'periodEndMs': str(int(now * 1000)), 'groupBy': 4})
-        for d in daily.get('dailySpend', []):
-            day, t = int(d['day']) / 1000, int(d.get('totalTokens') or 0)
-            window += t * min(1, (day + 86400 - begun) / 86400) if day < begun else t
-    percent = status.get('usagePercent')
-    rate = percent / window if percent is not None and window > 0 else None
-    return {'percent': percent, 'resets': status.get('nextResetTimestampUtc'), 'hours': hours,
-            'rows': [{'bot': bot, 'at': int(h), 'tokens': t, 'limit_used': round(t * rate, 4) if rate else None}
-                     for h, bots in hours.items() for bot, t in bots.items() if t]}
+        k = f'grokbot:{bot}:{int(day)}:{int(start)}'
+        r = fresh.setdefault(k, {'key': k, 'bot': bot, 'start': max(day, start), 'end': min(day + 86399, end or now), 'ppm': 0})
+        r['ppm'] += int(d.get('ppm') or 0)
+    try:
+        kept = json.loads(GROK_STATE.read_text(encoding='utf-8')).get('rows', [])
+    except Exception:
+        kept = []
+    since = now - (USAGE_DAYS + 8) * 86400
+    rows = list(fresh.values()) + [r for r in kept if r.get('key') and 'ppm' in r and r['key'] not in fresh
+                                   and not r['key'].endswith(f':{int(start)}') and r['end'] >= since]
+    return {'percent': status.get('usagePercent'), 'resets': status.get('nextResetTimestampUtc'), 'rows': rows}
 
 
 def grok_usage(item, read):
-    """A Grok agent's hours in Grok Bot, from what grok_rows read."""
+    """A Grok agent's days in Grok Bot, from what grok_rows read: no tokens or cost (the servers give
+    none now), its share of the plan's weekly limit."""
     out = []
     for d in read['rows'] if read else []:
-        if d['bot'] != item['session']:
+        if d.get('bot') != item['session'] or 'ppm' not in d:
             continue
         out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'grok', 'model': 'grok-bot',
-                    'run_key': f'grokbot:{d["bot"]}:{d["at"]}', 'started_at': iso(d['at']),
-                    'ended_at': iso(min(d['at'] + 3599, time.time())), 'tokens': d['tokens'], 'new_tokens': d['tokens'],
-                    'cost_usd': round(d['tokens'] * GROK_PRICE / 1e6, 4),
-                    'limit_used': d['limit_used'], 'limit_percent': read['percent'], 'limit_window_minutes': 7 * 1440})
+                    'run_key': d['key'], 'started_at': iso(d['start']), 'ended_at': iso(min(d['end'], time.time())),
+                    'tokens': 0, 'new_tokens': 0, 'cost_usd': None, 'limit_used': round(d['ppm'] / 1e4, 4),
+                    'limit_percent': read.get('percent'), 'limit_window_minutes': 7 * 1440})
     return out
 
 
 def grok_read():
-    """grok_rows, kept for when the servers can't be reached (so its hours aren't dropped meanwhile)."""
+    """grok_rows, kept for when the servers can't be reached (so its days aren't dropped meanwhile)."""
     try:
         read = grok_rows()
     except Exception as e:
@@ -1182,7 +1234,7 @@ def report_grok_limit(key, show=False):
     """Read how much of the Grok Bot plan's weekly limit is used and send it to Goalcraft."""
     token = grok_token()
     if not token:
-        return False  # no Grok Bot on this Mac, or signed out: nothing to read
+        return False  # no Grok Bot on this computer, or signed out: nothing to read
     try:
         status = grok_call(token, 'GetSandUsageStatus', {})
     except Exception as e:
