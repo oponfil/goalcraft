@@ -643,11 +643,18 @@ def claude_token():
         return None
     renewed_at = time.time()
     try:
-        subprocess.run([claude, 'auth', 'status'], capture_output=True, timeout=60, cwd=str(HOME), creationflags=NO_WINDOW)
-    except Exception:
-        return None
+        r = subprocess.run([claude, 'auth', 'status'], capture_output=True, encoding='utf-8', errors='replace',
+                           timeout=60, cwd=str(HOME), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
+        said = f'exit {r.returncode}, ' + ('loggedIn true' if '"loggedIn": true' in r.stdout else 'not logged in' if '"loggedIn": false' in r.stdout
+                                         else (r.stderr.strip() or r.stdout.strip())[-200:].replace('\n', ' '))
+    except Exception as e:
+        said = f'{type(e).__name__}: {e}'
     o = claude_sign_in()
-    return o.get('accessToken') if o.get('expiresAt', 0) / 1000 > time.time() + 60 else None
+    if o.get('expiresAt', 0) / 1000 > time.time() + 60:
+        return o.get('accessToken')
+    # Why it didn't renew, so a sign-out that `claude auth login` wouldn't fix can be told apart.
+    log(f'limit: `{claude} auth status` did not renew the sign-in ({said})')
+    return None
 
 
 def report_limit(key, show=False):
