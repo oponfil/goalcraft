@@ -116,6 +116,6 @@ On Windows run the same commands with `py` (or `python`) instead of `python3`; t
 - The note an agent gets is fixed text ("The person wrote to you on the Goalcraft dashboard. Check Goalcraft now…"); your message itself reaches the agent only through MCP.
 - A woken Claude agent may use its Goalcraft tools, and keeps the permission mode its session has in the app (auto, bypassPermissions, acceptEdits, plan… whatever Claude Code takes): what it may do there without asking, it may do when woken. A session in the default mode gets only the Goalcraft tools, since nobody is there to approve the rest.
 - Each agent is woken once per message, per answer, and per silence (until it signals again). An agent that is working now is left alone: it finds messages on its own heartbeat.
-- A woken run that takes more than 30 minutes is stopped.
+- A woken agent works as long as it needs: the script doesn't stop it.
 
 Standard library only (Python 3, which macOS ships with the command-line tools). The endpoint it asks is `supabase/functions/wake`.

@@ -83,7 +83,6 @@ BINS = [HOME / '.local' / 'bin', pathlib.Path('/opt/homebrew/bin'), pathlib.Path
         pathlib.Path(os.environ.get('APPDATA') or HOME / 'AppData' / 'Roaming') / 'npm']
 # The Goalcraft MCP server under the names it usually has: as a claude.ai connector, or added by hand.
 GOALCRAFT_TOOLS = ['mcp__claude_ai_Goalcraft', 'mcp__goalcraft', 'mcp__goalagents']
-RUN_LIMIT = 30 * 60  # a woken run that takes longer is stopped
 
 
 def computer_name():
@@ -326,7 +325,7 @@ def start_run(item, cmd, cwd):
         started = time.time()
         try:
             out = subprocess.run(cmd, cwd=cwd, capture_output=True, encoding='utf-8', errors='replace',
-                                 timeout=RUN_LIMIT, creationflags=NO_WINDOW)
+                                 creationflags=NO_WINDOW)  # a woken agent works as long as it needs
             last = (out.stdout.strip().splitlines() or [''])[-1][:200]
             log(f'woke {who} in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if 'already has an active writer' in out.stderr:
@@ -344,10 +343,6 @@ def start_run(item, cmd, cwd):
                 problem('wake_failed', 'warning', item['agent'], (out.stderr.strip() or out.stdout.strip()).splitlines()[-1:][0] if (out.stderr.strip() or out.stdout.strip()) else f'exit {out.returncode}')
             else:
                 problem('wake_failed', agent=item['agent'])
-        except subprocess.TimeoutExpired:
-            retry.pop(key, None)
-            log(f'woke {who}: stopped after {RUN_LIMIT // 60} min')
-            problem('wake_failed', 'warning', item['agent'], f'stopped after {RUN_LIMIT // 60} min')
         except Exception as e:
             log(f'woke {who}: {e}')
         finally:
