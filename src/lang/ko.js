@@ -190,6 +190,7 @@ export default {
   'board.sendAnswerTip': '에이전트는 다음에 Goalcraft를 확인할 때 답을 받습니다.',
   'board.chatApp': (app, id) => `에이전트는 ${app} 앱에서 일합니다 · 대화 ${id}`,
   'board.chatSite': (h, id) => `에이전트는 ${h}에서 일합니다${id ? ` · 채팅 ${id}` : ''}`,
+  'board.chatElsewhere': (app, pc) => `에이전트는 다른 컴퓨터(${pc})의 ${app}에서 일합니다.\n채팅은 그곳에서만 열립니다. 여기서 답할 수 있습니다`,
   'board.chatAppOnly': (app) => `에이전트는 ${app}에서 일합니다: 개별 대화 링크가 없어 앱이 열립니다`,
   'board.chatNone': '에이전트가 채팅 링크를 보내지 않아 새 채팅이 열립니다',
   'board.replyIn': (who) => `${who}에서 답하기`,

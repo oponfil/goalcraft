@@ -191,6 +191,7 @@ export default {
   'board.sendAnswerTip': 'Tác tử sẽ nhận câu trả lời khi kiểm tra Goalcraft lần tới.',
   'board.chatApp': (app, id) => `Tác tử làm việc trong ứng dụng ${app} · cuộc trò chuyện ${id}`,
   'board.chatSite': (h, id) => `Tác tử làm việc trên ${h}${id ? ` · chat ${id}` : ''}`,
+  'board.chatElsewhere': (app, pc) => `Tác tử làm việc trong ${app} trên một máy tính khác (${pc}).\nCuộc trò chuyện chỉ mở được ở đó; bạn có thể trả lời từ đây`,
   'board.chatAppOnly': (app) => `Tác tử làm việc trong ${app}: không có liên kết tới một cuộc trò chuyện, nên ứng dụng sẽ mở`,
   'board.chatNone': 'Tác tử chưa gửi liên kết tới chat của mình: một chat mới sẽ mở',
   'board.replyIn': (who) => `Trả lời trong ${who}`,

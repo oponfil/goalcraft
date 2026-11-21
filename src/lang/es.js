@@ -190,6 +190,7 @@ export default {
   'board.sendAnswerTip': 'El agente recibirá tu respuesta la próxima vez que revise Goalcraft.',
   'board.chatApp': (app, id) => `El agente trabaja en la app ${app} · conversación ${id}`,
   'board.chatSite': (h, id) => `El agente trabaja en ${h}${id ? ` · chat ${id}` : ''}`,
+  'board.chatElsewhere': (app, pc) => `El agente trabaja en ${app} en otro ordenador, ${pc}.\nSu chat solo se abre allí; puedes responderle desde aquí`,
   'board.chatAppOnly': (app) => `El agente trabaja en ${app}: no hay enlace a una conversación, así que se abre la app`,
   'board.chatNone': 'El agente no ha enviado el enlace a su chat: se abrirá un chat nuevo',
   'board.replyIn': (who) => `Responder en ${who}`,

@@ -18,7 +18,7 @@
 //                cost_usd? }] }   → { saved }: the plan's limit as the script read it, with what every local
 //                session of that app cost since the reading before (the board turns cost into a share of it)
 //
-// Each script says which computer it runs on (X-Goalcraft-Computer): a person may run it on several,
+// Each script says which computer it runs on (X-Goalcraft-Computer) and its system (X-Goalcraft-Os): a person may run it on several,
 // each with its own key, and a new key on the same computer replaces the one before.
 //
 // An agent is woken once for each reason: a message it has not read (from the person or from another
@@ -181,7 +181,10 @@ Deno.serve(async (req) => {
   const computer = named.replace(/[^\p{L}\p{N}\p{Zs}._'’()-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 64) || null
   // What the script says is wrong on its computer (scripts from 2026-11-18.1 on): kept as it last said.
   const problems = readProblems(req.headers.get('x-goalcraft-problems'))
-  await admin.from('wake_keys').update({ last_used_at: iso(now), script_version: version, problems, ...(computer ? { computer } : {}) }).eq('id', owner.id)
+  // Its system (X-Goalcraft-Os, scripts from 2026-11-21.1 on): the board greys out Open for a chat on a
+  // computer with another system than the browser's.
+  const os = ['mac', 'windows', 'linux'].find(o => o === req.headers.get('x-goalcraft-os')) ?? null
+  await admin.from('wake_keys').update({ last_used_at: iso(now), script_version: version, problems, ...(computer ? { computer } : {}), ...(os ? { os } : {}) }).eq('id', owner.id)
   // A new key on a computer replaces the ones made there before (set up again): they go.
   if (computer && computer !== owner.computer) {
     await admin.from('wake_keys').delete().eq('user_id', user).eq('computer', computer).neq('id', owner.id).lt('created_at', owner.created_at)

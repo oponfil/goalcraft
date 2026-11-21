@@ -155,6 +155,9 @@ body {
 /* A <button> styled as .btn (Create a key on the Connect page): no browser grey behind its text. */
 button.btn { background: none; font: inherit; cursor: pointer; }
 .btn.primary { background: #D97757; border-color: #D97757; color: #fff; }
+/* Open for a chat on another computer: greyed out, with why on hover. */
+.btn.off, .btn.off:hover { background: none; opacity: 0.45; }
+#pop .btn.off[data-tip] { cursor: not-allowed; }
 #pop textarea {
   width: 100%;
   margin: 0 0 8px;

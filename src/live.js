@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=eddb7ad0';
+import { supabase } from './auth.js?v=62b87ad4';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -63,6 +63,12 @@ function toScene(f, reports, now, usage = []) {
 }
 
 // One agent's presence → what the scene draws by it.
+// The person's computers by their wake key: its name and system. A chat in the Claude app, Codex or
+// Antigravity is kept on the computer it runs on (it opens nowhere else), and the wake script there
+// is the one that sends its runs: its last run says which computer that is.
+let computers = new Map();
+const LOCAL_CHATS = new Set(['claude', 'codex', 'antigravity']);
+
 function agentOf(f, p, now, usage = []) {
       // The agent's unanswered questions, oldest first. An agent asking stands and waits for the
       // answers; one that went to sleep keeps them in a bubble and picks them up on its next run.
@@ -104,6 +110,12 @@ function agentOf(f, p, now, usage = []) {
         // Its token use over the last week (the plans' limits are weekly), as the person's wake script read it from the agent's own
         // session files (null: not known, e.g. a web chat).
         usage: dayUsage(mine),
+        // The computer its chat is on, { name, os } (null: not known), so another computer's board
+        // doesn't offer to open it.
+        computer: (() => {
+          const here = mine.filter(u => u.wake_key_id && LOCAL_CHATS.has(u.app)).reduce((a, u) => (!a || u.ended_at > a.ended_at ? u : a), null);
+          return (here && computers.get(here.wake_key_id)) ?? null;
+        })(),
         // What this run added (the last run's, while the agent sleeps); null = not known.
         added: p.run_added,
       };
@@ -191,7 +203,7 @@ export async function loadFunnels() {
     const keys = [...new Set(readings.data.map(r => (r.quota ? `${r.app}:${r.quota}` : r.app)))];
     limits = Object.fromEntries(keys.map(k => [k, limitRate(readings.data.filter(r => (r.quota ? `${r.app}:${r.quota}` : r.app) === k), LIMIT_MIN[k.split(':')[0]])]));
   }
-  const [funnels, reports, usage] = await Promise.all([
+  const [funnels, reports, usage, keys] = await Promise.all([
     supabase.from('funnels')
       .select(`id, title, position, theme, source_url, guide_url, result, goal_total, goal_due, results, result_titles, output_flow_per_day,
         stages (key, position, label, count, active, fill_percent, flow_per_day),
@@ -207,10 +219,13 @@ export async function loadFunnels() {
       .order('at').order('id')),
     // A week of runs is more than one page of rows (1000): read them all.
     all(() => supabase.from('agent_usage')
-      .select('funnel_id, agent, app, model, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at')
+      .select('funnel_id, agent, app, model, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at, wake_key_id')
       .gte('ended_at', new Date(now - 7 * DAY).toISOString()).order('ended_at').order('agent').order('run_key')),
+    // The computers the runs came from (see computers).
+    supabase.from('wake_keys').select('id, computer, os'),
   ]);
   if (funnels.error) throw funnels.error;
+  computers = new Map((keys.data ?? []).map(k => [k.id, { name: k.computer, os: k.os }]));
   if (reports.error) throw reports.error;
   // Token use is extra: without it (say, before the table exists) the board still loads.
   return funnels.data.map(f => toScene(f, reports.data, now, usage.error ? [] : usage.data.map(withLimit)));

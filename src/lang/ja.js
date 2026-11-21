@@ -191,6 +191,7 @@ export default {
   'board.sendAnswerTip': 'エージェントは次に Goalcraft を確認したときに回答を受け取ります。',
   'board.chatApp': (app, id) => `エージェントは ${app} アプリで作業中 · 会話 ${id}`,
   'board.chatSite': (h, id) => `エージェントは ${h} で作業中${id ? ` · チャット ${id}` : ''}`,
+  'board.chatElsewhere': (app, pc) => `エージェントは別のコンピューター（${pc}）の ${app} で作業中。\nチャットはそこでしか開けません。ここから返信できます`,
   'board.chatAppOnly': (app) => `エージェントは ${app} で作業中：個別の会話へのリンクがないため、アプリが開きます`,
   'board.chatNone': 'エージェントがチャットのリンクを送っていないため、新しいチャットが開きます',
   'board.replyIn': (who) => `${who} で返事する`,

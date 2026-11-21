@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-21'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-21.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -103,7 +103,10 @@ def computer_name():
 
 COMPUTER = computer_name()
 # What every request to Goalcraft says: the script's version, and its computer (encoded: a header is ASCII).
-OURS = {'User-Agent': AGENT, 'X-Goalcraft-Computer': urllib.parse.quote(COMPUTER), 'X-Goalcraft-Problems': '[]'}
+# The system too, so the board can tell a computer's chats from another's: a Claude or Codex chat
+# opens only on the computer it is on, and a browser knows its own system, not its computer's name.
+OS = 'mac' if MAC else 'windows' if WINDOWS else 'linux'
+OURS = {'User-Agent': AGENT, 'X-Goalcraft-Computer': urllib.parse.quote(COMPUTER), 'X-Goalcraft-Os': OS, 'X-Goalcraft-Problems': '[]'}
 
 # What is wrong on this computer, as Goalcraft shows it under the spending (its dot turns amber for a
 # warning, red for an error): a code the dashboard words in the person's language, its level, a few

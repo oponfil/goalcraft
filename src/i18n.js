@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=eddb7ad0';
-import vi from './lang/vi.js?v=eddb7ad0';
-import ja from './lang/ja.js?v=eddb7ad0';
-import pt from './lang/pt.js?v=eddb7ad0';
-import tr from './lang/tr.js?v=eddb7ad0';
-import ko from './lang/ko.js?v=eddb7ad0';
+import es from './lang/es.js?v=62b87ad4';
+import vi from './lang/vi.js?v=62b87ad4';
+import ja from './lang/ja.js?v=62b87ad4';
+import pt from './lang/pt.js?v=62b87ad4';
+import tr from './lang/tr.js?v=62b87ad4';
+import ko from './lang/ko.js?v=62b87ad4';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -445,6 +445,7 @@ const STRINGS = {
   'board.sendAnswerTip': L('The agent gets your answer when it next checks Goalcraft.', 'Агент получит ответ, когда в следующий раз заглянет в Goalcraft.', '智能体下次查看 Goalcraft 时会收到回复。', 'เอเจนต์จะได้รับคำตอบเมื่อเข้ามาดู Goalcraft ครั้งถัดไป'),
   'board.chatApp': L((app, id) => `The agent works in the ${app} app · conversation ${id}`, (app, id) => `Агент работает в приложении ${app} · разговор ${id}`, (app, id) => `智能体在 ${app} 应用中工作 · 对话 ${id}`, (app, id) => `เอเจนต์ทำงานในแอป ${app} · บทสนทนา ${id}`),
   'board.chatSite': L((h, id) => `The agent works on ${h}${id ? ` · chat ${id}` : ''}`, (h, id) => `Агент работает на сайте ${h}${id ? ` · чат ${id}` : ''}`, (h, id) => `智能体在 ${h} 上工作${id ? ` · 聊天 ${id}` : ''}`, (h, id) => `เอเจนต์ทำงานบน ${h}${id ? ` · แชต ${id}` : ''}`),
+  'board.chatElsewhere': L((app, pc) => `The agent works in ${app} on another computer, ${pc}.\nIts chat opens only there; you can answer it from here`, (app, pc) => `Агент работает в ${app} на другом компьютере — ${pc}.\nЕго чат открывается только там, а ответить агенту можно и отсюда`, (app, pc) => `智能体在另一台电脑（${pc}）上的 ${app} 中工作。\n它的对话只能在那里打开，你可以在这里回复它`, (app, pc) => `เอเจนต์ทำงานใน ${app} บนคอมพิวเตอร์อีกเครื่อง (${pc})\nแชทของมันเปิดได้ที่นั่นเท่านั้น ตอบเอเจนต์จากที่นี่ได้`),
   'board.chatAppOnly': L((app) => `The agent works in ${app}: it has no link to one conversation, so this opens the app`, (app) => `Агент работает в ${app}: ссылки на отдельный разговор там нет, откроется приложение`, (app) => `智能体在 ${app} 中工作：没有单个对话的链接，将打开应用`, (app) => `เอเจนต์ทำงานใน ${app}: ไม่มีลิงก์ไปยังบทสนทนาเดียว จึงจะเปิดแอป`),
   'board.chatNone': L("The agent hasn't sent a link to its chat, so this opens a new one", 'Агент не прислал ссылку на свой чат: откроется новый чат', '智能体没有发送其聊天链接，将打开新聊天', 'เอเจนต์ยังไม่ได้ส่งลิงก์แชตของตน จะเปิดแชตใหม่'),
   'board.replyIn': L((who) => `Reply in ${who}`, (who) => `Ответить в ${who}`, (who) => `在 ${who} 中回复`, (who) => `ตอบใน ${who}`),

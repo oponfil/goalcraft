@@ -190,6 +190,7 @@ export default {
   'board.sendAnswerTip': 'Ajan cevabını Goalcraft\'a bir sonraki bakışında alır.',
   'board.chatApp': (app, id) => `Ajan ${app} uygulamasında çalışıyor · konuşma ${id}`,
   'board.chatSite': (h, id) => `Ajan ${h} üzerinde çalışıyor${id ? ` · sohbet ${id}` : ''}`,
+  'board.chatElsewhere': (app, pc) => `Ajan başka bir bilgisayarda (${pc}) ${app} içinde çalışıyor.\nSohbeti yalnızca orada açılır; buradan yanıt verebilirsiniz`,
   'board.chatAppOnly': (app) => `Ajan ${app} içinde çalışıyor: tek bir konuşmaya bağlantı yok, uygulama açılır`,
   'board.chatNone': 'Ajan sohbetinin bağlantısını göndermedi: yeni bir sohbet açılır',
   'board.replyIn': (who) => `${who} içinde cevapla`,

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=eddb7ad0';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=eddb7ad0';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=eddb7ad0';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=62b87ad4';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=62b87ad4';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=62b87ad4';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -34,8 +34,27 @@ const whereTip = (mine, info, inAntigravity) => {
   if (/^kimi/.test(mine || '') || (!mine && (info.product || info.name) === 'Kimi')) return t('board.chatAppOnly', 'Kimi');
   return t('board.chatNone');
 };
-const openBtnHtml = (link, web, info, tipText) =>
-  `<a class="btn" href="${esc(link)}" ${opens(link, web)}${tipText ? ` data-tip="${esc(tipText)}"` : ''}>${esc(openLabel(link, info))}</a>`;
+// away: the computer the agent's chat is on, when it isn't this one (see elsewhere): the button is
+// greyed out and says why on hover, as the chat can't be opened here.
+const openBtnHtml = (link, web, info, tipText, away) => away
+  ? `<span class="btn off" aria-disabled="true" data-tip="${esc(t('board.chatElsewhere', info.product || info.name, away.name || OS_NAMES[away.os]))}">${esc(openLabel(link, info))}</span>`
+  : `<a class="btn" href="${esc(link)}" ${opens(link, web)}${tipText ? ` data-tip="${esc(tipText)}"` : ''}>${esc(openLabel(link, info))}</a>`;
+// The system this browser runs on, as the wake scripts name theirs; 'mobile' on a phone or tablet,
+// where no computer's chat opens. null: can't tell (then nothing is greyed out).
+const OS_NAMES = { mac: 'Mac', windows: 'Windows', linux: 'Linux' };
+const MY_OS = (() => {
+  const n = globalThis.navigator;
+  if (!n) return null;
+  const p = String(n.userAgentData?.platform || n.platform || '').toLowerCase(), ua = String(n.userAgent || '').toLowerCase();
+  if (/iphone|ipad|android/.test(ua) || n.userAgentData?.mobile || (p.startsWith('mac') && n.maxTouchPoints > 1)) return 'mobile';
+  if (p.startsWith('mac')) return 'mac';
+  if (p.startsWith('win')) return 'windows';
+  if (/linux|cros|chrome os/.test(p)) return 'linux';
+  return null;
+})();
+// The agent's chat is on another computer: its computer when its system isn't this browser's (two
+// computers with the same system can't be told apart, so their chats stay open to try).
+const elsewhere = a => (a.computer?.os && MY_OS && a.computer.os !== MY_OS ? a.computer : null);
 const opens = (url, web) => (/^https?:/.test(url) ? 'target="_blank" rel="noopener"' : `data-web="${esc(web)}"`);
 
 // No app on this computer: the app link does nothing and the page keeps the focus, so after a
@@ -768,7 +787,7 @@ export function mountDashboard(funnels, opts = {}) {
       const mine = url => (url && url !== info.chat && url !== web ? url : a.chat);
       const openBtn = url => {
         const link = chatLink(info, url);
-        return link ? openBtnHtml(link, webOf(url, info), info, (opts.live ? whereTip(mine(url), info, inAntigravity) : '')) : '';
+        return link ? openBtnHtml(link, webOf(url, info), info, (opts.live ? whereTip(mine(url), info, inAntigravity) : ''), opts.live && elsewhere(a)) : '';
       };
       // The first question (the one asked first) shows with its answer box; the rest fold under
       // "N more questions" and open with their own boxes.
@@ -798,9 +817,9 @@ export function mountDashboard(funnels, opts = {}) {
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : '')) : ''}</div>
+        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : ''}</div>
         <div class="pop-msg"></div></div>`
-      : chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : '')) : '';
+      : chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '';
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
       <div class="pop-status">${paused}${wakes}${missed}${lost}</div>
       <div class="pop-sub where">${where}</div>
