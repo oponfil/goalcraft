@@ -23,7 +23,7 @@ The script tells Goalcraft with every check what is wrong on its computer, and t
 | Claude Code or Codex isn't installed (`claude_missing`, `codex_missing`) while an agent there needs it | error | install it and sign in |
 | Google Antigravity isn't running (`antigravity_off`), so a Gemini agent can't be woken | warning | open Antigravity |
 | macOS refused the keychain entry (`keychain_denied`) | warning | `python3 ~/.goalcraft/goalcraft-wake.py limit` asks again |
-| An agent couldn't be woken (`cant_wake`, an hour) or its woken run failed (`wake_failed`, a day) | warning | the line says why; it clears once that agent is woken fine |
+| An agent couldn't be woken (`cant_wake`, an hour) or its woken run failed (`wake_failed`, a day) | warning | the line says why; it clears once that agent is woken fine or is taken off the dashboard |
 
 ### Several computers
 
@@ -107,7 +107,7 @@ On Windows run the same commands with `py` (or `python`) instead of `python3`; t
 ## Limits
 
 - With the script on several computers, Antigravity's and Kimi's limits are worked out from what their models cost on the computer that read the limit last, so if both computers use them the share each run shows is a little high.
-- A Codex thread the ChatGPT app keeps open (a Codex automation, a chat open in the app) can't be resumed from outside: Codex answers that the thread "already has an active writer". The script logs it and leaves the agent to its next run. Claude app sessions wake fine, open or not.
+- A Codex thread the ChatGPT app keeps open (a Codex automation, a chat open in the app) can't be resumed from outside: Codex answers that the thread "already has an active writer". The script tries again every 10 minutes, until the run starts, the agent has run in the app by itself (its thread changed since), it is taken off the dashboard, or a day has passed; then the warning goes. Claude app sessions wake fine, open or not.
 
 ## What it can do
 

@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-21.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-21.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -287,6 +287,10 @@ def codex_command(item):
 
 
 running = set()  # sessions being woken now: one run at a time per conversation
+# Codex threads the ChatGPT app kept open when they were woken → {item, when it failed, first, next try}:
+# tried again every RETRY_EVERY until a run starts, the thread moves on by itself, or a day has passed.
+retry = {}
+RETRY_EVERY = 10 * 60
 passed = {}  # agents not woken here lately (not on this computer, or something missing) → when: not looked at again for a while
 PASS_FOR = 10 * 60
 
@@ -326,9 +330,13 @@ def start_run(item, cmd, cwd):
             last = (out.stdout.strip().splitlines() or [''])[-1][:200]
             log(f'woke {who} in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if 'already has an active writer' in out.stderr:
-                log('  the ChatGPT app keeps this Codex thread open, so it cannot be resumed from outside; it gets the news on its next run')
+                log(f'  the ChatGPT app keeps this Codex thread open, so it cannot be resumed from outside: trying again in {RETRY_EVERY // 60} min')
                 problem('wake_failed', 'warning', item['agent'], 'the ChatGPT app keeps this Codex thread open')
-            elif 'Failed to authenticate' in out.stdout + out.stderr or 'Not logged in' in out.stdout + out.stderr:
+                now = time.time()
+                retry[key] = {'item': item, 'failed': now, 'first': retry.get(key, {}).get('first', now), 'at': now + RETRY_EVERY}
+                return
+            retry.pop(key, None)
+            if 'Failed to authenticate' in out.stdout + out.stderr or 'Not logged in' in out.stdout + out.stderr:
                 log(f'  {SIGN_IN_HINT}')
                 problem('claude_signed_out', 'error')
             elif out.returncode:
@@ -337,6 +345,7 @@ def start_run(item, cmd, cwd):
             else:
                 problem('wake_failed', agent=item['agent'])
         except subprocess.TimeoutExpired:
+            retry.pop(key, None)
             log(f'woke {who}: stopped after {RUN_LIMIT // 60} min')
             problem('wake_failed', 'warning', item['agent'], f'stopped after {RUN_LIMIT // 60} min')
         except Exception as e:
@@ -1378,6 +1387,19 @@ def report_codex_limit(key, show=False):
     return True
 
 
+def forget_gone(agents):
+    """An agent taken off the dashboard (or silent for a week) is no longer woken again, and its warnings go."""
+    names = {item['agent'] for item in agents}
+    for session, r in list(retry.items()):
+        if r['item']['agent'] not in names:
+            retry.pop(session, None)
+    gone = [k for k, v in list(problems.items()) if v.get('agent') and v['agent'] not in names]
+    for k in gone:
+        problems.pop(k, None)
+    if gone:
+        send_problems()
+
+
 def report_usage(key, show=False):
     """Read the local agents' token use and send it to Goalcraft. Returns how many runs were sent."""
     req = urllib.request.Request(ENDPOINT + '?agents=1', headers={'Authorization': f'Bearer {key}', **OURS})
@@ -1387,6 +1409,7 @@ def report_usage(key, show=False):
     except Exception as e:
         log(f'usage: could not list agents: {e}')
         return 0
+    forget_gone(agents)
     sessions = app_sessions()
     grok = grok_read() if any(item['app'] == 'grok' for item in agents) else None
     rows = []
@@ -1419,6 +1442,28 @@ def report_usage(key, show=False):
     return saved
 
 
+def try_again(now):
+    """Wake again the Codex threads the ChatGPT app kept open. Goalcraft lists an agent once for each
+    thing it is woken for, so the script remembers these itself. It stops when the thread has moved on
+    since (the agent ran in the app, where it reads its news), and after a day; the warning goes then."""
+    for session, r in list(retry.items()):
+        if session in running or r['at'] > now:
+            continue
+        item = r['item']
+        found = glob.glob(str(CODEX_SESSIONS / '*' / '*' / '*' / f'rollout-*{session}.jsonl'))
+        moved = bool(found) and os.path.getmtime(found[0]) > r['failed']
+        if not found or moved or now - r['first'] > PROBLEM_HOURS['wake_failed'] * 3600:
+            retry.pop(session, None)
+            log(f'{who_of(item)} ' + ('has run in the ChatGPT app since' if moved else 'has no Codex thread here any more' if not found
+                                      else 'could not be woken for a day') + ': not woken again')
+            problem('wake_failed', agent=item['agent'])  # a thread gone is its own trouble, reported when next woken
+            continue
+        r['at'] = now + RETRY_EVERY
+        made, _, _ = codex_command(item)
+        if made:
+            start_run(item, *made)
+
+
 def check(key):
     """Ask Goalcraft whom to wake, take (claim) those whose conversation is on this computer, and wake
     them. The others are left for the script on the computer they work on."""
@@ -1435,7 +1480,9 @@ def check(key):
         return None
     update(got.get('script'))
     now, ready = time.time(), []
+    try_again(now)
     for item in got.get('wake', []):
+        retry.pop(item.get('session'), None)  # woken anew for this, with whatever is new
         seen = f'{item["funnel_id"]}|{item["agent"]}|{",".join(item["reasons"])}'
         if passed.get(seen, 0) > now - PASS_FOR:
             continue
