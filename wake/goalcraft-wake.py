@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-21.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-21.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -160,7 +160,38 @@ def find(tool):
         for name in ([tool + '.exe', tool + '.cmd'] if WINDOWS else [tool]):
             if (d / name).exists():
                 return str(d / name)
+    if tool == 'codex' and WINDOWS:
+        return codex_in_app()
     return None
+
+
+def codex_in_app():
+    """Windows: Codex as it comes inside the ChatGPT app (a Microsoft Store package, OpenAI.Codex): its
+    folder under C:\\Program Files\\WindowsApps changes with every update and can't be listed, so it is
+    taken from the packages Windows registers for this user (the newest version that has codex.exe)."""
+    try:
+        import winreg
+        root = r'Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages'
+        found = []
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, root) as packages:
+            i = 0
+            while True:
+                try:
+                    name = winreg.EnumKey(packages, i)
+                except OSError:
+                    break
+                i += 1
+                if not name.startswith('OpenAI.Codex_'):  # not the app's runtimes (OpenAI.CodexPrimaryRuntime…)
+                    continue
+                with winreg.OpenKey(packages, name) as p:
+                    folder = winreg.QueryValueEx(p, 'PackageRootFolder')[0]
+                exe = pathlib.Path(folder) / 'app' / 'resources' / 'codex.exe'
+                if exe.exists():
+                    version = tuple(int(n) for n in re.findall(r'\d+', name.split('_')[1]))
+                    found.append((version, str(exe)))
+        return max(found)[1] if found else None
+    except Exception:
+        return None
 
 
 def note(item):

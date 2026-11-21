@@ -40,7 +40,8 @@ print(f'version {version}: {changed} files stamped')
 # The wake script's release, for the wake endpoint: the version and SHA-256 of wake/goalcraft-wake.py as
 # goalcraft.ai serves it. Scripts update themselves to it, and only to a file with this hash, so the
 # file on the site alone can't change what runs on people's computers. Deploy the wake function after.
-script = (ROOT / 'wake' / 'goalcraft-wake.py').read_bytes()
+# As git stores it (and the site serves it): Git for Windows may check a file out with CRLF line ends.
+script = (ROOT / 'wake' / 'goalcraft-wake.py').read_bytes().replace(b'\r\n', b'\n')
 release = re.search(rb"^VERSION = '([\w.-]+)'", script, re.M).group(1).decode()
 out = ROOT / 'supabase' / 'functions' / 'wake' / 'release.ts'
 text = ('// Written by tools/stamp.py from wake/goalcraft-wake.py: the version the scripts update themselves to.\n'
