@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=c3f2c1e0';
-import vi from './lang/vi.js?v=c3f2c1e0';
-import ja from './lang/ja.js?v=c3f2c1e0';
-import pt from './lang/pt.js?v=c3f2c1e0';
-import tr from './lang/tr.js?v=c3f2c1e0';
-import ko from './lang/ko.js?v=c3f2c1e0';
+import es from './lang/es.js?v=a61a6194';
+import vi from './lang/vi.js?v=a61a6194';
+import ja from './lang/ja.js?v=a61a6194';
+import pt from './lang/pt.js?v=a61a6194';
+import tr from './lang/tr.js?v=a61a6194';
+import ko from './lang/ko.js?v=a61a6194';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -393,8 +393,8 @@ const STRINGS = {
   'wake.versionCurrent': L((v) => `Script version ${v}, the latest`, (v) => `Версия скрипта ${v}, актуальная`, (v) => `脚本版本 ${v}，最新`, (v) => `สคริปต์เวอร์ชัน ${v} ล่าสุด`),
   'wake.versionOld': L((v, l) => `Script version ${v}, old: the latest is ${l}`, (v, l) => `Версия скрипта ${v}, старая: новая ${l}`, (v, l) => `脚本版本 ${v}，旧版：最新为 ${l}`, (v, l) => `สคริปต์เวอร์ชัน ${v} เก่า: ล่าสุดคือ ${l}`),
   'wake.troubled': L('running, with problems', 'работает, есть проблемы', '运行中，有问题', 'ทำงานอยู่ มีปัญหา'),
-  'wake.p.claude_signed_out': L('Claude Code is signed out: Claude agents here aren\'t woken and the Claude limit isn\'t read. In a terminal on this computer run: claude auth login', 'Вход Claude Code истёк: агентов Claude здесь не будят, лимит Claude не читается. В терминале на этом компьютере выполните: claude auth login', 'Claude Code 已登出：这里的 Claude 智能体不会被唤醒，也读不到 Claude 额度。请在这台电脑的终端运行：claude auth login', 'Claude Code ออกจากระบบแล้ว: เอเจนต์ Claude ที่นี่จะไม่ถูกปลุก และอ่านโควตา Claude ไม่ได้ ให้รันในเทอร์มินัลบนเครื่องนี้: claude auth login'),
-  'wake.p.claude_missing': L('Claude Code isn\'t installed here: Claude agents can\'t be woken. Install it and run: claude auth login', 'Claude Code здесь не установлен: агентов Claude не разбудить. Установите его и выполните: claude auth login', '这里没有安装 Claude Code：无法唤醒 Claude 智能体。请安装后运行：claude auth login', 'ไม่ได้ติดตั้ง Claude Code ที่นี่: ปลุกเอเจนต์ Claude ไม่ได้ ติดตั้งแล้วรัน: claude auth login'),
+  'wake.p.claude_signed_out': L('Claude Code is signed out: Claude agents here aren\'t woken and the Claude limit isn\'t read.\nIn a terminal on this computer run: claude auth login', 'Вход Claude Code истёк: агентов Claude здесь не будят, лимит Claude не читается.\nВ терминале на этом компьютере выполните: claude auth login', 'Claude Code 已登出：这里的 Claude 智能体不会被唤醒，也读不到 Claude 额度。\n请在这台电脑的终端运行：claude auth login', 'Claude Code ออกจากระบบแล้ว: เอเจนต์ Claude ที่นี่จะไม่ถูกปลุก และอ่านโควตา Claude ไม่ได้\nให้รันในเทอร์มินัลบนเครื่องนี้: claude auth login'),
+  'wake.p.claude_missing': L('Claude Code isn\'t installed here: Claude agents can\'t be woken.\nInstall it and run: claude auth login', 'Claude Code здесь не установлен: агентов Claude не разбудить.\nУстановите его и выполните: claude auth login', '这里没有安装 Claude Code：无法唤醒 Claude 智能体。\n请安装后运行：claude auth login', 'ไม่ได้ติดตั้ง Claude Code ที่นี่: ปลุกเอเจนต์ Claude ไม่ได้\nติดตั้งแล้วรัน: claude auth login'),
   'wake.p.codex_missing': L('Codex isn\'t installed here: Codex agents can\'t be woken', 'Codex здесь не установлен: агентов Codex не разбудить', '这里没有安装 Codex：无法唤醒 Codex 智能体', 'ไม่ได้ติดตั้ง Codex ที่นี่: ปลุกเอเจนต์ Codex ไม่ได้'),
   'wake.p.antigravity_off': L((a) => `Google Antigravity isn't running: ${a} can't be woken`, (a) => `Google Antigravity не запущен: ${a} не разбудить`, (a) => `Google Antigravity 未运行：无法唤醒 ${a}`, (a) => `Google Antigravity ไม่ได้เปิดอยู่: ปลุก ${a} ไม่ได้`),
   'wake.p.keychain_denied': L((a) => `Access to "${a}" in the keychain was refused: that plan's limit isn't read`, (a) => `Доступ к «${a}» в связке ключей запрещён: лимит этого плана не читается`, (a) => `钥匙串中“${a}”的访问被拒绝：读不到该套餐的额度`, (a) => `การเข้าถึง "${a}" ในพวงกุญแจถูกปฏิเสธ: อ่านโควตาของแผนนั้นไม่ได้`),
