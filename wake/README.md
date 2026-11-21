@@ -50,7 +50,7 @@ Claude doesn't log its plan's limit as Codex does, so every 10 minutes the scrip
 Your agent sets it up; you only agree. The supervisor's prompt on [goalcraft.ai/connect](https://goalcraft.ai/connect/) has it offer this when it runs on your computer (Claude Code, Codex), and any agent there can do it when you ask ("set up the Goalcraft wake script"):
 
 1. The agent calls the MCP tool `create_wake_key`. It returns a key and the one command that installs the script with it: `install` for macOS, `install_windows` for Windows (PowerShell).
-2. The agent runs that command: it downloads `goalcraft-wake.py` to `~/.goalcraft/` (on Windows `%USERPROFILE%\.goalcraft\`), saves the key and keeps the script running, also after a restart: a login item on macOS, a script in the Startup folder on Windows that starts it with no window.
+2. The agent runs that command: it downloads `goalcraft-wake.py` to `~/.goalcraft/` (on Windows `%USERPROFILE%\.goalcraft\`), saves the key and keeps the script running, also after a restart: a login item on macOS; on Windows a Task Scheduler task that starts it with no window at sign-in and every 10 minutes (a second copy sees the first and leaves), with a script in the Startup folder in case the task is gone. Not a process of the agent's app: an app from the Microsoft Store, as the Claude app is on Windows, takes the processes it started with it when it updates or restarts.
 
 The agents' command-line tools must be signed in once: `claude` (Claude Code) and/or `codex`; the script uses them to resume the agents' chats. On a Mac Codex needs no separate install: the script finds the one inside the ChatGPT app. Windows needs Python 3 (from python.org, or the Microsoft Store).
 

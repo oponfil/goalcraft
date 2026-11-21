@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-20'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-21'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1468,8 +1468,11 @@ def restart():
     """Start this script again, now its file is the new version (the same process on macOS and Linux)."""
     release_lock()
     if WINDOWS:
-        subprocess.Popen([pythonw(), str(pathlib.Path(__file__).resolve()), 'run'], cwd=str(HOME),
-                         creationflags=0x00000008 | 0x00000200 | NO_WINDOW, close_fds=True)  # detached, its own group
+        me = pathlib.Path(__file__).resolve()
+        if has_task() or add_task(me):
+            start_windows(me)  # from the task: see TASK
+        else:
+            subprocess.Popen([pythonw(), str(me), 'run', '--task'], cwd=str(HOME), creationflags=0x00000008 | 0x00000200 | NO_WINDOW, close_fds=True)
         os._exit(0)
     os.execv(sys.executable, [sys.executable, str(pathlib.Path(__file__).resolve()), 'run'])
 
@@ -1477,8 +1480,9 @@ def restart():
 lock_file = None
 
 
-def take_lock():
-    """One script at a time on a computer: False when another already runs."""
+def take_lock(mine=True):
+    """One script at a time on a computer: False when another already runs. mine: it is this script's
+    from now on (its pid is written down)."""
     global lock_file
     DIR.mkdir(exist_ok=True)
     lock_file = open(LOCK, 'a+')
@@ -1494,8 +1498,17 @@ def take_lock():
         lock_file.close()
         lock_file = None
         return False
-    PIDFILE.write_text(str(os.getpid()))
+    if mine:
+        PIDFILE.write_text(str(os.getpid()))
     return True
+
+
+def lock_taken():
+    """Whether a script here holds the lock (it is let go at once)."""
+    if not take_lock(mine=False):
+        return True
+    release_lock()
+    return False
 
 
 def release_lock():
@@ -1556,6 +1569,17 @@ def limit_job(key):
 
 def run():
     key = key_or_exit()
+    # Windows: a script started some other way (the Startup folder, an agent, one from before the task)
+    # hands over to the task, adding it if it is missing, and leaves.
+    if WINDOWS and '--task' not in sys.argv:
+        me = pathlib.Path(__file__).resolve()
+        if lock_taken():
+            print('The wake script already runs on this computer.')
+            return
+        if has_task() or add_task(me):
+            log('handing over to the Task Scheduler task')
+            start_windows(me)
+            return
     if not take_lock():
         print('The wake script already runs on this computer.')
         return
@@ -1570,6 +1594,8 @@ def run():
                 continue
             if check(key) == 401:
                 log('the key was replaced or removed: stopping. Ask your agent to set up the wake script again (create_wake_key).')
+                if WINDOWS:  # the task would start it again every 10 minutes; setting it up again adds the task back
+                    subprocess.run(['schtasks', '/Delete', '/TN', TASK, '/F'], capture_output=True, creationflags=NO_WINDOW)
                 return
             if time.time() - counted > USAGE_EVERY:
                 counted = time.time()
@@ -1629,11 +1655,94 @@ def install_mac(me):
 
 
 def install_windows(me):
-    """Windows: a script in the Startup folder starts it at sign-in with no window; it starts now too."""
+    """Windows: a task in the Task Scheduler runs it at sign-in and every 10 minutes (it stays one script:
+    a second one sees the lock and leaves), and the Startup folder starts it at sign-in too, should the
+    task be gone. It starts now, from the task."""
     STARTUP.parent.mkdir(parents=True, exist_ok=True)
     STARTUP.write_text(f'CreateObject("WScript.Shell").Run """{pythonw()}"" ""{me}"" run", 0, False\r\n', encoding='utf-8')
+    if not add_task(me):
+        print('Could not add the Task Scheduler task: the script starts at sign-in only.')
     stop_windows()
-    subprocess.Popen([pythonw(), str(me), 'run'], cwd=str(HOME), creationflags=0x00000008 | 0x00000200 | NO_WINDOW, close_fds=True)
+    start_windows(me)
+
+
+# Windows: the script runs from a Task Scheduler task. A process started by an app installed from the
+# Microsoft Store (as the Claude app is, in WindowsApps) belongs to that app: Windows closes it with
+# the app, when the app updates or restarts. A script that an agent in the Claude app installed, or that
+# restarted itself after an update, died that way. The task's processes belong to no app.
+TASK = 'Goalcraft wake'
+
+
+def add_task(me, at_sign_in=True):
+    """Add (or replace) the task: at sign-in and every 10 minutes, with no time limit, also on battery.
+    Should Windows not let this user add a sign-in trigger, every 10 minutes only (the Startup folder
+    starts it at sign-in)."""
+    user = f'{os.environ.get("USERDOMAIN", "")}\\{os.environ.get("USERNAME", "")}'.lstrip('\\')
+    x = lambda v: str(v).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+    xml = f'''<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo><Description>Goalcraft wake: wakes your agents when you answer them on goalcraft.ai</Description></RegistrationInfo>
+  <Triggers>
+    {f'<LogonTrigger><Enabled>true</Enabled><UserId>{x(user)}</UserId></LogonTrigger>' if at_sign_in else ''}
+    <TimeTrigger><Repetition><Interval>PT10M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition><StartBoundary>{time.strftime("%Y-%m-%dT%H:%M:%S")}</StartBoundary><Enabled>true</Enabled></TimeTrigger>
+  </Triggers>
+  <Principals><Principal id="Author"><UserId>{x(user)}</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
+  <Settings>
+    <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <IdleSettings><StopOnIdleEnd>false</StopOnIdleEnd><RestartOnIdle>false</RestartOnIdle></IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>true</Hidden>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>5</Priority>
+  </Settings>
+  <Actions Context="Author"><Exec><Command>{x(pythonw())}</Command><Arguments>"{x(me)}" run --task</Arguments><WorkingDirectory>{x(HOME)}</WorkingDirectory></Exec></Actions>
+</Task>
+'''
+    f = DIR / 'task.xml'
+    try:
+        f.write_text(xml, encoding='utf-16')
+        done = subprocess.run(['schtasks', '/Create', '/TN', TASK, '/XML', str(f), '/F'], capture_output=True,
+                              text=True, errors='replace', creationflags=NO_WINDOW)
+    except Exception as e:
+        log(f'task: could not add it: {e}')
+        return False
+    finally:
+        f.unlink(missing_ok=True)
+    if done.returncode and at_sign_in:
+        return add_task(me, at_sign_in=False)
+    if done.returncode:
+        log(f'task: could not add it: {(done.stderr or done.stdout).strip()}')
+    return done.returncode == 0
+
+
+def has_task():
+    return subprocess.run(['schtasks', '/Query', '/TN', TASK], capture_output=True, creationflags=NO_WINDOW).returncode == 0
+
+
+def start_windows(me):
+    """Start the script from the task, so it belongs to no app; if the task can't start it (none, or its
+    Python doesn't come up in 20 seconds), start it from here as before. Returns whether the task did."""
+    try:
+        before = PIDFILE.stat().st_mtime
+    except OSError:
+        before = 0
+    ran = subprocess.run(['schtasks', '/Run', '/TN', TASK], capture_output=True, creationflags=NO_WINDOW).returncode == 0
+    for _ in range(20 if ran else 0):  # the task's script writes its pid once it has the lock
+        time.sleep(1)
+        try:
+            if PIDFILE.stat().st_mtime > before:
+                return True
+        except OSError:
+            pass
+    if ran:
+        log('task: it did not start the script; starting it directly')
+    subprocess.Popen([pythonw(), str(me), 'run', '--task'], cwd=str(HOME), creationflags=0x00000008 | 0x00000200 | NO_WINDOW, close_fds=True)
+    return False
 
 
 def stop_windows():
@@ -1657,6 +1766,7 @@ def uninstall():
     elif WINDOWS:
         if STARTUP.exists():
             STARTUP.unlink()
+        subprocess.run(['schtasks', '/Delete', '/TN', TASK, '/F'], capture_output=True, creationflags=NO_WINDOW)
         stop_windows()
     print('Goalcraft wake is off. The key stays in ~/.goalcraft/wake.json until a new one replaces it.')
 
