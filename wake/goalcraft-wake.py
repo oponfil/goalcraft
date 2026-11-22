@@ -37,6 +37,8 @@ the plan's weekly limit is used. For the Kimi app's Work it asks Kimi how much o
 quota is used, with the sign-in the app keeps here (sent only to Kimi).
 Standard library only; the log is ~/.goalcraft/wake.log.
 """
+import base64
+import calendar
 import glob
 import hashlib
 import json
@@ -53,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-22.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-22.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1175,6 +1177,40 @@ def grok_call(token, method, body):
 
 
 GROK_STEP = 50  # ppm of the weekly limit (0.005%): less is the servers' rounding, which sways a bot's day by a few ppm
+# Grok Bot's requests, as its plan bills them, by kind of token: the row's field and the price in $ per
+# million (xAI's for grok-4.7). The plan's limit goes by just these prices: on 20-22 November 2026 every
+# day's requests at them came to $4.00 per 1% of the Super plan's weekly limit.
+GROK_TOKENS = {'prompt-text-tokens': ('input_tokens', 2.0), 'cache-write-text-tokens': ('cache_write_tokens', 2.0),
+               'cached-prompt-text-tokens': ('cache_read_tokens', 0.5), 'completion-text-tokens': ('output_tokens', 6.0)}
+GROK_BILLING = 'https://cursor.com/api/dashboard/v2/query-billing-items'
+
+
+def grok_requests(token, since, until):
+    """Grok Bot's requests from since to until (the plan's billing items, as its usage page lists them):
+    each one's time, id and tokens by kind. They don't say which bot made them. The dashboard takes the
+    same sign-in as Grok Bot's servers, given as the website's session (<user>::<token>)."""
+    user = json.loads(base64.urlsafe_b64decode(token.split('.')[1] + '=='))['sub'].split('|')[-1]
+    stamp = lambda t: time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime(t))
+    out, cursor = [], None
+    for _ in range(100):
+        q = {'scope': 'user', 'startTime': stamp(since), 'endTime': stamp(until), 'pageSize': 500, **({'cursor': cursor} if cursor else {})}
+        req = urllib.request.Request(GROK_BILLING + '?' + urllib.parse.urlencode(q), headers={
+            'Cookie': f'WorkosCursorSessionToken={urllib.parse.quote(user)}%3A%3A{token}'})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            page = json.load(r)
+        out += [{'id': i['billingItemId'], 'at': iso_time(i['eventTime']), 'usage': i.get('usage') or {}}
+                for i in page.get('data') or [] if i.get('product') == 'grok-bot' and i.get('billingItemId')]
+        more = page.get('pagination') or {}
+        if not more.get('hasMore') or not more.get('nextCursor'):
+            break
+        cursor = more['nextCursor']
+    return out
+
+
+def iso_time(s):
+    """Seconds since 1970 of an ISO time in UTC ("2026-11-22T04:16:35.780Z")."""
+    whole, _, frac = s.rstrip('Z').partition('.')
+    return calendar.timegm(time.strptime(whole, '%Y-%m-%dT%H:%M:%S')) + float('0.' + (frac or '0'))
 
 
 def grok_rows():
@@ -1229,30 +1265,69 @@ def grok_rows():
         track[k] = {**t, 'at': now}
     track = {k: v for k, v in track.items() if k in days}
     slots = {k: v for k, v in slots.items() if k in days}
+    # The week's requests, all bots', added up by day (kept; each reading asks only from half an hour
+    # before the one before, for requests listed late): what a row's share of its day's percent took of
+    # each kind of token, and so its cost at xAI's prices.
+    mix, seen, fetched = old.get('mix') or {}, old.get('seen') or {}, old.get('fetched')
+    if (old.get('week') or start) != start:
+        mix, seen, fetched = {}, {}, None
+    try:
+        since = max(start, fetched - 1800) if fetched else start
+        for q in grok_requests(token, since, now):
+            if q['id'] in seen or q['at'] < start:
+                continue
+            seen[q['id']] = q['at']
+            bucket = mix.setdefault(f'{int(q["at"] // 86400 * 86400)}:{int(start)}', {})
+            for kind, n in q['usage'].items():
+                if kind in GROK_TOKENS:
+                    bucket[kind] = bucket.get(kind, 0) + int(n)
+        seen = {i: t for i, t in seen.items() if t >= now - 3600}
+        fetched = now
+    except Exception as e:
+        log(f'usage: Grok Bot requests: {e}')
+    day_ppm = {}
+    for k, d in days.items():
+        b = k.split(':', 2)[2]
+        day_ppm[b] = day_ppm.get(b, 0) + d['ppm']
+
+    def priced(k, ppm):
+        """A row's tokens by kind and cost: its share of all bots' percent that day, of that day's requests."""
+        b = k.split(':', 2)[2]
+        if not mix.get(b) or not day_ppm.get(b):
+            return {}
+        share = ppm / day_ppm[b]
+        kinds = {GROK_TOKENS[kind][0]: round(n * share) for kind, n in mix[b].items()}
+        return {'kinds': kinds, 'cost': sum(n * share * GROK_TOKENS[kind][1] for kind, n in mix[b].items()) / 1e6}
+
     rows = []
     for k, d in days.items():
         mine = slots.get(k, [])
         left = d['ppm'] - sum(s['ppm'] for s in mine)
         if left >= GROK_STEP:
-            rows.append({'key': k, 'bot': d['bot'], 'start': d['start'], 'end': min(d['end'], max(d['start'], track[k]['from'])), 'ppm': left})
-        rows += [{'key': f'{k}:{int(s["start"])}', 'bot': d['bot'], 'start': s['start'], 'end': s['end'], 'ppm': s['ppm']} for s in mine]
+            rows.append({'key': k, 'bot': d['bot'], 'start': d['start'], 'end': min(d['end'], max(d['start'], track[k]['from'])),
+                         'ppm': left, **priced(k, left)})
+        rows += [{'key': f'{k}:{int(s["start"])}', 'bot': d['bot'], 'start': s['start'], 'end': s['end'], 'ppm': s['ppm'],
+                  **priced(k, s['ppm'])} for s in mine]
     since = now - (USAGE_DAYS + 8) * 86400
     rows += [r for r in old.get('rows', []) if r.get('key') and 'ppm' in r and r['end'] >= since
              and r['key'].split(':')[3:4] != [str(int(start))]]
     return {'percent': status.get('usagePercent'), 'resets': status.get('nextResetTimestampUtc'), 'rows': rows,
-            'track': track, 'slots': slots, 'polled': now}
+            'track': track, 'slots': slots, 'polled': now, 'week': start, 'mix': mix, 'seen': seen, 'fetched': fetched}
 
 
 def grok_usage(item, read):
-    """A Grok agent's days in Grok Bot, from what grok_rows read: no tokens or cost (the servers give
-    none now), its share of the plan's weekly limit."""
+    """A Grok agent's use in Grok Bot, from what grok_rows read: its share of the plan's weekly limit,
+    and the tokens and cost that share took of its day's requests (none when they couldn't be read)."""
     out = []
     for d in read['rows'] if read else []:
         if d.get('bot') != item['session'] or 'ppm' not in d:
             continue
+        kinds = d.get('kinds') or {}
+        total = sum(kinds.values())
         out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'grok', 'model': 'grok-bot',
                     'run_key': d['key'], 'started_at': iso(d['start']), 'ended_at': iso(min(d['end'], time.time())),
-                    'tokens': 0, 'new_tokens': 0, 'cost_usd': None, 'limit_used': round(d['ppm'] / 1e4, 4),
+                    **kinds, 'tokens': total, 'new_tokens': total - kinds.get('cache_read_tokens', 0),
+                    'cost_usd': round(d['cost'], 4) if d.get('cost') is not None else None, 'limit_used': round(d['ppm'] / 1e4, 4),
                     'limit_percent': read.get('percent'), 'limit_window_minutes': 7 * 1440})
     return out
 
