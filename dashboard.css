@@ -427,6 +427,10 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
   background: none; border: 2px solid var(--border); color: var(--text); font: 500 13px var(--font); cursor: pointer;
 }
 .sitebar .spend-btn:hover { border-color: var(--muted); }
+.sitebar .spend-btn .wake-dot { width: 9px; height: 9px; border-radius: 50%; margin: 0 3px; flex: none; }  /* the wake scripts' state */
+.sitebar .spend-btn .wake-dot.ok { background: #9FE870; }
+.sitebar .spend-btn .wake-dot.warn { background: #F2A33C; }
+.sitebar .spend-btn .wake-dot.off { background: #FF5A4E; }
 @media (max-width: 560px) { .sitebar .spend-btn { padding: 4px 7px; } }
 #pop.wide { width: min(560px, calc(100vw - 16px)); }
 #pop .hist-controls + .hist-controls { margin-top: 6px; }

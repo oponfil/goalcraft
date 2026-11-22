@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=275efcda';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=275efcda';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=275efcda';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=26c34672';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=26c34672';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=26c34672';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -174,10 +174,13 @@ export function mountDashboard(funnels, opts = {}) {
   zoomBox.innerHTML = `<button type="button" data-d="-1" aria-label="${esc(t('board.zoomOut'))}" title="${esc(t('board.zoomOut'))}">−</button><button type="button" class="pct" data-d="0"></button><button type="button" data-d="1" aria-label="${esc(t('board.zoomIn'))}" title="${esc(t('board.zoomIn'))}">+</button>`;
   document.querySelector('.sitebar .logo').after(zoomBox);
   // What the agents spent, over all funnels: a button at the start of the top bar's links.
+  // Once there are wake scripts, a dot takes the icon's place: green while all of them are well, the
+  // worst one's color (red, amber) when one is in trouble; what is wrong on hover (markScripts).
+  let spendBtn = null;
   if (opts.spending) {
-    const spendBtn = document.createElement('button');
+    spendBtn = document.createElement('button');
     spendBtn.type = 'button'; spendBtn.className = 'spend-btn';
-    spendBtn.title = t('spend.title');
+    spendBtn.dataset.tip = t('spend.title');
     spendBtn.innerHTML = `${SPEND_ICON}<span class="wide">${esc(t('spend.button'))}</span>`;
     spendBtn.addEventListener('click', e => { e.stopPropagation(); showSpend(e); });
     document.querySelector('.sitebar .links').prepend(spendBtn);
@@ -461,28 +464,31 @@ export function mountDashboard(funnels, opts = {}) {
   // counted. Folded until the viewer opens it; when something is off (none yet, one silent, in trouble or
   // outdated), its title carries the worst one's dot.
   const SELF_UPDATING = '2026-11-18';  // the first version that updates itself
+  // One status a computer, its details on hover: gone silent (red), an error (red), a warning or an
+  // old version (amber), or all well (green).
+  const scriptUp = (c, now) => now - c.seen < 2 * 60e3;
+  const scriptCurrent = (w, c) => !w.latest || (c.version ?? '') >= w.latest;
+  const problemText = p => {
+    const key = `wake.p.${p.code}`, said = t(key, p.agent ?? '', p.why ?? '');
+    return said === key ? [p.code, p.agent, p.why].filter(Boolean).join(': ') : said;
+  };
+  function scriptStatus(w, c, now) {
+    if (!scriptUp(c, now)) return ['off', t('wake.silent', fmtDuration((now - c.seen) / 1000)), t('wake.silentTip')];
+    const old = scriptCurrent(w, c) ? [] : [t((c.version ?? '') < SELF_UPDATING ? 'wake.manualTip' : 'wake.updatesTip', w.latest)];
+    const said = [...(c.problems ?? []).map(problemText), ...old].join('\n');
+    if (c.problems?.some(p => p.level === 'error')) return ['off', t('wake.troubled'), said];
+    if (c.problems?.length) return ['warn', t('wake.troubled'), said];
+    if (old.length) return ['warn', t('wake.oldVersion'), said];
+    return ['ok', t('wake.running'), t('wake.allGood')];
+  }
+  // The worst status over the computers: 'off', 'warn' or 'ok'.
+  const worstOf = levels => levels.includes('off') ? 'off' : levels.includes('warn') ? 'warn' : 'ok';
   function scriptsBlock(w) {
     if (!w) return '';
     const now = Date.now(), list = w.computers ?? [];
     const open = spendState.scriptsOpen ? ' open' : '';
     if (!list.length) return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} <span class="warn">●</span></summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
-    const up = c => now - c.seen < 2 * 60e3;
-    const current = c => !w.latest || (c.version ?? '') >= w.latest;
-    const problemText = p => {
-      const key = `wake.p.${p.code}`, said = t(key, p.agent ?? '', p.why ?? '');
-      return said === key ? [p.code, p.agent, p.why].filter(Boolean).join(': ') : said;
-    };
-    // One status a computer, its details on hover: gone silent (red), an error (red), a warning or an
-    // old version (amber), or all well (green). Hovering its name shows its version.
-    const statusOf = c => {
-      if (!up(c)) return ['off', t('wake.silent', fmtDuration((now - c.seen) / 1000)), t('wake.silentTip')];
-      const old = current(c) ? [] : [t((c.version ?? '') < SELF_UPDATING ? 'wake.manualTip' : 'wake.updatesTip', w.latest)];
-      const said = [...(c.problems ?? []).map(problemText), ...old].join('\n');
-      if (c.problems?.some(p => p.level === 'error')) return ['off', t('wake.troubled'), said];
-      if (c.problems?.length) return ['warn', t('wake.troubled'), said];
-      if (old.length) return ['warn', t('wake.oldVersion'), said];
-      return ['ok', t('wake.running'), t('wake.allGood')];
-    };
+    const up = c => scriptUp(c, now), current = c => scriptCurrent(w, c), statusOf = c => scriptStatus(w, c, now);
     const rows = list.map(c => {
       const [level, text, tip] = statusOf(c);
       const version = t(current(c) ? 'wake.versionCurrent' : 'wake.versionOld', c.version ?? '?', w.latest ?? '');
@@ -491,11 +497,35 @@ export function mountDashboard(funnels, opts = {}) {
         + `<span class="${level}" data-tip="${esc(tip)}">● ${esc(text)}</span>`
         + `<span class="n" data-tip="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span></li>`;
     }).join('');
-    const running = list.filter(up).length, levels = list.map(c => statusOf(c)[0]);
-    const worst = levels.includes('off') ? 'off' : levels.includes('warn') ? 'warn' : '';
-    return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}${worst ? ` <span class="${worst}">●</span>` : ''}</summary>
+    const running = list.filter(up).length, worst = worstOf(list.map(c => statusOf(c)[0]));
+    return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}${worst !== 'ok' ? ` <span class="${worst}">●</span>` : ''}</summary>
       <ul>${rows}</ul><p class="pop-note">${esc(t('wake.about'))}</p></details>`;
   }
+  // The dot on the Spending button, from the scripts' latest state (w: wakeScripts' answer).
+  function markScripts(w) {
+    if (!spendBtn || !w) return;
+    const now = Date.now(), list = w.computers ?? [];
+    const icon = spendBtn.querySelector('svg, .wake-dot');
+    if (!list.length) {
+      if (!icon.matches('svg')) icon.outerHTML = SPEND_ICON;
+      spendBtn.dataset.tip = t('spend.title');
+      return;
+    }
+    const states = list.map(c => [c, scriptStatus(w, c, now)]);
+    const worst = worstOf(states.map(([, s]) => s[0]));
+    const dot = Object.assign(document.createElement('i'), { className: `wake-dot ${worst}` });
+    icon.replaceWith(dot);
+    const head = `${t('wake.title')} · ${t('wake.count', list.filter(c => scriptUp(c, now)).length, list.length)}`;
+    const bad = states.filter(([, s]) => s[0] !== 'ok').map(([c, s]) => `${c.computer || t('wake.oldComputer')}: ${s[1]}`);
+    spendBtn.dataset.tip = [t('spend.title'), head, ...bad].join('\n');
+  }
+  // At most every half minute: the board redraws with every write of an agent.
+  let scriptsAt = 0;
+  const checkScripts = () => {
+    if (!opts.wakeScripts || Date.now() - scriptsAt < 30e3) return;
+    scriptsAt = Date.now();
+    opts.wakeScripts().then(markScripts, () => {});
+  };
   async function showSpend(e) {
     showPop(e, `<div class="pop-title">${esc(t('spend.title'))}</div><div class="hist-body"><div class="pop-loading" role="status" aria-label="${esc(t('board.loading'))}"></div></div>`);
     pop.classList.add('wide');
@@ -503,6 +533,7 @@ export function mountDashboard(funnels, opts = {}) {
     let rows, scripts;
     try {
       [rows, scripts] = await Promise.all([opts.spending(Date.now() - 366 * 864e5), opts.wakeScripts ? opts.wakeScripts().catch(() => null) : null]);
+      markScripts(scripts);
     } catch { body.innerHTML = `<p class="pop-note">${esc(t('hist.failed'))}</p>`; return; }
     if (!body.isConnected) return;
     if (!rows.length) { body.innerHTML = `<p class="pop-note">${esc(t('spend.none'))}</p>${scriptsBlock(scripts)}`; return; }
@@ -997,7 +1028,7 @@ export function mountDashboard(funnels, opts = {}) {
     tip.style.top = Math.min(window.innerHeight - tip.offsetHeight - 8, tipAt.y + 18) + 'px';
   };
   const dropTip = () => { clearTimeout(tipWait); tipFor = null; if (tip.classList.contains('over')) tip.hidden = true; };
-  pop.addEventListener('pointermove', e => {
+  const tipMove = e => {
     const el = e.target.closest('[data-tip]');
     if (!el || e.pointerType === 'touch') return dropTip();
     tipAt = { x: e.clientX, y: e.clientY };
@@ -1010,8 +1041,14 @@ export function mountDashboard(funnels, opts = {}) {
       if (tipFor !== el || !el.isConnected) return;
       tip.textContent = el.dataset.tip; tip.classList.add('over'); tip.hidden = false; placeTip();
     }, 100);
-  });
-  pop.addEventListener('pointerleave', dropTip);
+  };
+  for (const el of [pop, spendBtn].filter(Boolean)) {
+    el.addEventListener('pointermove', tipMove);
+    el.addEventListener('pointerleave', dropTip);
+  }
+  spendBtn?.addEventListener('pointerdown', dropTip);
+  // The scripts' dot on the Spending button: now, and again with every new data (setFunnels).
+  checkScripts();
   // A link in the card (Appoint a supervisor, Open in Claude…) takes the person elsewhere: the card
   // closes, so it isn't still open when they come back.
   pop.addEventListener('click', e => { if (e.target.closest('a[href]')) hidePop(); });
@@ -1032,6 +1069,7 @@ export function mountDashboard(funnels, opts = {}) {
       scene.resize(scale, window.devicePixelRatio || 1);
       layout();
       buildTitles();
+      checkScripts();
       return true;
     },
   };
