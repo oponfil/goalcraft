@@ -64,7 +64,7 @@ claude auth login
 
 The script looks for `claude` on the PATH and in `~/.local/bin` (where Claude Code installs itself), on Windows also among npm's tools; failing that, it takes the newest copy the Claude app keeps for itself (`claude-code/<version>/…` in the app's folder: `%APPDATA%\Claude` on Windows, `~/Library/Application Support/Claude` on a Mac), which changes with every update of the app. Either way it runs with Claude Code's sign-in.
 
-The sign-in's access token lasts hours and Claude Code renews it only when it runs, which here is seldom (only to wake an agent). So when it has run out, the script asks Claude Code to renew it (`claude auth status`, which costs no tokens), at most once an hour. If even the renewal has run out (Claude Code not run for weeks), nothing can renew it but a new `claude auth login`: the log says so (`Claude Code is signed out on this computer…`), agents there aren't woken, and the Claude limit isn't read until then.
+The sign-in's access token lasts hours and Claude Code renews it only when it runs, which here is seldom (only to wake an agent). So when it has run out, the script asks Claude Code to renew it with `claude mcp list`, at most once an hour: it costs no tokens, and to list the account's claude.ai connectors Claude Code renews the sign-in first (`claude auth status` doesn't: it only reads it). If even the renewal has run out (Claude Code not run for weeks), nothing can renew it but a new `claude auth login`: the log says so (`Claude Code is signed out on this computer…`), agents there aren't woken, and the Claude limit isn't read until then.
 
 A new key on a computer replaces that computer's old key, and the script installed with the old one stops with a note in its log.
 

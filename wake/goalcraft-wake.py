@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-22.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-22.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -632,8 +632,10 @@ def claude_sign_in():
 def claude_token():
     """Claude Code's sign-in while it is still valid. Its access token lasts hours, and Claude Code renews
     it only when it runs; here it seldom does (only to wake an agent). So when it has run out, Claude Code
-    is asked to renew it (`claude auth status`, which costs no tokens), at most hourly; a sign-in whose
-    renewal has run out too needs `claude auth login` (SIGN_IN_HINT)."""
+    is asked to renew it, at most hourly, by `claude mcp list`, which costs no tokens: it asks claude.ai
+    for the account's connectors, and so renews the sign-in first. (`claude auth status` only reads it:
+    in Claude Code 2.1.301 it says logged in and leaves an expired token as it is.) A sign-in whose renewal
+    has run out too needs `claude auth login` (SIGN_IN_HINT)."""
     global renewed_at
     o = claude_sign_in()
     if o.get('expiresAt', 0) / 1000 > time.time() + 60:
@@ -642,18 +644,23 @@ def claude_token():
     if not o or not claude or time.time() - renewed_at < RENEW_EVERY:
         return None
     renewed_at = time.time()
+    run = lambda *args: subprocess.run([claude, *args], capture_output=True, encoding='utf-8', errors='replace',
+                                       timeout=120, cwd=str(HOME), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
     try:
-        r = subprocess.run([claude, 'auth', 'status'], capture_output=True, encoding='utf-8', errors='replace',
-                           timeout=60, cwd=str(HOME), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
-        said = f'exit {r.returncode}, ' + ('loggedIn true' if '"loggedIn": true' in r.stdout else 'not logged in' if '"loggedIn": false' in r.stdout
-                                         else (r.stderr.strip() or r.stdout.strip())[-200:].replace('\n', ' '))
+        run('mcp', 'list')
     except Exception as e:
-        said = f'{type(e).__name__}: {e}'
+        log(f'limit: `{claude} mcp list` failed: {type(e).__name__}: {e}')
     o = claude_sign_in()
     if o.get('expiresAt', 0) / 1000 > time.time() + 60:
         return o.get('accessToken')
     # Why it didn't renew, so a sign-out that `claude auth login` wouldn't fix can be told apart.
-    log(f'limit: `{claude} auth status` did not renew the sign-in ({said})')
+    try:
+        r = run('auth', 'status')
+        said = f'exit {r.returncode}, ' + ('loggedIn true' if '"loggedIn": true' in r.stdout else 'not logged in' if '"loggedIn": false' in r.stdout
+                                         else (r.stderr.strip() or r.stdout.strip())[-200:].replace('\n', ' '))
+    except Exception as e:
+        said = f'{type(e).__name__}: {e}'
+    log(f'limit: `{claude} mcp list` did not renew the sign-in (auth status: {said})')
     return None
 
 
