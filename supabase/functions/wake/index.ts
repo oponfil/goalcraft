@@ -12,8 +12,9 @@
 //                          token use the script reads (nobody is woken or marked)
 //   POST /wake { usage: [{ funnel_id, agent, run_key, app, model, started_at, ended_at, tokens, new_tokens,
 //                input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd,
-//                limit_percent, limit_used, limit_window_minutes }], replace_from? }   → { saved }: what their runs
-//                used; replace_from drops what was sent before for runs that ended since then
+//                limit_percent, limit_used, limit_window_minutes }], replace_from?, replace_apps? }   → { saved }: what
+//                their runs used; replace_from drops what this computer sent before for runs that ended since
+//                then, and replace_apps (["grok"]) what any computer sent of those apps
 //   POST /wake { limits: [{ app: "claude" | "codex" | "antigravity" | "grok" | "kimi", quota?, at, week_percent, week_resets_at?, session_percent?, session_resets_at?,
 //                cost_usd? }] }   → { saved }: the plan's limit as the script read it, with what every local
 //                session of that app cost since the reading before (the board turns cost into a share of it)
@@ -159,6 +160,13 @@ async function saveUsage(user: string, keyId: string, body: any) {
     const { error: e } = await admin.from('agent_usage').delete().eq('user_id', user).gte('ended_at', from)
       .or(`wake_key_id.eq.${keyId},wake_key_id.is.null`)
     if (e) return json({ error: 'failed' }, 500)
+    // replace_apps: apps whose use is one account read alike from every computer (Grok Bot), each splitting
+    // it at its own readings: what any computer sent of them since goes, so it's counted once.
+    const apps = Array.isArray(body?.replace_apps) ? body.replace_apps.filter((a: unknown) => a === 'grok') : []
+    if (apps.length) {
+      const { error: e2 } = await admin.from('agent_usage').delete().eq('user_id', user).gte('ended_at', from).in('app', apps)
+      if (e2) return json({ error: 'failed' }, 500)
+    }
   }
   if (ok.length) {
     const { error: e } = await admin.from('agent_usage').upsert(ok, { onConflict: 'funnel_id,agent,run_key' })

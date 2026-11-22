@@ -53,7 +53,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-21.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-22.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1167,13 +1167,20 @@ def grok_call(token, method, body):
         return json.load(r)
 
 
+GROK_STEP = 50  # ppm of the weekly limit (0.005%): less is the servers' rounding, which sways a bot's day by a few ppm
+
+
 def grok_rows():
-    """Every Grok Bot bot's use, a row a day: its share of the plan's weekly limit, as the app shows it
+    """Every Grok Bot bot's use: its share of the plan's weekly limit, as the app shows it
     (GetGrokBotUsageBreakdown). Since 7 November 2026 the servers give no tokens per bot any more
-    (GetDailySpendByCategory answers nothing), only this share, and only for the current week: so the
-    days read are kept (GROK_STATE) and sent again for USAGE_DAYS. A day split by the week's reset is two
-    rows, one in each week. A bot's "dreams" (dream-<bot id>-...) count as the bot's. None when they
-    can't be asked."""
+    (GetDailySpendByCategory answers nothing), only this share, a total for each day (UTC) of the current
+    week, which they bring up to date every two minutes or so while a bot works. So each reading
+    (every USAGE_EVERY) is compared with the one before: what a bot's day grew by since is a row of its
+    own, from that reading to this one, and the board gives it to the run it falls in. What a day had
+    before this computer first read it is one more row, from the day's start to that reading. The
+    readings and rows are kept (GROK_STATE): rows are sent again for USAGE_DAYS, and the servers give
+    nothing of a week gone. A day split by the week's reset is in each week. A bot's "dreams"
+    (dream-<bot id>-...) count as the bot's. None when they can't be asked."""
     token = grok_token()
     if not token:
         return None
@@ -1181,23 +1188,52 @@ def grok_rows():
     status = grok_call(token, 'GetSandUsageStatus', {})
     week = grok_call(token, 'GetGrokBotUsageBreakdown', {}).get('weeklyLimitPpm') or {}
     start, end = int(week.get('periodStartMs') or 0) / 1000, int(week.get('periodEndMs') or 0) / 1000
-    fresh = {}
+    days = {}
     for d in week.get('byBot', []):
         bot = re.sub(r'^dream-([0-9a-f-]{36})-\d+$', r'\1', d.get('botId') or '')
         day = int(d.get('dayMs') or 0) / 1000
         if not bot or not day:
             continue
         k = f'grokbot:{bot}:{int(day)}:{int(start)}'
-        r = fresh.setdefault(k, {'key': k, 'bot': bot, 'start': max(day, start), 'end': min(day + 86399, end or now), 'ppm': 0})
+        r = days.setdefault(k, {'bot': bot, 'start': max(day, start), 'end': min(day + 86399, end or now), 'ppm': 0})
         r['ppm'] += int(d.get('ppm') or 0)
     try:
-        kept = json.loads(GROK_STATE.read_text(encoding='utf-8')).get('rows', [])
+        old = json.loads(GROK_STATE.read_text(encoding='utf-8'))
     except Exception:
-        kept = []
+        old = {}
+    # track: each day's reading the rows go from ('at', 'ppm'), and when this computer first read it ('from').
+    track, slots, polled = old.get('track') or {}, old.get('slots') or {}, old.get('polled')
+    if not start or (not days and any(k.endswith(f':{int(start)}') for k in track)):
+        # An answer without the week's days read before: not taken (it would drop the readings).
+        raise RuntimeError('Grok Bot gave no days of this week')
+    for k, d in days.items():
+        t = track.get(k)
+        if not t and polled:
+            # A day not there at the reading before had nothing then (or at its start).
+            t = {'at': max(polled, d['start']), 'ppm': 0, 'from': max(polled, d['start'])}
+        if not t:
+            track[k] = {'at': now, 'ppm': d['ppm'], 'from': now}
+            continue
+        grew = d['ppm'] - t['ppm']
+        if grew >= GROK_STEP:
+            slots.setdefault(k, []).append({'start': t['at'], 'end': now, 'ppm': grew})
+            t = {**t, 'ppm': d['ppm']}
+        # A row goes from the reading before this one, even when that one didn't move it: the base stays.
+        track[k] = {**t, 'at': now}
+    track = {k: v for k, v in track.items() if k in days}
+    slots = {k: v for k, v in slots.items() if k in days}
+    rows = []
+    for k, d in days.items():
+        mine = slots.get(k, [])
+        left = d['ppm'] - sum(s['ppm'] for s in mine)
+        if left >= GROK_STEP:
+            rows.append({'key': k, 'bot': d['bot'], 'start': d['start'], 'end': min(d['end'], max(d['start'], track[k]['from'])), 'ppm': left})
+        rows += [{'key': f'{k}:{int(s["start"])}', 'bot': d['bot'], 'start': s['start'], 'end': s['end'], 'ppm': s['ppm']} for s in mine]
     since = now - (USAGE_DAYS + 8) * 86400
-    rows = list(fresh.values()) + [r for r in kept if r.get('key') and 'ppm' in r and r['key'] not in fresh
-                                   and not r['key'].endswith(f':{int(start)}') and r['end'] >= since]
-    return {'percent': status.get('usagePercent'), 'resets': status.get('nextResetTimestampUtc'), 'rows': rows}
+    rows += [r for r in old.get('rows', []) if r.get('key') and 'ppm' in r and r['end'] >= since
+             and r['key'].split(':')[3:4] != [str(int(start))]]
+    return {'percent': status.get('usagePercent'), 'resets': status.get('nextResetTimestampUtc'), 'rows': rows,
+            'track': track, 'slots': slots, 'polled': now}
 
 
 def grok_usage(item, read):
@@ -1474,11 +1510,14 @@ def report_usage(key, show=False):
             print(f'{r["funnel_id"]:>14} {r["agent"]:<18} {r["started_at"]} {r["tokens"] / 1e6:7.2f}M tokens{cost}{limit}')
     saved = 0
     # The first batch replaces what was sent before for the same days, so runs read differently
-    # this time (say, split at another pause) are not counted twice.
+    # this time (say, split at another pause) are not counted twice. Grok Bot's use is the same account
+    # read from every computer, each splitting it at its own readings: what another computer sent of it
+    # goes too, so it's counted once (as the computer that sent last split it).
     since = iso(time.time() - USAGE_DAYS * 86400)
     rows = [r for r in rows if r['ended_at'] >= since]
+    first = {'replace_from': since, **({'replace_apps': ['grok']} if grok else {})}
     for i in range(0, len(rows), 400):
-        body = json.dumps({'usage': rows[i:i + 400], **({'replace_from': since} if i == 0 else {})}).encode()
+        body = json.dumps({'usage': rows[i:i + 400], **(first if i == 0 else {})}).encode()
         req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={
             'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
         try:
