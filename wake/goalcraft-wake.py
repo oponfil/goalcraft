@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-22.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-22.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1382,14 +1382,21 @@ KIMI_SESSIONS = APP_DATA / 'kimi-desktop' / 'daimon-share' / 'daimon' / 'runtime
 
 def kimi_owner(conv):
     """Whose Kimi conversation this is: the agent and funnel its own Goalcraft calls name most often
-    (as antigravity_owner)."""
+    (as antigravity_owner). A call is any {...} with both, in either order and either quotes, however
+    deeply escaped: the app's own tool calls, or, when the app gives the agent no Goalcraft tools (as
+    from 21 November), the agent's own scripts' (`python mcp_client.py goalcraft call set_agent_state
+    "{\"funnel_id\":...,\"agent\":...}"`, `args={'funnel_id':...,'agent':...}`)."""
     import collections
     import re
+    agent = re.compile(r'''["']agent["']\s*:\s*["']([a-z0-9_-]+)["']''')
+    funnel = re.compile(r'''["']funnel_id["']\s*:\s*["']([a-z0-9-]+)["']''')
     calls = collections.Counter()
     for f in glob.glob(str(pathlib.Path(conv) / 'agents' / '*' / 'wire.jsonl')):
-        raw = pathlib.Path(f).read_text(encoding='utf-8', errors='replace')
-        for m in re.finditer(r'\\?"agent\\?"\s*:\s*\\?"([a-z0-9_-]+)\\?"\s*,\s*\\?"funnel_id\\?"\s*:\s*\\?"([a-z0-9-]+)', raw):
-            calls[(m.group(1), m.group(2))] += 1
+        raw = pathlib.Path(f).read_text(encoding='utf-8', errors='replace').replace(chr(92), '')  # no backslashes
+        for m in re.finditer(r'\{([^{}]*)\}', raw):
+            a, fu = agent.search(m.group(1)), funnel.search(m.group(1))
+            if a and fu:
+                calls[(a.group(1), fu.group(1))] += 1
     return calls.most_common(1)[0][0] if calls else None
 
 
