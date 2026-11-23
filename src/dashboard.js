@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3f71f6f3';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=3f71f6f3';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3f71f6f3';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=507b72a6';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=507b72a6';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=507b72a6';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1018,7 +1018,7 @@ export function mountDashboard(funnels, opts = {}) {
     const info = inAntigravity ? { ...base, product: 'Antigravity', app: null } : inGrokBot ? { ...base, product: 'Grok Bot' } : base;
     const link = chatLink(info, url);
     if (!link) return `<span>${found}</span>`;
-    const tip = t('board.runChat') + '\n' + whereTip(url, info, inAntigravity);
+    const tip = whereTip(url, info, inAntigravity);
     return `<span><a class="run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${found || esc(t('board.runChatShort'))}</a></span>`;
   };
   // The last week's spending, in dollars at API prices (tokens when no price is known), with the tokens

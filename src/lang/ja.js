@@ -169,7 +169,6 @@ export default {
   'board.flowDay': (v) => `24時間で ${v}`,
   'board.flowTip': (v, u) => `${v} ${u} (直近24時間から)`,
   'board.flowSet': (v, u) => `${v} ${u} (手動で設定)`,
-  'board.runChat': 'この実行の会話を開きます：',
   'board.runChatShort': 'チャット',
   'board.usageLimit': (p, d) => (d === 7 ? `週間上限の${p}` : `${d}日間の上限の${p}`),
   'board.runNow': '実行中',
