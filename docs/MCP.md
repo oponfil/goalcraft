@@ -85,9 +85,19 @@ Only counts, dates and links are stored. Item lists (vacancies, people, papers) 
 | `reply(question_id \| message_id, text)` | After getting the person's answer or message, a short line back ("Thanks, sending it now"), shown on the dashboard as a note over the agent until the person closes it. Required for every answer; anything more the agent needs is a new question. `list_funnels` lists answers still owed a reply (`answers_to_reply`) |
 | `close_question(funnel_id, agent, question_id?, answer?)` | The person answered elsewhere (in the agent's chat): closes that question, or all the agent's open questions in the funnel, so the dashboard stops showing it as waiting |
 | `clear_agent(funnel_id, agent)` | The agent leaves the funnel |
+| `set_launch(funnel_id, agent, schedule?, schedule_on?, time_zone?, mode?, quota_limit?, guide_url?, executors?[{app, computer?, model?, effort?, new_chat?, full_access?, bot_id?, enabled?}])` | How Goalcraft starts a role itself (see [Launch](#launch-roles-goalcraft-starts)): its schedule (five-field cron in `time_zone`; `null`: none), whether it is on, `mode` (`even` or `priority`), the quota threshold (95 by default), the role's own instructions, and who may work it, in order (`claude`, `codex`, `antigravity`, `grok` with its `bot_id`); executors, when given, replace the list. `list_funnels` shows each started role's settings as its `launch` |
 | `delete_funnel(funnel_id)` | Delete a funnel and everything in it, only when the person asks |
 
 Write tools return the updated funnel so the agent can check what the person sees.
+
+## Launch: roles Goalcraft starts
+
+A role is an agent name in a funnel (a worker's zone or the supervisor) that Goalcraft starts itself: the person's [wake script](../wake/README.md) on their computers starts each run, in a new conversation of one of the role's executors, with a short note — who the role is (`funnel_id`, `agent`, `zone`, the `provider` to report), the funnel's guide and the role's own instructions (`guide_url` in its launch settings). The agent then works as on any run: `set_agent_state(work)` first and every 5 minutes, messages and answers, and at the end the run's outcome written into its instructions and `set_agent_state(sleep)`.
+
+- With a schedule, the role runs on it: its `next_run_at` is set from the schedule whatever the agent sends. Without one, the agent names its next run; a `sleep` without `next_run_at` puts it on pause.
+- A role runs once at a time. A start that comes while it works (it reports `work`) waits; ten minutes of silence end a run.
+- Each start's executor: of the enabled ones a computer that is on can run and whose plan's quota is under `quota_limit`, the first (`priority`) or the one whose quota would go unused soonest before the role's next start (`even`). One that doesn't report `work` within ten minutes passes the start to the next.
+- A message to the role or the person's answer to its question starts it (not on pause). The person's Run now in its card does even on pause.
 
 ## What the server computes
 

@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-23.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-23.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -500,48 +500,54 @@ def claude_usage(item, sessions):
     since = time.time() - USAGE_DAYS * 86400
     out = []
     for x in group:
-        cli = x.get('cliSessionId')
-        for f in glob.glob(str(PROJECTS / '*' / f'{cli}.jsonl')) if cli else []:
-            if os.path.getmtime(f) < since:
-                continue
-            seen, points = set(), []
-            with open(f, encoding='utf-8', errors='ignore') as fh:
-                for line in fh:
-                    if '"usage"' not in line:
-                        continue
-                    try:
-                        d = json.loads(line)
-                    except Exception:
-                        continue
-                    m = d.get('message')
-                    if not isinstance(m, dict) or not isinstance(m.get('usage'), dict) or m.get('id') in seen:
-                        continue
-                    t = when(d.get('timestamp') or '')
-                    if t is None:
-                        continue
-                    seen.add(m.get('id'))
-                    points.append((t, m.get('model'), m['usage']))
-            points.sort(key=lambda p: p[0])
-            for run in split_runs(points):
-                if run[-1][0] < since:
+        out += claude_file_runs(item, x.get('cliSessionId'), since)
+    return out
+
+
+def claude_file_runs(item, cli, since):
+    """The runs in one Claude Code session (its transcript), split where it paused, for an agent."""
+    out = []
+    for f in glob.glob(str(PROJECTS / '*' / f'{cli}.jsonl')) if cli else []:
+        if os.path.getmtime(f) < since:
+            continue
+        seen, points = set(), []
+        with open(f, encoding='utf-8', errors='ignore') as fh:
+            for line in fh:
+                if '"usage"' not in line:
                     continue
-                kinds = {'input_tokens': 0, 'cache_read_tokens': 0, 'cache_write_tokens': 0, 'output_tokens': 0}
-                cost, models = 0.0, {}
-                for _, model, u in run:
-                    fresh, read, out_ = u.get('input_tokens', 0), u.get('cache_read_input_tokens', 0), u.get('output_tokens', 0)
-                    write = u.get('cache_creation_input_tokens', 0)
-                    hour = (u.get('cache_creation') or {}).get('ephemeral_1h_input_tokens', 0)
-                    kinds['input_tokens'] += fresh
-                    kinds['cache_read_tokens'] += read
-                    kinds['cache_write_tokens'] += write
-                    kinds['output_tokens'] += out_
-                    models[model] = models.get(model, 0) + 1
-                    c = message_cost(model, u)
-                    cost = None if c is None or cost is None else cost + c
-                out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'claude',
-                            'run_key': f'{cli}:{int(run[0][0])}', 'model': max(models, key=models.get),
-                            'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), **totals(kinds),
-                            'cost_usd': round(cost, 4) if cost is not None else None})
+                try:
+                    d = json.loads(line)
+                except Exception:
+                    continue
+                m = d.get('message')
+                if not isinstance(m, dict) or not isinstance(m.get('usage'), dict) or m.get('id') in seen:
+                    continue
+                t = when(d.get('timestamp') or '')
+                if t is None:
+                    continue
+                seen.add(m.get('id'))
+                points.append((t, m.get('model'), m['usage']))
+        points.sort(key=lambda p: p[0])
+        for run in split_runs(points):
+            if run[-1][0] < since:
+                continue
+            kinds = {'input_tokens': 0, 'cache_read_tokens': 0, 'cache_write_tokens': 0, 'output_tokens': 0}
+            cost, models = 0.0, {}
+            for _, model, u in run:
+                fresh, read, out_ = u.get('input_tokens', 0), u.get('cache_read_input_tokens', 0), u.get('output_tokens', 0)
+                write = u.get('cache_creation_input_tokens', 0)
+                hour = (u.get('cache_creation') or {}).get('ephemeral_1h_input_tokens', 0)
+                kinds['input_tokens'] += fresh
+                kinds['cache_read_tokens'] += read
+                kinds['cache_write_tokens'] += write
+                kinds['output_tokens'] += out_
+                models[model] = models.get(model, 0) + 1
+                c = message_cost(model, u)
+                cost = None if c is None or cost is None else cost + c
+            out.append({'agent': item['agent'], 'funnel_id': item['funnel_id'], 'app': 'claude',
+                        'run_key': f'{cli}:{int(run[0][0])}', 'model': max(models, key=models.get),
+                        'started_at': iso(run[0][0]), 'ended_at': iso(run[-1][0]), **totals(kinds),
+                        'cost_usd': round(cost, 4) if cost is not None else None})
     return out
 
 
@@ -1613,6 +1619,9 @@ def report_usage(key, show=False):
                      else antigravity_usage(item) if item['app'] == 'antigravity' else grok_usage(item, grok) if item['app'] == 'grok' else kimi_usage(item) if item['app'] == 'kimi' else [])
         except Exception as e:
             log(f'usage: {item["agent"]} in {item["funnel_id"]}: {e}')
+    rows += launched_usage()  # the orchestrator's starts run here, whatever chat their agents name
+    # A run read twice (by its agent's chat and as a start run here) goes once: the database takes a row once a batch.
+    rows = list({(r['funnel_id'], r['agent'], r['run_key']): r for r in rows}.values())
     if show:
         for r in rows:
             cost = f' ≈${r["cost_usd"]:.2f}' if r.get('cost_usd') is not None else ''
@@ -1720,6 +1729,44 @@ def check(key):
 # the app is done; the agent itself tells Goalcraft when its run begins and ends.
 CLAUDE_MODELS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-2']
 launching = set()  # starts being run here now
+LAUNCHES = DIR / 'launches.json'  # the starts run here: whose, on which app, its conversation (for their token use)
+launches_lock = threading.Lock()
+
+
+def remember_launch(rec):
+    """Note a start run here, so its token use is read and sent for its role, whatever chat its agent
+    names. Kept as long as runs are (re)sent."""
+    with launches_lock:
+        try:
+            have = json.loads(LAUNCHES.read_text(encoding='utf-8'))
+        except Exception:
+            have = []
+        since = time.time() - (USAGE_DAYS + 1) * 86400
+        have = [r for r in have if r.get('at', 0) >= since and r.get('launch') != rec['launch']] + [{**rec, 'at': time.time()}]
+        LAUNCHES.write_text(json.dumps(have), encoding='utf-8')
+
+
+def launched_usage():
+    """The token use of the starts run here: a Claude session by the id it was started with, a Codex
+    thread by the id it printed, an Antigravity agent's conversations (found by its own calls)."""
+    try:
+        have = json.loads(LAUNCHES.read_text(encoding='utf-8'))
+    except Exception:
+        return []
+    since, rows, roles = time.time() - USAGE_DAYS * 86400, [], set()
+    for r in have:
+        item = {'agent': r['agent'], 'funnel_id': r['funnel_id']}
+        try:
+            if r['app'] == 'claude' and r.get('session'):
+                rows += claude_file_runs(item, r['session'], since)
+            elif r['app'] == 'codex' and r.get('session'):
+                rows += codex_usage({**item, 'app': 'codex', 'session': r['session']})
+            elif r['app'] == 'antigravity' and (r['agent'], r['funnel_id']) not in roles:
+                roles.add((r['agent'], r['funnel_id']))
+                rows += antigravity_usage({**item, 'app': 'antigravity', 'session': None})
+        except Exception as e:
+            log(f'usage: start of {r["agent"]} in {r["funnel_id"]}: {e}')
+    return rows
 
 
 def inventory():
@@ -1802,7 +1849,7 @@ def launch_command(l):
         claude = find_claude()
         if not claude:
             return None, 'claude command not found'
-        cmd = [claude, '-p']
+        cmd = [claude, '-p', '--session-id', l['session']]
         cmd += ['--model', model] if model else []
         cmd += ['--effort', effort] if effort else []
         cmd += ['--permission-mode', 'bypassPermissions'] if full else ['--allowedTools', *GOALCRAFT_TOOLS]
@@ -1847,8 +1894,13 @@ def run_launch(key, l):
             log(f'launch {who}: could not report it done: {e}')
 
     def go():
+        import uuid
         started = time.time()
         try:
+            if l['app'] == 'claude':
+                l['session'] = str(uuid.uuid4())
+            if l['app'] in ('claude', 'antigravity'):
+                remember_launch({'launch': lid, 'agent': l['agent'], 'funnel_id': l['funnel_id'], 'app': l['app'], 'session': l.get('session')})
             if l['app'] == 'grok':
                 err = grok_send(l.get('bot_id'), l['prompt'])
                 log(f'launched {who}' if not err else f'launch {who} failed: {err}')
@@ -1865,6 +1917,10 @@ def run_launch(key, l):
                                  creationflags=NO_WINDOW, timeout=4 * 3600)
             text = (out.stdout.strip() or out.stderr.strip())
             last = (text.splitlines() or [''])[-1][:200]
+            if l['app'] == 'codex':  # its thread, as codex exec prints it: "session id: <uuid>"
+                m = re.search(r'session id:\s*([0-9a-f-]{36})', out.stdout + out.stderr)
+                if m:
+                    remember_launch({'launch': lid, 'agent': l['agent'], 'funnel_id': l['funnel_id'], 'app': 'codex', 'session': m.group(1)})
             log(f'launched {who}: finished in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if l['app'] != 'antigravity':  # Antigravity's agentapi returns once the conversation is under way
                 done(out.returncode == 0, None if out.returncode == 0 else (out.stderr.strip() or last)[-300:])

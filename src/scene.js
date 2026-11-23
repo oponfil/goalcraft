@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=0906ea4a';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=0906ea4a';
-import { themeOf } from './themes.js?v=0906ea4a';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=0906ea4a';
+import { agentInfo, plural } from './data.js?v=b99d14b3';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=b99d14b3';
+import { themeOf } from './themes.js?v=b99d14b3';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=b99d14b3';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -185,7 +185,12 @@ export class Scene {
       const zones = new Map();
       for (const w of f.workers) zones.set(w.zone, [...(zones.get(w.zone) || []), w]);
       for (const ws of zones.values()) {
-        [...ws].sort((p, q) => p.agent.localeCompare(q.agent)).slice(0, MAX_PER_ZONE).forEach((w, i) => place.push([f, w, i % 2 ? 'R' : 'L', i >> 1]));
+        // A role Goalcraft starts itself (the orchestrator, one per zone) has the zone's place: right of
+        // the pipe on the lowest tier; agents not yet made roles take the places left, as before.
+        const role = ws.some(w => w.launch);
+        const sorted = [...ws].sort((p, q) => (q.launch ? 1 : 0) - (p.launch ? 1 : 0) || p.agent.localeCompare(q.agent));
+        const first = role ? 'R' : 'L', second = role ? 'L' : 'R';
+        sorted.slice(0, MAX_PER_ZONE).forEach((w, i) => place.push([f, w, i % 2 ? second : first, i >> 1]));
       }
     });
     place.forEach(([f, w, side, tier]) => {

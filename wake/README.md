@@ -104,6 +104,21 @@ A funnel's supervisor tells you once when a script needs that or has stopped, an
 
 On Windows run the same commands with `py` (or `python`) instead of `python3`; the log is `%USERPROFILE%\.goalcraft\wake.log`. On Linux it saves the key and asks you to keep `goalcraft-wake.py run` running yourself (cron, systemd).
 
+## Launches: Goalcraft starts the roles
+
+Goalcraft can start a funnel's roles itself, one run at a time, each on the executor it chooses (see the main README, [Launch](../README.md#launch-goalcraft-starts-the-roles)). With every check it may hand this computer a start it can do; the script takes it (claim: no other computer starts it too) and starts the app in a new conversation with a short note — who the role is and where its instructions are:
+
+| App | How |
+|---|---|
+| Claude | `claude -p --session-id <new id> --model … --effort … --permission-mode bypassPermissions` (full access; without it only the Goalcraft tools) |
+| Codex | `codex exec --skip-git-repo-check -m … -c model_reasoning_effort="…" --dangerously-bypass-approvals-and-sandbox` (full access) |
+| Google Antigravity | its own `agentapi new-conversation --model=<the model's id> …`, with the app's server address and token and, with full access, the grants `command(*)`, `read_file(*)`, `write_file(*)`, `mcp(*)` (Antigravity must be running) |
+| Grok Bot | a message to the role's bot, as the person writing to it in the app: it goes on in its one conversation |
+
+Every 10 minutes the script also tells Goalcraft what this computer can run: each app there and its models (Claude's, Codex's from its model cache, Antigravity's as its server lists them), which the card's Launch settings offer. The starts it ran are kept in `~/.goalcraft/launches.json` (whose, on which app, its conversation), so their token use is counted for their role whatever chat its agent names.
+
+From Antigravity 2.34 its server takes its token on stdin, not on the command line: the script reads its ports and token from `~/.gemini/antigravity/daemon/hub_*.json`, the newest whose port answers.
+
 ## Limits
 
 - With the script on several computers, Antigravity's and Kimi's limits are worked out from what their models cost on the computer that read the limit last, so if both computers use them the share each run shows is a little high.
@@ -116,6 +131,7 @@ On Windows run the same commands with `py` (or `python`) instead of `python3`; t
 - The note an agent gets is fixed text ("The person wrote to you on the Goalcraft dashboard. Check Goalcraft now…"); your message itself reaches the agent only through MCP.
 - A woken Claude agent may use its Goalcraft tools, and keeps the permission mode its session has in the app (auto, bypassPermissions, acceptEdits, plan… whatever Claude Code takes): what it may do there without asking, it may do when woken. A session in the default mode gets only the Goalcraft tools, since nobody is there to approve the rest.
 - Each agent is woken once per message, per answer, and per silence (until it signals again). An agent that is working now is left alone: it finds messages on its own heartbeat.
-- A woken agent works as long as it needs: the script doesn't stop it.
+- A woken agent works as long as it needs: the script doesn't stop it (a run Goalcraft started, at most 4 hours).
+- A run Goalcraft starts has, with full access, everything allowed without asking (see Launches): nobody is there to approve during a scheduled run. Without full access the app's own defaults apply.
 
 Standard library only (Python 3, which macOS ships with the command-line tools). The endpoint it asks is `supabase/functions/wake`.

@@ -2,9 +2,9 @@
 
 Watch AI agents craft your goals — [goalcraft.ai](https://goalcraft.ai) · [live demo](https://goalcraft.ai/demo/).
 
-Every goal is a vertical column of tanks, one per stage (jobs found → applied → interviews → offer). Between the tanks are work zones where agents — Claude, ChatGPT, Gemini and others — move items to the next stage. Results drop out at the bottom. On a platform at the top of the funnel stands its supervisor: your own agent that watches the whole funnel, finds the bottleneck, answers your questions about it and helps you add worker agents. You see the whole picture at once: how much is at each stage, how fast it flows, which agent is working, who is waiting for you, and when the next result is due.
+Every goal is a vertical column of tanks, one per stage (jobs found → applied → interviews → offer). Between the tanks are work zones where agents — Claude, ChatGPT (Codex), Gemini (Google Antigravity) and Grok (Grok Bot) — move items to the next stage. Results drop out at the bottom. On a platform at the top of the funnel stands its supervisor: your own agent that watches the whole funnel, finds the bottleneck, answers your questions about it and helps you add worker agents. You see the whole picture at once: how much is at each stage, how fast it flows, which agent is working, who is waiting for you, and when the next result is due.
 
-The dashboard is read-only. Agents create and update everything through an MCP server; you only watch, click for details, and jump into an agent's chat when it needs you. Protocol, data model and how the readings are estimated: [docs/MCP.md](docs/MCP.md).
+Agents create and update everything through an MCP server; you watch, click for details, jump into an agent's chat when it needs you, and set how Goalcraft starts a role when that is easier by hand than through an agent (see [Launch](#launch-goalcraft-starts-the-roles)). Protocol, data model and how the readings are estimated: [docs/MCP.md](docs/MCP.md).
 
 Live at [goalcraft.ai](https://goalcraft.ai): your own board under Goals, written by your agents through the MCP server, and a demo at [goalcraft.ai/demo](https://goalcraft.ai/demo/) on made-up data (`src/data.js`).
 
@@ -80,22 +80,27 @@ Each funnel picks a look; the data and behaviour are the same.
 
 ![Agents in brand colours with their logos on the shirt](docs/img/agents.png)
 
-An agent's `provider` (which AI it is, apart from its name in the funnel) sets its shirt:
+Goalcraft works with the agents it can start itself, on the person's own subscriptions, through the [wake script](wake/README.md) on their computers:
 
-| Provider | Agent |
-|---|---|
-| `claude` | Claude |
-| `chatgpt` | ChatGPT |
-| `grok` | Grok |
-| `gemini` | Gemini |
-| `deepseek` | DeepSeek |
-| `kimi` | Kimi |
-| `qwen` | Qwen |
-| `mistral` | Mistral |
-| `perplexity` | Perplexity |
-| `hermes` | Hermes (Nous Research) |
+| Provider (shirt) | Agent | How Goalcraft starts it |
+|---|---|---|
+| `claude` | Claude | Claude Code (`claude -p`), the one the Claude app installs |
+| `chatgpt` | ChatGPT | Codex (`codex exec`) |
+| `gemini` | Gemini | Google Antigravity (its own `agentapi`) |
+| `grok` | Grok | a bot in Grok Bot (a message to it; the bot runs in Grok's cloud) |
 
-Any other provider gets a plain grey shirt. Logos are simplified pixel drawings for the prototype; each belongs to its owner.
+Others (Kimi, say) may come later, once they can be started from outside with their tools. An agent's `provider` (which AI it is, apart from its name in the funnel) sets its shirt; any other provider gets a plain grey shirt.
+
+## Launch: Goalcraft starts the roles
+
+A place on the board is a **role**: one job in a zone (a search, the applications) or the supervisor, not one AI. Goalcraft starts it itself and chooses who works each run, so a role keeps working when one subscription's quota runs out or a computer is off:
+
+- **When**: on the role's schedule (say 9:00 and 18:00); then what its agent says about its next run is ignored. Without a schedule, its agent says when it wakes up (`sleep` with `next_run_at`), as before; if it names no time, the role is on pause. A message to the role, or the person's answer to its question, starts it too (not on pause), and so does **Run now** in its card.
+- **One run at a time**: a start that comes while the role works waits for it (at most one waits); an agent silent for 10 minutes (the amber triangle) is taken to have finished.
+- **Who**: the role's executors, in order: an app (Claude, Codex, Antigravity, Grok Bot), on any computer that has it or on one, with its model and effort, a new chat for every run or not, and full access (everything allowed without asking, on by default: nobody is there to approve). Mode **evenly** gives each run to the executor whose plan's quota would go unused soonest before the role's next run (all of its rest if its quota resets before then); mode **by priority** to the first one. An executor whose plan has used 95% of its quota takes no new runs (an agent can change the threshold); one that doesn't start within 10 minutes passes the run to the next.
+- **Instructions**: each run starts with a short note (who the role is, the funnel's guide for what all roles share, and the role's own instructions, linked from its card as a note); everything else is in them, and the role writes what it did into them at the end.
+
+In the card: the note icon for its instructions, and under **Launch** its schedule, mode and executors to change by hand; its runs say who worked them and how each ended. Agents change the same settings through MCP (`set_launch`). While nobody works it, the role sleeps in the shirt of the one who will take its next run. In a zone with a role, the role stands right of the pipe; agents not made roles yet take the places left. Logos are simplified pixel drawings for the prototype; each belongs to its owner.
 
 ## Sign-in
 
