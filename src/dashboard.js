@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7f4fb6bb';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=7f4fb6bb';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7f4fb6bb';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=ccd3184a';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=ccd3184a';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ccd3184a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -927,6 +927,9 @@ export function mountDashboard(funnels, opts = {}) {
     const out = all.map(x => (apps.has(x.app) ? next.shift() : x));
     return [...out, ...next];
   };
+  // How the executors take turns, under them: its name says the mode it is in (In order, or Evenly by
+  // the quotas), and its hint what that is and what the switch turns it to.
+  const modeHtml = (even, limit) => `<label class="l-row l-mode" data-tip="${esc(t(even ? 'launch.evenTip' : 'launch.orderTip', limit))}"><input type="checkbox" class="switch l-even"${even ? ' checked' : ''}><span>${esc(t(even ? 'launch.even' : 'launch.inOrder'))}</span></label>`;
   function launchHtml(a) {
     const l = a.launch;
     if (!l || !opts.onLaunch) return '';
@@ -941,9 +944,9 @@ export function mountDashboard(funnels, opts = {}) {
       <div class="l-row"><label class="l-sched" data-tip="${esc(t('launch.scheduleTip'))}"><input type="checkbox" class="switch l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>${guide}</div>
       <input class="l-times" value="${esc(timesOf(l.schedule))}" placeholder="${esc(t('launch.times'))}">
       <p class="pop-note l-free"${l.schedule && l.schedule_on ? ' hidden' : ''}>${esc(t('launch.noSchedule'))}</p>
-      <label class="l-row" data-tip="${esc(t('launch.quotaTip', Number(l.quota_limit ?? 95)))}"><input type="checkbox" class="switch l-even"${l.mode === 'even' ? ' checked' : ''}>${esc(t('launch.even'))}</label>
       ${computer}
       <div class="ex-list">${shownExecutors(l, main).map(e => exRow(e, apps)).join('')}</div>
+      ${modeHtml(l.mode === 'even', Number(l.quota_limit ?? 95))}
     </details><div class="pop-msg l-msg"></div></div>`;
   }
   function bindLaunch(a) {
@@ -965,6 +968,12 @@ export function mountDashboard(funnels, opts = {}) {
     };
     box.querySelectorAll('input.switch').forEach(switchTip);
     box.addEventListener('change', e => { if (e.target.matches('input.switch')) switchTip(e.target); });
+    // The mode's name and hint follow its switch.
+    box.querySelector('.l-even').addEventListener('change', e => {
+      const row = e.target.closest('.l-mode'), limit = Number(l.quota_limit ?? 95);
+      row.querySelector('span').textContent = t(e.target.checked ? 'launch.even' : 'launch.inOrder');
+      row.dataset.tip = t(e.target.checked ? 'launch.evenTip' : 'launch.orderTip', limit);
+    });
     // Another main computer: its apps, keeping what was set for the ones shown.
     box.querySelector('.l-computer')?.addEventListener('change', e => {
       l.executors = merged(l.executors, [...list.querySelectorAll('.ex-row:not(.missing)')].map(read));

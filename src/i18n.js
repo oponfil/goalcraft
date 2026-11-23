@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=7f4fb6bb';
-import vi from './lang/vi.js?v=7f4fb6bb';
-import ja from './lang/ja.js?v=7f4fb6bb';
-import pt from './lang/pt.js?v=7f4fb6bb';
-import tr from './lang/tr.js?v=7f4fb6bb';
-import ko from './lang/ko.js?v=7f4fb6bb';
+import es from './lang/es.js?v=ccd3184a';
+import vi from './lang/vi.js?v=ccd3184a';
+import ja from './lang/ja.js?v=ccd3184a';
+import pt from './lang/pt.js?v=ccd3184a';
+import tr from './lang/tr.js?v=ccd3184a';
+import ko from './lang/ko.js?v=ccd3184a';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -437,17 +437,19 @@ const STRINGS = {
   'launch.title': L('Launch', 'Запуск'),
   'launch.guide': L('Instructions', 'Инструкция'),
   'launch.schedule': L('On schedule', 'По расписанию'),
-  'launch.scheduleTip': L('On: the role runs at these times, and what its agent says about its next run is ignored. Off: its agent says when it wakes up; if it names no time, the role is on pause.', 'Включено: роль запускается в это время, а то, когда агент сам хочет проснуться, не учитывается. Выключено: агент сам говорит, когда проснуться; не назвал время — роль на паузе.'),
+  'launch.scheduleTip': L('On: the role runs at these times, and what its agent says about its next run is ignored.\nOff: its agent says when it wakes up; if it names no time, the role is on pause.', 'Включено: роль запускается в это время, а то, когда агент сам хочет проснуться, не учитывается.\nВыключено: агент сам говорит, когда проснуться; не назвал время — роль на паузе.'),
   'launch.times': L('Times, e.g. 9:00, 18:00 (or a cron)', 'Время, например 9:00, 18:00 (или cron)'),
   'launch.noSchedule': L('No schedule: the agent says when it runs next; if it names no time, the role is on pause.', 'Без расписания агент сам говорит, когда проснуться; не назвал время — роль на паузе.'),
   'launch.even': L('Evenly by the plans\' quotas', 'Равномерно по квотам'),
+  'launch.inOrder': L('In order', 'По порядку'),
+  'launch.evenTip': L((n) => `Now: evenly by the quotas. Each run goes to the executor whose plan's quota would go unused soonest.\nOff: in order, the first in the list whose plan has used under ${n}% of its quota.`, (n) => `Сейчас: равномерно по квотам. Каждый запуск берёт исполнитель, чья квота быстрее всего пропадёт неиспользованной.\nВыключить: по порядку, первый в списке, у кого израсходовано меньше ${n}% квоты.`),
+  'launch.orderTip': L((n) => `Now: in order. Each run goes to the first in the list whose plan has used under ${n}% of its quota.\nOn: evenly by the quotas, to the executor whose quota would go unused soonest.`, (n) => `Сейчас: по порядку. Запуск берёт первый в списке, у кого израсходовано меньше ${n}% квоты.\nВключить: равномерно по квотам, к тому, чья квота быстрее всего пропадёт неиспользованной.`),
   'launch.computer': L('Computer', 'Компьютер'),
   'launch.computerTip': L('The main computer: the role starts there whenever it is on; only when it is off does another computer take the run.', 'Основной компьютер: роль запускается на нём, когда он в сети; только если он не в сети, запуск берёт другой компьютер.'),
   'launch.off': L('off', 'не в сети'),
   'launch.notInstalled': L((app, pc) => `${app} is not installed on ${pc}. Install it there to use it.`, (app, pc) => `${app} не установлен на компьютере ${pc}. Чтобы им пользоваться, установите его там.`),
   'launch.drag': L('Drag to change the order', 'Перетащите, чтобы поменять порядок'),
   'launch.botNeeded': L('Grok Bot needs its bot id to run the role.', 'Для Grok Bot укажите id бота.'),
-  'launch.quotaTip': L((n) => `An executor whose plan has used ${n}% of its quota takes no new runs. You can change it through an agent.`, (n) => `Исполнитель, у которого израсходовано ${n}% квоты, новых запусков не берёт. Изменить можно через агента.`),
   'launch.newChat': L('New chat', 'Новая беседа'),
   'launch.newChatTip': L('Every run in a new conversation; unticked, it goes on in the last one when there is one.', 'Каждый запуск — новая беседа; без галочки продолжает последнюю, если она есть.'),
   'launch.full': L('Full access', 'Полный доступ'),
