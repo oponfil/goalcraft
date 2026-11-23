@@ -8,6 +8,7 @@ import { pipeline } from 'npm:@supabase/middleware@1.0.0'
 import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1.9.0'
 import { z } from 'npm:zod@4.6.5'
 import { emailQuestion } from './notify.ts'
+import { beginLaunch, cronNext, endLaunches, roleOf } from './launch.ts'
 
 type Db = any // the Supabase client scoped to the caller
 // Who is calling, and an admin client to read their current settings (for question emails). chat:
@@ -112,10 +113,20 @@ async function funnels(db: Db, key?: string) {
       presence (agent, provider, display_name, zone, state, next_run_at, chat_url, question_id, run_added, status, summary, pause_reason, updated_at),
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
       agent_messages (id, agent, text, sent_at, read_at),
-      person_tasks (id, position, title, detail, url, due_at, done_at)`)
+      person_tasks (id, position, title, detail, url, due_at, done_at),
+      role_launch (agent, schedule, schedule_on, time_zone, mode, quota_limit, guide_url,
+        role_executors (position, enabled, app, computer, model, effort, new_chat, full_access, bot_id))`)
     .order('created_at')
   if (key) q = q.eq('key', key)
   const rows = check(await q) as any[]
+  // How Goalcraft starts a role (set_launch), for the agents it starts: by its agent name.
+  const launchOf = (f: any, agent: string) => {
+    const l = (f.role_launch ?? []).find((r: any) => r.agent === agent)
+    if (!l) return undefined
+    const { agent: _, role_executors, ...rest } = l
+    return { ...rest, executors: (role_executors ?? []).sort((a: any, b: any) => a.position - b.position).map(({ position: _p, ...e }: any) => e) }
+  }
+  const withLaunch = (f: any, p: any) => { const launch = launchOf(f, p.agent); return launch ? { ...p, launch } : p }
   return rows.map(f => ({
     id: f.key,
     title: f.title,
@@ -129,9 +140,9 @@ async function funnels(db: Db, key?: string) {
     stages: f.stages.sort((a: any, b: any) => a.position - b.position)
       .map(({ key, label, count, active, fill_percent, flow_per_day }: any) => ({ key, label, count, active, fill_percent, flow_per_day })),
     output_flow_per_day: f.output_flow_per_day,
-    agents: f.presence.filter((p: any) => p.zone != null).map(({ status, summary, ...p }: any) => p),
+    agents: f.presence.filter((p: any) => p.zone != null).map(({ status, summary, ...p }: any) => withLaunch(f, p)),
     // The agent on the platform over the whole funnel, with what its last run found.
-    supervisor: f.presence.filter((p: any) => p.zone == null).map(({ zone, run_added, ...p }: any) => p)[0] ?? null,
+    supervisor: f.presence.filter((p: any) => p.zone == null).map(({ zone, run_added, ...p }: any) => withLaunch(f, p))[0] ?? null,
     open_questions: f.questions.filter((q: any) => !q.answered_at),
     // Answered but not replied to yet: the agent owes the person a short reply.
     // What the person wrote to agents and they have not read yet (get_messages reads them).
@@ -387,22 +398,35 @@ function server(db: Db, caller: Caller) {
     // and is kept through the next sleep, so the person sees what the last run added.
     const prev = check(await db.from('presence').select('zone, state').eq('funnel_id', f.id).eq('agent', a.agent).maybeSingle()) as any
     const newRun = a.state === 'work' && (!prev || prev.state === 'sleep' || prev.state === 'pause' || prev.zone !== zone)
+    // A role Goalcraft starts (the orchestrator): with a schedule it wakes on it, whatever its agent says;
+    // without one, an agent that goes to sleep naming no time goes on pause.
+    const role = await roleOf(caller.admin, f.id, a.agent)
+    let state = a.state, next_run_at = a.next_run_at ?? null, reason = a.reason ?? null
+    if (role && state === 'sleep') {
+      if (role.schedule && role.schedule_on) next_run_at = cronNext(role.schedule, role.time_zone)
+      else if (!next_run_at) { state = 'pause'; reason = reason ?? 'нет расписания, время следующего запуска не названо' }
+    }
     const run = !newRun ? {} : zone == null ? { run_base: null, run_added: null, run_manual: false }
       : { run_base: (await zoneTargets(db, f.id))(zone), run_added: 0, run_manual: false }
+    let runId: number | null = null
     if (newRun) {
       check(await endRun(db, f.id, a.agent))
-      check(await db.from('agent_runs').insert({ funnel_id: f.id, agent: a.agent, zone }))
+      runId = (check(await db.from('agent_runs').insert({ funnel_id: f.id, agent: a.agent, zone }).select('id').single()) as { id: number }).id
+      if (role) await beginLaunch(caller.admin, f.id, a.agent, runId)
     }
     if (a.added != null) check(await openRun(db, f.id, a.agent).update({ added: a.added }))
     // What the supervisor found, on its run (before a sleep ends it) and by it on the dashboard.
     const found: Record<string, unknown> = { ...(a.status && { status: a.status }), ...(a.summary && { summary: a.summary }) }
     if (a.status && !a.summary) found.summary = null
     if (Object.keys(found).length) check(await openRun(db, f.id, a.agent).update(found))
-    if (a.state === 'sleep' || a.state === 'pause') check(await endRun(db, f.id, a.agent))
+    if (state === 'sleep' || state === 'pause') {
+      check(await endRun(db, f.id, a.agent))
+      if (role) await endLaunches(caller.admin, f.id, a.agent)
+    }
     check(await db.from('presence').upsert({
-      funnel_id: f.id, agent: a.agent, zone, state: a.state, ...found, ...(a.name && { display_name: a.name }), ...(a.provider && { provider: a.provider }),
-      next_run_at: a.state === 'sleep' ? a.next_run_at ?? null : null,
-      pause_reason: a.state === 'pause' ? a.reason ?? null : null,
+      funnel_id: f.id, agent: a.agent, zone, state, ...found, ...(a.name && { display_name: a.name }), ...(a.provider && { provider: a.provider }),
+      next_run_at: state === 'sleep' ? next_run_at : null,
+      pause_reason: state === 'pause' ? reason : null,
       question_id, ...(chat_url !== undefined && { chat_url }),
       ...run,
       ...(a.added != null && { run_added: a.added, run_manual: true }),
@@ -410,6 +434,48 @@ function server(db: Db, caller: Caller) {
     // What waits for this agent: messages from the person it has not read yet.
     const unread = check(await db.from('agent_messages').select('id').eq('funnel_id', f.id).eq('agent', a.agent).is('read_at', null)) as unknown[]
     return text({ question_id, new_messages: unread.length, funnel: await one(db, a.funnel_id) })
+  })
+
+  s.registerTool('set_launch', {
+    title: 'Set how Goalcraft starts a role',
+    description: "Goalcraft can start a role (an agent name in a funnel: a worker's zone or the supervisor) itself, through the wake script on the person's computers, on the subscriptions the person has: Claude (Claude Code), Codex, Google Antigravity, Grok Bot. One run at a time; each run on one of the executors you list. With a schedule the role runs on it (what its agent says about its next run is ignored); without one, its agent says when it wakes up (sleep with next_run_at), and an agent that names no time goes on pause. mode: even (each run on the executor whose plan's quota would go unused soonest before the next run) or priority (the first one whose quota is under quota_limit). Each run starts with a short note: who the role is, the funnel's guide and the role's own instructions (guide_url), where everything else is. Leave a field out to keep it; executors, when given, replace the list. Change it when the person asks, or as the funnel's supervisor for a role of its funnel.",
+    inputSchema: req({
+      funnel_id: funnelId,
+      agent,
+      schedule: z.string().regex(/^\S+( \S+){4}$/).nullable().optional().describe('Five-field cron in time_zone, e.g. "0 9,18 * * *" (9:00 and 18:00 daily), "30 */4 * * *"; null: no schedule (the agent names its next run)'),
+      schedule_on: z.boolean().optional().describe('false turns the schedule off: the role goes on pause'),
+      time_zone: z.string().min(1).max(64).optional().describe('IANA time zone of the schedule, e.g. "Asia/Ho_Chi_Minh" (the default)'),
+      mode: z.enum(['even', 'priority']).optional(),
+      quota_limit: z.number().min(1).max(100).optional().describe('An executor whose plan has used this much of its quota (%) takes no new runs (95 by default)'),
+      guide_url: z.string().url().regex(/^https?:\/\//).nullable().optional().describe('The role\'s own instructions: one note or document for this role only (the funnel\'s guide holds what all its roles share), with a "last run" block the agent updates at the end of each run'),
+      executors: z.array(req({
+        app: z.enum(['claude', 'codex', 'antigravity', 'grok']),
+        computer: z.string().min(1).max(64).nullable().optional().describe('Only on this computer (as wake_script.computers names it); leave out for any that has the app'),
+        model: z.string().min(1).max(64).optional().describe('Claude: claude-opus-5-5, claude-sonnet-5-5…; Codex: gpt-6.2-sol…; Antigravity: the model\'s label, e.g. "Gemini 4 Argon (Medium)" (its effort is part of it). Grok Bot: none, the bot\'s own'),
+        effort: z.enum(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']).optional().describe('Claude and Codex'),
+        new_chat: z.boolean().optional().describe('A new conversation every run (default true); Grok Bot always goes on in its one conversation'),
+        full_access: z.boolean().optional().describe('Everything allowed without asking (default true): nobody is there to approve'),
+        bot_id: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/).optional().describe('Grok Bot: the bot that works the role'),
+        enabled: z.boolean().optional(),
+      })).max(8).optional().describe('Who may work the role, first preferred'),
+    }),
+    annotations: { title: 'Set how Goalcraft starts a role', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (a) => {
+    const f = await funnelRow(db, a.funnel_id)
+    if (a.schedule && !cronNext(a.schedule, a.time_zone ?? 'Asia/Ho_Chi_Minh')) fail(`"${a.schedule}" is not a cron Goalcraft can read: five fields, minute hour day month weekday`)
+    for (const e of a.executors ?? []) if (e.app === 'grok' && !e.bot_id) fail('A Grok Bot executor needs its bot_id')
+    const patch: Record<string, unknown> = { funnel_id: f.id, agent: a.agent }
+    for (const k of ['schedule', 'schedule_on', 'time_zone', 'mode', 'quota_limit', 'guide_url'] as const) if (a[k] !== undefined) patch[k] = a[k]
+    check(await db.from('role_launch').upsert(patch, { onConflict: 'funnel_id,agent' }))
+    if (a.executors) {
+      check(await db.from('role_executors').delete().eq('funnel_id', f.id).eq('agent', a.agent))
+      if (a.executors.length) check(await db.from('role_executors').insert(a.executors.map((e, i) => ({
+        funnel_id: f.id, agent: a.agent, position: i, app: e.app, computer: e.computer ?? null, model: e.model ?? null,
+        effort: e.effort ?? null, new_chat: e.app === 'grok' ? false : e.new_chat ?? true, full_access: e.full_access ?? true,
+        bot_id: e.bot_id ?? null, enabled: e.enabled ?? true,
+      }))))
+    }
+    return text(await one(db, a.funnel_id))
   })
 
   s.registerTool('get_answer', {
@@ -564,6 +630,7 @@ function server(db: Db, caller: Caller) {
   }, async ({ funnel_id, agent }) => {
     const f = await funnelRow(db, funnel_id)
     check(await endRun(db, f.id, agent))
+    await endLaunches(caller.admin, f.id, agent)
     check(await db.from('presence').delete().eq('funnel_id', f.id).eq('agent', agent))
     return text(await one(db, funnel_id))
   })

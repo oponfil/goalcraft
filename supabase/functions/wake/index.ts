@@ -8,6 +8,10 @@
 //   POST /wake { claim: [{ funnel_id, agent, marks }] }   → { claimed: [true|false, …] }: marks them as woken;
 //                          false when another computer took it first. script: the latest version and its
 //                          SHA-256, so the script can update itself (wake/goalcraft-wake.py on goalcraft.ai)
+//   GET /wake?claim=1 also → { launches: [{ launch, funnel_id, agent, app, model, effort, new_chat, full_access,
+//                          bot_id, prompt }] }: the orchestrator's starts this computer can do (orchestrator.ts);
+//   POST /wake { launch_claim: id } → { claimed }; { launch_done: id, ok, note } → { ok }: the script took a start,
+//                          and its app finished; { inventory: { app: { models, running?, signed_in? } } } → { saved }
 //   GET /wake?agents=1   → { agents: [{ agent, funnel_id, app, session }] }: the agents on this computer whose
 //                          token use the script reads (nobody is woken or marked)
 //   POST /wake { usage: [{ funnel_id, agent, run_key, app, model, started_at, ended_at, tokens, new_tokens,
@@ -30,6 +34,7 @@
 // are listed; each listing marks what it wakes for, so the next one does not repeat it.
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2'
 import { WAKE_RELEASE } from './release.ts'
+import { claimLaunch, dispatch, launchDone } from './orchestrator.ts'
 
 const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 const SILENT = 10 * 60e3 // the dashboard's own threshold for an amber triangle
@@ -178,7 +183,7 @@ async function saveUsage(user: string, keyId: string, body: any) {
 Deno.serve(async (req) => {
   const key = (req.headers.get('authorization') ?? '').replace(/^Bearer /, '').trim()
   if (!key) return json({ error: 'no_key' }, 401)
-  const { data: owner } = await admin.from('wake_keys').select('id, user_id, computer, created_at').eq('key_hash', await sha256(key)).maybeSingle()
+  const { data: owner } = await admin.from('wake_keys').select('id, user_id, computer, created_at, inventory').eq('key_hash', await sha256(key)).maybeSingle()
   if (!owner) return json({ error: 'bad_key' }, 401)
   const user = owner.user_id, now = Date.now(), iso = (t: number) => new Date(t).toISOString()
   // The script's version, from its User-Agent ("goalcraft-wake/2026-10-24"); older ones say "1".
@@ -204,6 +209,13 @@ Deno.serve(async (req) => {
   if (req.method === 'POST') {
     const body = await req.json().catch(() => null)
     if (Array.isArray(body?.claim)) return claim(user, body.claim)
+    // The orchestrator (orchestrator.ts): the script took a start, finished one, or says what it can run.
+    if (typeof body?.launch_claim === 'string') return json({ claimed: await claimLaunch(admin, user, owner.id, computer ?? owner.computer, body.launch_claim) })
+    if (typeof body?.launch_done === 'string') { await launchDone(admin, user, body.launch_done, body.ok !== false, typeof body.note === 'string' ? body.note : null); return json({ ok: true }) }
+    if (body?.inventory && typeof body.inventory === 'object') {
+      const { error } = await admin.from('wake_keys').update({ inventory: body.inventory }).eq('id', owner.id)
+      return error ? json({ error: 'failed' }, 500) : json({ saved: true })
+    }
     return Array.isArray(body?.limits) ? saveLimits(user, body.limits) : saveUsage(user, owner.id, body)
   }
   if (params.has('agents')) {
@@ -234,9 +246,13 @@ Deno.serve(async (req) => {
   if (presence.error || messages.error || answers.error || wakes.error || replies.error) return json({ error: 'failed' }, 500)
   const wokeAfter = new Map((wakes.data ?? []).map((w: any) => [`${w.funnel_id}|${w.agent}`, Date.parse(w.signal_at)]))
 
+  // Roles the orchestrator starts are its own: the old wake leaves them alone.
+  const { data: launched } = await admin.from('role_launch').select('funnel_id, agent').eq('user_id', user)
+  const orchestrated = new Set((launched ?? []).map((r: any) => `${r.funnel_id}|${r.agent}`))
   const wake = new Map<string, any>()
   const add = (p: any, reason: string, chat: string | null, mark: (m: any) => void) => {
     if (p.state === 'pause') return false  // paused: it won't run until resumed, so nothing wakes it
+    if (orchestrated.has(`${p.funnel_id}|${p.agent}`)) return false
     const s = resumable(p, chat)
     if (!s) return false
     const k = `${p.funnel_id}|${p.agent}`
@@ -271,7 +287,13 @@ Deno.serve(async (req) => {
   }
 
   // ?claim=1: the script wakes only what is on its computer, and claims that first (POST claim).
-  if (params.has('claim')) return json({ wake: [...wake.values()], script })
+  if (params.has('claim')) {
+    // And the starts the orchestrator has for this computer (scripts from 2026-11-23.1 on take them).
+    let launches: any[] = []
+    try { launches = await dispatch(admin, user, { ...owner, computer: computer ?? owner.computer, last_used_at: iso(now), inventory: owner.inventory }) }
+    catch (e) { console.error('dispatch failed:', (e as Error)?.message ?? e) }
+    return json({ wake: [...wake.values()], launches, script })
+  }
   // Scripts from before 18 November 2026: all is marked as listed.
   const all = [...wake.values()].map(w => ({ funnel_id: w.funnel_id, agent: w.agent, marks: w.marks }))
   await claim(user, all)

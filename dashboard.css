@@ -187,13 +187,36 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 /* A run's tokens, at the end of its row, as the wake script counted them. */
 #pop .run-row .tok { color: var(--muted); white-space: nowrap; }
 #pop .pop-note.usage { color: var(--muted); }
-#pop .run-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 10px; padding: 3px 0; }
+#pop .run-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; gap: 10px; padding: 3px 0; }
+#pop .run-row .by { color: var(--muted); white-space: nowrap; font-size: 12px; }
+#pop .run-row .by .warn { color: #F2A33C; }
 #pop .run-row > span:nth-child(3) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #pop .run-row .at, #pop .run-row .took { color: var(--muted); white-space: nowrap; }
 .pop-msg { color: var(--alert); margin-top: 6px; }
 .pop-msg.ok { color: var(--muted); }
 /* Writing to an agent from its card. */
 #pop .write { margin-top: 10px; }
+/* A role Goalcraft starts itself: its instructions, and its Launch settings (schedule, mode, executors). */
+#pop .launch { margin-top: 10px; font-size: 13px; }
+#pop .launch-guide { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); text-decoration: none; margin-bottom: 6px; }
+#pop .launch-guide:hover { color: var(--text); }
+#pop details.launch-box { border-top: 1px solid var(--border); padding-top: 8px; margin-bottom: 8px; }
+#pop details.launch-box summary { cursor: pointer; color: var(--muted); }
+#pop details.launch-box summary:hover { color: var(--text); }
+#pop .launch-box > label, #pop .launch-box > input, #pop .launch-box > select { display: block; margin: 8px 0 0; }
+#pop .launch-box input.l-times, #pop .launch-box select.ex-add { width: 100%; box-sizing: border-box; }
+#pop .launch-box .pop-note { margin: 4px 0 0; }
+#pop .launch-mode select { margin-left: 6px; }
+#pop .ex-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+#pop .ex-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; }
+#pop .ex-row .ex-app { min-width: 72px; }
+#pop .ex-row select, #pop .ex-row input.ex-bot { max-width: 190px; font-size: 12px; }
+#pop .ex-row label { display: inline-flex; align-items: center; gap: 3px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+#pop .ex-row .ex-note { color: var(--muted); font-size: 12px; }
+#pop .ex-row .ex-move { margin-left: auto; display: inline-flex; gap: 2px; }
+#pop .ex-row .ex-move button { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); cursor: pointer; padding: 0 6px; line-height: 20px; }
+#pop .ex-row .ex-move button:hover { color: var(--text); }
+#pop .launch .ask-buttons { margin-top: 8px; }
 #clock .who { margin-left: 4px; }
 #clock button { background: none; border: 0; color: var(--muted); font: inherit; cursor: pointer; padding: 0 0 0 10px; text-decoration: underline; }
 #clock button:hover { color: var(--text); }

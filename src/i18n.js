@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=26c34672';
-import vi from './lang/vi.js?v=26c34672';
-import ja from './lang/ja.js?v=26c34672';
-import pt from './lang/pt.js?v=26c34672';
-import tr from './lang/tr.js?v=26c34672';
-import ko from './lang/ko.js?v=26c34672';
+import es from './lang/es.js?v=0906ea4a';
+import vi from './lang/vi.js?v=0906ea4a';
+import ja from './lang/ja.js?v=0906ea4a';
+import pt from './lang/pt.js?v=0906ea4a';
+import tr from './lang/tr.js?v=0906ea4a';
+import ko from './lang/ko.js?v=0906ea4a';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -429,6 +429,38 @@ const STRINGS = {
     '主管是你的智能体，负责盯着这个漏斗：核对数字和智能体，找出瓶颈并建议怎么做。',
     'ผู้ดูแลคือเอเจนต์ของคุณที่คอยดูกรวยนี้: ตรวจตัวเลขและเอเจนต์ หาคอขวด และแนะนำว่าควรทำอะไร'),
   'board.appointSupervisor': L('Appoint a supervisor', 'Назначить супервайзера', '指定主管', 'แต่งตั้งผู้ดูแล'),
+  // A role Goalcraft starts itself (the orchestrator): its card's Launch block.
+  'launch.title': L('Launch', 'Запуск'),
+  'launch.guide': L('Instructions', 'Инструкция'),
+  'launch.schedule': L('On schedule', 'По расписанию'),
+  'launch.times': L('Times, e.g. 9:00, 18:00 (or a cron)', 'Время, например 9:00, 18:00 (или cron)'),
+  'launch.noSchedule': L('No schedule: the agent says when it runs next; if it names no time, the role is on pause.', 'Без расписания агент сам говорит, когда проснуться; не назвал время — роль на паузе.'),
+  'launch.mode': L('Who runs it', 'Кто запускается'),
+  'launch.even': L('Evenly, by quotas', 'Равномерно, по квотам'),
+  'launch.priority': L('By priority', 'По приоритету'),
+  'launch.quotaTip': L((n) => `An executor whose plan has used ${n}% of its quota takes no new runs. You can change it through an agent.`, (n) => `Исполнитель, у которого израсходовано ${n}% квоты, новых запусков не берёт. Изменить можно через агента.`),
+  'launch.add': L('Add an executor…', 'Добавить исполнителя…'),
+  'launch.newChat': L('New chat', 'Новая беседа'),
+  'launch.newChatTip': L('Every run in a new conversation; unticked, it goes on in the last one when there is one.', 'Каждый запуск — новая беседа; без галочки продолжает последнюю, если она есть.'),
+  'launch.full': L('Full access', 'Полный доступ'),
+  'launch.fullTip': L('Everything allowed without asking: nobody is there to approve during a scheduled run. Unticked, the app\'s own defaults apply.', 'Всё разрешено без подтверждения: при запуске по расписанию подтвердить некому. Без галочки действуют настройки самого приложения.'),
+  'launch.inBot': L('model and access are set in the bot', 'модель и доступ задаются в самом боте'),
+  'launch.bot': L('bot id', 'id бота'),
+  'launch.anyModel': L('default model', 'модель по умолчанию'),
+  'launch.effort': L('effort', 'усилие'),
+  'launch.up': L('Higher', 'Выше'),
+  'launch.down': L('Lower', 'Ниже'),
+  'launch.remove': L('Remove', 'Убрать'),
+  'launch.save': L('Save', 'Сохранить'),
+  'launch.saved': L('Saved.', 'Сохранено.'),
+  'launch.runNow': L('Run now', 'Запустить сейчас'),
+  'launch.queued': L('Starting: it runs as soon as a computer takes it.', 'Запуск поставлен: начнётся, как только его возьмёт компьютер.'),
+  'launch.waiting': L('A start is already waiting.', 'Запуск уже ждёт в очереди.'),
+  'launch.badTimes': L('Write times like 9:00, 18:00 (same minutes), or a cron of five fields.', 'Напишите время вида 9:00, 18:00 (с одинаковыми минутами) или cron из пяти полей.'),
+  'launch.noExecutors': L('Add at least one executor.', 'Добавьте хотя бы одного исполнителя.'),
+  'launch.notStarted': L('did not start', 'не начал'),
+  'launch.silent': L('went silent', 'замолчал'),
+  'launch.failed': L('failed to start', 'не запустился'),
   'board.noRuns': L('No runs recorded yet.', 'Запусков пока не записано.', '还没有记录到运行。', 'ยังไม่มีการรันที่บันทึกไว้'),
   'board.runsFailed': L('Could not load the runs.', 'Не удалось загрузить запуски.', '无法加载运行记录。', 'โหลดการรันไม่สำเร็จ'),
   'board.paused': L((who) => `${who} is paused`, (who) => `${who} на паузе`, (who) => `${who} 已暂停`, (who) => `${who} หยุดชั่วคราว`),

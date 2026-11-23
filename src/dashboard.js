@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=26c34672';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=26c34672';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=26c34672';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=0906ea4a';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=0906ea4a';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=0906ea4a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -739,6 +739,7 @@ export function mountDashboard(funnels, opts = {}) {
     bindRuns(h.a);
     if (h.type === 'ask' && opts.onAnswer) bindAnswer(h.a);
     if (h.type === 'agent' && opts.onMessage) bindMessage(h.a);
+    if (h.type === 'agent') bindLaunch(h.a);
   });
 
   // A supervisor's status word in its own colour: all good, bottleneck, recommendation, question.
@@ -857,7 +858,95 @@ export function mountDashboard(funnels, opts = {}) {
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
       <div class="pop-status">${paused}${wakes}${missed}${lost}</div>
       <div class="pop-sub where">${where}</div>
-      ${write}${history}`;
+      ${launchHtml(a)}${write}${history}`;
+  }
+
+  // A role Goalcraft starts itself (the orchestrator): in its card, its instructions (the note icon), and
+  // under Launch its schedule, how the executor of each run is chosen, and who may work it, in order,
+  // each with its model and effort, a new chat or not, and full access; Save, and Run now.
+  const APP_NAMES = { claude: 'Claude', codex: 'Codex', antigravity: 'Antigravity', grok: 'Grok Bot' };
+  const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
+  const NOTE_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M6 2h9l5 5v15H6V2zm8 1.5V8h4.5L14 3.5zM8 11h10v1.5H8V11zm0 3.5h10V16H8v-1.5zm0 3.5h7v1.5H8V18z"/></svg>';
+  // The schedule as the person writes it: times of day with the same minutes ("9:00, 18:00") or a cron.
+  const cronOf = text => {
+    const s = text.trim();
+    if (/^\S+( \S+){4}$/.test(s) && !/:/.test(s)) return s;
+    const times = s.split(/[,;\s]+/).filter(Boolean).map(x => /^(\d{1,2}):(\d{2})$/.exec(x));
+    if (!times.length || times.some(m => !m || +m[1] > 23 || +m[2] > 59)) return null;
+    const mins = new Set(times.map(m => +m[2]));
+    return mins.size === 1 ? `${[...mins][0]} ${[...new Set(times.map(m => +m[1]))].sort((x, y) => x - y).join(',')} * * *` : null;
+  };
+  const timesOf = cron => {
+    const m = /^(\d{1,2}) ([\d,]+) \* \* \*$/.exec(cron || '');
+    return m ? m[2].split(',').map(h => `${h}:${m[1].padStart(2, '0')}`).join(', ') : (cron || '');
+  };
+  const exRow = (e, apps) => {
+    const grok = e.app === 'grok', models = [...new Set([...(apps[e.app]?.models ?? []), ...(e.model ? [e.model] : [])])];
+    const model = grok ? `<span class="ex-note">${esc(t('launch.inBot'))}</span><input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128">`
+      : `<select class="ex-model"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option${m === e.model ? ' selected' : ''}>${esc(m)}</option>`).join('')}</select>`
+        + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value=""></option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
+    return `<div class="ex-row" data-app="${esc(e.app)}">
+      <input type="checkbox" class="ex-on"${e.enabled === false ? '' : ' checked'}><b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b>${model}
+      ${grok ? '' : `<label data-tip="${esc(t('launch.newChatTip'))}"><input type="checkbox" class="ex-new"${e.new_chat === false ? '' : ' checked'}>${esc(t('launch.newChat'))}</label>
+      <label data-tip="${esc(t('launch.fullTip'))}"><input type="checkbox" class="ex-full"${e.full_access === false ? '' : ' checked'}>${esc(t('launch.full'))}</label>`}
+      <span class="ex-move"><button class="ex-up" data-tip="${esc(t('launch.up'))}">↑</button><button class="ex-down" data-tip="${esc(t('launch.down'))}">↓</button><button class="ex-del" data-tip="${esc(t('launch.remove'))}">×</button></span></div>`;
+  };
+  function launchHtml(a) {
+    const l = a.launch;
+    if (!l || !opts.onLaunch) return '';
+    const apps = opts.launchApps?.() ?? {};
+    const addable = ['claude', 'codex', 'antigravity', 'grok'].filter(x => x === 'grok' || apps[x]);
+    const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener" data-tip="${esc(t('launch.guide'))}">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
+    return `<div class="launch">${guide}<details class="launch-box"><summary>${esc(t('launch.title'))}${l.schedule && l.schedule_on ? ` · ${esc(timesOf(l.schedule))}` : ''}</summary>
+      <label class="launch-sched"><input type="checkbox" class="l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>
+      <input class="l-times" value="${esc(timesOf(l.schedule))}" placeholder="${esc(t('launch.times'))}">
+      <p class="pop-note l-free"${l.schedule && l.schedule_on ? ' hidden' : ''}>${esc(t('launch.noSchedule'))}</p>
+      <label class="launch-mode" data-tip="${esc(t('launch.quotaTip', Number(l.quota_limit ?? 95)))}">${esc(t('launch.mode'))}
+        <select class="l-mode"><option value="even"${l.mode === 'even' ? ' selected' : ''}>${esc(t('launch.even'))}</option><option value="priority"${l.mode === 'priority' ? ' selected' : ''}>${esc(t('launch.priority'))}</option></select></label>
+      <div class="ex-list">${l.executors.map(e => exRow(e, apps)).join('')}</div>
+      <select class="ex-add"><option value="">${esc(t('launch.add'))}</option>${addable.map(x => `<option value="${x}">${esc(APP_NAMES[x])}</option>`).join('')}</select>
+      <div class="ask-buttons"><button class="btn primary l-save">${esc(t('launch.save'))}</button></div>
+    </details><div class="ask-buttons"><button class="btn l-run">${esc(t('launch.runNow'))}</button></div><div class="pop-msg l-msg"></div></div>`;
+  }
+  function bindLaunch(a) {
+    const box = pop.querySelector('.launch');
+    if (!box) return;
+    const msg = box.querySelector('.l-msg'), list = box.querySelector('.ex-list'), apps = opts.launchApps?.() ?? {};
+    const say = (text, ok) => { msg.textContent = text; msg.className = 'pop-msg l-msg' + (ok ? ' ok' : ''); };
+    box.querySelector('.l-on').addEventListener('change', e => { box.querySelector('.l-free').hidden = e.target.checked; });
+    list.addEventListener('click', e => {
+      const row = e.target.closest('.ex-row');
+      if (!row) return;
+      if (e.target.closest('.ex-up') && row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling);
+      else if (e.target.closest('.ex-down') && row.nextElementSibling) row.parentNode.insertBefore(row.nextElementSibling, row);
+      else if (e.target.closest('.ex-del')) row.remove();
+    });
+    box.querySelector('.ex-add').addEventListener('change', e => {
+      if (!e.target.value) return;
+      list.insertAdjacentHTML('beforeend', exRow({ app: e.target.value, effort: e.target.value === 'antigravity' || e.target.value === 'grok' ? null : 'medium' }, apps));
+      e.target.value = '';
+    });
+    box.querySelector('.l-save').addEventListener('click', async e => {
+      const on = box.querySelector('.l-on').checked, text = box.querySelector('.l-times').value;
+      const schedule = text.trim() ? cronOf(text) : null;
+      if (text.trim() && !schedule) return say(t('launch.badTimes'));
+      const executors = [...list.querySelectorAll('.ex-row')].map(r => ({
+        app: r.dataset.app, enabled: r.querySelector('.ex-on').checked, model: r.querySelector('.ex-model')?.value || null,
+        effort: r.querySelector('.ex-effort')?.value || null, new_chat: r.querySelector('.ex-new')?.checked ?? false,
+        full_access: r.querySelector('.ex-full')?.checked ?? true, bot_id: r.querySelector('.ex-bot')?.value.trim() || null,
+      }));
+      if (!executors.length) return say(t('launch.noExecutors'));
+      e.target.disabled = true;
+      const error = await opts.onLaunch(a, { schedule, schedule_on: on && !!schedule, mode: box.querySelector('.l-mode').value }, executors);
+      e.target.disabled = false;
+      say(error || t('launch.saved'), !error);
+    });
+    box.querySelector('.l-run').addEventListener('click', async e => {
+      e.target.disabled = true;
+      const error = await opts.onRunNow(a);
+      e.target.disabled = false;
+      say(error ? (/duplicate|unique/i.test(error) ? t('launch.waiting') : error) : t('launch.queued'), !error);
+    });
   }
 
   // The runs list: when each run started, how long it took (or that it is still going) and what it
@@ -910,8 +999,11 @@ export function mountDashboard(funnels, opts = {}) {
           const ru = r.usage, share = ru && runLimit(ru);
           const tok = ru && (counted(ru) || share) ? `<span class="tok" data-tip="${esc(usageTip(ru, share))}">${esc(
             ru.cost != null ? fmtCost(ru.cost) : counted(ru) ? t('board.tokens', fmtTokens(ru.tokens)) : t('board.usageShare', share))}</span>` : '';
+          // A run Goalcraft started: on which app and model, and how it ended when not as it should.
+          const end = r.launch?.outcome, bad = end === 'silent' ? t('launch.silent') : end === 'not_started' ? t('launch.notStarted') : end === 'failed' ? t('launch.failed') : '';
+          const by = r.app ? `<span class="by" data-tip="${esc([APP_NAMES[r.app] ?? r.app, r.model].filter(Boolean).join(' · '))}">${esc(APP_NAMES[r.app] ?? r.app)}${bad ? ` · <span class="warn">${esc(bad)}</span>` : ''}</span>` : '';
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
-            ${what}${tok}</div>`;
+            ${what}${by}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
         pop.style.top = Math.max(8, Math.min(window.innerHeight - pop.offsetHeight - 8, pop.offsetTop)) + 'px';
       } catch { list.textContent = t('board.runsFailed'); delete list.dataset.loaded; }

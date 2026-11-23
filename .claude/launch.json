@@ -4,7 +4,19 @@
     {
       "name": "goalcraft",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["serve.py", "5173"],
+      "runtimeArgs": [
+        "serve.py",
+        "5173"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "goalcraft-pc",
+      "runtimeExecutable": "py",
+      "runtimeArgs": [
+        "serve.py",
+        "5173"
+      ],
       "port": 5173
     }
   ]

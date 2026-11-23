@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-22.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-23.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -724,6 +724,9 @@ def save_limit_state(**changes):
 def antigravity_server():
     """Antigravity's language server on this computer, while the app runs: its local ports and the token
     the app itself uses with it (from the process's command line; it never leaves this computer)."""
+    hub = antigravity_hub()
+    if hub:
+        return hub
     if WINDOWS:
         return antigravity_server_windows()
     try:
@@ -741,6 +744,25 @@ def antigravity_server():
             continue
         ports = [l.split()[8].rsplit(':', 1)[1] for l in out.splitlines()[1:] if len(l.split()) > 8]
         return {'token': token, 'ports': ports}
+    return None
+
+
+def antigravity_hub():
+    """Antigravity from 2.34 on: its server runs as a hub that takes its token on stdin, not on the command
+    line, and writes its ports and token to ~/.gemini/antigravity/daemon/hub_<port>.json. The newest such
+    file whose port answers is the running one."""
+    files = sorted(glob.glob(str(HOME / '.gemini' / 'antigravity' / 'daemon' / 'hub_*.json')), key=os.path.getmtime, reverse=True)
+    for f in files:
+        try:
+            d = json.loads(pathlib.Path(f).read_text(encoding='utf-8'))
+            port, token, http = int(d['httpsPort']), str(d['csrfToken']), d.get('httpPort')
+        except Exception:
+            continue
+        try:
+            socket.create_connection(('127.0.0.1', port), timeout=2).close()
+        except OSError:
+            continue
+        return {'token': token, 'ports': [str(port)], 'http': http}
     return None
 
 
@@ -1169,8 +1191,8 @@ def windows_aes_gcm(key, nonce, data, tag):
         bcrypt.BCryptCloseAlgorithmProvider(alg, 0)
 
 
-def grok_call(token, method, body):
-    req = urllib.request.Request(GROK_API + method, data=json.dumps(body).encode(), method='POST', headers={
+def grok_call(token, method, body, api=None):
+    req = urllib.request.Request((api or GROK_API) + method, data=json.dumps(body).encode(), method='POST', headers={
         'Authorization': f'Bearer {token}', 'Content-Type': 'application/json', 'Connect-Protocol-Version': '1'})
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.load(r)
@@ -1654,6 +1676,7 @@ def check(key):
         log(f'check failed: {e}')
         return None
     update(got.get('script'))
+    take_launches(key, got.get('launches'))  # the orchestrator's starts for this computer
     now, ready = time.time(), []
     try_again(now)
     for item in got.get('wake', []):
@@ -1688,6 +1711,205 @@ def check(key):
             problem('cant_wake', agent=item['agent'])
             job()
     return 200
+
+
+# The orchestrator: Goalcraft starts a funnel's roles itself (see supabase/functions/wake/orchestrator.ts).
+# With every check it may hand this computer starts it can do: a role, an app (Claude, Codex, Google
+# Antigravity, Grok Bot), its model and effort, and the note to start with. The script takes one (claim),
+# so no other computer starts it too, starts the app with that note in a new conversation, and says when
+# the app is done; the agent itself tells Goalcraft when its run begins and ends.
+CLAUDE_MODELS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-2']
+launching = set()  # starts being run here now
+
+
+def inventory():
+    """What this computer can run for the orchestrator: each app there and its models."""
+    inv = {}
+    if find_claude():
+        inv['claude'] = {'models': CLAUDE_MODELS}
+    if find('codex'):
+        try:
+            cache = json.loads((HOME / '.codex' / 'models_cache.json').read_text(encoding='utf-8'))
+            models = [m.get('slug') for m in (cache.get('models') or []) if m.get('slug') and 'review' not in m.get('slug')]
+        except Exception:
+            models = []
+        inv['codex'] = {'models': models}
+    if agentapi_command():
+        server = antigravity_server()
+        inv['antigravity'] = {'running': bool(server), 'models': antigravity_models(server) if server else []}
+    if grok_token():
+        inv['grok'] = {'signed_in': True}
+    return inv
+
+
+def antigravity_models(server):
+    """The models Antigravity offers here, by the ids its agentapi takes (with their labels)."""
+    import ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE
+    for port in server['ports']:
+        req = urllib.request.Request(f'https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/GetCascadeModelConfigData',
+                                     data=b'{}', method='POST', headers={'Content-Type': 'application/json', 'Connect-Protocol-Version': '1',
+                                                                         'X-Codeium-Csrf-Token': server['token']})
+        try:
+            with urllib.request.urlopen(req, timeout=15, context=ctx) as r:
+                d = json.load(r)
+        except Exception:
+            continue
+        out = []
+        for c in d.get('clientModelConfigs') or []:
+            m = c.get('modelOrAlias') or {}
+            ident = m.get('model') or m.get('alias')
+            if ident and not c.get('disabled'):
+                out.append({'id': ident, 'label': c.get('label') or ident})
+        return out
+    return []
+
+
+def agentapi_command():
+    """Antigravity's own command for a new conversation (`agentapi`, which its Automations run), as a
+    list to start: on Windows the language server it calls, not the .bat (cmd.exe would mangle the note)."""
+    bat = HOME / '.gemini' / 'antigravity' / 'bin' / ('agentapi.bat' if WINDOWS else 'agentapi')
+    if not bat.exists():
+        return None
+    if not WINDOWS:
+        return [str(bat)]
+    m = re.search(r'"([^"]*language_server[^"]*\.exe)"\s+agentapi', bat.read_text(encoding='utf-8', errors='replace'))
+    return [m.group(1), 'agentapi'] if m and os.path.exists(m.group(1)) else None
+
+
+def send_inventory(key):
+    body = json.dumps({'inventory': inventory()}).encode()
+    req = urllib.request.Request(ENDPOINT, data=body, method='POST', headers={'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=20):
+            pass
+    except Exception as e:
+        log(f'inventory: could not send: {e}')
+
+
+def launch_post(key, body):
+    req = urllib.request.Request(ENDPOINT, data=json.dumps(body).encode(), method='POST',
+                                 headers={'Authorization': f'Bearer {key}', **OURS, 'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.load(r)
+
+
+def launch_command(l):
+    """The command that starts a role's run in a new conversation of its app, or None and why not."""
+    note, model, effort, full = l['prompt'], l.get('model'), l.get('effort'), l.get('full_access', True)
+    if l['app'] == 'claude':
+        claude = find_claude()
+        if not claude:
+            return None, 'claude command not found'
+        cmd = [claude, '-p']
+        cmd += ['--model', model] if model else []
+        cmd += ['--effort', effort] if effort else []
+        cmd += ['--permission-mode', 'bypassPermissions'] if full else ['--allowedTools', *GOALCRAFT_TOOLS]
+        return cmd + [note], None
+    if l['app'] == 'codex':
+        codex = find('codex')
+        if not codex:
+            return None, 'codex command not found'
+        cmd = [codex, 'exec', '--skip-git-repo-check']
+        cmd += ['-m', model] if model else []
+        cmd += ['-c', f'model_reasoning_effort="{effort}"'] if effort else []
+        cmd += ['--dangerously-bypass-approvals-and-sandbox'] if full else []
+        return cmd + [note], None
+    if l['app'] == 'antigravity':
+        api = agentapi_command()
+        if not api:
+            return None, 'Antigravity is not installed here'
+        hub = antigravity_hub()
+        if not hub or not hub.get('http'):
+            return None, 'Antigravity is not running (or older than 2.34)'
+        # agentapi talks to the app's server over gRPC (its http port), with the app's own token, as the
+        # app's Automations do; the grants are what it may do without asking (all of it with full access).
+        env = {**os.environ, 'ANTIGRAVITY_LS_ADDRESS': f'127.0.0.1:{hub["http"]}', 'ANTIGRAVITY_CSRF_TOKEN': hub['token']}
+        if full:
+            env['ANTIGRAVITY_PERM_GRANTS'] = json.dumps(['command(*)', 'read_file(*)', 'write_file(*)', 'mcp(*)'])
+        # The model by its label ("Gemini 4 Argon (Medium)": the effort is part of it), as its id there.
+        ident = next((m['id'] for m in antigravity_models(hub) if m['label'] == model or m['id'] == model), None) if model else None
+        if model and not ident:
+            return None, f'Antigravity has no model "{model}" here'
+        return (api + ['new-conversation'] + ([f'--model={ident}'] if ident else []) + [f'--title=Goalcraft: {l["agent"]}', note], env), None
+    return None, f'unknown app {l["app"]}'
+
+
+def run_launch(key, l):
+    """Start one role's run (in its own thread: a run takes as long as the agent works)."""
+    lid, who = l['launch'], f'{l["agent"]} in {l["funnel_id"]} on {l["app"]}' + (f' ({l["model"]})' if l.get('model') else '')
+
+    def done(ok, note):
+        try:
+            launch_post(key, {'launch_done': lid, 'ok': ok, 'note': note})
+        except Exception as e:
+            log(f'launch {who}: could not report it done: {e}')
+
+    def go():
+        started = time.time()
+        try:
+            if l['app'] == 'grok':
+                err = grok_send(l.get('bot_id'), l['prompt'])
+                log(f'launched {who}' if not err else f'launch {who} failed: {err}')
+                if err:
+                    done(False, err)
+                return
+            made, err = launch_command(l)
+            if not made:
+                log(f'launch {who} failed: {err}')
+                done(False, err)
+                return
+            cmd, env = made if isinstance(made, tuple) else (made, None)
+            out = subprocess.run(cmd, cwd=str(HOME), env=env, capture_output=True, encoding='utf-8', errors='replace',
+                                 creationflags=NO_WINDOW, timeout=4 * 3600)
+            text = (out.stdout.strip() or out.stderr.strip())
+            last = (text.splitlines() or [''])[-1][:200]
+            log(f'launched {who}: finished in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
+            if l['app'] != 'antigravity':  # Antigravity's agentapi returns once the conversation is under way
+                done(out.returncode == 0, None if out.returncode == 0 else (out.stderr.strip() or last)[-300:])
+            elif out.returncode:
+                done(False, (out.stderr.strip() or last)[-300:])
+        except Exception as e:
+            log(f'launch {who}: {e!r}')
+            done(False, repr(e)[:300])
+        finally:
+            launching.discard(lid)
+            running.discard(lid)
+    launching.add(lid)
+    running.add(lid)  # an update waits for it, as for a woken agent
+    threading.Thread(target=go, daemon=True).start()
+    log(f'launching {who}')
+
+
+def grok_send(bot, text):
+    """A note to a Grok Bot bot, as the person writing to it in the app: it goes on in its one conversation."""
+    import uuid
+    if not bot:
+        return 'no bot given'
+    token = grok_token()
+    if not token:
+        return 'not signed in to Grok Bot here'
+    try:
+        r = grok_call(token, 'SendGrokBotUserMessage', {'agentId': bot, 'messageId': str(uuid.uuid4()), 'text': text,
+                                                       'sentAtMs': str(int(time.time() * 1000)), 'sessionId': ''},
+                      api='https://api2.cursor.sh/aiserver.v1.GrokBotService/')
+        return None if r.get('dispatched') else f'not dispatched: {json.dumps(r)[:200]}'
+    except Exception as e:
+        return f'{e}'
+
+
+def take_launches(key, launches):
+    for l in launches or []:
+        if l.get('launch') in launching:
+            continue
+        try:
+            ok = launch_post(key, {'launch_claim': l['launch']}).get('claimed')
+        except Exception as e:
+            log(f'launch claim failed: {e}')
+            continue
+        if ok:
+            run_launch(key, l)
 
 
 # Updates: Goalcraft says with every check which version is out and its SHA-256. A newer one is
@@ -1824,6 +2046,7 @@ def limit_job(key):
             log(f'limit: {name}: {e!r}')
             return False
     claude = read('Claude', report_limit)
+    read('inventory', send_inventory)  # what this computer can run, for the orchestrator
     for name, fn in (('Antigravity', report_antigravity_limit), ('Grok Bot', report_grok_limit),
                      ('Kimi', report_kimi_limit), ('Codex', report_codex_limit)):
         read(name, fn)
