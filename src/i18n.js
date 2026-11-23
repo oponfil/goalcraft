@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=c4f5ce67';
-import vi from './lang/vi.js?v=c4f5ce67';
-import ja from './lang/ja.js?v=c4f5ce67';
-import pt from './lang/pt.js?v=c4f5ce67';
-import tr from './lang/tr.js?v=c4f5ce67';
-import ko from './lang/ko.js?v=c4f5ce67';
+import es from './lang/es.js?v=7bb6f3c6';
+import vi from './lang/vi.js?v=7bb6f3c6';
+import ja from './lang/ja.js?v=7bb6f3c6';
+import pt from './lang/pt.js?v=7bb6f3c6';
+import tr from './lang/tr.js?v=7bb6f3c6';
+import ko from './lang/ko.js?v=7bb6f3c6';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -433,32 +433,32 @@ const STRINGS = {
   'launch.title': L('Launch', 'Запуск'),
   'launch.guide': L('Instructions', 'Инструкция'),
   'launch.schedule': L('On schedule', 'По расписанию'),
+  'launch.scheduleTip': L('On: the role runs at these times, and what its agent says about its next run is ignored. Off: its agent says when it wakes up; if it names no time, the role is on pause.', 'Включено: роль запускается в это время, а то, когда агент сам хочет проснуться, не учитывается. Выключено: агент сам говорит, когда проснуться; не назвал время — роль на паузе.'),
   'launch.times': L('Times, e.g. 9:00, 18:00 (or a cron)', 'Время, например 9:00, 18:00 (или cron)'),
   'launch.noSchedule': L('No schedule: the agent says when it runs next; if it names no time, the role is on pause.', 'Без расписания агент сам говорит, когда проснуться; не назвал время — роль на паузе.'),
   'launch.even': L('Evenly by the plans\' quotas', 'Равномерно по квотам'),
   'launch.computer': L('Computer', 'Компьютер'),
   'launch.computerTip': L('The main computer: the role starts there whenever it is on; only when it is off does another computer take the run.', 'Основной компьютер: роль запускается на нём, когда он в сети; только если он не в сети, запуск берёт другой компьютер.'),
   'launch.off': L('off', 'не в сети'),
+  'launch.appsNote': L('Shown are the apps this computer has. One missing is not installed there: install it on this computer to use it.', 'Показаны приложения, которые есть на этом компьютере. Если какого-то нет, оно там не установлено: установите его на этом компьютере.'),
+  'launch.drag': L('Drag to change the order', 'Перетащите, чтобы поменять порядок'),
+  'launch.botNeeded': L('Grok Bot needs its bot id to run the role.', 'Для Grok Bot укажите id бота.'),
   'launch.quotaTip': L((n) => `An executor whose plan has used ${n}% of its quota takes no new runs. You can change it through an agent.`, (n) => `Исполнитель, у которого израсходовано ${n}% квоты, новых запусков не берёт. Изменить можно через агента.`),
-  'launch.add': L('Add an executor…', 'Добавить исполнителя…'),
   'launch.newChat': L('New chat', 'Новая беседа'),
   'launch.newChatTip': L('Every run in a new conversation; unticked, it goes on in the last one when there is one.', 'Каждый запуск — новая беседа; без галочки продолжает последнюю, если она есть.'),
   'launch.full': L('Full access', 'Полный доступ'),
   'launch.fullTip': L('Everything allowed without asking: nobody is there to approve during a scheduled run. Unticked, the app\'s own defaults apply.', 'Всё разрешено без подтверждения: при запуске по расписанию подтвердить некому. Без галочки действуют настройки самого приложения.'),
-  'launch.inBot': L('model and access are set in the bot', 'модель и доступ задаются в самом боте'),
+  'launch.inBot': L('The bot that works the role (its id). Its model and access are set in the bot itself.', 'Бот, который работает за роль (его id). Модель и доступ задаются в самом боте.'),
   'launch.bot': L('bot id', 'id бота'),
   'launch.anyModel': L('default model', 'модель по умолчанию'),
   'launch.effort': L('effort', 'усилие'),
-  'launch.up': L('Higher', 'Выше'),
-  'launch.down': L('Lower', 'Ниже'),
-  'launch.remove': L('Remove', 'Убрать'),
   'launch.save': L('Save', 'Сохранить'),
   'launch.saved': L('Saved.', 'Сохранено.'),
   'launch.runNow': L('Run now', 'Запустить сейчас'),
   'launch.queued': L('Starting: it runs as soon as a computer takes it.', 'Запуск поставлен: начнётся, как только его возьмёт компьютер.'),
   'launch.waiting': L('A start is already waiting.', 'Запуск уже ждёт в очереди.'),
   'launch.badTimes': L('Write times like 9:00, 18:00 (same minutes), or a cron of five fields.', 'Напишите время вида 9:00, 18:00 (с одинаковыми минутами) или cron из пяти полей.'),
-  'launch.noExecutors': L('Add at least one executor.', 'Добавьте хотя бы одного исполнителя.'),
+  'launch.noExecutors': L('Turn on at least one executor.', 'Включите хотя бы одного исполнителя.'),
   'launch.notStarted': L('did not start', 'не начал'),
   'launch.silent': L('went silent', 'замолчал'),
   'launch.failed': L('failed to start', 'не запустился'),

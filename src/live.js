@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=c4f5ce67';
+import { supabase } from './auth.js?v=7bb6f3c6';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -240,7 +240,9 @@ export async function loadFunnels() {
   // What the person's computers can run for Goalcraft's launches: each app's models, from every computer.
   inventory = {};
   // The computers that run the wake script, in the order they were set up (the first is a role's main one by default).
-  launchComputers = (keys.data ?? []).filter(k => k.computer).map(k => ({ name: k.computer, on: k.last_used_at && now - Date.parse(k.last_used_at) < 3 * 60e3 }));
+  launchComputers = (keys.data ?? []).filter(k => k.computer).map(k => ({ name: k.computer, on: k.last_used_at && now - Date.parse(k.last_used_at) < 3 * 60e3,
+    // The apps it has (Grok Bot when signed in there).
+    apps: Object.entries(k.inventory ?? {}).filter(([app, v]) => app !== 'grok' || v.signed_in).map(([app]) => app) }));
   for (const k of keys.data ?? []) for (const [app, v] of Object.entries(k.inventory ?? {})) {
     const have = inventory[app] ??= { models: [], computers: [] };
     have.computers.push(k.computer);

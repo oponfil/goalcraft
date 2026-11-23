@@ -100,7 +100,7 @@ body {
 #tip[hidden] { display: none; }
 /* Over a card: a cost's tokens by kind, one per line, above the card. */
 /* A card's hint: its own lines, and a long one wraps rather than running across the screen. */
-#tip.over { z-index: 40; white-space: pre-wrap; max-width: min(440px, calc(100vw - 16px)); line-height: 1.5; }
+#tip.over { z-index: 40; white-space: pre-wrap; max-width: min(300px, calc(100vw - 16px)); line-height: 1.5; }
 #pop [data-tip] { cursor: help; }
 #pop .btn[data-tip], #pop button[data-tip], #pop .pick[data-tip] { cursor: pointer; }
 #pop {
@@ -199,7 +199,7 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 /* A role Goalcraft starts itself: its instructions, and Launch (with Run now on its line); opened, its
    settings in the board's style: square fields like the answer box, pixel switches like the menu's. */
 #pop .launch { margin-top: 10px; font-size: 13px; }
-#pop .launch-guide { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); text-decoration: none; margin-bottom: 6px; }
+#pop .launch-guide { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; color: var(--muted); text-decoration: none; }
 #pop .launch-guide:hover { color: var(--text); }
 #pop details.launch-box { border-top: 1px solid var(--border); padding-top: 8px; margin-bottom: 4px; }
 #pop details.launch-box summary { display: flex; align-items: baseline; gap: 10px; cursor: pointer; color: var(--muted); list-style: none; }
@@ -210,7 +210,9 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .l-run { margin-left: auto; color: #F2C14E; text-decoration: none; white-space: nowrap; }
 #pop .l-run:hover { text-decoration: underline; }
 #pop .l-run.busy { opacity: 0.5; pointer-events: none; }
-#pop .launch-box .l-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; color: var(--text); cursor: pointer; }
+#pop .launch-box .l-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; color: var(--text); }
+#pop .launch-box label.l-row, #pop .launch-box .l-sched { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+#pop .launch-box p.l-apps { margin-top: 10px; }
 #pop .launch-box .l-row select { margin-left: auto; }
 #pop .launch-box .pop-note { margin: 4px 0 0; }
 #pop .launch-box input.l-times, #pop .launch-box select.ex-add { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; }
@@ -226,15 +228,16 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .ex-row { padding: 6px 8px; border: 2px solid var(--border); background: rgba(0, 0, 0, 0.15); }
 #pop .ex-row .ex-top { display: flex; align-items: center; gap: 8px; }
 #pop .ex-row .ex-top svg { flex: none; }
+#pop .ex-row .ex-top .ex-on { margin-left: auto; }
+#pop .ex-row .ex-grip { cursor: grab; color: var(--muted); letter-spacing: -1px; padding-right: 3px; user-select: none; }
+#pop .ex-row .ex-grip:active { cursor: grabbing; }
+#pop .ex-row.dragging { opacity: 0.5; }
 #pop .ex-row .ex-fields { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
 #pop .ex-row .ex-fields select.ex-model, #pop .ex-row .ex-fields input.ex-bot { flex: 1 1 140px; min-width: 0; }
 #pop .ex-row .ex-checks { display: flex; gap: 14px; margin-top: 6px; }
 #pop .ex-row label { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; white-space: nowrap; cursor: pointer; }
 #pop .ex-row label input { margin: 0; accent-color: #F2C14E; }
 #pop .ex-row .ex-note { color: var(--muted); font-size: 12px; width: 100%; }
-#pop .ex-row .ex-move { margin-left: auto; display: inline-flex; gap: 3px; }
-#pop .ex-row .ex-move button { background: none; border: 2px solid var(--border); color: var(--muted); cursor: pointer; padding: 0 5px; line-height: 16px; font: 12px var(--font); }
-#pop .ex-row .ex-move button:hover { color: var(--text); border-color: var(--muted); }
 #pop .launch .ask-buttons { margin-top: 10px; }
 #pop .run-row .by { display: inline-flex; align-items: center; gap: 4px; }
 #pop .app-mark { display: inline-flex; align-items: center; }

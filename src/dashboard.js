@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=c4f5ce67';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c4f5ce67';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c4f5ce67';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7bb6f3c6';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=7bb6f3c6';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7bb6f3c6';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -861,12 +861,14 @@ export function mountDashboard(funnels, opts = {}) {
       ${launchHtml(a)}${write}${history}`;
   }
 
-  // A role Goalcraft starts itself (the orchestrator): in its card, its instructions (the note icon) and
-  // Launch with Run now on its line; opened, its schedule, whether runs go evenly by the plans' quotas
-  // (else by priority), its main computer when there are several, and who may work it, in order, each
-  // with its model and effort, a new chat or not, and full access; Save.
+  // A role Goalcraft starts itself (the orchestrator): in its card, Launch with Run now on its line;
+  // opened, its schedule with its instructions beside it, whether runs go evenly by the plans' quotas
+  // (else by priority), its main computer when there are several, and who may work it: every app the
+  // main computer has, in order (dragged by its handle), each on or off, with its model and effort, a
+  // new chat or not, and full access; Save.
   const APP_NAMES = { claude: 'Claude', codex: 'Codex', antigravity: 'Antigravity', grok: 'Grok Bot' };
   const APP_LOGOS = { claude: CLAUDE_LOGO, codex: OPENAI_LOGO, antigravity: ANTIGRAVITY_LOGO, grok: GROK_LOGO };
+  const APPS = ['claude', 'codex', 'antigravity', 'grok'];
   const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
   const NOTE_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M6 2h9l5 5v15H6V2zm8 1.5V8h4.5L14 3.5zM8 11h10v1.5H8V11zm0 3.5h10V16H8v-1.5zm0 3.5h7v1.5H8V18z"/></svg>';
   // The schedule as the person writes it: times of day with the same minutes ("9:00, 18:00") or a cron.
@@ -886,66 +888,95 @@ export function mountDashboard(funnels, opts = {}) {
   const appMark = (app, model, effort) => `<span class="app-mark" data-tip="${esc([APP_NAMES[app] ?? app, model, effort].filter(Boolean).join(' · '))}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</span>`;
   const exRow = (e, apps) => {
     const grok = e.app === 'grok', models = [...new Set([...(apps[e.app]?.models ?? []), ...(e.model ? [e.model] : [])])];
-    const model = grok ? `<span class="ex-note">${esc(t('launch.inBot'))}</span><input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128">`
+    const model = grok ? `<input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128" data-tip="${esc(t('launch.inBot'))}">`
       : `<select class="ex-model"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option${m === e.model ? ' selected' : ''}>${esc(m)}</option>`).join('')}</select>`
         + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value=""></option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
     return `<div class="ex-row" data-app="${esc(e.app)}">
-      <div class="ex-top"><input type="checkbox" class="switch ex-on"${e.enabled === false ? '' : ' checked'}>${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b>
-      <span class="ex-move"><button class="ex-up" data-tip="${esc(t('launch.up'))}">↑</button><button class="ex-down" data-tip="${esc(t('launch.down'))}">↓</button><button class="ex-del" data-tip="${esc(t('launch.remove'))}">×</button></span></div>
+      <div class="ex-top"><span class="ex-grip" draggable="true" data-tip="${esc(t('launch.drag'))}">⋮⋮</span>${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b><input type="checkbox" class="switch ex-on"${e.enabled === false ? '' : ' checked'}></div>
       <div class="ex-fields">${model}</div>
       ${grok ? '' : `<div class="ex-checks"><label data-tip="${esc(t('launch.newChatTip'))}"><input type="checkbox" class="ex-new"${e.new_chat === false ? '' : ' checked'}>${esc(t('launch.newChat'))}</label>
       <label data-tip="${esc(t('launch.fullTip'))}"><input type="checkbox" class="ex-full"${e.full_access === false ? '' : ' checked'}>${esc(t('launch.full'))}</label></div>`}</div>`;
+  };
+  // The executors shown for a computer: the role's own, in their order, that this computer has, then the
+  // other apps it has, off. The role's executors of apps it doesn't have are kept as they are.
+  const shownExecutors = (l, pc) => {
+    const has = pc ? new Set(pc.apps) : new Set(APPS);
+    return [...l.executors.filter(e => has.has(e.app)), ...APPS.filter(x => has.has(x) && !l.executors.some(e => e.app === x))
+      .map(app => ({ app, enabled: false, effort: app === 'antigravity' || app === 'grok' ? null : 'medium' }))];
+  };
+  // The role's executors with the ones shown as the person set them: those shown take, in the order shown,
+  // the places the shown apps had; the others keep theirs.
+  const merged = (all, shown) => {
+    const apps = new Set(shown.map(x => x.app)), next = [...shown];
+    const out = all.map(x => (apps.has(x.app) ? next.shift() : x));
+    return [...out, ...next];
   };
   function launchHtml(a) {
     const l = a.launch;
     if (!l || !opts.onLaunch) return '';
     const apps = opts.launchApps?.() ?? {}, pcs = opts.launchComputers?.() ?? [];
-    const addable = ['claude', 'codex', 'antigravity', 'grok'].filter(x => x === 'grok' || apps[x]);
-    const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
     // The main computer: the one chosen, else the first one set up.
-    const main = pcs.some(c => c.name === l.computer) ? l.computer : pcs[0]?.name;
+    const main = pcs.find(c => c.name === l.computer) ?? pcs[0];
     const computer = pcs.length > 1
-      ? `<label class="l-row" data-tip="${esc(t('launch.computerTip'))}">${esc(t('launch.computer'))}<select class="l-computer">${pcs.map(c => `<option value="${esc(c.name)}"${c.name === main ? ' selected' : ''}>${esc(c.name)}${c.on ? '' : ` (${esc(t('launch.off'))})`}</option>`).join('')}</select></label>`
-      : pcs.length ? `<p class="pop-note l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
-    return `<div class="launch">${guide}<details class="launch-box"><summary><span class="l-title">${esc(t('launch.title'))}${l.schedule && l.schedule_on ? ` · ${esc(timesOf(l.schedule))}` : ''}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
-      <label class="l-row"><input type="checkbox" class="switch l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>
+      ? `<label class="l-row" data-tip="${esc(t('launch.computerTip'))}">${esc(t('launch.computer'))}<select class="l-computer">${pcs.map(c => `<option value="${esc(c.name)}"${c === main ? ' selected' : ''}>${esc(c.name)}${c.on ? '' : ` (${esc(t('launch.off'))})`}</option>`).join('')}</select></label>`
+      : pcs.length ? `<p class="l-row l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
+    const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
+    return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(t('launch.title'))}${l.schedule && l.schedule_on ? ` · ${esc(timesOf(l.schedule))}` : ''}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
+      <div class="l-row"><label class="l-sched" data-tip="${esc(t('launch.scheduleTip'))}"><input type="checkbox" class="switch l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>${guide}</div>
       <input class="l-times" value="${esc(timesOf(l.schedule))}" placeholder="${esc(t('launch.times'))}">
       <p class="pop-note l-free"${l.schedule && l.schedule_on ? ' hidden' : ''}>${esc(t('launch.noSchedule'))}</p>
       <label class="l-row" data-tip="${esc(t('launch.quotaTip', Number(l.quota_limit ?? 95)))}"><input type="checkbox" class="switch l-even"${l.mode === 'even' ? ' checked' : ''}>${esc(t('launch.even'))}</label>
       ${computer}
-      <div class="ex-list">${l.executors.map(e => exRow(e, apps)).join('')}</div>
-      <select class="ex-add"><option value="">${esc(t('launch.add'))}</option>${addable.map(x => `<option value="${x}">${esc(APP_NAMES[x])}</option>`).join('')}</select>
+      <p class="pop-note l-apps">${esc(t('launch.appsNote'))}</p>
+      <div class="ex-list">${shownExecutors(l, main).map(e => exRow(e, apps)).join('')}</div>
       <div class="ask-buttons"><button class="btn primary l-save">${esc(t('launch.save'))}</button></div>
     </details><div class="pop-msg l-msg"></div></div>`;
   }
   function bindLaunch(a) {
     const box = pop.querySelector('.launch');
     if (!box) return;
-    const msg = box.querySelector('.l-msg'), list = box.querySelector('.ex-list'), apps = opts.launchApps?.() ?? {};
+    const l = a.launch, msg = box.querySelector('.l-msg'), list = box.querySelector('.ex-list');
+    const apps = opts.launchApps?.() ?? {}, pcs = opts.launchComputers?.() ?? [];
     const say = (text, ok) => { msg.textContent = text; msg.className = 'pop-msg l-msg' + (ok ? ' ok' : ''); };
+    const read = r => ({
+      app: r.dataset.app, enabled: r.querySelector('.ex-on').checked, model: r.querySelector('.ex-model')?.value || null,
+      effort: r.querySelector('.ex-effort')?.value || null, new_chat: r.querySelector('.ex-new')?.checked ?? false,
+      full_access: r.querySelector('.ex-full')?.checked ?? true, bot_id: r.querySelector('.ex-bot')?.value.trim() || null,
+    });
     box.querySelector('.l-on').addEventListener('change', e => { box.querySelector('.l-free').hidden = e.target.checked; });
-    list.addEventListener('click', e => {
-      const row = e.target.closest('.ex-row');
-      if (!row) return;
-      if (e.target.closest('.ex-up') && row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling);
-      else if (e.target.closest('.ex-down') && row.nextElementSibling) row.parentNode.insertBefore(row.nextElementSibling, row);
-      else if (e.target.closest('.ex-del')) row.remove();
+    // Another main computer: its apps, keeping what was set for the ones shown.
+    box.querySelector('.l-computer')?.addEventListener('change', e => {
+      l.executors = merged(l.executors, [...list.querySelectorAll('.ex-row')].map(read));
+      list.innerHTML = shownExecutors(l, pcs.find(c => c.name === e.target.value)).map(x => exRow(x, apps)).join('');
     });
-    box.querySelector('.ex-add').addEventListener('change', e => {
-      if (!e.target.value) return;
-      list.insertAdjacentHTML('beforeend', exRow({ app: e.target.value, effort: e.target.value === 'antigravity' || e.target.value === 'grok' ? null : 'medium' }, apps));
-      e.target.value = '';
+    // Order by dragging a row by its handle.
+    let dragged = null;
+    list.addEventListener('dragstart', e => {
+      dragged = e.target.closest('.ex-row');
+      if (!dragged) return;
+      dragged.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragged.dataset.app); e.dataTransfer.setDragImage(dragged, 12, 12); } catch {}
     });
+    list.addEventListener('dragover', e => {
+      if (!dragged) return;
+      e.preventDefault();
+      const over = e.target.closest('.ex-row');
+      if (!over || over === dragged) return;
+      const r = over.getBoundingClientRect();
+      list.insertBefore(dragged, e.clientY > r.top + r.height / 2 ? over.nextSibling : over);
+    });
+    list.addEventListener('drop', e => e.preventDefault());
+    list.addEventListener('dragend', () => { dragged?.classList.remove('dragging'); dragged = null; });
     box.querySelector('.l-save').addEventListener('click', async e => {
       const on = box.querySelector('.l-on').checked, text = box.querySelector('.l-times').value;
       const schedule = text.trim() ? cronOf(text) : null;
       if (text.trim() && !schedule) return say(t('launch.badTimes'));
-      const executors = [...list.querySelectorAll('.ex-row')].map(r => ({
-        app: r.dataset.app, enabled: r.querySelector('.ex-on').checked, model: r.querySelector('.ex-model')?.value || null,
-        effort: r.querySelector('.ex-effort')?.value || null, new_chat: r.querySelector('.ex-new')?.checked ?? false,
-        full_access: r.querySelector('.ex-full')?.checked ?? true, bot_id: r.querySelector('.ex-bot')?.value.trim() || null,
-      }));
-      if (!executors.length) return say(t('launch.noExecutors'));
+      // Those of apps the main computer doesn't have stay as they are, in their places.
+      const executors = merged(l.executors, [...list.querySelectorAll('.ex-row')].map(read));
+      if (!executors.some(x => x.enabled)) return say(t('launch.noExecutors'));
+      const grokOff = executors.find(x => x.app === 'grok' && x.enabled && !x.bot_id);
+      if (grokOff) return say(t('launch.botNeeded'));
       const patch = { schedule, schedule_on: on && !!schedule, mode: box.querySelector('.l-even').checked ? 'even' : 'priority' };
       const pc = box.querySelector('.l-computer');
       if (pc) patch.computer = pc.value;
