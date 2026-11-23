@@ -8,7 +8,7 @@ import { pipeline } from 'npm:@supabase/middleware@1.0.0'
 import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1.9.0'
 import { z } from 'npm:zod@4.6.5'
 import { emailQuestion } from './notify.ts'
-import { beginLaunch, cronNext, endLaunches, roleOf } from './launch.ts'
+import { beginLaunch, cronNext, endLaunches, LAUNCH_PROVIDER, launchedApp, roleOf } from './launch.ts'
 
 type Db = any // the Supabase client scoped to the caller
 // Who is calling, and an admin client to read their current settings (for question emails). chat:
@@ -422,12 +422,15 @@ function server(db: Db, caller: Caller) {
     if (Object.keys(found).length) check(await openRun(db, f.id, a.agent).update(found))
     // The run's own conversation, so its row in the card opens the chat it was worked in.
     if (chat_url) check(await openRun(db, f.id, a.agent).update({ chat_url }))
+    // A role's shirt is the app Goalcraft started it on, whatever its agent calls itself.
+    const launched = role ? await launchedApp(caller.admin, f.id, a.agent) : null
+    const provider = (launched && LAUNCH_PROVIDER[launched]) || a.provider
     if (state === 'sleep' || state === 'pause') {
       check(await endRun(db, f.id, a.agent))
       if (role) await endLaunches(caller.admin, f.id, a.agent)
     }
     check(await db.from('presence').upsert({
-      funnel_id: f.id, agent: a.agent, zone, state, ...found, ...(a.name && { display_name: a.name }), ...(a.provider && { provider: a.provider }),
+      funnel_id: f.id, agent: a.agent, zone, state, ...found, ...(a.name && { display_name: a.name }), ...(provider && { provider }),
       next_run_at: state === 'sleep' ? next_run_at : null,
       pause_reason: state === 'pause' ? reason : null,
       question_id, ...(chat_url !== undefined && { chat_url }),

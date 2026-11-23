@@ -136,6 +136,8 @@ export async function dispatch(admin: any, user: string, key: Row) {
       l.started_at = run?.started_at ?? p.updated_at
       await admin.from('role_launches').update({ started_at: l.started_at, ...(run && { run_id: run.id }) }).eq('id', l.id).is('started_at', null)
       if (run) await admin.from('agent_runs').update({ app: l.app, model: l.model, launch_id: l.id }).eq('id', run.id)
+      // Its shirt is the one who took the start, whatever its agent says it is.
+      if (PROVIDER[l.app] && p.provider !== PROVIDER[l.app]) await admin.from('presence').update({ provider: PROVIDER[l.app] }).eq('funnel_id', role.funnel_id).eq('agent', role.agent)
     }
     // The starts that are over: taken but the agent never began within 10 minutes (the next executor
     // gets it), or begun and silent for 10 minutes (it ended without saying).
