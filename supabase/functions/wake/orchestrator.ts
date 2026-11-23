@@ -101,7 +101,7 @@ export async function dispatch(admin: any, user: string, key: Row) {
     admin.from('role_launch').select('*').eq('user_id', user),
     admin.from('role_executors').select('*').eq('user_id', user).order('position'),
     admin.from('role_launches').select('*').eq('user_id', user).is('ended_at', null),
-    admin.from('wake_keys').select('id, computer, last_used_at, inventory').eq('user_id', user),
+    admin.from('wake_keys').select('id, computer, last_used_at, inventory, created_at').eq('user_id', user),
     admin.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, session_percent, session_resets_at').eq('user_id', user).gte('at', iso(now - 2 * 86400e3)),
     admin.from('presence').select('funnel_id, agent, zone, state, next_run_at, updated_at, display_name, provider').eq('user_id', user),
     admin.from('funnels').select('id, key, title, guide_url').eq('user_id', user),
@@ -205,7 +205,12 @@ export async function dispatch(admin: any, user: string, key: Row) {
           await admin.from('role_launches').update({ executor_id: ex.id, app: ex.app, model: ex.model, effort: ex.effort, note: null }).eq('id', waiting.id)
           Object.assign(waiting, { executor_id: ex.id, app: ex.app, model: ex.model, effort: ex.effort })
         }
-        if (canRun(key, ex, now)) {
+        // The role's main computer takes it whenever it is on and can run it; else the next one that can,
+        // in the order the scripts were set up (the first one set up is the main one when none is chosen).
+        const main = (k: Row) => (role.computer ? k.computer === role.computer : false)
+        const able = (keys.data ?? []).filter((k: Row) => canRun(k, ex, now))
+          .sort((a: Row, b: Row) => Number(main(b)) - Number(main(a)) || Date.parse(a.created_at) - Date.parse(b.created_at))
+        if (able[0]?.id === key.id) {
           const f = fun.get(role.funnel_id)
           offer.push({
             launch: waiting.id, funnel_id: f?.key, agent: role.agent, app: ex.app, model: ex.model, effort: ex.effort,

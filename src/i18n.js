@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=b99d14b3';
-import vi from './lang/vi.js?v=b99d14b3';
-import ja from './lang/ja.js?v=b99d14b3';
-import pt from './lang/pt.js?v=b99d14b3';
-import tr from './lang/tr.js?v=b99d14b3';
-import ko from './lang/ko.js?v=b99d14b3';
+import es from './lang/es.js?v=c4f5ce67';
+import vi from './lang/vi.js?v=c4f5ce67';
+import ja from './lang/ja.js?v=c4f5ce67';
+import pt from './lang/pt.js?v=c4f5ce67';
+import tr from './lang/tr.js?v=c4f5ce67';
+import ko from './lang/ko.js?v=c4f5ce67';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -435,9 +435,10 @@ const STRINGS = {
   'launch.schedule': L('On schedule', 'По расписанию'),
   'launch.times': L('Times, e.g. 9:00, 18:00 (or a cron)', 'Время, например 9:00, 18:00 (или cron)'),
   'launch.noSchedule': L('No schedule: the agent says when it runs next; if it names no time, the role is on pause.', 'Без расписания агент сам говорит, когда проснуться; не назвал время — роль на паузе.'),
-  'launch.mode': L('Who runs it', 'Кто запускается'),
-  'launch.even': L('Evenly, by quotas', 'Равномерно, по квотам'),
-  'launch.priority': L('By priority', 'По приоритету'),
+  'launch.even': L('Evenly by the plans\' quotas', 'Равномерно по квотам'),
+  'launch.computer': L('Computer', 'Компьютер'),
+  'launch.computerTip': L('The main computer: the role starts there whenever it is on; only when it is off does another computer take the run.', 'Основной компьютер: роль запускается на нём, когда он в сети; только если он не в сети, запуск берёт другой компьютер.'),
+  'launch.off': L('off', 'не в сети'),
   'launch.quotaTip': L((n) => `An executor whose plan has used ${n}% of its quota takes no new runs. You can change it through an agent.`, (n) => `Исполнитель, у которого израсходовано ${n}% квоты, новых запусков не берёт. Изменить можно через агента.`),
   'launch.add': L('Add an executor…', 'Добавить исполнителя…'),
   'launch.newChat': L('New chat', 'Новая беседа'),

@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=b99d14b3';
+import { supabase } from './auth.js?v=c4f5ce67';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -67,7 +67,8 @@ function toScene(f, reports, now, usage = []) {
 // Antigravity is kept on the computer it runs on (it opens nowhere else), and the wake script there
 // is the one that sends its runs: its last run says which computer that is.
 let computers = new Map();
-let inventory = {};
+let inventory = {}, launchComputers = [];
+export const computersForLaunch = () => launchComputers;
 // What the person's computers can run (their wake scripts say): { app: { models, computers } }.
 export const launchApps = () => inventory;
 const LOCAL_CHATS = new Set(['claude', 'codex', 'antigravity']);
@@ -219,7 +220,7 @@ export async function loadFunnels() {
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
         agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),
         person_tasks (id, position, title, detail, url, due_at, done_at),
-        role_launch (agent, schedule, schedule_on, time_zone, mode, quota_limit, guide_url,
+        role_launch (agent, schedule, schedule_on, time_zone, mode, quota_limit, guide_url, computer,
           role_executors (id, position, enabled, app, computer, model, effort, new_chat, full_access, bot_id))`)
       // In the person's order (see saveFunnelOrder); new ones, not placed yet, after them by age.
       .order('position', { nullsFirst: false }).order('created_at'),
@@ -232,12 +233,14 @@ export async function loadFunnels() {
       .select('funnel_id, agent, app, model, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at, wake_key_id')
       .gte('ended_at', new Date(now - 7 * DAY).toISOString()).order('ended_at').order('agent').order('run_key')),
     // The computers the runs came from (see computers).
-    supabase.from('wake_keys').select('id, computer, os, inventory, last_used_at'),
+    supabase.from('wake_keys').select('id, computer, os, inventory, last_used_at, created_at').order('created_at'),
   ]);
   if (funnels.error) throw funnels.error;
   computers = new Map((keys.data ?? []).map(k => [k.id, { name: k.computer, os: k.os }]));
   // What the person's computers can run for Goalcraft's launches: each app's models, from every computer.
   inventory = {};
+  // The computers that run the wake script, in the order they were set up (the first is a role's main one by default).
+  launchComputers = (keys.data ?? []).filter(k => k.computer).map(k => ({ name: k.computer, on: k.last_used_at && now - Date.parse(k.last_used_at) < 3 * 60e3 }));
   for (const k of keys.data ?? []) for (const [app, v] of Object.entries(k.inventory ?? {})) {
     const have = inventory[app] ??= { models: [], computers: [] };
     have.computers.push(k.computer);
@@ -309,7 +312,7 @@ export async function spending(from) {
 export async function runs(a) {
   const week = new Date(Date.now() - 7 * DAY).toISOString();
   const { data, error } = await all(() => supabase.from('agent_runs')
-    .select('zone, started_at, ended_at, added, status, summary, app, model, launch:role_launches!agent_runs_launch_id_fkey (reason, outcome)')
+    .select('zone, started_at, ended_at, added, status, summary, app, model, launch:role_launches!agent_runs_launch_id_fkey (reason, outcome, effort, computer)')
     .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('started_at', week)
     .order('started_at', { ascending: false }));
   if (error) throw error;

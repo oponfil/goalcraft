@@ -1,6 +1,6 @@
 // Agent miners, drawn from simple shapes on the scene's fine grid (half-unit pixels).
 // A miner fits a 20×28 box (units), faces right, and is mirrored or rotated for other poses.
-import { LOGO_SVG } from './logos.js?v=b99d14b3';
+import { LOGO_SVG } from './logos.js?v=c4f5ce67';
 
 // 13x13 brand marks printed on the shirt in half-unit pixels, simplified so they stay
 // recognisable at this size.

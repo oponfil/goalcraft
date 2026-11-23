@@ -115,7 +115,7 @@ async function funnels(db: Db, key?: string) {
       questions (id, agent, question, answer, asked_at, answered_at, chat_url, replied_at),
       agent_messages (id, agent, text, sent_at, read_at),
       person_tasks (id, position, title, detail, url, due_at, done_at),
-      role_launch (agent, schedule, schedule_on, time_zone, mode, quota_limit, guide_url,
+      role_launch (agent, schedule, schedule_on, time_zone, mode, quota_limit, guide_url, computer,
         role_executors (position, enabled, app, computer, model, effort, new_chat, full_access, bot_id))`)
     .order('created_at')
   if (key) q = q.eq('key', key)
@@ -446,6 +446,7 @@ function server(db: Db, caller: Caller) {
       schedule: z.string().regex(/^\S+( \S+){4}$/).nullable().optional().describe('Five-field cron in time_zone, e.g. "0 9,18 * * *" (9:00 and 18:00 daily), "30 */4 * * *"; null: no schedule (the agent names its next run)'),
       schedule_on: z.boolean().optional().describe('false turns the schedule off: the role goes on pause'),
       time_zone: z.string().min(1).max(64).optional().describe('IANA time zone of the schedule, e.g. "Asia/Ho_Chi_Minh" (the default)'),
+      computer: z.string().min(1).max(64).nullable().optional().describe('The role\'s main computer (as wake_script.computers names it): it starts there whenever that computer is on, else on another; null: the first one set up'),
       mode: z.enum(['even', 'priority']).optional(),
       quota_limit: z.number().min(1).max(100).optional().describe('An executor whose plan has used this much of its quota (%) takes no new runs (95 by default)'),
       guide_url: z.string().url().regex(/^https?:\/\//).nullable().optional().describe('The role\'s own instructions: one note or document for this role only (the funnel\'s guide holds what all its roles share), with a "last run" block the agent updates at the end of each run'),
@@ -466,7 +467,7 @@ function server(db: Db, caller: Caller) {
     if (a.schedule && !cronNext(a.schedule, a.time_zone ?? 'Asia/Ho_Chi_Minh')) fail(`"${a.schedule}" is not a cron Goalcraft can read: five fields, minute hour day month weekday`)
     for (const e of a.executors ?? []) if (e.app === 'grok' && !e.bot_id) fail('A Grok Bot executor needs its bot_id')
     const patch: Record<string, unknown> = { funnel_id: f.id, agent: a.agent }
-    for (const k of ['schedule', 'schedule_on', 'time_zone', 'mode', 'quota_limit', 'guide_url'] as const) if (a[k] !== undefined) patch[k] = a[k]
+    for (const k of ['schedule', 'schedule_on', 'time_zone', 'mode', 'quota_limit', 'guide_url', 'computer'] as const) if (a[k] !== undefined) patch[k] = a[k]
     check(await db.from('role_launch').upsert(patch, { onConflict: 'funnel_id,agent' }))
     if (a.executors) {
       check(await db.from('role_executors').delete().eq('funnel_id', f.id).eq('agent', a.agent))

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=b99d14b3';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=b99d14b3';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=b99d14b3';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=c4f5ce67';
+import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=c4f5ce67';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c4f5ce67';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -861,10 +861,12 @@ export function mountDashboard(funnels, opts = {}) {
       ${launchHtml(a)}${write}${history}`;
   }
 
-  // A role Goalcraft starts itself (the orchestrator): in its card, its instructions (the note icon), and
-  // under Launch its schedule, how the executor of each run is chosen, and who may work it, in order,
-  // each with its model and effort, a new chat or not, and full access; Save, and Run now.
+  // A role Goalcraft starts itself (the orchestrator): in its card, its instructions (the note icon) and
+  // Launch with Run now on its line; opened, its schedule, whether runs go evenly by the plans' quotas
+  // (else by priority), its main computer when there are several, and who may work it, in order, each
+  // with its model and effort, a new chat or not, and full access; Save.
   const APP_NAMES = { claude: 'Claude', codex: 'Codex', antigravity: 'Antigravity', grok: 'Grok Bot' };
+  const APP_LOGOS = { claude: CLAUDE_LOGO, codex: OPENAI_LOGO, antigravity: ANTIGRAVITY_LOGO, grok: GROK_LOGO };
   const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
   const NOTE_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M6 2h9l5 5v15H6V2zm8 1.5V8h4.5L14 3.5zM8 11h10v1.5H8V11zm0 3.5h10V16H8v-1.5zm0 3.5h7v1.5H8V18z"/></svg>';
   // The schedule as the person writes it: times of day with the same minutes ("9:00, 18:00") or a cron.
@@ -880,33 +882,41 @@ export function mountDashboard(funnels, opts = {}) {
     const m = /^(\d{1,2}) ([\d,]+) \* \* \*$/.exec(cron || '');
     return m ? m[2].split(',').map(h => `${h}:${m[1].padStart(2, '0')}`).join(', ') : (cron || '');
   };
+  // An executor's mark: its app's logo, with the app, model and effort on hover.
+  const appMark = (app, model, effort) => `<span class="app-mark" data-tip="${esc([APP_NAMES[app] ?? app, model, effort].filter(Boolean).join(' · '))}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</span>`;
   const exRow = (e, apps) => {
     const grok = e.app === 'grok', models = [...new Set([...(apps[e.app]?.models ?? []), ...(e.model ? [e.model] : [])])];
     const model = grok ? `<span class="ex-note">${esc(t('launch.inBot'))}</span><input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128">`
       : `<select class="ex-model"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option${m === e.model ? ' selected' : ''}>${esc(m)}</option>`).join('')}</select>`
         + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value=""></option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
     return `<div class="ex-row" data-app="${esc(e.app)}">
-      <input type="checkbox" class="ex-on"${e.enabled === false ? '' : ' checked'}><b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b>${model}
-      ${grok ? '' : `<label data-tip="${esc(t('launch.newChatTip'))}"><input type="checkbox" class="ex-new"${e.new_chat === false ? '' : ' checked'}>${esc(t('launch.newChat'))}</label>
-      <label data-tip="${esc(t('launch.fullTip'))}"><input type="checkbox" class="ex-full"${e.full_access === false ? '' : ' checked'}>${esc(t('launch.full'))}</label>`}
-      <span class="ex-move"><button class="ex-up" data-tip="${esc(t('launch.up'))}">↑</button><button class="ex-down" data-tip="${esc(t('launch.down'))}">↓</button><button class="ex-del" data-tip="${esc(t('launch.remove'))}">×</button></span></div>`;
+      <div class="ex-top"><input type="checkbox" class="switch ex-on"${e.enabled === false ? '' : ' checked'}>${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b>
+      <span class="ex-move"><button class="ex-up" data-tip="${esc(t('launch.up'))}">↑</button><button class="ex-down" data-tip="${esc(t('launch.down'))}">↓</button><button class="ex-del" data-tip="${esc(t('launch.remove'))}">×</button></span></div>
+      <div class="ex-fields">${model}</div>
+      ${grok ? '' : `<div class="ex-checks"><label data-tip="${esc(t('launch.newChatTip'))}"><input type="checkbox" class="ex-new"${e.new_chat === false ? '' : ' checked'}>${esc(t('launch.newChat'))}</label>
+      <label data-tip="${esc(t('launch.fullTip'))}"><input type="checkbox" class="ex-full"${e.full_access === false ? '' : ' checked'}>${esc(t('launch.full'))}</label></div>`}</div>`;
   };
   function launchHtml(a) {
     const l = a.launch;
     if (!l || !opts.onLaunch) return '';
-    const apps = opts.launchApps?.() ?? {};
+    const apps = opts.launchApps?.() ?? {}, pcs = opts.launchComputers?.() ?? [];
     const addable = ['claude', 'codex', 'antigravity', 'grok'].filter(x => x === 'grok' || apps[x]);
-    const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener" data-tip="${esc(t('launch.guide'))}">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
-    return `<div class="launch">${guide}<details class="launch-box"><summary>${esc(t('launch.title'))}${l.schedule && l.schedule_on ? ` · ${esc(timesOf(l.schedule))}` : ''}</summary>
-      <label class="launch-sched"><input type="checkbox" class="l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>
+    const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
+    // The main computer: the one chosen, else the first one set up.
+    const main = pcs.some(c => c.name === l.computer) ? l.computer : pcs[0]?.name;
+    const computer = pcs.length > 1
+      ? `<label class="l-row" data-tip="${esc(t('launch.computerTip'))}">${esc(t('launch.computer'))}<select class="l-computer">${pcs.map(c => `<option value="${esc(c.name)}"${c.name === main ? ' selected' : ''}>${esc(c.name)}${c.on ? '' : ` (${esc(t('launch.off'))})`}</option>`).join('')}</select></label>`
+      : pcs.length ? `<p class="pop-note l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
+    return `<div class="launch">${guide}<details class="launch-box"><summary><span class="l-title">${esc(t('launch.title'))}${l.schedule && l.schedule_on ? ` · ${esc(timesOf(l.schedule))}` : ''}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
+      <label class="l-row"><input type="checkbox" class="switch l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>
       <input class="l-times" value="${esc(timesOf(l.schedule))}" placeholder="${esc(t('launch.times'))}">
       <p class="pop-note l-free"${l.schedule && l.schedule_on ? ' hidden' : ''}>${esc(t('launch.noSchedule'))}</p>
-      <label class="launch-mode" data-tip="${esc(t('launch.quotaTip', Number(l.quota_limit ?? 95)))}">${esc(t('launch.mode'))}
-        <select class="l-mode"><option value="even"${l.mode === 'even' ? ' selected' : ''}>${esc(t('launch.even'))}</option><option value="priority"${l.mode === 'priority' ? ' selected' : ''}>${esc(t('launch.priority'))}</option></select></label>
+      <label class="l-row" data-tip="${esc(t('launch.quotaTip', Number(l.quota_limit ?? 95)))}"><input type="checkbox" class="switch l-even"${l.mode === 'even' ? ' checked' : ''}>${esc(t('launch.even'))}</label>
+      ${computer}
       <div class="ex-list">${l.executors.map(e => exRow(e, apps)).join('')}</div>
       <select class="ex-add"><option value="">${esc(t('launch.add'))}</option>${addable.map(x => `<option value="${x}">${esc(APP_NAMES[x])}</option>`).join('')}</select>
       <div class="ask-buttons"><button class="btn primary l-save">${esc(t('launch.save'))}</button></div>
-    </details><div class="ask-buttons"><button class="btn l-run">${esc(t('launch.runNow'))}</button></div><div class="pop-msg l-msg"></div></div>`;
+    </details><div class="pop-msg l-msg"></div></div>`;
   }
   function bindLaunch(a) {
     const box = pop.querySelector('.launch');
@@ -936,15 +946,22 @@ export function mountDashboard(funnels, opts = {}) {
         full_access: r.querySelector('.ex-full')?.checked ?? true, bot_id: r.querySelector('.ex-bot')?.value.trim() || null,
       }));
       if (!executors.length) return say(t('launch.noExecutors'));
+      const patch = { schedule, schedule_on: on && !!schedule, mode: box.querySelector('.l-even').checked ? 'even' : 'priority' };
+      const pc = box.querySelector('.l-computer');
+      if (pc) patch.computer = pc.value;
       e.target.disabled = true;
-      const error = await opts.onLaunch(a, { schedule, schedule_on: on && !!schedule, mode: box.querySelector('.l-mode').value }, executors);
+      const error = await opts.onLaunch(a, patch, executors);
       e.target.disabled = false;
       say(error || t('launch.saved'), !error);
     });
+    // Run now sits on Launch's own line: it starts the role, and doesn't open or close the settings.
     box.querySelector('.l-run').addEventListener('click', async e => {
-      e.target.disabled = true;
+      e.preventDefault(); e.stopPropagation();
+      const link = e.currentTarget;
+      if (link.classList.contains('busy')) return;
+      link.classList.add('busy');
       const error = await opts.onRunNow(a);
-      e.target.disabled = false;
+      link.classList.remove('busy');
       say(error ? (/duplicate|unique/i.test(error) ? t('launch.waiting') : error) : t('launch.queued'), !error);
     });
   }
@@ -1001,7 +1018,7 @@ export function mountDashboard(funnels, opts = {}) {
             ru.cost != null ? fmtCost(ru.cost) : counted(ru) ? t('board.tokens', fmtTokens(ru.tokens)) : t('board.usageShare', share))}</span>` : '';
           // A run Goalcraft started: on which app and model, and how it ended when not as it should.
           const end = r.launch?.outcome, bad = end === 'silent' ? t('launch.silent') : end === 'not_started' ? t('launch.notStarted') : end === 'failed' ? t('launch.failed') : '';
-          const by = r.app ? `<span class="by" data-tip="${esc([APP_NAMES[r.app] ?? r.app, r.model].filter(Boolean).join(' · '))}">${esc(APP_NAMES[r.app] ?? r.app)}${bad ? ` · <span class="warn">${esc(bad)}</span>` : ''}</span>` : '';
+          const by = r.app ? `<span class="by">${appMark(r.app, r.model, r.launch?.effort)}${bad ? `<span class="warn">${esc(bad)}</span>` : ''}</span>` : '';
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
             ${what}${by}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
