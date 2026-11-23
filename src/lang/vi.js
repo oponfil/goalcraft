@@ -169,7 +169,6 @@ export default {
   'board.flowDay': (v) => `${v} trong 24 giờ`,
   'board.flowTip': (v, u) => `${v} ${u} (theo 24 giờ qua)`,
   'board.flowSet': (v, u) => `${v} ${u} (đặt thủ công)`,
-  'board.runChatShort': 'trò chuyện',
   'board.usageLimit': (p, d) => (d === 7 ? `${p} hạn mức tuần` : `${p} hạn mức ${d} ngày`),
   'board.runNow': 'đang chạy',
   'board.supervisorName': (funnel) => `Giám sát · ${funnel}`,

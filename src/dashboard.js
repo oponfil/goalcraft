@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=0c0f2786';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=0c0f2786';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=0c0f2786';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=02bc13ba';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=02bc13ba';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=02bc13ba';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -778,7 +778,8 @@ export function mountDashboard(funnels, opts = {}) {
   // Whether a use has a cost or tokens to show. Grok Bot's servers give neither per bot (since November
   // 2026), only its share of the plan's limit: such a use shows that share alone, not "0 tokens".
   const counted = u => u.cost != null || u.tokens > 0;
-  const supStatus = s => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}">${esc(t('board.supStatus.' + s))}</span>`;
+  // What a supervisor found, by its word ("Recommendation"); what it said on hover.
+  const supStatus = (s, said) => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}"${said ? ` data-tip="${esc(said)}"` : ''}>${esc(t('board.supStatus.' + s))}</span>`;
 
   function content(h) {
     // An empty platform: the funnel has no supervisor yet; the Connect page tells how to appoint one.
@@ -805,8 +806,9 @@ export function mountDashboard(funnels, opts = {}) {
     // what its last run found instead ("All good", "Bottleneck: …").
     let where;
     if (a.sup) {
-      const found = a.status ? supStatus(a.status) : '';
-      where = found ? `${found}${a.summary ? `: ${esc(a.summary)}` : ''}` : a.summary ? esc(a.summary) : esc(t('board.supervisorNoRun'));
+      // Its word alone ("Recommendation"); what it said shows on hover.
+      const found = a.status ? supStatus(a.status, a.summary) : '';
+      where = found || (a.summary ? esc(a.summary) : esc(t('board.supervisorNoRun')));
     }
     else {
       // The card's number is kept for its runs list, so its running row says the same.
@@ -854,7 +856,6 @@ export function mountDashboard(funnels, opts = {}) {
     const pl = a.pauseLimit, why = a.state !== 'pause' ? '' : a.pauseReason
       || (pl ? t('board.pausedLimit', LIMIT_NAMES[pl.key] ?? pl.key, pl.resets ? fmtDuration((pl.resets - Date.now()) / 1000) : null) : '');
     const paused = why ? `<p class="pop-note">${esc(why)}</p>` : '';
-    const wake = wakesText(a), wakes = `<p class="pop-note wakes"${wake ? '' : ' hidden'}>${esc(wake)}</p>`;
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
@@ -862,7 +863,7 @@ export function mountDashboard(funnels, opts = {}) {
         <div class="pop-msg"></div></div>`
       : chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '';
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
-      <div class="pop-status">${paused}${wakes}${missed}${lost}</div>
+      <div class="pop-status">${paused}${missed}${lost}</div>
       <div class="pop-sub where">${where}</div>
       ${launchHtml(a)}${write}${history}`;
   }
@@ -1043,16 +1044,23 @@ export function mountDashboard(funnels, opts = {}) {
   // added to the items its zone works into.
   // What a run found or added, as a link to the conversation it was worked in (when its agent sent
   // one), saying on hover which app and conversation that is.
-  const runChat = (a, r, app, found) => {
+  // A run's app, by its icon: a link to the conversation it was worked in (when its agent sent one),
+  // saying on hover the app, model, effort and conversation ("The agent works in the ChatGPT (Codex)
+  // app · gpt-6.2-sol · medium · conversation 01a2…"); without one, the app, model and effort.
+  const APP_OF_URL = [[/^codex:/i, 'codex'], [/^claude:/i, 'claude'], [/^antigravity:/i, 'antigravity'], [/^grokbot:/i, 'grok']];
+  const runApp = (a, r, app, model, effort) => {
     const url = r.chat_url;
-    if (!url || !opts.live) return `<span>${found}</span>`;
+    app = app ?? APP_OF_URL.find(([re]) => re.test(url || ''))?.[1];
+    if (!app) return '';
+    if (!url || !opts.live) return appMark(app, model, effort);
     const inAntigravity = /^antigravity:/i.test(url), inGrokBot = /^grokbot:/i.test(url);
     const base = agentInfo(a.agent, { provider: a.provider, chat: url, app });
     const info = inAntigravity ? { ...base, product: 'Antigravity', app: null } : inGrokBot ? { ...base, product: 'Grok Bot' } : base;
     const link = chatLink(info, url);
-    if (!link) return `<span>${found}</span>`;
-    const tip = whereTip(url, info, inAntigravity);
-    return `<span><a class="run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${found || `<span>${esc(t('board.runChatShort'))}</span>`}</a></span>`;
+    if (!link) return appMark(app, model, effort);
+    const [where, ...rest] = whereTip(url, info, inAntigravity).split(' · ');
+    const tip = [where, modelName(model), effort, ...rest].filter(Boolean).join(' · ');
+    return `<a class="app-mark run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</a>`;
   };
   // The last week's spending, in dollars at API prices (tokens when no price is known), with the tokens
   // by kind on hover. No share of a plan's limit: a role may work on several apps, each with its own.
@@ -1089,17 +1097,18 @@ export function mountDashboard(funnels, opts = {}) {
         list.innerHTML = (rows.length ? rows.map(r => {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
           // A supervisor's run says what it found; a worker's run, what it added.
-          const found = a.sup ? (r.status ? supStatus(r.status) : '')
-            : `<b class="run">+${fmtCount(r.added)}</b> <span>${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}</span>`;
+          // What it found (its summary on hover) or added.
+          const found = a.sup ? (r.status ? supStatus(r.status, r.summary) : '')
+            : `<b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}`;
           const ru = r.usage;
           const tok = ru && counted(ru) ? `<span class="tok" data-tip="${esc(usageTip(ru, null))}">${esc(
             ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)))}</span>` : '<span class="tok"></span>';
           // On which app and model (a run Goalcraft didn't start: the app its tokens were counted on), and
           // how a run Goalcraft started ended when not as it should.
           const app = r.app ?? ru?.app, end = r.launch?.outcome, bad = end === 'silent' ? t('launch.silent') : end === 'not_started' ? t('launch.notStarted') : end === 'failed' ? t('launch.failed') : '';
-          const by = app ? `<span class="by">${appMark(app, r.model ?? ru?.model, r.launch?.effort)}${bad ? `<span class="warn">${esc(bad)}</span>` : ''}</span>` : '<span class="by"></span>';
+          const by = `<span class="by">${runApp(a, r, app, r.model ?? ru?.model, r.launch?.effort)}${bad ? `<span class="warn">${esc(bad)}</span>` : ''}</span>`;
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
-            ${runChat(a, r, app, found)}${by}${tok}</div>`;
+            <span>${found}</span>${by}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
         pop.style.top = Math.max(8, Math.min(window.innerHeight - pop.offsetHeight - 8, pop.offsetTop)) + 'px';
       } catch { list.textContent = t('board.runsFailed'); delete list.dataset.loaded; }
@@ -1159,16 +1168,17 @@ export function mountDashboard(funnels, opts = {}) {
     : a.state === 'walk' ? (a.to === 'work' ? 'board.starting' : 'board.finished')
       : 'board.working';
   function agentTitle(a, named) {
-    const state = agentState(a), who = esc(named);
+    const state = agentState(a), who = esc(named), said = stateTip(a, named);
     return STATE_ICONS[state]
-      ? `${who}<span class="state-icon ${{ 'board.resting': 'sleep', 'board.paused': 'pause' }[state] ?? 'work'}" role="img" data-tip="${esc(t(state, named))}" aria-label="${esc(t(state, named))}">${STATE_ICONS[state]}</span>`
+      ? `${who}<span class="state-icon ${{ 'board.resting': 'sleep', 'board.paused': 'pause' }[state] ?? 'work'}" role="img" data-tip="${esc(said)}" aria-label="${esc(said)}">${STATE_ICONS[state]}</span>`
       : t(state, who);
   }
-  // Asleep on time: when it wakes up.
+  // Asleep on time: when it wakes up, on its moon's hint under its state.
   const wakesText = a => {
     const left = scene.sleepLeft(a);
     return a.state === 'sleep' && !scene.overdue(a) && left > 0 ? t('board.wakesIn', fmtDuration(left)) : '';
   };
+  const stateTip = (a, named) => [t(agentState(a), named), wakesText(a)].filter(Boolean).join('\n');
   // An open agent's card follows it: when it falls asleep or starts work, the title changes too,
   // and the time to its wake-up counts down.
   let popAgent = null;
@@ -1179,8 +1189,13 @@ export function mountDashboard(funnels, opts = {}) {
       el.dataset.state = agentState(popAgent.a);
       el.innerHTML = agentTitle(popAgent.a, popAgent.named);
     }
-    const note = pop.querySelector('.pop-note.wakes'), wake = wakesText(popAgent.a);
-    if (note && note.textContent !== wake) { note.textContent = wake; note.hidden = !wake; }
+    // The time to its wake-up counts down in its moon's hint, also while it shows.
+    const icon = el.querySelector('.state-icon'), said = stateTip(popAgent.a, popAgent.named);
+    if (icon && icon.dataset.tip !== said) {
+      const shown = icon.matches(':hover') && !tip.hidden && tip.textContent === icon.dataset.tip;
+      icon.dataset.tip = said; icon.setAttribute('aria-label', said);
+      if (shown) tip.textContent = said;
+    }
   }, 500);
 
   // The width a card or tooltip has on the screen: the page's, without a scrollbar; the window's

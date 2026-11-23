@@ -168,7 +168,6 @@ export default {
   'board.flowDay': (v) => `24 saatte ${v}`,
   'board.flowTip': (v, u) => `${v} ${u} (son 24 saate göre)`,
   'board.flowSet': (v, u) => `${v} ${u} (elle girildi)`,
-  'board.runChatShort': 'sohbet',
   'board.usageLimit': (p, d) => (d === 7 ? `haftalık limitin ${p}` : `${d} günlük limitin ${p}`),
   'board.runNow': 'sürüyor',
   'board.supervisorName': (funnel) => `Süpervizör · ${funnel}`,

@@ -168,7 +168,6 @@ export default {
   'board.flowDay': (v) => `${v} em 24 horas`,
   'board.flowTip': (v, u) => `${v} ${u} (pelas últimas 24 horas)`,
   'board.flowSet': (v, u) => `${v} ${u} (definido à mão)`,
-  'board.runChatShort': 'chat',
   'board.usageLimit': (p, d) => (d === 7 ? `${p} do limite semanal` : `${p} do limite de ${d} dias`),
   'board.runNow': 'em andamento',
   'board.supervisorName': (funnel) => `Supervisor · ${funnel}`,

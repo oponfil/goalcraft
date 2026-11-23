@@ -196,10 +196,9 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .run-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; gap: 10px; padding: 3px 0; }
 #pop .run-row .by { color: var(--muted); white-space: nowrap; font-size: 12px; }
 #pop .run-row .by .warn { color: #F2A33C; }
-/* A run's result opens the conversation it was worked in. */
-#pop .run-row a.run-chat { color: inherit; text-decoration: none; text-underline-offset: 3px; cursor: pointer; }
-/* Underlined on hover, as Run now, each part in its own colour (Recommendation blue, +7 green). */
-#pop .run-row a.run-chat:hover > * { text-decoration: underline; text-underline-offset: 3px; }
+/* A run's app icon opens the conversation it was worked in: it lights up under the mouse. */
+#pop .run-row a.run-chat { display: inline-flex; cursor: pointer; opacity: 0.85; }
+#pop .run-row a.run-chat:hover { opacity: 1; filter: brightness(1.25); }
 #pop .run-row > span:nth-child(3) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #pop .run-row .at, #pop .run-row .took { color: var(--muted); white-space: nowrap; }
 .pop-msg { color: var(--alert); margin-top: 6px; }

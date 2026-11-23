@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=0c0f2786';
-import vi from './lang/vi.js?v=0c0f2786';
-import ja from './lang/ja.js?v=0c0f2786';
-import pt from './lang/pt.js?v=0c0f2786';
-import tr from './lang/tr.js?v=0c0f2786';
-import ko from './lang/ko.js?v=0c0f2786';
+import es from './lang/es.js?v=02bc13ba';
+import vi from './lang/vi.js?v=02bc13ba';
+import ja from './lang/ja.js?v=02bc13ba';
+import pt from './lang/pt.js?v=02bc13ba';
+import tr from './lang/tr.js?v=02bc13ba';
+import ko from './lang/ko.js?v=02bc13ba';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -489,7 +489,6 @@ const STRINGS = {
   'board.chatElsewhere': L((app, pc) => `The agent works in ${app} on another computer, ${pc}.\nIts chat opens only there; you can answer it from here`, (app, pc) => `Агент работает в ${app} на другом компьютере — ${pc}.\nЕго чат открывается только там, а ответить агенту можно и отсюда`, (app, pc) => `智能体在另一台电脑（${pc}）上的 ${app} 中工作。\n它的对话只能在那里打开，你可以在这里回复它`, (app, pc) => `เอเจนต์ทำงานใน ${app} บนคอมพิวเตอร์อีกเครื่อง (${pc})\nแชทของมันเปิดได้ที่นั่นเท่านั้น ตอบเอเจนต์จากที่นี่ได้`),
   'board.chatAppOnly': L((app) => `The agent works in ${app}: it has no link to one conversation, so this opens the app`, (app) => `Агент работает в ${app}: ссылки на отдельный разговор там нет, откроется приложение`, (app) => `智能体在 ${app} 中工作：没有单个对话的链接，将打开应用`, (app) => `เอเจนต์ทำงานใน ${app}: ไม่มีลิงก์ไปยังบทสนทนาเดียว จึงจะเปิดแอป`),
   'board.chatNone': L("The agent hasn't sent a link to its chat, so this opens a new one", 'Агент не прислал ссылку на свой чат: откроется новый чат', '智能体没有发送其聊天链接，将打开新聊天', 'เอเจนต์ยังไม่ได้ส่งลิงก์แชตของตน จะเปิดแชตใหม่'),
-  'board.runChatShort': L('chat', 'чат', '对话', 'แชต'),
   'board.replyIn': L((who) => `Reply in ${who}`, (who) => `Ответить в ${who}`, (who) => `在 ${who} 中回复`, (who) => `ตอบใน ${who}`),
   'board.answer': L('Your answer', 'Ваш ответ', '你的回复', 'คำตอบของคุณ'),
   'board.send': L('Answer', 'Ответить', '回复', 'ตอบ'),
