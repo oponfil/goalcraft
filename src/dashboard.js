@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=dfb01c95';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=dfb01c95';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=dfb01c95';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=4e8572a0';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=4e8572a0';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=4e8572a0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1019,7 +1019,7 @@ export function mountDashboard(funnels, opts = {}) {
     const link = chatLink(info, url);
     if (!link) return `<span>${found}</span>`;
     const tip = whereTip(url, info, inAntigravity);
-    return `<span><a class="run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${found || esc(t('board.runChatShort'))}</a></span>`;
+    return `<span><a class="run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${found || `<span>${esc(t('board.runChatShort'))}</span>`}</a></span>`;
   };
   // The last week's spending, in dollars at API prices (tokens when no price is known), with the tokens
   // by kind on hover. No share of a plan's limit: a role may work on several apps, each with its own.
@@ -1057,7 +1057,7 @@ export function mountDashboard(funnels, opts = {}) {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
           // A supervisor's run says what it found; a worker's run, what it added.
           const found = a.sup ? (r.status ? supStatus(r.status) : '')
-            : `<b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}`;
+            : `<b class="run">+${fmtCount(r.added)}</b> <span>${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}</span>`;
           const ru = r.usage;
           const tok = ru && counted(ru) ? `<span class="tok" data-tip="${esc(usageTip(ru, null))}">${esc(
             ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)))}</span>` : '<span class="tok"></span>';
