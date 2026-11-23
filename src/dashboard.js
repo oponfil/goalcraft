@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7cb1447b';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=7cb1447b';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7cb1447b';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=f1366ab1';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=f1366ab1';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=f1366ab1';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -902,7 +902,7 @@ export function mountDashboard(funnels, opts = {}) {
     // Grok Bot: its bot by name (as the computers read them); one not among them by its id.
     const bots = apps.grok?.bots ?? [], botOpts = [...bots, ...(e.bot_id && !bots.some(b => b.id === e.bot_id) ? [{ id: e.bot_id, name: e.bot_id }] : [])];
     const model = grok ? (botOpts.length
-      ? `<select class="ex-bot" data-tip="${esc(t('launch.inBot'))}"><option value="">${esc(t('launch.pickBot'))}</option>${botOpts.map(b => `<option value="${esc(b.id)}"${b.id === e.bot_id ? ' selected' : ''}>${esc(b.name || b.id)}</option>`).join('')}</select>`
+      ? `<select class="ex-bot" data-tip="${esc(t('launch.inBot'))}"><option value="" disabled hidden${e.bot_id ? '' : ' selected'}>${esc(t('launch.pickBot'))}</option>${botOpts.map(b => `<option value="${esc(b.id)}"${b.id === e.bot_id ? ' selected' : ''}>${esc(b.name || b.id)}</option>`).join('')}</select>`
       : `<input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128" data-tip="${esc(t('launch.inBot'))}">`)
       : `<select class="ex-model" data-tip="${esc(t(e.app === 'antigravity' ? 'launch.agModelTip' : 'launch.modelTip'))}"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option value="${esc(m)}"${m === e.model ? ' selected' : ''}>${esc(modelName(m))}</option>`).join('')}</select>`
         + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value="">${esc(t('launch.anyModel'))}</option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
