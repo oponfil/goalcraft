@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=ccd3184a';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=ccd3184a';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ccd3184a';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=0c0f2786';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=0c0f2786';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=0c0f2786';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -930,6 +930,9 @@ export function mountDashboard(funnels, opts = {}) {
   // How the executors take turns, under them: its name says the mode it is in (In order, or Evenly by
   // the quotas), and its hint what that is and what the switch turns it to.
   const modeHtml = (even, limit) => `<label class="l-row l-mode" data-tip="${esc(t(even ? 'launch.evenTip' : 'launch.orderTip', limit))}"><input type="checkbox" class="switch l-even"${even ? ' checked' : ''}><span>${esc(t(even ? 'launch.even' : 'launch.inOrder'))}</span></label>`;
+  // Launch's line says when the role runs: "Launch · 9:00, 18:00" on schedule, "Launch · paused" with
+  // the schedule off (the role waits on pause; Run now still starts it).
+  const launchTitle = (on, schedule) => `${t('launch.title')} · ${on && schedule ? timesOf(schedule) : t('launch.paused')}`;
   function launchHtml(a) {
     const l = a.launch;
     if (!l || !opts.onLaunch) return '';
@@ -940,7 +943,7 @@ export function mountDashboard(funnels, opts = {}) {
       ? `<label class="l-row" data-tip="${esc(t('launch.computerTip'))}">${esc(t('launch.computer'))}<select class="l-computer">${pcs.map(c => `<option value="${esc(c.name)}"${c === main ? ' selected' : ''}>${esc(c.name)}${c.on ? '' : ` (${esc(t('launch.off'))})`}</option>`).join('')}</select></label>`
       : pcs.length ? `<p class="l-row l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
     const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
-    return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(t('launch.title'))}${l.schedule && l.schedule_on ? ` · ${esc(timesOf(l.schedule))}` : ''}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
+    return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(launchTitle(l.schedule_on, l.schedule))}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
       <div class="l-row"><label class="l-sched" data-tip="${esc(t('launch.scheduleTip'))}"><input type="checkbox" class="switch l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>${guide}</div>
       <input class="l-times" value="${esc(timesOf(l.schedule))}" placeholder="${esc(t('launch.times'))}">
       <p class="pop-note l-free"${l.schedule && l.schedule_on ? ' hidden' : ''}>${esc(t('launch.noSchedule'))}</p>
@@ -1017,7 +1020,10 @@ export function mountDashboard(funnels, opts = {}) {
       const pc = box.querySelector('.l-computer');
       if (pc) patch.computer = pc.value;
       const error = await opts.onLaunch(a, patch, executors);
-      if (!error) Object.assign(l, patch, { executors });
+      if (!error) {
+        Object.assign(l, patch, { executors });
+        box.querySelector('.l-title').textContent = launchTitle(l.schedule_on, l.schedule);
+      }
       // Saved as it changes: only what went wrong is said.
       say(error || '');
     };

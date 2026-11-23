@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=ccd3184a';
-import vi from './lang/vi.js?v=ccd3184a';
-import ja from './lang/ja.js?v=ccd3184a';
-import pt from './lang/pt.js?v=ccd3184a';
-import tr from './lang/tr.js?v=ccd3184a';
-import ko from './lang/ko.js?v=ccd3184a';
+import es from './lang/es.js?v=0c0f2786';
+import vi from './lang/vi.js?v=0c0f2786';
+import ja from './lang/ja.js?v=0c0f2786';
+import pt from './lang/pt.js?v=0c0f2786';
+import tr from './lang/tr.js?v=0c0f2786';
+import ko from './lang/ko.js?v=0c0f2786';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -435,6 +435,7 @@ const STRINGS = {
   'board.appointSupervisor': L('Appoint a supervisor', 'Назначить супервайзера', '指定主管', 'แต่งตั้งผู้ดูแล'),
   // A role Goalcraft starts itself (the orchestrator): its card's Launch block.
   'launch.title': L('Launch', 'Запуск'),
+  'launch.paused': L('paused', 'пауза'),
   'launch.guide': L('Instructions', 'Инструкция'),
   'launch.schedule': L('On schedule', 'По расписанию'),
   'launch.scheduleTip': L('On: the role runs at these times, and what its agent says about its next run is ignored.\nOff: its agent says when it wakes up; if it names no time, the role is on pause.', 'Включено: роль запускается в это время, а то, когда агент сам хочет проснуться, не учитывается.\nВыключено: агент сам говорит, когда проснуться; не назвал время — роль на паузе.'),
