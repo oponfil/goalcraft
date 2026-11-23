@@ -222,7 +222,6 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .l-run.busy { opacity: 0.5; pointer-events: none; }
 #pop .launch-box .l-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; color: var(--text); }
 #pop .launch-box label.l-row, #pop .launch-box .l-sched { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-#pop .launch-box p.l-apps { margin-top: 10px; }
 #pop .launch-box .l-row select { margin-left: auto; }
 #pop .launch-box .pop-note { margin: 4px 0 0; }
 #pop .launch-box input.l-times, #pop .launch-box select.ex-add { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; }
@@ -242,6 +241,9 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .ex-row .ex-grip { cursor: grab; color: var(--muted); letter-spacing: -1px; padding-right: 3px; user-select: none; }
 #pop .ex-row .ex-grip:active { cursor: grabbing; }
 #pop .ex-row.dragging { opacity: 0.5; }
+/* An app the main computer doesn't have: its name alone, grey. */
+#pop .ex-row.missing { color: var(--muted); background: none; cursor: help; }
+#pop .ex-row.missing .ex-top svg { filter: grayscale(1); opacity: 0.5; }
 #pop .ex-row .ex-fields { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
 #pop .ex-row .ex-fields select.ex-model, #pop .ex-row .ex-fields input.ex-bot { flex: 1 1 140px; min-width: 0; }
 #pop .ex-row .ex-checks { display: flex; gap: 14px; margin-top: 6px; }

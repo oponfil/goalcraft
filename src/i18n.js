@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=3acdc9c4';
-import vi from './lang/vi.js?v=3acdc9c4';
-import ja from './lang/ja.js?v=3acdc9c4';
-import pt from './lang/pt.js?v=3acdc9c4';
-import tr from './lang/tr.js?v=3acdc9c4';
-import ko from './lang/ko.js?v=3acdc9c4';
+import es from './lang/es.js?v=7f4fb6bb';
+import vi from './lang/vi.js?v=7f4fb6bb';
+import ja from './lang/ja.js?v=7f4fb6bb';
+import pt from './lang/pt.js?v=7f4fb6bb';
+import tr from './lang/tr.js?v=7f4fb6bb';
+import ko from './lang/ko.js?v=7f4fb6bb';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -444,7 +444,7 @@ const STRINGS = {
   'launch.computer': L('Computer', 'Компьютер'),
   'launch.computerTip': L('The main computer: the role starts there whenever it is on; only when it is off does another computer take the run.', 'Основной компьютер: роль запускается на нём, когда он в сети; только если он не в сети, запуск берёт другой компьютер.'),
   'launch.off': L('off', 'не в сети'),
-  'launch.appsNote': L('Shown are the apps this computer has. One missing is not installed there: install it on this computer to use it.', 'Показаны приложения, которые есть на этом компьютере. Если какого-то нет, оно там не установлено: установите его на этом компьютере.'),
+  'launch.notInstalled': L((app, pc) => `${app} is not installed on ${pc}. Install it there to use it.`, (app, pc) => `${app} не установлен на компьютере ${pc}. Чтобы им пользоваться, установите его там.`),
   'launch.drag': L('Drag to change the order', 'Перетащите, чтобы поменять порядок'),
   'launch.botNeeded': L('Grok Bot needs its bot id to run the role.', 'Для Grok Bot укажите id бота.'),
   'launch.quotaTip': L((n) => `An executor whose plan has used ${n}% of its quota takes no new runs. You can change it through an agent.`, (n) => `Исполнитель, у которого израсходовано ${n}% квоты, новых запусков не берёт. Изменить можно через агента.`),

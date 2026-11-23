@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3acdc9c4';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=3acdc9c4';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3acdc9c4';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7f4fb6bb';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=7f4fb6bb';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7f4fb6bb';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -903,6 +903,8 @@ export function mountDashboard(funnels, opts = {}) {
       : `<input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128" data-tip="${esc(t('launch.inBot'))}">`)
       : `<select class="ex-model"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option value="${esc(m)}"${m === e.model ? ' selected' : ''}>${esc(modelName(m))}</option>`).join('')}</select>`
         + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value=""></option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
+    if (e.missing) return `<div class="ex-row missing" data-app="${esc(e.app)}" data-tip="${esc(t('launch.notInstalled', APP_NAMES[e.app] ?? e.app, e.missing))}">
+      <div class="ex-top">${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b></div></div>`;
     return `<div class="ex-row" data-app="${esc(e.app)}">
       <div class="ex-top"><span class="ex-grip" draggable="true" data-tip="${esc(t('launch.drag'))}">⋮⋮</span>${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b><input type="checkbox" class="switch ex-on"${e.enabled === false ? '' : ' checked'}></div>
       <div class="ex-fields">${model}</div>
@@ -914,7 +916,9 @@ export function mountDashboard(funnels, opts = {}) {
   const shownExecutors = (l, pc) => {
     const has = pc ? new Set(pc.apps) : new Set(APPS);
     return [...l.executors.filter(e => has.has(e.app)), ...APPS.filter(x => has.has(x) && !l.executors.some(e => e.app === x))
-      .map(app => ({ app, enabled: false, effort: app === 'antigravity' || app === 'grok' ? null : 'medium' }))];
+      .map(app => ({ app, enabled: false, effort: app === 'antigravity' || app === 'grok' ? null : 'medium' })),
+      // Every app Goalcraft can start is listed: one this computer lacks greyed, with nothing to set.
+      ...APPS.filter(x => !has.has(x)).map(app => ({ app, missing: pc.name }))];
   };
   // The role's executors with the ones shown as the person set them: those shown take, in the order shown,
   // the places the shown apps had; the others keep theirs.
@@ -939,7 +943,6 @@ export function mountDashboard(funnels, opts = {}) {
       <p class="pop-note l-free"${l.schedule && l.schedule_on ? ' hidden' : ''}>${esc(t('launch.noSchedule'))}</p>
       <label class="l-row" data-tip="${esc(t('launch.quotaTip', Number(l.quota_limit ?? 95)))}"><input type="checkbox" class="switch l-even"${l.mode === 'even' ? ' checked' : ''}>${esc(t('launch.even'))}</label>
       ${computer}
-      <p class="pop-note l-apps">${esc(t('launch.appsNote'))}</p>
       <div class="ex-list">${shownExecutors(l, main).map(e => exRow(e, apps)).join('')}</div>
     </details><div class="pop-msg l-msg"></div></div>`;
   }
@@ -964,7 +967,7 @@ export function mountDashboard(funnels, opts = {}) {
     box.addEventListener('change', e => { if (e.target.matches('input.switch')) switchTip(e.target); });
     // Another main computer: its apps, keeping what was set for the ones shown.
     box.querySelector('.l-computer')?.addEventListener('change', e => {
-      l.executors = merged(l.executors, [...list.querySelectorAll('.ex-row')].map(read));
+      l.executors = merged(l.executors, [...list.querySelectorAll('.ex-row:not(.missing)')].map(read));
       list.innerHTML = shownExecutors(l, pcs.find(c => c.name === e.target.value)).map(x => exRow(x, apps)).join('');
       list.querySelectorAll('input.switch').forEach(switchTip);
     });
@@ -980,7 +983,7 @@ export function mountDashboard(funnels, opts = {}) {
     list.addEventListener('dragover', e => {
       if (!dragged) return;
       e.preventDefault();
-      const over = e.target.closest('.ex-row');
+      const over = e.target.closest('.ex-row:not(.missing)');  // the apps not installed stay last
       if (!over || over === dragged) return;
       const r = over.getBoundingClientRect();
       list.insertBefore(dragged, e.clientY > r.top + r.height / 2 ? over.nextSibling : over);
@@ -997,7 +1000,7 @@ export function mountDashboard(funnels, opts = {}) {
       const schedule = text.trim() ? cronOf(text) : null;
       if (text.trim() && !schedule) return say(t('launch.badTimes'));
       // Those of apps the main computer doesn't have stay as they are, in their places.
-      const executors = merged(l.executors, [...list.querySelectorAll('.ex-row')].map(read));
+      const executors = merged(l.executors, [...list.querySelectorAll('.ex-row:not(.missing)')].map(read));
       if (!executors.some(x => x.enabled)) return say(t('launch.noExecutors'));
       const grokOff = executors.find(x => x.app === 'grok' && x.enabled && !x.bot_id);
       if (grokOff) return say(t('launch.botNeeded'));
