@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=507b72a6';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=507b72a6';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=507b72a6';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=dfb01c95';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=dfb01c95';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=dfb01c95';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1060,11 +1060,11 @@ export function mountDashboard(funnels, opts = {}) {
             : `<b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}`;
           const ru = r.usage;
           const tok = ru && counted(ru) ? `<span class="tok" data-tip="${esc(usageTip(ru, null))}">${esc(
-            ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)))}</span>` : '';
+            ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)))}</span>` : '<span class="tok"></span>';
           // On which app and model (a run Goalcraft didn't start: the app its tokens were counted on), and
           // how a run Goalcraft started ended when not as it should.
           const app = r.app ?? ru?.app, end = r.launch?.outcome, bad = end === 'silent' ? t('launch.silent') : end === 'not_started' ? t('launch.notStarted') : end === 'failed' ? t('launch.failed') : '';
-          const by = app ? `<span class="by">${appMark(app, r.model ?? ru?.model, r.launch?.effort)}${bad ? `<span class="warn">${esc(bad)}</span>` : ''}</span>` : '';
+          const by = app ? `<span class="by">${appMark(app, r.model ?? ru?.model, r.launch?.effort)}${bad ? `<span class="warn">${esc(bad)}</span>` : ''}</span>` : '<span class="by"></span>';
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
             ${runChat(a, r, app, found)}${by}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);

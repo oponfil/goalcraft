@@ -185,7 +185,7 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .runs-list { margin-top: 6px; max-height: 220px; overflow-y: auto; scrollbar-gutter: stable; padding-right: 4px; }
 #pop .runs-day .pop-note { margin: 6px 0 0; }
 /* A run's tokens, at the end of its row, as the wake script counted them. */
-#pop .run-row .tok { color: var(--muted); white-space: nowrap; }
+#pop .run-row .tok { color: var(--muted); white-space: nowrap; min-width: 3.6em; text-align: right; }  /* money last, the same place in every row */
 #pop .pop-note.usage { color: var(--muted); }
 #pop .run-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; gap: 10px; padding: 3px 0; }
 #pop .run-row .by { color: var(--muted); white-space: nowrap; font-size: 12px; }
@@ -242,7 +242,7 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .ex-row label input { margin: 0; accent-color: #F2C14E; }
 #pop .ex-row .ex-note { color: var(--muted); font-size: 12px; width: 100%; }
 #pop .launch .ask-buttons { margin-top: 10px; }
-#pop .run-row .by { display: inline-flex; align-items: center; gap: 4px; }
+#pop .run-row .by { display: inline-flex; align-items: center; gap: 4px; min-width: 16px; }  /* the app's icon before it, even with no money */
 #pop .app-mark { display: inline-flex; align-items: center; }
 #pop .app-mark svg { width: 14px; height: 14px; }
 #clock .who { margin-left: 4px; }
