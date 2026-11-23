@@ -12,7 +12,9 @@ export const SILENT = 10 * 60e3  // the board's amber triangle: this long withou
 const ONLINE = 3 * 60e3          // a computer whose script asked this recently is on
 
 // Which AI each app is on the board (its logo and shirt), and which plan quota a run there uses.
-export const PROVIDER: Record<string, string> = { claude: 'claude', codex: 'chatgpt', antigravity: 'gemini', grok: 'grok' }
+// A role on pause because its schedule was turned off (and back to sleep when it is turned on again).
+export const SCHEDULE_OFF = 'расписание выключено'
+export const PROVIDER: Record<string, string> ={ claude: 'claude', codex: 'chatgpt', antigravity: 'gemini', grok: 'grok' }
 function quotaOf(app: string, model: string | null): [string, string] {
   if (app !== 'antigravity') return [app, '']
   const m = (model ?? '').toLowerCase()
@@ -103,7 +105,7 @@ export async function dispatch(admin: any, user: string, key: Row) {
     admin.from('role_launches').select('*').eq('user_id', user).is('ended_at', null),
     admin.from('wake_keys').select('id, computer, last_used_at, inventory, created_at').eq('user_id', user),
     admin.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, session_percent, session_resets_at').eq('user_id', user).gte('at', iso(now - 2 * 86400e3)),
-    admin.from('presence').select('funnel_id, agent, zone, state, next_run_at, updated_at, display_name, provider').eq('user_id', user),
+    admin.from('presence').select('funnel_id, agent, zone, state, next_run_at, pause_reason, updated_at, display_name, provider').eq('user_id', user),
     admin.from('funnels').select('id, key, title, guide_url').eq('user_id', user),
     admin.from('agent_messages').select('id, funnel_id, agent, sent_at').eq('user_id', user).is('read_at', null).is('woken_at', null).gte('sent_at', iso(now - 86400e3)),
     admin.from('questions').select('id, funnel_id, agent, answered_at').eq('user_id', user).not('answered_at', 'is', null).is('replied_at', null).is('woken_at', null).gte('answered_at', iso(now - 86400e3)),
@@ -146,13 +148,20 @@ export async function dispatch(admin: any, user: string, key: Row) {
         await end(l, p && (p.state === 'sleep' || p.state === 'pause') ? 'done' : 'silent')
       }
     }
-    // Paused: nothing starts it but the person's Run now.
-    const paused = p?.state === 'pause'
     const scheduled = role.schedule && role.schedule_on
     // A schedule turned off: the role goes on pause (no time of its own to wake at).
     if (role.schedule && !role.schedule_on && p && p.state === 'sleep') {
-      await admin.from('presence').update({ state: 'pause', pause_reason: 'расписание выключено', next_run_at: null }).eq('funnel_id', role.funnel_id).eq('agent', role.agent)
+      await admin.from('presence').update({ state: 'pause', pause_reason: SCHEDULE_OFF, next_run_at: null }).eq('funnel_id', role.funnel_id).eq('agent', role.agent)
+      p.state = 'pause'
     }
+    // Turned on again: the pause that came of it ends, and the role sleeps until its next time.
+    if (scheduled && p && p.state === 'pause' && p.pause_reason === SCHEDULE_OFF) {
+      const at = cronNext(role.schedule, role.time_zone, new Date(now))?.toISOString() ?? null
+      await admin.from('presence').update({ state: 'sleep', pause_reason: null, next_run_at: at }).eq('funnel_id', role.funnel_id).eq('agent', role.agent)
+      Object.assign(p, { state: 'sleep', pause_reason: null, next_run_at: at })
+    }
+    // Paused: nothing starts it but the person's Run now.
+    const paused = p?.state === 'pause'
     const queued = starts.find((l: Row) => !l.claimed_at)
     const lastDue = async (reason: string) => {
       const { data } = await admin.from('role_launches').select('due_at, created_at').eq('funnel_id', role.funnel_id).eq('agent', role.agent)

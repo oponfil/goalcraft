@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=02bc13ba';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=02bc13ba';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=02bc13ba';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=74e971af';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=74e971af';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=74e971af';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -853,8 +853,10 @@ export function mountDashboard(funnels, opts = {}) {
     }
     const lost = scene.lost(a) ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.silence(a))))}</p>` : '';
     // On pause: why, as it or its supervisor said, or the used-up limit with when it resets.
-    const pl = a.pauseLimit, why = a.state !== 'pause' ? '' : a.pauseReason
-      || (pl ? t('board.pausedLimit', LIMIT_NAMES[pl.key] ?? pl.key, pl.resets ? fmtDuration((pl.resets - Date.now()) / 1000) : null) : '');
+    // A role paused by its schedule turned off says so on its Launch line ("Paused"), not here too.
+    const offSchedule = a.launch && a.pauseReason === 'расписание выключено';
+    const pl = a.pauseLimit, why = a.state !== 'pause' || offSchedule ? '' : a.pauseReason
+      || (pl ?t('board.pausedLimit', LIMIT_NAMES[pl.key] ?? pl.key, pl.resets ? fmtDuration((pl.resets - Date.now()) / 1000) : null) : '');
     const paused = why ? `<p class="pop-note">${esc(why)}</p>` : '';
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
@@ -931,9 +933,9 @@ export function mountDashboard(funnels, opts = {}) {
   // How the executors take turns, under them: its name says the mode it is in (In order, or Evenly by
   // the quotas), and its hint what that is and what the switch turns it to.
   const modeHtml = (even, limit) => `<label class="l-row l-mode" data-tip="${esc(t(even ? 'launch.evenTip' : 'launch.orderTip', limit))}"><input type="checkbox" class="switch l-even"${even ? ' checked' : ''}><span>${esc(t(even ? 'launch.even' : 'launch.inOrder'))}</span></label>`;
-  // Launch's line says when the role runs: "Launch · 9:00, 18:00" on schedule, "Launch · paused" with
-  // the schedule off (the role waits on pause; Run now still starts it).
-  const launchTitle = (on, schedule) => `${t('launch.title')} · ${on && schedule ? timesOf(schedule) : t('launch.paused')}`;
+  // Launch's line says when the role runs: "Launch · 9:00, 18:00" on schedule, "Paused" with the
+  // schedule off (the role waits on pause; Run now still starts it).
+  const launchTitle = (on, schedule) => (on && schedule ? `${t('launch.title')} · ${timesOf(schedule)}` : t('launch.paused'));
   function launchHtml(a) {
     const l = a.launch;
     if (!l || !opts.onLaunch) return '';
@@ -943,7 +945,7 @@ export function mountDashboard(funnels, opts = {}) {
     const computer = pcs.length > 1
       ? `<label class="l-row" data-tip="${esc(t('launch.computerTip'))}">${esc(t('launch.computer'))}<select class="l-computer">${pcs.map(c => `<option value="${esc(c.name)}"${c === main ? ' selected' : ''}>${esc(c.name)}${c.on ? '' : ` (${esc(t('launch.off'))})`}</option>`).join('')}</select></label>`
       : pcs.length ? `<p class="l-row l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
-    const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
+    const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener" data-tip="${esc(t('launch.guideTip'))}">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
     return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(launchTitle(l.schedule_on, l.schedule))}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
       <div class="l-row"><label class="l-sched" data-tip="${esc(t('launch.scheduleTip'))}"><input type="checkbox" class="switch l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>${guide}</div>
       <input class="l-times" value="${esc(timesOf(l.schedule))}" placeholder="${esc(t('launch.times'))}">
