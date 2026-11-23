@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-23.5'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-23.6'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -71,8 +71,11 @@ APP_DATA = (HOME / 'Library' / 'Application Support' if MAC
             else pathlib.Path(os.environ.get('APPDATA') or HOME / 'AppData' / 'Roaming') if WINDOWS
             else pathlib.Path(os.environ.get('XDG_CONFIG_HOME') or HOME / '.config'))
 SESSIONS = APP_DATA / 'Claude' / 'claude-code-sessions'
-# Windows: started at sign-in from the Startup folder, with no window.
-STARTUP = APP_DATA / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'Startup' / 'goalcraft-wake.vbs'
+# Windows: started at sign-in from the Startup folder, with no window (Goalcraft.vbs; named
+# goalcraft-wake.vbs until 2026-11-23.6).
+STARTUP_DIR = APP_DATA / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'Startup'
+STARTUP = STARTUP_DIR / 'Goalcraft.vbs'
+STARTUP_OLD = STARTUP_DIR / 'goalcraft-wake.vbs'
 LOCK = DIR / 'wake.lock'  # one script at a time on a computer
 PIDFILE = DIR / 'wake.pid'
 NO_WINDOW = 0x08000000 if WINDOWS else 0  # Windows: the agents' tools run without a console window popping up
@@ -2150,6 +2153,12 @@ def run():
         print('The wake script already runs on this computer.')
         return
     log(f'started {VERSION} on {COMPUTER}')
+    # Windows: its Startup entry, Goalcraft (set up before 2026-11-23.6, it was named goalcraft-wake).
+    if WINDOWS and not STARTUP.exists():
+        try:
+            startup_entry(pathlib.Path(__file__).resolve())
+        except Exception as e:
+            log(f'startup entry: {e!r}')
     counted = 0
     while True:
         try:
@@ -2220,12 +2229,20 @@ def install_mac(me):
     subprocess.run(['launchctl', 'bootstrap', f'gui/{uid}', str(PLIST)], check=True)
 
 
+def startup_entry(me):
+    """Windows: the Startup folder's entry, Goalcraft.vbs, which runs the script with no window. Task
+    Manager's Startup apps names it by the file (a shortcut it would name by what it runs: Python); the
+    one named goalcraft-wake.vbs before goes."""
+    STARTUP_DIR.mkdir(parents=True, exist_ok=True)
+    STARTUP.write_text(f'CreateObject("WScript.Shell").Run """{pythonw()}"" ""{me}"" run", 0, False\r\n', encoding='utf-8')
+    STARTUP_OLD.unlink(missing_ok=True)
+
+
 def install_windows(me):
     """Windows: a task in the Task Scheduler runs it at sign-in and every 10 minutes (it stays one script:
     a second one sees the lock and leaves), and the Startup folder starts it at sign-in too, should the
     task be gone. It starts now, from the task."""
-    STARTUP.parent.mkdir(parents=True, exist_ok=True)
-    STARTUP.write_text(f'CreateObject("WScript.Shell").Run """{pythonw()}"" ""{me}"" run", 0, False\r\n', encoding='utf-8')
+    startup_entry(me)
     if not add_task(me):
         print('Could not add the Task Scheduler task: the script starts at sign-in only.')
     stop_windows()
@@ -2330,8 +2347,8 @@ def uninstall():
         if PLIST.exists():
             PLIST.unlink()
     elif WINDOWS:
-        if STARTUP.exists():
-            STARTUP.unlink()
+        STARTUP.unlink(missing_ok=True)
+        STARTUP_OLD.unlink(missing_ok=True)
         subprocess.run(['schtasks', '/Delete', '/TN', TASK, '/F'], capture_output=True, creationflags=NO_WINDOW)
         stop_windows()
     print('Goalcraft wake is off. The key stays in ~/.goalcraft/wake.json until a new one replaces it.')
