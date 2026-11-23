@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=74e971af';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=74e971af';
-import { themeOf } from './themes.js?v=74e971af';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=74e971af';
+import { agentInfo, plural } from './data.js?v=3fbb3627';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=3fbb3627';
+import { themeOf } from './themes.js?v=3fbb3627';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=3fbb3627';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -755,7 +755,7 @@ export class Scene {
       f.stages.forEach((s, j) => {
         // The number is the same size in every tank, in its middle; at its top right, how fast the
         // tank fills (the flow of the zone above it). What the tank holds shows on hover.
-        const num = fmtCount(s.count), flow = fmtFlow(f.flows[j] ?? 0), open = s.active != null ? fmtCount(Math.min(s.active, s.count)) : '';
+        const num = fmtCount(s.count), flow = fmtFlow(f.flows[j] ?? 0), open = s.active != null ? fmtCount(openOf(f, j)) : '';
         let box;
         shadowed(() => { box = withFlow(num, flow, cx, f.geo.tankTop(j) + f.geo.lh(j) / 2, 15, '#FFFFFF', f.flows[j] ? '#9FE870' : STALLED, open); });
         // The number and its flow open the stage's history.
@@ -931,7 +931,7 @@ export class Scene {
     c.drawImage(h.layer, bx, y, bw, lh);
     // The open ones (still able to go on) are the newest pieces, the last to land: they glow, a
     // light blue over their own shapes, breathing slowly.
-    const s = f.stages[j], open = s.active != null && s.count > 0 ? Math.min(h.shown, Math.max(s.active > 0 ? 1 : 0, Math.round(h.shown * s.active / s.count))) : 0;
+    const s = f.stages[j], active = s.active != null ? openOf(f, j) : 0, open = s.active != null && s.count > 0 ? Math.min(h.shown, Math.max(active > 0 ? 1 : 0, Math.round(h.shown * active / s.count))) : 0;
     if (open > 0) {
       const glowKey = `${layerKey}|${h.shown}|${open}`;
       if (h.glowKey !== glowKey) {
@@ -1033,6 +1033,12 @@ function circle(c, cx, cy, r, col) {
 // as a bare "+N": the unit is not written. Under 1, one significant digit (+0.3, +0.04).
 const PER = { h: 1 / 24, d: 1, w: 7 };
 export const fmtCount = n => n.toLocaleString('en-US');
+
+// How many of a stage's items went on (the next tank's count, the results' for the last) and are
+// still open: as its agent said, but no more than can be (all but those that went on), so the
+// stage's total, open and dropped add up.
+export const nextOf = (f, j) => Math.min(f.stages[j].count, j + 1 < f.stages.length ? f.stages[j + 1].count : f.cubes ?? 0);
+export const openOf = (f, j) => Math.max(0, Math.min(f.stages[j].active ?? 0, f.stages[j].count - nextOf(f, j)));
 
 export function fmtFlow(perDay) {
   if (perDay == null) return '';

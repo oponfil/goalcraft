@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=74e971af';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=74e971af';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=74e971af';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3fbb3627';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=3fbb3627';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3fbb3627';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -701,13 +701,13 @@ export function mountDashboard(funnels, opts = {}) {
       const flow = f.flows?.[h.j], unit = t(`flow.${flowUnit}`);
       if (flow != null) text += ': ' + (f.flowSet?.[h.j] ? t('board.flowSet', fmtFlow(flow), unit)
         : flowUnit === 'd' ? t('board.flowDay', fmtFlow(flow)) : t('board.flowTip', fmtFlow(flow), unit));
-      // With the open ones known: how many reached it, are still open and went on (the next tank's
-      // count), and those that dropped out here when there are any. One turned down at a later step
-      // went on (it is the next tank's) and drops out there.
+      // With the open ones known: how many reached it, are still open and dropped out here (those
+      // that went on are the next tank's). One turned down at a later step went on and drops out
+      // there. The three add up: an agent's open count above what can still be open (all but those
+      // that went on) is taken as that much.
       if (s.active != null) {
-        const open = Math.min(s.active, s.count), next = Math.min(s.count - open, h.j + 1 < f.stages.length ? f.stages[h.j + 1].count : f.cubes ?? 0);
-        const dropped = s.count - open - next;
-        text += '\n' + t('board.openTip', fmtCount(s.count), fmtCount(open), fmtCount(next)) + (dropped > 0 ? ' · ' + t('board.dropTip', fmtCount(dropped)) : '');
+        const next = nextOf(f, h.j), open = openOf(f, h.j);
+        text += '\n' + t('board.openTip', fmtCount(s.count), fmtCount(open), fmtCount(s.count - open - next));
       }
       tip.textContent = text;
     }

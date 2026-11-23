@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=74e971af';
-import vi from './lang/vi.js?v=74e971af';
-import ja from './lang/ja.js?v=74e971af';
-import pt from './lang/pt.js?v=74e971af';
-import tr from './lang/tr.js?v=74e971af';
-import ko from './lang/ko.js?v=74e971af';
+import es from './lang/es.js?v=3fbb3627';
+import vi from './lang/vi.js?v=3fbb3627';
+import ja from './lang/ja.js?v=3fbb3627';
+import pt from './lang/pt.js?v=3fbb3627';
+import tr from './lang/tr.js?v=3fbb3627';
+import ko from './lang/ko.js?v=3fbb3627';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -413,8 +413,7 @@ const STRINGS = {
   'nav.tanksGrow': L('Tanks grow with items', 'Баки растут с количеством', '储罐随数量增长', 'ถังขยายตามจำนวน'),
   'board.usageCost': L((c) => `${c} at API prices`, (c) => `${c} по ценам API`, (c) => `按 API 价格 ${c}`, (c) => `${c} ตามราคา API`),
   'board.usageShare': L((p) => `${p} of limit`, (p) => `${p} лимита`, (p) => `占额度 ${p}`, (p) => `${p} ของโควตา`),
-  'board.openTip': L((a, b, n) => `Total ${a} · open ${b} · went on ${n}`, (a, b, n) => `Всего ${a} · в работе ${b} · дальше ${n}`, (a, b, n) => `共 ${a} · 进行中 ${b} · 已进入下一步 ${n}`, (a, b, n) => `ทั้งหมด ${a} · กำลังดำเนินการ ${b} · ไปต่อ ${n}`),
-  'board.dropTip': L((d) => `dropped ${d}`, (d) => `выбыли ${d}`, (d) => `已流失 ${d}`, (d) => `หลุดไป ${d}`),
+  'board.openTip': L((a, b, d) => `Total ${a} · open ${b} · dropped ${d}`, (a, b, d) => `Всего ${a} · в работе ${b} · выбыли ${d}`, (a, b, d) => `共 ${a} · 进行中 ${b} · 已流失 ${d}`, (a, b, d) => `ทั้งหมด ${a} · กำลังดำเนินการ ${b} · หลุดไป ${d}`),
   'board.flowDay': L((v) => `${v} in 24 hours`, (v) => `${v} за 24 часа`, (v) => `24 小时 ${v}`, (v) => `${v} ใน 24 ชั่วโมง`),
   'board.flowTip': L((v, u) => `${v} ${u} (by the last 24 hours)`, (v, u) => `${v} ${u} (по последним 24 часам)`, (v, u) => `${u} ${v}（按最近 24 小时）`, (v, u) => `${v} ${u} (ตาม 24 ชั่วโมงล่าสุด)`),
   'board.flowSet': L((v, u) => `${v} ${u} (set by hand)`, (v, u) => `${v} ${u} (задано вручную)`, (v, u) => `${u} ${v}（手动设置）`, (v, u) => `${v} ${u} (ตั้งเอง)`),
