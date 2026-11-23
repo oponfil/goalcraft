@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-23.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-23.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1730,7 +1730,7 @@ def check(key):
 # Antigravity, Grok Bot), its model and effort, and the note to start with. The script takes one (claim),
 # so no other computer starts it too, starts the app with that note in a new conversation, and says when
 # the app is done; the agent itself tells Goalcraft when its run begins and ends.
-CLAUDE_MODELS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-2']
+CLAUDE_MODELS = ['claude-fable-5-2', 'claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5']
 launching = set()  # starts being run here now
 LAUNCHES = DIR / 'launches.json'  # the starts run here: whose, on which app, its conversation (for their token use)
 launches_lock = threading.Lock()
@@ -1787,9 +1787,20 @@ def inventory():
     if agentapi_command():
         server = antigravity_server()
         inv['antigravity'] = {'running': bool(server), 'models': antigravity_models(server) if server else []}
-    if grok_token():
-        inv['grok'] = {'signed_in': True}
+    token = grok_token()
+    if token:
+        inv['grok'] = {'signed_in': True, 'bots': grok_bots(token)}
     return inv
+
+
+def grok_bots(token):
+    """The person's Grok Bot bots, by id and name, to pick one by its name in a role's Launch."""
+    try:
+        r = grok_call(token, 'ListGrokBotAgents', {}, api='https://api2.cursor.sh/aiserver.v1.GrokBotService/')
+    except Exception:
+        return []
+    return [{'id': a['agentId'], 'name': str(a.get('name') or '')[:64]} for a in r.get('agents') or []
+            if a.get('agentId') and a.get('viewerIsOwner') is not False]
 
 
 def antigravity_models(server):

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=4e8572a0';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=4e8572a0';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=4e8572a0';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3acdc9c4';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=3acdc9c4';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3acdc9c4';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -891,11 +891,17 @@ export function mountDashboard(funnels, opts = {}) {
     return m ? m[2].split(',').map(h => `${h}:${m[1].padStart(2, '0')}`).join(', ') : (cron || '');
   };
   // An executor's mark: its app's logo, with the app, model and effort on hover.
-  const appMark = (app, model, effort) => `<span class="app-mark" data-tip="${esc([APP_NAMES[app] ?? app, model, effort].filter(Boolean).join(' · '))}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</span>`;
+  // A model as people call it: claude-opus-5-5 is Claude Opus 5.5; other apps' names are as they are.
+  const modelName = m => m?.replace(/^claude-([a-z]+)-(\d+)-(\d+)$/, (_, n, a, b) => `Claude ${n[0].toUpperCase()}${n.slice(1)} ${a}.${b}`) ?? m;
+  const appMark = (app, model, effort) => `<span class="app-mark" data-tip="${esc([APP_NAMES[app] ?? app, modelName(model), effort].filter(Boolean).join(' · '))}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</span>`;
   const exRow = (e, apps) => {
     const grok = e.app === 'grok', models = [...new Set([...(apps[e.app]?.models ?? []), ...(e.model ? [e.model] : [])])];
-    const model = grok ? `<input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128" data-tip="${esc(t('launch.inBot'))}">`
-      : `<select class="ex-model"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option${m === e.model ? ' selected' : ''}>${esc(m)}</option>`).join('')}</select>`
+    // Grok Bot: its bot by name (as the computers read them); one not among them by its id.
+    const bots = apps.grok?.bots ?? [], botOpts = [...bots, ...(e.bot_id && !bots.some(b => b.id === e.bot_id) ? [{ id: e.bot_id, name: e.bot_id }] : [])];
+    const model = grok ? (botOpts.length
+      ? `<select class="ex-bot" data-tip="${esc(t('launch.inBot'))}"><option value="">${esc(t('launch.pickBot'))}</option>${botOpts.map(b => `<option value="${esc(b.id)}"${b.id === e.bot_id ? ' selected' : ''}>${esc(b.name || b.id)}</option>`).join('')}</select>`
+      : `<input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128" data-tip="${esc(t('launch.inBot'))}">`)
+      : `<select class="ex-model"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option value="${esc(m)}"${m === e.model ? ' selected' : ''}>${esc(modelName(m))}</option>`).join('')}</select>`
         + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value=""></option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
     return `<div class="ex-row" data-app="${esc(e.app)}">
       <div class="ex-top"><span class="ex-grip" draggable="true" data-tip="${esc(t('launch.drag'))}">⋮⋮</span>${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b><input type="checkbox" class="switch ex-on"${e.enabled === false ? '' : ' checked'}></div>
@@ -949,10 +955,18 @@ export function mountDashboard(funnels, opts = {}) {
       full_access: r.querySelector('.ex-full')?.checked ?? true, bot_id: r.querySelector('.ex-bot')?.value.trim() || null,
     });
     box.querySelector('.l-on').addEventListener('change', e => { box.querySelector('.l-free').hidden = e.target.checked; });
+    // A switch says on hover what clicking it does: Turn on, or Turn off; at once after a click too.
+    const switchTip = el => {
+      el.dataset.tip = t(el.checked ? 'launch.turnOff' : 'launch.turnOn');
+      if (el.matches(':hover') && !tip.hidden && tip.classList.contains('over')) tip.textContent = el.dataset.tip;
+    };
+    box.querySelectorAll('input.switch').forEach(switchTip);
+    box.addEventListener('change', e => { if (e.target.matches('input.switch')) switchTip(e.target); });
     // Another main computer: its apps, keeping what was set for the ones shown.
     box.querySelector('.l-computer')?.addEventListener('change', e => {
       l.executors = merged(l.executors, [...list.querySelectorAll('.ex-row')].map(read));
       list.innerHTML = shownExecutors(l, pcs.find(c => c.name === e.target.value)).map(x => exRow(x, apps)).join('');
+      list.querySelectorAll('input.switch').forEach(switchTip);
     });
     // Order by dragging a row by its handle.
     let dragged = null;
@@ -992,7 +1006,8 @@ export function mountDashboard(funnels, opts = {}) {
       if (pc) patch.computer = pc.value;
       const error = await opts.onLaunch(a, patch, executors);
       if (!error) Object.assign(l, patch, { executors });
-      say(error || t('launch.saved'), !error);
+      // Saved as it changes: only what went wrong is said.
+      say(error || '');
     };
     // Run now sits on Launch's own line: it starts the role, and doesn't open or close the settings.
     box.querySelector('.l-run').addEventListener('click', async e => {

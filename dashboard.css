@@ -84,6 +84,12 @@ body {
 #scroller::-webkit-scrollbar-track { background: #241F1B; }
 #scroller::-webkit-scrollbar-thumb { background: #6B5A48; border: 2px solid #241F1B; }
 #scroller::-webkit-scrollbar-thumb:hover { background: #8A745C; }
+/* A card (and its runs list) scrolls up and down with the board's own bar: square, in its colours. */
+@supports (-moz-appearance: none) { #pop, #pop .runs-list { scrollbar-color: #6B5A48 transparent; } }
+#pop::-webkit-scrollbar, #pop .runs-list::-webkit-scrollbar { width: 10px; }
+#pop::-webkit-scrollbar-track, #pop .runs-list::-webkit-scrollbar-track { background: transparent; }
+#pop::-webkit-scrollbar-thumb, #pop .runs-list::-webkit-scrollbar-thumb { background: #6B5A48; border: 2px solid var(--panel); }
+#pop::-webkit-scrollbar-thumb:hover, #pop .runs-list::-webkit-scrollbar-thumb:hover { background: #8A745C; }
 #scene { display: block; flex: none; image-rendering: pixelated; touch-action: pan-x pan-y; }
 #scene[hidden], #titles[hidden] { display: none; }
 /* What a tank holds, next to the cursor while it hovers the tank. */

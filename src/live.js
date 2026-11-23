@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=4e8572a0';
+import { supabase } from './auth.js?v=3acdc9c4';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -245,8 +245,10 @@ export async function loadFunnels() {
     // The apps it has (Grok Bot when signed in there).
     apps: Object.entries(k.inventory ?? {}).filter(([app, v]) => app !== 'grok' || v.signed_in).map(([app]) => app) }));
   for (const k of keys.data ?? []) for (const [app, v] of Object.entries(k.inventory ?? {})) {
-    const have = inventory[app] ??= { models: [], computers: [] };
+    const have = inventory[app] ??= { models: [], computers: [], bots: [] };
     have.computers.push(k.computer);
+    // Grok Bot's bots by name, for its executor (the same account's, read on any computer).
+    for (const b of v.bots ?? []) if (b?.id && !have.bots.some(x => x.id === b.id)) have.bots.push(b);
     for (const m of v.models ?? []) {
       const id = typeof m === 'string' ? m : m.label;
       if (id && !have.models.includes(id)) have.models.push(id);

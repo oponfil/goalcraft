@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=4e8572a0';
-import vi from './lang/vi.js?v=4e8572a0';
-import ja from './lang/ja.js?v=4e8572a0';
-import pt from './lang/pt.js?v=4e8572a0';
-import tr from './lang/tr.js?v=4e8572a0';
-import ko from './lang/ko.js?v=4e8572a0';
+import es from './lang/es.js?v=3acdc9c4';
+import vi from './lang/vi.js?v=3acdc9c4';
+import ja from './lang/ja.js?v=3acdc9c4';
+import pt from './lang/pt.js?v=3acdc9c4';
+import tr from './lang/tr.js?v=3acdc9c4';
+import ko from './lang/ko.js?v=3acdc9c4';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -452,11 +452,13 @@ const STRINGS = {
   'launch.newChatTip': L('Every run in a new conversation; unticked, it goes on in the last one when there is one.', 'Каждый запуск — новая беседа; без галочки продолжает последнюю, если она есть.'),
   'launch.full': L('Full access', 'Полный доступ'),
   'launch.fullTip': L('Everything allowed without asking: nobody is there to approve during a scheduled run. Unticked, the app\'s own defaults apply.', 'Всё разрешено без подтверждения: при запуске по расписанию подтвердить некому. Без галочки действуют настройки самого приложения.'),
-  'launch.inBot': L('The bot that works the role (its id). Its model and access are set in the bot itself.', 'Бот, который работает за роль (его id). Модель и доступ задаются в самом боте.'),
+  'launch.inBot': L('The bot that works the role. Its model and access are set in the bot itself.', 'Бот, который работает за роль. Модель и доступ задаются в самом боте.'),
+  'launch.pickBot': L('Choose a bot', 'Выберите бота'),
   'launch.bot': L('bot id', 'id бота'),
   'launch.anyModel': L('default model', 'модель по умолчанию'),
   'launch.effort': L('effort', 'усилие'),
-  'launch.saved': L('Saved.', 'Сохранено.'),
+  'launch.turnOn': L('Turn on', 'Включить'),
+  'launch.turnOff': L('Turn off', 'Выключить'),
   'launch.runNow': L('Run now', 'Запустить сейчас'),
   'launch.queued': L('Starting: it runs as soon as a computer takes it.', 'Запуск поставлен: начнётся, как только его возьмёт компьютер.'),
   'launch.waiting': L('A start is already waiting.', 'Запуск уже ждёт в очереди.'),
