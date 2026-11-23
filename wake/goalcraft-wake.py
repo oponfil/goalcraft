@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-23.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-23.5'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1732,6 +1732,7 @@ def check(key):
 # the app is done; the agent itself tells Goalcraft when its run begins and ends.
 CLAUDE_MODELS = ['claude-fable-5-2', 'claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5']
 launching = set()  # starts being run here now
+AG_MODELS = DIR / 'antigravity-models.json'  # Antigravity's models as it last listed them
 LAUNCHES = DIR / 'launches.json'  # the starts run here: whose, on which app, its conversation (for their token use)
 launches_lock = threading.Lock()
 
@@ -1786,7 +1787,16 @@ def inventory():
         inv['codex'] = {'models': models}
     if agentapi_command():
         server = antigravity_server()
-        inv['antigravity'] = {'running': bool(server), 'models': antigravity_models(server) if server else []}
+        # Its models as it last listed them, while it's closed too, so a role's Launch can offer them.
+        models = antigravity_models(server) if server else []
+        try:
+            if models:
+                AG_MODELS.write_text(json.dumps(models), encoding='utf-8')
+            else:
+                models = json.loads(AG_MODELS.read_text(encoding='utf-8'))
+        except Exception:
+            pass
+        inv['antigravity'] = {'running': bool(server), 'models': models}
     token = grok_token()
     if token:
         inv['grok'] = {'signed_in': True, 'bots': grok_bots(token)}

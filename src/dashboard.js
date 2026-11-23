@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3fbb3627';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=3fbb3627';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3fbb3627';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3464e464';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=3464e464';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3464e464';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -904,8 +904,8 @@ export function mountDashboard(funnels, opts = {}) {
     const model = grok ? (botOpts.length
       ? `<select class="ex-bot" data-tip="${esc(t('launch.inBot'))}"><option value="">${esc(t('launch.pickBot'))}</option>${botOpts.map(b => `<option value="${esc(b.id)}"${b.id === e.bot_id ? ' selected' : ''}>${esc(b.name || b.id)}</option>`).join('')}</select>`
       : `<input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128" data-tip="${esc(t('launch.inBot'))}">`)
-      : `<select class="ex-model"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option value="${esc(m)}"${m === e.model ? ' selected' : ''}>${esc(modelName(m))}</option>`).join('')}</select>`
-        + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value=""></option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
+      : `<select class="ex-model" data-tip="${esc(t(e.app === 'antigravity' ? 'launch.agModelTip' : 'launch.modelTip'))}"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option value="${esc(m)}"${m === e.model ? ' selected' : ''}>${esc(modelName(m))}</option>`).join('')}</select>`
+        + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value="">${esc(t('launch.anyModel'))}</option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
     if (e.missing) return `<div class="ex-row missing" data-app="${esc(e.app)}" data-tip="${esc(t('launch.notInstalled', APP_NAMES[e.app] ?? e.app, e.missing))}">
       <div class="ex-top">${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b></div></div>`;
     return `<div class="ex-row" data-app="${esc(e.app)}">

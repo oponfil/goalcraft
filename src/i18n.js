@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=3fbb3627';
-import vi from './lang/vi.js?v=3fbb3627';
-import ja from './lang/ja.js?v=3fbb3627';
-import pt from './lang/pt.js?v=3fbb3627';
-import tr from './lang/tr.js?v=3fbb3627';
-import ko from './lang/ko.js?v=3fbb3627';
+import es from './lang/es.js?v=3464e464';
+import vi from './lang/vi.js?v=3464e464';
+import ja from './lang/ja.js?v=3464e464';
+import pt from './lang/pt.js?v=3464e464';
+import tr from './lang/tr.js?v=3464e464';
+import ko from './lang/ko.js?v=3464e464';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -458,8 +458,10 @@ const STRINGS = {
   'launch.inBot': L('The bot that works the role. Its model and access are set in the bot itself.', 'Бот, который работает за роль. Модель и доступ задаются в самом боте.'),
   'launch.pickBot': L('Choose a bot', 'Выберите бота'),
   'launch.bot': L('bot id', 'id бота'),
-  'launch.anyModel': L('default model', 'модель по умолчанию'),
-  'launch.effort': L('effort', 'усилие'),
+  'launch.anyModel': L('as in the app', 'как в приложении'),
+  'launch.modelTip': L('The model. As in the app: the one chosen in the app itself.', 'Модель. «Как в приложении» — та, что выбрана в самом приложении.'),
+  'launch.agModelTip': L('The model and how hard it thinks: in Antigravity that is part of its name, e.g. Gemini 4 Argon (High). As in the app: the one chosen there.', 'Модель и уровень рассуждений: у Antigravity он входит в название модели, например Gemini 4 Argon (High). «Как в приложении» — та, что выбрана в самом приложении.'),
+  'launch.effort': L('How hard it thinks (effort). As in the app: as set there.', 'Уровень рассуждений (effort). «Как в приложении» — как выставлено там.'),
   'launch.turnOn': L('Turn on', 'Включить'),
   'launch.turnOff': L('Turn off', 'Выключить'),
   'launch.runNow': L('Run now', 'Запустить сейчас'),
