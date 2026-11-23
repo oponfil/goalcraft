@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=e180fe5d';
-import vi from './lang/vi.js?v=e180fe5d';
-import ja from './lang/ja.js?v=e180fe5d';
-import pt from './lang/pt.js?v=e180fe5d';
-import tr from './lang/tr.js?v=e180fe5d';
-import ko from './lang/ko.js?v=e180fe5d';
+import es from './lang/es.js?v=3f71f6f3';
+import vi from './lang/vi.js?v=3f71f6f3';
+import ja from './lang/ja.js?v=3f71f6f3';
+import pt from './lang/pt.js?v=3f71f6f3';
+import tr from './lang/tr.js?v=3f71f6f3';
+import ko from './lang/ko.js?v=3f71f6f3';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -415,8 +415,9 @@ const STRINGS = {
   'board.usageShare': L((p) => `${p} of limit`, (p) => `${p} лимита`, (p) => `占额度 ${p}`, (p) => `${p} ของโควตา`),
   'board.openTip': L((a, b, n) => `Total ${a} · open ${b} · went on ${n}`, (a, b, n) => `Всего ${a} · в работе ${b} · дальше ${n}`, (a, b, n) => `共 ${a} · 进行中 ${b} · 已进入下一步 ${n}`, (a, b, n) => `ทั้งหมด ${a} · กำลังดำเนินการ ${b} · ไปต่อ ${n}`),
   'board.dropTip': L((d) => `dropped ${d}`, (d) => `выбыли ${d}`, (d) => `已流失 ${d}`, (d) => `หลุดไป ${d}`),
-  'board.flowTip': L((v, u) => `${v} ${u}, on average over the last 7 days`, (v, u) => `${v} ${u}, в среднем за последние 7 дней`, (v, u) => `${u} ${v}（最近 7 天平均）`, (v, u) => `${v} ${u} (เฉลี่ย 7 วันล่าสุด)`),
-  'board.flowSet': L((v, u) => `${v} ${u}, set by hand`, (v, u) => `${v} ${u}, задано вручную`, (v, u) => `${u} ${v}（手动设置）`, (v, u) => `${v} ${u} (ตั้งเอง)`),
+  'board.flowDay': L((v) => `${v} in 24 hours`, (v) => `${v} за 24 часа`, (v) => `24 小时 ${v}`, (v) => `${v} ใน 24 ชั่วโมง`),
+  'board.flowTip': L((v, u) => `${v} ${u} (by the last 24 hours)`, (v, u) => `${v} ${u} (по последним 24 часам)`, (v, u) => `${u} ${v}（按最近 24 小时）`, (v, u) => `${v} ${u} (ตาม 24 ชั่วโมงล่าสุด)`),
+  'board.flowSet': L((v, u) => `${v} ${u} (set by hand)`, (v, u) => `${v} ${u} (задано вручную)`, (v, u) => `${u} ${v}（手动设置）`, (v, u) => `${v} ${u} (ตั้งเอง)`),
   'board.usageLimit': L((p, d) => (d === 7 ? `${p} of the weekly limit` : `${p} of the ${d}-day limit`), (p, d) => (d === 7 ? `${p} недельного лимита` : `${p} лимита на ${d} дн.`), (p, d) => (d === 7 ? `每周额度已用 ${p}` : `${d} 天额度已用 ${p}`), (p, d) => (d === 7 ? `ใช้ ${p} ของโควตารายสัปดาห์` : `ใช้ ${p} ของโควตา ${d} วัน`)),
   'board.runNow': L('running', 'идёт', '进行中', 'กำลังรัน'),
   // A supervisor that gave itself no name: by its funnel.

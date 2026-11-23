@@ -1,13 +1,12 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=e180fe5d';
+import { supabase } from './auth.js?v=3f71f6f3';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
 
-// Flow of one reported value (a stage count or the results), per day: how much it grew over the
-// last 7 days, an average per day. Only increases count, so a stage that items leave does not read
-// as negative. With less than a day of history the growth so far counts as one day's: +1 in the
-// first hour is +1/d, not +24/d. Until there are two reports to compare it is 0: "+0/d".
+// Flow of one reported value (a stage count or the results), per day: how much it grew in the last
+// 24 hours. Only increases count, so a stage that items leave does not read as negative. Until
+// there are two reports to compare it is 0: "+0".
 // Every row of a query, page by page: the database gives at most 1000 rows at a time, and the count
 // reports run to thousands a week. query() builds the query afresh for each page.
 async function all(query, page = 1000) {
@@ -20,12 +19,13 @@ async function all(query, page = 1000) {
   }
 }
 
+// Its reports' rises in the last 24 hours added up (a report before them is where the first one rose from).
 function flowOf(reports, now) {
-  if (reports.length < 2) return 0;
   let grew = 0;
-  for (let i = 1; i < reports.length; i++) grew += Math.max(0, reports[i].value - reports[i - 1].value);
-  const days = Math.max(1, (now - Date.parse(reports[0].at)) / DAY);
-  return grew / days;
+  for (let i = 1; i < reports.length; i++) {
+    if (now - Date.parse(reports[i].at) <= DAY) grew += Math.max(0, reports[i].value - reports[i - 1].value);
+  }
+  return grew;
 }
 
 // Rows from the database → the funnels the scene draws (same shape as the demo in src/data.js).

@@ -105,11 +105,11 @@ Every reading below is **automatic** by default. An agent can set the flows **by
 
 Unless an agent set them by hand, flows and forecasts come from the count history (agents see current counts in `list_funnels`, not this history):
 
-- **Flow** of a zone (`+14` by the number of the tank it feeds): how much the count of that stage grew over the last 7 days, averaged per day; the board shows it per hour, day or week, as the person picks, without the unit. With less than a day of history the growth so far counts as one day's, so the first reports don't extrapolate (+1 in an hour is +1/d, not +24/d).
+- **Flow** of a zone (`+14` by the number of the tank it feeds): how much the count of that stage grew in the last 24 hours; the board shows it per hour, day or week, as the person picks, without the unit.
 - **Pace** of the output zone: what the results' flow brings by the goal's date ÷ the results still missing (the date is `goal.due`). It colours the `next` line under the results.
 - **Output zone**: its flow is results per day (from the `results` history), shown next to the results count under the funnel, and the `next` line under the results gives the estimated time to the next result, coloured by pace (red far behind, yellow close, green on pace, bright green well ahead).
 - **Tank fill** (a heap of pieces rising from the bottom, a liquid in the lab): items at a stage so far ÷ items needed there for the whole goal (`goal.total` results). "Needed" comes from the conversion between the tanks' counts below it: the next stage's count ÷ this stage's (the results for the last stage). Where either is still 0, a default conversion of 30% stands in, so a tank shows a level from the first report.
-- **No flow yet**: a flow with fewer than two reports in the last 7 days counts as 0, so the tank shows `+0` until reports come in (or the agent sets `flow_per_day`).
+- **No flow yet**: a flow with no rise between reports in the last 24 hours counts as 0, so the tank shows `+0` until reports come in (or the agent sets `flow_per_day`).
 
 ## Heartbeat: one timer for every agent
 

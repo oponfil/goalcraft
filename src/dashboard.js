@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=e180fe5d';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=e180fe5d';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=e180fe5d';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3f71f6f3';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=3f71f6f3';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3f71f6f3';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -696,6 +696,11 @@ export function mountDashboard(funnels, opts = {}) {
     else {
       const f = scene.funnels[h.fi], s = f.stages[h.j], label = plural(s.count, s.forms);
       let text = label.charAt(0).toLocaleUpperCase(lang) + label.slice(1);  // Turkish: i → İ
+      // Its name with its +N, what the +N under the tank means: the growth in the last 24 hours, per
+      // hour, day or week as the person picked (or as set by hand). "Jobs found: +43 in 24 hours".
+      const flow = f.flows?.[h.j], unit = t(`flow.${flowUnit}`);
+      if (flow != null) text += ': ' + (f.flowSet?.[h.j] ? t('board.flowSet', fmtFlow(flow), unit)
+        : flowUnit === 'd' ? t('board.flowDay', fmtFlow(flow)) : t('board.flowTip', fmtFlow(flow), unit));
       // With the open ones known: how many reached it, are still open and went on (the next tank's
       // count), and those that dropped out here when there are any. One turned down at a later step
       // went on (it is the next tank's) and drops out there.
@@ -704,10 +709,6 @@ export function mountDashboard(funnels, opts = {}) {
         const dropped = s.count - open - next;
         text += '\n' + t('board.openTip', fmtCount(s.count), fmtCount(open), fmtCount(next)) + (dropped > 0 ? ' · ' + t('board.dropTip', fmtCount(dropped)) : '');
       }
-      // The +N under the tank: per hour, day or week as the person picked, the last 7 days' average
-      // (or as set by hand).
-      const flow = f.flows?.[h.j];
-      if (flow != null) text += '\n' + t(f.flowSet?.[h.j] ? 'board.flowSet' : 'board.flowTip', fmtFlow(flow), t(`flow.${flowUnit}`));
       tip.textContent = text;
     }
     tip.hidden = false;
