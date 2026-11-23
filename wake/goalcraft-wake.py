@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-23.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-23.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -117,10 +117,12 @@ PROBLEM_HOURS = {'cant_wake': 1, 'wake_failed': 24}  # a passing trouble fades u
 
 
 def problem(code, level=None, agent=None, why=None):
-    """Note a problem (level 'error' or 'warning'), or with no level clear it."""
+    """Note a problem (level 'error' or 'warning'), or with no level clear it (with no agent, for every
+    agent: say, Antigravity running again clears what it kept from waking each of its agents)."""
     key = f'{code}:{agent}' if agent else code
     if level is None:
-        problems.pop(key, None)
+        for k in [k for k in problems if k == key or (not agent and k.startswith(code + ':'))]:
+            problems.pop(k)
     else:
         hours = PROBLEM_HOURS.get(code)
         problems[key] = {'code': code, 'level': level, **({'agent': agent} if agent else {}),
@@ -827,6 +829,7 @@ def report_antigravity_limit(key, show=False):
     server = antigravity_server()
     if not server:
         return False  # the app isn't running: nothing to read, and nothing to log every reading
+    problem('antigravity_off')  # it runs: a warning from when it didn't goes
     ctx = ssl.create_default_context()
     ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE  # its own certificate, on 127.0.0.1
     def ask(method, body=b'{}'):

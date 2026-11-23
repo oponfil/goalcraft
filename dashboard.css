@@ -95,12 +95,12 @@ body {
   border: 2px solid var(--border);
   padding: 4px 8px;
   font-size: 13px;
-  white-space: nowrap;
+  white-space: pre;  /* a tank's lines as they are */
 }
 #tip[hidden] { display: none; }
 /* Over a card: a cost's tokens by kind, one per line, above the card. */
 /* A card's hint: its own lines, and a long one wraps rather than running across the screen. */
-#tip.over { z-index: 40; white-space: pre-wrap; max-width: min(300px, calc(100vw - 16px)); line-height: 1.5; }
+#tip.over { z-index: 40; white-space: pre-wrap; overflow-wrap: anywhere; max-width: min(300px, calc(100vw - 16px)); line-height: 1.5; }
 #pop [data-tip] { cursor: help; }
 #pop .btn[data-tip], #pop button[data-tip], #pop .pick[data-tip] { cursor: pointer; }
 #pop {
@@ -190,6 +190,9 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .run-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; gap: 10px; padding: 3px 0; }
 #pop .run-row .by { color: var(--muted); white-space: nowrap; font-size: 12px; }
 #pop .run-row .by .warn { color: #F2A33C; }
+/* A run's result opens the conversation it was worked in: underlined as a link. */
+#pop .run-row a.run-chat { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: 3px; cursor: pointer; }
+#pop .run-row a.run-chat:hover { text-decoration-color: currentColor; }
 #pop .run-row > span:nth-child(3) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #pop .run-row .at, #pop .run-row .took { color: var(--muted); white-space: nowrap; }
 .pop-msg { color: var(--alert); margin-top: 6px; }

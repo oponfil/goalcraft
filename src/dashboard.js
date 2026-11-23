@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7bb6f3c6';
-import { Scene, CW, fmtCount, fmtDuration } from './scene.js?v=7bb6f3c6';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7bb6f3c6';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=e180fe5d';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow } from './scene.js?v=e180fe5d';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=e180fe5d';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -18,7 +18,7 @@ const openLabel = (link, info) => {
 // ("in the ChatGPT (Codex) app · conversation 01a1351e…"), or that it sent no link to one, so the button
 // opens the app or a new chat. mine: the agent's own link (or the question's), if any. Live board
 // only: the demo's agents have no chats of their own.
-const shortId = s => (s.length > 12 ? `${s.slice(0, 8)}…` : s);
+const shortId = s => s;  // whole: the hint wraps
 const whereTip = (mine, info, inAntigravity) => {
   let m;
   if ((m = /^codex:\/\/threads\/([\w-]+)/.exec(mine || ''))) return t('board.chatApp', 'ChatGPT (Codex)', shortId(m[1]));
@@ -690,19 +690,24 @@ export function mountDashboard(funnels, opts = {}) {
   let tipTimer;
   function showTip(e, h) {
     tip.classList.remove('over');
-    tip.style.whiteSpace = 'pre';
     if (h.type === 'result') tip.textContent = h.title;
     else if (h.type === 'source') tip.textContent = t('board.sheet', sheetPlace(h.url));
     else if (h.type === 'guide') tip.textContent = t('board.guide', sheetPlace(h.url));
     else {
       const f = scene.funnels[h.fi], s = f.stages[h.j], label = plural(s.count, s.forms);
       let text = label.charAt(0).toLocaleUpperCase(lang) + label.slice(1);  // Turkish: i → İ
-      // With the open ones known: how many reached it, are still open, dropped (those that went on are
-      // the next tank's count).
+      // With the open ones known: how many reached it, are still open and went on (the next tank's
+      // count), and those that dropped out here when there are any. One turned down at a later step
+      // went on (it is the next tank's) and drops out there.
       if (s.active != null) {
         const open = Math.min(s.active, s.count), next = Math.min(s.count - open, h.j + 1 < f.stages.length ? f.stages[h.j + 1].count : f.cubes ?? 0);
-        text += '\n' + t('board.openTip', fmtCount(s.count), fmtCount(open), fmtCount(Math.max(0, s.count - open - next)));
+        const dropped = s.count - open - next;
+        text += '\n' + t('board.openTip', fmtCount(s.count), fmtCount(open), fmtCount(next)) + (dropped > 0 ? ' · ' + t('board.dropTip', fmtCount(dropped)) : '');
       }
+      // The +N under the tank: per hour, day or week as the person picked, the last 7 days' average
+      // (or as set by hand).
+      const flow = f.flows?.[h.j];
+      if (flow != null) text += '\n' + t(f.flowSet?.[h.j] ? 'board.flowSet' : 'board.flowTip', fmtFlow(flow), t(`flow.${flowUnit}`));
       tip.textContent = text;
     }
     tip.hidden = false;
@@ -929,7 +934,6 @@ export function mountDashboard(funnels, opts = {}) {
       ${computer}
       <p class="pop-note l-apps">${esc(t('launch.appsNote'))}</p>
       <div class="ex-list">${shownExecutors(l, main).map(e => exRow(e, apps)).join('')}</div>
-      <div class="ask-buttons"><button class="btn primary l-save">${esc(t('launch.save'))}</button></div>
     </details><div class="pop-msg l-msg"></div></div>`;
   }
   function bindLaunch(a) {
@@ -967,8 +971,13 @@ export function mountDashboard(funnels, opts = {}) {
       list.insertBefore(dragged, e.clientY > r.top + r.height / 2 ? over.nextSibling : over);
     });
     list.addEventListener('drop', e => e.preventDefault());
-    list.addEventListener('dragend', () => { dragged?.classList.remove('dragging'); dragged = null; });
-    box.querySelector('.l-save').addEventListener('click', async e => {
+    list.addEventListener('dragend', () => { if (!dragged) return; dragged.classList.remove('dragging'); dragged = null; save(); });
+    // Every change is saved at once (no Save button): a switch, a list, the times once typed (on
+    // leaving the field or Enter), the order once dropped. Saves go one after another.
+    let saving = Promise.resolve();
+    const save = () => (saving = saving.then(saveNow));
+    box.addEventListener('change', e => { if (!e.target.closest('.l-run')) save(); });
+    const saveNow = async () => {
       const on = box.querySelector('.l-on').checked, text = box.querySelector('.l-times').value;
       const schedule = text.trim() ? cronOf(text) : null;
       if (text.trim() && !schedule) return say(t('launch.badTimes'));
@@ -980,11 +989,10 @@ export function mountDashboard(funnels, opts = {}) {
       const patch = { schedule, schedule_on: on && !!schedule, mode: box.querySelector('.l-even').checked ? 'even' : 'priority' };
       const pc = box.querySelector('.l-computer');
       if (pc) patch.computer = pc.value;
-      e.target.disabled = true;
       const error = await opts.onLaunch(a, patch, executors);
-      e.target.disabled = false;
+      if (!error) Object.assign(l, patch, { executors });
       say(error || t('launch.saved'), !error);
-    });
+    };
     // Run now sits on Launch's own line: it starts the role, and doesn't open or close the settings.
     box.querySelector('.l-run').addEventListener('click', async e => {
       e.preventDefault(); e.stopPropagation();
@@ -999,16 +1007,26 @@ export function mountDashboard(funnels, opts = {}) {
 
   // The runs list: when each run started, how long it took (or that it is still going) and what it
   // added to the items its zone works into.
-  // The last week's spending: its cost at API prices and, when known, its share of the plan's weekly
-  // limit (as Codex logged it; for Claude, its cost at the measured rate). Hovering shows tokens.
+  // What a run found or added, as a link to the conversation it was worked in (when its agent sent
+  // one), saying on hover which app and conversation that is.
+  const runChat = (a, r, app, found) => {
+    const url = r.chat_url;
+    if (!url || !opts.live) return `<span>${found}</span>`;
+    const inAntigravity = /^antigravity:/i.test(url), inGrokBot = /^grokbot:/i.test(url);
+    const base = agentInfo(a.agent, { provider: a.provider, chat: url, app });
+    const info = inAntigravity ? { ...base, product: 'Antigravity', app: null } : inGrokBot ? { ...base, product: 'Grok Bot' } : base;
+    const link = chatLink(info, url);
+    if (!link) return `<span>${found}</span>`;
+    const tip = t('board.runChat') + '\n' + whereTip(url, info, inAntigravity);
+    return `<span><a class="run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${found || esc(t('board.runChatShort'))}</a></span>`;
+  };
+  // The last week's spending, in dollars at API prices (tokens when no price is known), with the tokens
+  // by kind on hover. No share of a plan's limit: a role may work on several apps, each with its own.
   const weekLine = u => {
-    if (!u) return '';
-    const share = u.limit_used != null ? fmtPercent(u.limit_used) : null;
-    const tip = [u.cost != null && t('board.usageCost', fmtCost(u.cost)), usageTip(u, share)].filter(Boolean).join('\n');
-    if (!counted(u)) return share ? `<p class="pop-note usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', t('board.usageShare', share)))}</p>` : '';
+    if (!u || !counted(u)) return '';
+    const tip = [u.cost != null && t('board.usageCost', fmtCost(u.cost)), usageTip(u, null)].filter(Boolean).join('\n');
     const what = u.cost != null ? fmtCost(u.cost) : t('board.tokens', fmtTokens(u.tokens));
-    // One line: "Spent in 7 days: $695 · 31.1% of limit"; the prices and tokens behind it on hover.
-    return `<p class="pop-note usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', what))}${share ? ` · ${esc(t('board.usageShare', share))}` : ''}</p>`;
+    return `<p class="pop-note usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', what))}</p>`;
   };
   // A week of the demo's runs added up, when the agent has no count from the wake script.
   const weekOf = rows => {
@@ -1033,25 +1051,21 @@ export function mountDashboard(funnels, opts = {}) {
         const dayHm = new Intl.DateTimeFormat(lang, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
         const today = new Date().toDateString();
         const when = { format: d => (d.toDateString() === today ? hm : dayHm).format(d) };
-        // Each run at API prices; hovering one shows its tokens by kind and its share of the plan's
-        // limit: the week's share spread over the runs by their cost, to a tenth.
-        const u = a.usage || weekOf(rows);
-        const perDollar = u?.limit_used != null && u.cost > 0 ? u.limit_used / u.cost : null;
-        const runLimit = ru => perDollar != null && ru.cost != null ? fmtPercent(ru.cost * perDollar)
-          : ru.limit_used != null ? fmtPercent(ru.limit_used) : null;
+        // Each run at API prices; hovering one shows its tokens by kind.
         list.innerHTML = (rows.length ? rows.map(r => {
           const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
           // A supervisor's run says what it found; a worker's run, what it added.
-          const what = a.sup ? `<span>${r.status ? supStatus(r.status) : ''}</span>`
-            : `<span><b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}</span>`;
-          const ru = r.usage, share = ru && runLimit(ru);
-          const tok = ru && (counted(ru) || share) ? `<span class="tok" data-tip="${esc(usageTip(ru, share))}">${esc(
-            ru.cost != null ? fmtCost(ru.cost) : counted(ru) ? t('board.tokens', fmtTokens(ru.tokens)) : t('board.usageShare', share))}</span>` : '';
-          // A run Goalcraft started: on which app and model, and how it ended when not as it should.
-          const end = r.launch?.outcome, bad = end === 'silent' ? t('launch.silent') : end === 'not_started' ? t('launch.notStarted') : end === 'failed' ? t('launch.failed') : '';
-          const by = r.app ? `<span class="by">${appMark(r.app, r.model, r.launch?.effort)}${bad ? `<span class="warn">${esc(bad)}</span>` : ''}</span>` : '';
+          const found = a.sup ? (r.status ? supStatus(r.status) : '')
+            : `<b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}`;
+          const ru = r.usage;
+          const tok = ru && counted(ru) ? `<span class="tok" data-tip="${esc(usageTip(ru, null))}">${esc(
+            ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)))}</span>` : '';
+          // On which app and model (a run Goalcraft didn't start: the app its tokens were counted on), and
+          // how a run Goalcraft started ended when not as it should.
+          const app = r.app ?? ru?.app, end = r.launch?.outcome, bad = end === 'silent' ? t('launch.silent') : end === 'not_started' ? t('launch.notStarted') : end === 'failed' ? t('launch.failed') : '';
+          const by = app ? `<span class="by">${appMark(app, r.model ?? ru?.model, r.launch?.effort)}${bad ? `<span class="warn">${esc(bad)}</span>` : ''}</span>` : '';
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
-            ${what}${by}${tok}</div>`;
+            ${runChat(a, r, app, found)}${by}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
         pop.style.top = Math.max(8, Math.min(window.innerHeight - pop.offsetHeight - 8, pop.offsetTop)) + 'px';
       } catch { list.textContent = t('board.runsFailed'); delete list.dataset.loaded; }

@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=7bb6f3c6';
+import { supabase } from './auth.js?v=e180fe5d';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -48,6 +48,7 @@ function toScene(f, reports, now, usage = []) {
     // active: how many of them are open now (may still go on), when the agent says.
     stages: stages.map(s => ({ key: s.key, count: Number(s.count), active: s.active == null ? null : Math.min(Number(s.active), Number(s.count)), forms: s.label })),
     // Flow per day: set by the agent, or the growth between its reports.
+    flowSet: [...stages.map(s => s.flow_per_day != null), f.output_flow_per_day != null],
     flows: [...stages.map(s => (s.flow_per_day != null ? Number(s.flow_per_day) : flowOf(series(s.key), now))),
       f.output_flow_per_day != null ? Number(f.output_flow_per_day) : flowOf(series(null), now)],
     // Tank fill an agent set by hand, 0-1 (null = computed).
@@ -314,7 +315,7 @@ export async function spending(from) {
 export async function runs(a) {
   const week = new Date(Date.now() - 7 * DAY).toISOString();
   const { data, error } = await all(() => supabase.from('agent_runs')
-    .select('zone, started_at, ended_at, added, status, summary, app, model, launch:role_launches!agent_runs_launch_id_fkey (reason, outcome, effort, computer)')
+    .select('zone, started_at, ended_at, added, status, summary, app, model, chat_url, launch:role_launches!agent_runs_launch_id_fkey (reason, outcome, effort, computer)')
     .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('started_at', week)
     .order('started_at', { ascending: false }));
   if (error) throw error;

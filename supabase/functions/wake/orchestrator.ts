@@ -219,12 +219,10 @@ export async function dispatch(admin: any, user: string, key: Row) {
         }
       }
     }
-    // While nobody works it, the role sleeps in the shirt of the one who would take its next start.
+    // While nobody works it, the role sleeps as the one who worked it last (its shirt and its chat, so the
+    // person can open what it did); the next start wakes it as the one who takes that start.
     if (!busy && p && (p.state === 'sleep' || p.state === 'pause')) {
-      const next = choose(role, mine, keys.data ?? [], q, now, horizon - now)
-      const shirt = next ? PROVIDER[next.app] : null
       const patch: Row = {}
-      if (shirt && p.provider !== shirt) patch.provider = shirt
       if (scheduled && p.state === 'sleep') {
         const at = cronNext(role.schedule, role.time_zone, new Date(now))?.toISOString() ?? null
         if (at && p.next_run_at !== at && Date.parse(p.next_run_at ?? '0') !== Date.parse(at)) patch.next_run_at = at

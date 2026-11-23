@@ -420,6 +420,8 @@ function server(db: Db, caller: Caller) {
     const found: Record<string, unknown> = { ...(a.status && { status: a.status }), ...(a.summary && { summary: a.summary }) }
     if (a.status && !a.summary) found.summary = null
     if (Object.keys(found).length) check(await openRun(db, f.id, a.agent).update(found))
+    // The run's own conversation, so its row in the card opens the chat it was worked in.
+    if (chat_url) check(await openRun(db, f.id, a.agent).update({ chat_url }))
     if (state === 'sleep' || state === 'pause') {
       check(await endRun(db, f.id, a.agent))
       if (role) await endLaunches(caller.admin, f.id, a.agent)
