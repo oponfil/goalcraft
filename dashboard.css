@@ -373,6 +373,8 @@ html:lang(ko) { --font: "Rubik", "Noto Sans KR", system-ui, sans-serif; }
 .agent-note button { position: absolute; top: 3px; right: 4px; background: none; border: 0; color: var(--muted); font: 16px/1 var(--font); cursor: pointer; padding: 2px 3px; }
 .agent-note button:hover { color: var(--text); }
 .agent-note[hidden] { display: none; }
+/* A long reply scrolls inside the note (about seven lines), so its × always shows. */
+.agent-note span { display: block; max-height: 9.5em; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #6B5A48 transparent; }
 /* On a phone the refresh button stays, as an icon only. */
 @media (max-width: 560px) { .sitebar .refresh { padding: 4px 7px; } }
 
