@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=99d8bead';
+import { supabase } from './auth.js?v=6e1df008';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -348,43 +348,53 @@ export async function runs(a) {
   // the next one: the short runs that answered a message or the person's answer, and the person's own
   // talk in its chat, are part of it. It shows from that start, with their time, items and cost added up,
   // the last word said, and the start's own chat. A role with no schedule: each run on its own.
+  // A run in a conversation an earlier run worked in (the person wrote there, in its app) belongs to
+  // that run, however late: with a new conversation every start, the old one's talk is the old run's.
+  // Others (a start that answered a message, in a conversation of its own) belong to the run going then.
+  // With one conversation for all starts, that is the run going then too.
   const scheduled = a.launch?.schedule && a.launch?.schedule_on;
-  const groups = [];
+  const chatId = url => (url && (url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0] ?? url)) || null;
+  const groups = [], byChat = new Map();
   for (const r of [...data].reverse()) {
     const starts = !scheduled || ['schedule', 'manual'].includes(r.launch?.reason) || !groups.length;
-    if (starts) groups.push([r]); else groups[groups.length - 1].push(r);
+    const g = starts ? null : byChat.get(chatId(r.chat_url)) ?? groups[groups.length - 1];
+    if (g) g.push(r); else groups.push([r]);
+    if (chatId(r.chat_url)) byChat.set(chatId(r.chat_url), g ?? groups[groups.length - 1]);
   }
+  for (const g of groups) g.sort((x, y) => Date.parse(x.started_at) - Date.parse(y.started_at));
   const merged = groups.map(g => {
     const first = g[0], last = g[g.length - 1];
-    if (g.length === 1) return first;
+    if (g.length === 1) return { ...first, members: g };
     const secs = r => ((r.ended_at ? Date.parse(r.ended_at) : Date.now()) - Date.parse(r.started_at)) / 1000;
     const said = [...g].reverse().find(r => r.status);
     // Gone wrong only when every start in it did (one that went silent, then answered, did its work).
     const bad = g.filter(r => r.launch).every(r => ['silent', 'not_started', 'failed'].includes(r.launch.outcome));
-    return { ...first, ended_at: last.ended_at, took: g.reduce((n, r) => n + secs(r), 0), parts: g.length,
+    return { ...first, members: g, ended_at: last.ended_at, took: g.reduce((n, r) => n + secs(r), 0), parts: g.length,
       added: g.reduce((n, r) => n + (r.added || 0), 0), status: said?.status ?? first.status, summary: said?.summary ?? first.summary,
       launch: first.launch && { ...first.launch, outcome: bad ? first.launch.outcome : 'done' } };
   });
   data.splice(0, data.length, ...merged.reverse());
-  // Each run's tokens: every stretch the wake script counted goes to the one run it overlaps most
-  // (a few minutes' slack for the agent's first and last signal).
+  // Each run's tokens: every stretch the wake script counted goes to the one of its parts it overlaps
+  // most (a few minutes' slack for the agent's first and last signal), so to the run that part is in.
   const from = data[data.length - 1].started_at;
+  const parts = data.flatMap((r, i) => r.members.map(m => [m, i]));
+  const bare = ({ members, ...r }) => r;
   const { data: usedRows } = await all(() => supabase.from('agent_usage').select('app, model, started_at, ended_at, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_used, limit_percent, limit_window_minutes')
     .eq('funnel_id', a.f.id).eq('agent', a.agent).gte('ended_at', from).order('ended_at').order('run_key'));
   const used = usedRows?.map(withLimit);
-  if (!used?.length) return data;
+  if (!used?.length) return data.map(bare);
   const pad = 5 * 60e3, mine = data.map(() => []);
   const span = r => [Date.parse(r.started_at) - pad, (r.ended_at ? Date.parse(r.ended_at) : Date.now()) + pad];
   for (const u of used) {
     const us = Date.parse(u.started_at), ue = Date.parse(u.ended_at);
     let best = -1, most = 0;
-    data.forEach((r, i) => {
+    for (const [r, i] of parts) {
       const [s, e] = span(r), o = Math.min(ue, e) - Math.max(us, s);
       if (o >= 0 && (best < 0 || o > most)) { best = i; most = o; }
-    });
+    }
     if (best >= 0) mine[best].push(u);
   }
-  return data.map((r, i) => mine[i].length ? { ...r, usage: { ...kinds(mine[i]),
+  return data.map(bare).map((r, i) => mine[i].length ? { ...r, usage: { ...kinds(mine[i]),
     cost: mine[i].some(u => u.cost_usd != null) ? mine[i].reduce((n, u) => n + Number(u.cost_usd ?? 0), 0) : null } } : r);
 }
 
