@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=74b93da4';
+import { supabase } from './auth.js?v=b632bc9a';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -362,7 +362,8 @@ export async function history(f, j) {
 // The person changed how Goalcraft starts a role, in its card: its settings, and its executors in order.
 export async function saveLaunch(a, patch, executors) {
   const role = { funnel_id: a.f.id, agent: a.agent };
-  const up = await supabase.from('role_launch').update(patch).match(role);
+  // An agent Goalcraft didn't start yet becomes a role on its first save.
+  const up = await supabase.from('role_launch').upsert({ ...role, ...patch }, { onConflict: 'funnel_id,agent' });
   if (up.error) return up.error.message;
   if (executors) {
     const del = await supabase.from('role_executors').delete().match(role);

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=74b93da4';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=74b93da4';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=74b93da4';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=b632bc9a';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=b632bc9a';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=b632bc9a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -948,8 +948,10 @@ export function mountDashboard(funnels, opts = {}) {
   // schedule off (the role waits on pause; Run now still starts it).
   const launchTitle = (on, schedule) => (on && schedule ? `${t('launch.title')} · ${timesOf(schedule)}` : t('launch.paused'));
   function launchHtml(a) {
-    const l = a.launch;
-    if (!l || !opts.onLaunch) return '';
+    if (!opts.onLaunch) return '';
+    // Every agent has Launch: one Goalcraft doesn't start yet opens on pause, with no executor on, and
+    // becomes a role on its first save.
+    const l = a.launch ??= { schedule: null, schedule_on: false, mode: 'priority', quota_limit: 95, computer: null, guide_url: null, executors: [] };
     const apps = opts.launchApps?.() ?? {}, pcs = opts.launchComputers?.() ?? [];
     // The main computer: the one chosen, else the first one set up.
     const main = pcs.find(c => c.name === l.computer) ?? pcs[0];
@@ -1046,6 +1048,7 @@ export function mountDashboard(funnels, opts = {}) {
       e.preventDefault(); e.stopPropagation();
       const link = e.currentTarget;
       if (link.classList.contains('busy')) return;
+      if (!a.launch.executors.some(x => x.enabled !== false)) return say(t('launch.noExecutors'));
       link.classList.add('busy');
       const error = await opts.onRunNow(a);
       link.classList.remove('busy');
