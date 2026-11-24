@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=e5a83225';
+import { supabase } from './auth.js?v=9b820ba9';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -193,9 +193,11 @@ function limitRate(rows, min = { usd: Infinity, pct: Infinity }) {
   const same = r => r.week_resets_at && last?.week_resets_at && Math.abs(Date.parse(r.week_resets_at) - Date.parse(last.week_resets_at)) < 3600e3;
   const ref = rows.findLast(r => Number(r.window_cost_usd) > 0.5 && same(r));
   const windowRate = ref && Number(ref.week_percent) >= min.pct ? Number(ref.week_percent) / Number(ref.window_cost_usd) : null;
-  // Used now: the most of this window's readings, since a week's use only grows (a reading behind the
-  // others, from an app that answered with an old figure, doesn't pull it back).
-  const week = last ? Math.max(...rows.filter(same).map(r => Number(r.week_percent)), Number(last.week_percent)) : null;
+  // Used now: the most of this window's readings in the last half hour (a reading behind the others,
+  // from an app that answered with an old figure, doesn't pull it back). Only those: a limit can be
+  // reset within its week (its reset time stays), and the readings from before must not hold it up.
+  const recent = r => same(r) && Date.parse(last.at) - Date.parse(r.at) <= 30 * 60e3;
+  const week = last ? Math.max(...rows.filter(recent).map(r => Number(r.week_percent)), Number(last.week_percent)) : null;
   return { perDollar: windowRate ?? (usd >= min.usd && pct >= min.pct ? pct / usd : null), week, resets: last?.week_resets_at ? Date.parse(last.week_resets_at) : null };
 }
 // A run's share of its plan's weekly limit, from its cost (Claude, Antigravity); Codex runs keep what Codex logged,
