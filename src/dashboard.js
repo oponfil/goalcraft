@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=dd1c4344';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=dd1c4344';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=dd1c4344';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=9b6c8624';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=9b6c8624';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9b6c8624';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -860,7 +860,7 @@ export function mountDashboard(funnels, opts = {}) {
       // Its state right under its name (when it takes the answer, or how late it is), then its work.
       return `<div class="pop-title">${t(asleep ? 'board.askedAsleep' : 'board.asking', who)}</div>
         <div class="pop-status">${asleep && !missed ? `<p class="pop-note">${esc(t('board.nextRun', when))}</p>` : ''}${missed}</div>
-        <div class="pop-sub where">${where}</div>${asks}${reply}${history}`;
+        <div class="pop-sub where">${where}</div>${launchHtml(a)}${asks}${reply}${history}`;
     }
     const lost = scene.lost(a) ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.silence(a))))}</p>` : '';
     // On pause: why, as it or its supervisor said, or the used-up limit with when it resets.
@@ -1131,7 +1131,8 @@ export function mountDashboard(funnels, opts = {}) {
           // On which app and model (a run Goalcraft didn't start: the app its tokens were counted on), and
           // how a run Goalcraft started ended when not as it should.
           const app = r.app ?? ru?.app, end = r.launch?.outcome, bad = end === 'silent' ? t('launch.silent') : end === 'not_started' ? t('launch.notStarted') : end === 'failed' ? t('launch.failed') : '';
-          const by = `<span class="by">${runApp(a, r, app, r.model ?? ru?.model, r.launch?.effort)}${bad ? `<span class="warn">${esc(bad)}</span>` : ''}</span>`;
+          const badTip = end === 'silent' ? t('launch.silentTip', r.launch?.computer) : end === 'not_started' ? t('launch.notStartedTip', r.launch?.computer) : '';
+          const by = `<span class="by">${runApp(a, r, app, r.model ?? ru?.model, r.launch?.effort)}${bad ? `<span class="warn"${badTip ? ` data-tip="${esc(badTip)}"` : ''}>${esc(bad)}</span>` : ''}</span>`;
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
             <span>${found}</span>${by}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);

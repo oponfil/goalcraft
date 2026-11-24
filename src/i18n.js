@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=dd1c4344';
-import vi from './lang/vi.js?v=dd1c4344';
-import ja from './lang/ja.js?v=dd1c4344';
-import pt from './lang/pt.js?v=dd1c4344';
-import tr from './lang/tr.js?v=dd1c4344';
-import ko from './lang/ko.js?v=dd1c4344';
+import es from './lang/es.js?v=9b6c8624';
+import vi from './lang/vi.js?v=9b6c8624';
+import ja from './lang/ja.js?v=9b6c8624';
+import pt from './lang/pt.js?v=9b6c8624';
+import tr from './lang/tr.js?v=9b6c8624';
+import ko from './lang/ko.js?v=9b6c8624';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -473,6 +473,10 @@ const STRINGS = {
   'launch.noExecutors': L('Turn on at least one executor.', 'Включите хотя бы одного исполнителя.'),
   'launch.notStarted': L('did not start', 'не начал'),
   'launch.silent': L('went silent', 'замолчал'),
+  'launch.silentTip': L((pc) => `The agent stopped checking in before it finished the run${pc ? ` (on ${pc})` : ''}, so Goalcraft closed the run. What it found is what it last reported.`,
+    (pc) => `Агент перестал выходить на связь, не закончив запуск${pc ? ` (на компьютере ${pc})` : ''}, и Goalcraft закрыл запуск. Найденное — то, что он успел сообщить.`),
+  'launch.notStartedTip': L((pc) => `The app${pc ? ` on ${pc}` : ''} was started, but the agent didn't report work within 10 minutes; Goalcraft went on to the next executor.`,
+    (pc) => `Приложение${pc ? ` на компьютере ${pc}` : ''} запустили, но агент за 10 минут не сообщил, что работает; Goalcraft перешёл к следующему исполнителю.`),
   'launch.failed': L('failed to start', 'не запустился'),
   'board.noRuns': L('No runs recorded yet.', 'Запусков пока не записано.', '还没有记录到运行。', 'ยังไม่มีการรันที่บันทึกไว้'),
   'board.runsFailed': L('Could not load the runs.', 'Не удалось загрузить запуски.', '无法加载运行记录。', 'โหลดการรันไม่สำเร็จ'),
