@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=12f5e1c3';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=12f5e1c3';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=12f5e1c3';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=237fa5b3';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=237fa5b3';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=237fa5b3';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -948,6 +948,8 @@ export function mountDashboard(funnels, opts = {}) {
   const modeHtml = (even, limit) => `<label class="l-row l-mode" data-tip="${esc(t(even ? 'launch.evenTip' : 'launch.orderTip', limit))}"><input type="checkbox" class="switch l-even"${even ? ' checked' : ''}><span>${esc(t(even ? 'launch.even' : 'launch.inOrder'))}</span></label>`;
   // Launch's line says when the role runs: "Launch · 9:00, 18:00" on schedule, "Paused" with the
   // schedule off (the role waits on pause; Run now still starts it).
+  // Spare's hint: what on and what off mean, each on its own line, the way it is now first.
+  const spareTip = on => (on ? ['launch.spareOn', 'launch.spareOff'] : ['launch.spareOff', 'launch.spareOn']).map(k => t(k)).join('\n');
   const launchTitle = (on, schedule) => (on && schedule ? `${t('launch.title')} · ${scheduleWords(schedule)}` : t('launch.paused'));
   function launchHtml(a) {
     if (!opts.onLaunch) return '';
@@ -961,7 +963,7 @@ export function mountDashboard(funnels, opts = {}) {
     // is off (off by default: the start waits for it).
     const computer = pcs.length > 1
       ? `<div class="l-row l-pc"><span data-tip="${esc(t('launch.computerTip'))}">${esc(t('launch.computer'))}</span><select class="l-computer">${pcs.map(c => `<option value="${esc(c.name)}"${c === main ? ' selected' : ''}>${esc(c.name)}${c.on ? '' : ` (${esc(t('launch.off'))})`}</option>`).join('')}</select>`
-        + `<label class="l-spare" data-tip="${esc(t('launch.spareTip'))}"><input type="checkbox" class="switch l-fallback"${l.computer_fallback ? ' checked' : ''}>${esc(t('launch.spare'))}</label></div>`
+        + `<label class="l-spare" data-tip="${esc(spareTip(l.computer_fallback))}"><input type="checkbox" class="switch l-fallback"${l.computer_fallback ? ' checked' : ''}>${esc(t('launch.spare'))}</label></div>`
       : pcs.length ? `<p class="l-row l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
     const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener" data-tip="${esc(t('launch.guideTip'))}">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
     return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(launchTitle(l.schedule_on, l.schedule))}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
@@ -998,6 +1000,7 @@ export function mountDashboard(funnels, opts = {}) {
       row.querySelector('span').textContent = t(e.target.checked ? 'launch.even' : 'launch.inOrder');
       row.dataset.tip = t(e.target.checked ? 'launch.evenTip' : 'launch.orderTip', limit);
     });
+    box.querySelector('.l-fallback')?.addEventListener('change', e => { e.target.closest('.l-spare').dataset.tip = spareTip(e.target.checked); });
     // Another main computer: its apps, keeping what was set for the ones shown.
     box.querySelector('.l-computer')?.addEventListener('change', e => {
       l.executors = merged(l.executors, [...list.querySelectorAll('.ex-row:not(.missing)')].map(read));
