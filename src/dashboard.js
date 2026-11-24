@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=697914c6';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=697914c6';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=697914c6';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=d0d67dab';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=d0d67dab';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=d0d67dab';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -802,7 +802,7 @@ export function mountDashboard(funnels, opts = {}) {
   const compact = new Intl.NumberFormat(lang, { notation: 'compact', maximumFractionDigits: 1 });
   const fmtTokens = n => compact.format(n);
   const money = [0, 2].map(d => new Intl.NumberFormat(lang, { minimumFractionDigits: d, maximumFractionDigits: d }));
-  const fmtCost = n => '$' + money[n >= 10 ? 0 : 1].format(n);
+  const fmtCost = n => (n ? '$' + money[n >= 10 ? 0 : 1].format(n) : '$0');  // nothing spent: $0, not $0.00
   const fmtPercent = n => new Intl.NumberFormat(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n) + '%';
   // A question to the person shows only one way, as the "!" with the question itself; an older run
   // that ended on status "question" (no longer a status) shows no status.
