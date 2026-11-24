@@ -108,13 +108,13 @@ On Windows run the same commands with `py` (or `python`) instead of `python3`; t
 
 ## Launches: Goalcraft starts the roles
 
-Goalcraft can start a funnel's roles itself, one run at a time, each on the executor it chooses (see the main README, [Launch](../README.md#launch-goalcraft-starts-the-roles)). With every check it may hand this computer a start it can do; the script takes it (claim: no other computer starts it too) and starts the app in a new conversation with a short note — who the role is and where its instructions are:
+Goalcraft can start a funnel's roles itself, one run at a time, each on the executor it chooses (see the main README, [Launch](../README.md#launch-goalcraft-starts-the-roles)). With every check it may hand this computer a start it can do; the script takes it (claim: no other computer starts it too) and starts the app with a short note — who the role is and where its instructions are — in a new conversation, or in the conversation the start goes on in (an answer: its question's; a message: the role's own; see the main README) when that conversation is on this computer:
 
 | App | How |
 |---|---|
-| Claude | `claude -p --session-id <new id> --model … --effort … --permission-mode bypassPermissions` (full access; without it only the Goalcraft tools) |
-| Codex | `codex exec --skip-git-repo-check -m … -c model_reasoning_effort="…" --dangerously-bypass-approvals-and-sandbox` (full access) |
-| Google Antigravity | its own `agentapi new-conversation --model=<the model's id> …`, with the app's server address and token and, with full access, the grants `command(*)`, `read_file(*)`, `write_file(*)`, `mcp(*)` (Antigravity must be running) |
+| Claude | `claude -p --chrome --session-id <new id> --name <the role's name> --model … --effort … --permission-mode bypassPermissions -- <note>` (full access; without it only the Goalcraft tools); to go on in a conversation, `--resume <its session>` in its folder instead of a new id and name. The name is what the Claude app calls the conversation (without one it shows its folder). The app opens such a conversation in Accept edits at most: it switches on Bypass or Auto only when the person picks it there, in that conversation |
+| Codex | `codex exec --skip-git-repo-check -m … -c model_reasoning_effort="…" --dangerously-bypass-approvals-and-sandbox <note>` (full access); to go on in a thread, `codex exec resume … <thread> <note>` |
+| Google Antigravity | its own `agentapi new-conversation --model=<the model's id> …`, with the app's server address and token and, with full access, the grants `command(*)`, `read_file(*)`, `write_file(*)`, `mcp(*)` (Antigravity must be running): always a new conversation, which it opens in Turbo |
 | Grok Bot | a message to the role's bot, as the person writing to it in the app: it goes on in its one conversation |
 
 Every 10 minutes the script also tells Goalcraft what this computer can run: each app there and its models (Claude's, Codex's from its model cache, Antigravity's as its server lists them), which the card's Launch settings offer. The starts it ran are kept in `~/.goalcraft/launches.json` (whose, on which app, its conversation), so their token use is counted for their role whatever chat its agent names.
