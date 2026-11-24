@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=eeb3d070';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=eeb3d070';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=eeb3d070';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=31f3025b';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=31f3025b';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=31f3025b';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -840,16 +840,21 @@ export function mountDashboard(funnels, opts = {}) {
     // agent's chat): an agent working in several chats asks from each. The demo links to the agent's
     // chat instead. The question's own chat, or the agent's; the site's front page alone is no chat.
     const mine = url => (url && url !== info.chat && url !== web ? url : a.chat);
-    const openBtn = url => {
+    // A question's chat is on the computer of the run that asked it, when known (else the agent's):
+    // on another computer the button is greyed and says which; with several computers its hint names it.
+    const severalPcs = (opts.launchComputers?.() ?? []).length > 1;
+    const openBtn = (url, pc) => {
       const link = chatLink(info, url);
-      return link ? openBtnHtml(link, webOf(url, info), info, (opts.live ? whereTip(mine(url), info, inAntigravity) : ''), opts.live && elsewhere(a)) : '';
+      const away = pc ? (pc.os && MY_OS && pc.os !== MY_OS ? pc : null) : elsewhere(a);
+      const tipText = opts.live ? [whereTip(mine(url), info, inAntigravity), pc && severalPcs ? t('board.onComputer', pc.name) : ''].filter(Boolean).join(' · ') : '';
+      return link ? openBtnHtml(link, webOf(url, info), info, tipText, opts.live && away) : '';
     };
     // Each question folds to its label ("Question 1") and opens by itself to its text and answer box;
     // the first starts open.
     const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>${esc(t('board.question', i + 1))}</summary>`
       + `<div class="ask" data-qid="${esc(q.id)}"><p class="ask-text">${esc(q.question)}</p>${opts.onAnswer
       ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
+        <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web, q.computer)}</div>
         <div class="pop-msg"></div>` : ''}</div></details>`;
     // Asleep, it takes the answers only on its next run: when that is.
     const left = scene.sleepLeft(a), takes = a.state === 'sleep' && !missed && left > 0 ? `<p class="pop-note">${esc(t('board.nextRun', fmtDuration(left)))}</p>` : '';

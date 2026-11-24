@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=eeb3d070';
+import { supabase } from './auth.js?v=31f3025b';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -68,6 +68,8 @@ function toScene(f, reports, now, usage = []) {
 // Antigravity is kept on the computer it runs on (it opens nowhere else), and the wake script there
 // is the one that sends its runs: its last run says which computer that is.
 let computers = new Map();
+// A computer by its name, { name, os } (its system unknown when no wake script of that name).
+const computerNamed = name => [...computers.values()].find(c => c.name === name) ?? { name, os: null };
 let inventory = {}, launchComputers = [];
 export const computersForLaunch = () => launchComputers;
 // What the person's computers can run (their wake scripts say): { app: { models, computers } }.
@@ -99,7 +101,7 @@ function agentOf(f, p, now, usage = []) {
         pauseLimit: state === 'pause' && p.state === 'sleep' ? { key: limitKey(lastRun), resets: spent.resets } : null,
         // Seconds since the agent last changed its state (its last word, for an overdue one).
         seenAgo: (now - Date.parse(p.updated_at)) / 1000,
-        questions: qs.map(q => ({ id: q.id, question: q.question, chat: q.chat_url })),
+        questions: qs.map(q => ({ id: q.id, question: q.question, chat: q.chat_url, computer: q.computer ? computerNamed(q.computer) : null })),
         // The agent's short replies to answers, not closed yet, oldest first.
         // Its short replies to answers and to messages ("m:" ids), not closed yet, oldest first.
         replies: [
@@ -218,7 +220,7 @@ export async function loadFunnels() {
       .select(`id, title, position, theme, source_url, guide_url, result, goal_total, goal_due, results, result_titles, output_flow_per_day,
         stages (key, position, label, count, active, fill_percent, flow_per_day),
         presence (agent, provider, display_name, zone, state, next_run_at, question_id, chat_url, run_added, status, summary, pause_reason, updated_at),
-        questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
+        questions (id, agent, question, answer, asked_at, answered_at, chat_url, computer, reply, replied_at, reply_seen_at),
         agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),
         person_tasks (id, position, title, detail, url, due_at, done_at),
         role_launch (agent, schedule, schedule_on, time_zone, mode, quota_limit, guide_url, computer, computer_fallback,

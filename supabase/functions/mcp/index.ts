@@ -8,7 +8,7 @@ import { pipeline } from 'npm:@supabase/middleware@1.0.0'
 import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1.9.0'
 import { z } from 'npm:zod@4.6.5'
 import { emailQuestion } from './notify.ts'
-import { beginLaunch, claudeRunChat, cronNext, endLaunches, LAUNCH_PROVIDER, launchedApp, roleOf } from './launch.ts'
+import { beginLaunch, chatComputer, claudeRunChat, cronNext, endLaunches, LAUNCH_PROVIDER, launchedApp, roleOf } from './launch.ts'
 
 type Db = any // the Supabase client scoped to the caller
 // Who is calling, and an admin client to read their current settings (for question emails). chat:
@@ -392,7 +392,9 @@ function server(db: Db, caller: Caller) {
       // news: no second email for it.
       const again = check(await db.from('questions').select('id').eq('funnel_id', f.id).eq('agent', a.agent)
         .eq('question', asked).is('answered_at', null).limit(1)) as unknown[]
-      const q = check(await db.from('questions').insert({ funnel_id: f.id, agent: a.agent, question: asked, chat_url: chat_url ?? null })
+      // The computer its chat is on (a run Goalcraft started), so the board opens it only there.
+      const computer = await chatComputer(caller.admin, f.id, a.agent, chat_url)
+      const q = check(await db.from('questions').insert({ funnel_id: f.id, agent: a.agent, question: asked, chat_url: chat_url ?? null, computer })
         .select('id').single()) as { id: string }
       question_id = q.id
       if (!again.length) {

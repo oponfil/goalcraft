@@ -1,6 +1,6 @@
 // The prompt that connects Goalcraft to any agent, with a copy icon on its block.
-import { MCP_URL } from './config.js?v=eeb3d070';
-import { t } from './i18n.js?v=eeb3d070';
+import { MCP_URL } from './config.js?v=31f3025b';
+import { t } from './i18n.js?v=31f3025b';
 
 export const CONNECT_PROMPT = t('connect.prompt', MCP_URL);
 // The Connect page's prompt: the agent connects Goalcraft and becomes the supervisor of one goal's funnel.

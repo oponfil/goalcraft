@@ -51,6 +51,20 @@ export async function claudeRunChat(db: Db, funnelId: string, agent: string, sen
   return data?.chat_url === opened ? opened : `claude://resume?session=${id}`
 }
 
+// The computer a chat of the agent is on, when Goalcraft started the run worked in it (its start says).
+export async function chatComputer(admin: Db, funnelId: string, agent: string, chat: string | null | undefined): Promise<string | null> {
+  if (!chat) return null
+  const { data } = await admin.from('agent_runs').select('launch:role_launches!agent_runs_launch_id_fkey (computer)')
+    .eq('funnel_id', funnelId).eq('agent', agent).eq('chat_url', chat).not('launch_id', 'is', null)
+    .order('started_at', { ascending: false }).limit(1)
+  const known = (data?.[0] as any)?.launch?.computer
+  if (known) return known
+  // Asked before its run named the chat: the start now going.
+  const { data: now } = await admin.from('role_launches').select('computer').eq('funnel_id', funnelId).eq('agent', agent)
+    .not('started_at', 'is', null).is('ended_at', null).order('started_at', { ascending: false }).limit(1)
+  return now?.[0]?.computer ?? null
+}
+
 // The run is over (sleep, pause, the agent left): its start ends as done.
 export async function endLaunches(admin: Db, funnelId: string, agent: string) {
   await admin.from('role_launches').update({ ended_at: new Date().toISOString(), outcome: 'done' })
