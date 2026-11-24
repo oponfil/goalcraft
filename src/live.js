@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=0517ace3';
+import { supabase } from './auth.js?v=8064fc26';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -68,6 +68,14 @@ function toScene(f, reports, now, usage = []) {
 // Antigravity is kept on the computer it runs on (it opens nowhere else), and the wake script there
 // is the one that sends its runs: its last run says which computer that is.
 let computers = new Map(), chatRuns = new Map();
+// A chat by its conversation: a Claude run's link is written two ways (claude://resume?session=<id> until
+// the board opens it, the app's claude://claude.ai/epitaxy/local_<id> after), so by the id in it.
+const CHAT_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+const chatKey = url => url?.match(CHAT_ID)?.[0].toLowerCase() ?? url;
+const chatForms = url => {
+  const id = /^claude:/i.test(url) && url.match(CHAT_ID)?.[0];
+  return id ? [url, `claude://resume?session=${id}`, `claude://claude.ai/epitaxy/local_${id}`] : [url];
+};
 // A computer by its name, { name, os } (its system unknown when no wake script of that name).
 const computerNamed = name => [...computers.values()].find(c => c.name === name) ?? { name, os: null };
 let inventory = {}, launchComputers = [];
@@ -101,7 +109,7 @@ function agentOf(f, p, now, usage = []) {
         pauseLimit: state === 'pause' && p.state === 'sleep' ? { key: limitKey(lastRun), resets: spent.resets } : null,
         // Seconds since the agent last changed its state (its last word, for an overdue one).
         seenAgo: (now - Date.parse(p.updated_at)) / 1000,
-        questions: qs.map(q => ({ id: q.id, question: q.question, chat: q.chat_url, computer: q.computer ? computerNamed(q.computer) : null, run: chatRuns.get(q.chat_url) ?? null })),
+        questions: qs.map(q => ({ id: q.id, question: q.question, chat: q.chat_url, computer: q.computer ? computerNamed(q.computer) : null, run: chatRuns.get(chatKey(q.chat_url)) ?? null })),
         // The agent's short replies to answers, not closed yet, oldest first.
         // Its short replies to answers and to messages ("m:" ids), not closed yet, oldest first.
         replies: [
@@ -113,7 +121,7 @@ function agentOf(f, p, now, usage = []) {
         ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)),
         chat: p.chat_url,
         // The run its chat was worked in (app, model, effort, computer), for the chat's icon.
-        chatRun: chatRuns.get(p.chat_url) ?? null,
+        chatRun: chatRuns.get(chatKey(p.chat_url)) ?? null,
         // Which AI it is, as it said (its logo); none from agents that never sent it.
         provider: p.provider,
         // Its token use over the last week (the plans' limits are weekly), as the person's wake script read it from the agent's own
@@ -260,10 +268,11 @@ export async function loadFunnels() {
   // The run each open chat (an agent's, a question's) was worked in: its app, model, effort and computer,
   // for the chat's icon and its hint.
   const chats = [...new Set(funnels.data.flatMap(f => [...(f.presence ?? []).map(p => p.chat_url), ...(f.questions ?? []).filter(q => !q.answered_at).map(q => q.chat_url)]).filter(Boolean))];
+  // The latest run in it whose app is known (a start Goalcraft made); the person's own talk there has none.
   const worked = chats.length ? await supabase.from('agent_runs').select('chat_url, app, model, launch:role_launches!agent_runs_launch_id_fkey (effort, computer)')
-    .in('chat_url', chats).order('started_at', { ascending: false }) : { data: [] };
+    .in('chat_url', [...new Set(chats.flatMap(chatForms))]).not('app', 'is', null).order('started_at', { ascending: false }) : { data: [] };
   chatRuns = new Map();
-  for (const r of worked.data ?? []) if (!chatRuns.has(r.chat_url)) chatRuns.set(r.chat_url, { app: r.app, model: r.model, effort: r.launch?.effort ?? null, computer: r.launch?.computer ?? null });
+  for (const r of worked.data ?? []) if (!chatRuns.has(chatKey(r.chat_url))) chatRuns.set(chatKey(r.chat_url), { app: r.app, model: r.model, effort: r.launch?.effort ?? null, computer: r.launch?.computer ?? null });
   // What the person's computers can run for Goalcraft's launches: each app's models, from every computer.
   inventory = {};
   // The computers that run the wake script, in the order they were set up (the first is a role's main one by default).
