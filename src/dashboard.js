@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=91689510';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=91689510';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=91689510';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=df2d1e8a';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=df2d1e8a';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=df2d1e8a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -840,8 +840,8 @@ export function mountDashboard(funnels, opts = {}) {
     const own = a.chat || (inAntigravity ? 'antigravity://' : info.chat), web = webOf(own, info), chat = chatLink(info, own), paint = agentButton(info);
     // Its own name when it gave one; else a supervisor goes by its funnel, a worker by its model.
     const named = a.shownName = a.name || (a.sup ? t('board.supervisorName', f.title) : info.name), who = esc(named);
-    // The step it works on, with what this run added (the last run's while it sleeps) to the items
-    // it works into: "Job Search: jobs found → +4 applied". The supervisor watches the whole funnel:
+    // What this run added (the last run's while it sleeps) to the items it works into: "+4 applied",
+    // as its past runs say it. The supervisor watches the whole funnel:
     // what its last run found instead ("All good", "Bottleneck: …").
     let where;
     if (a.sup) {
@@ -851,9 +851,9 @@ export function mountDashboard(funnels, opts = {}) {
     }
     else {
       // The card's number is kept for its runs list, so its running row says the same.
-      const st = f.stages, n = a.shownAdded = a.added || 0, from = a.zone < 0 ? '' : `${esc(plural(5, st[a.zone].forms))} → `;
+      const st = f.stages, n = a.shownAdded = a.added || 0;
       const into = a.zone === st.length - 1 ? f.result : st[a.zone + 1].forms;
-      where = `${from}<b class="run">+${fmtCount(n)}</b> ${esc(plural(n, into))}`;
+      where = `<b class="run">+${fmtCount(n)}</b> ${esc(plural(n, into))}`;
     }
     // Live only: the agent's last runs, loaded when the person opens them.
     // Its last week's spending shows at once, above its runs (which open on a click).
