@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=ec16f2ce';
+import { supabase } from './auth.js?v=c488ec39';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -357,7 +357,10 @@ export async function runs(a) {
   const groups = [], byChat = new Map();
   for (const r of [...data].reverse()) {
     const starts = !scheduled || ['schedule', 'manual'].includes(r.launch?.reason) || !groups.length;
-    const g = starts ? null : byChat.get(chatId(r.chat_url)) ?? groups[groups.length - 1];
+    // The run going then: only one Goalcraft started (runs from before it started the role, as the
+    // app's own scheduled tasks, stand on their own).
+    const going = groups[groups.length - 1], goingOurs = going?.[0]?.launch;
+    const g = starts ? null : byChat.get(chatId(r.chat_url)) ?? (goingOurs ? going : null);
     if (g) g.push(r); else groups.push([r]);
     if (chatId(r.chat_url)) byChat.set(chatId(r.chat_url), g ?? groups[groups.length - 1]);
   }
