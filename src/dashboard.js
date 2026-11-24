@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=6e1df008';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=6e1df008';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=6e1df008';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=f23a0f66';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=f23a0f66';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=f23a0f66';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -132,6 +132,26 @@ function openApp(e) {
 // opts.clock(scene): text for the right corner of the header.
 // opts.onAnswer(questionId, text): the person answered one of an agent's questions (live only).
 // opts.onCloseReplies(ids): the person closed the agent's replies to their answers (live only).
+// The shortest time between two starts of a cron, in minutes, from its minute field (a role runs at
+// most every 10 minutes): its minutes in an hour, and the next hour's first after the last.
+function cronMinGap(cron) {
+  const field = (cron || '').trim().split(/\s+/)[0];
+  if (!field) return 60;
+  const mins = new Set();
+  for (const part of field.split(',')) {
+    const m = /^(\*|\d{1,2}(?:-\d{1,2})?)(?:\/(\d{1,2}))?$/.exec(part);
+    if (!m) return 60;
+    const [a, b] = m[1] === '*' ? [0, 59] : m[1].split('-').map(Number).concat(m[1].includes('-') ? [] : [m[2] ? 59 : Number(m[1])]);
+    for (let x = a; x <= b; x += Number(m[2] || 1)) mins.add(x);
+  }
+  const list = [...mins].sort((x, y) => x - y);
+  if (!list.length) return 60;
+  let gap = 60 - list[list.length - 1] + list[0];
+  for (let i = 1; i < list.length; i++) gap = Math.min(gap, list[i] - list[i - 1]);
+  return gap;
+}
+const MIN_GAP = 10;
+
 export function mountDashboard(funnels, opts = {}) {
   pcsKnown = opts.launchComputers ?? (() => []);
   const canvas = document.getElementById('scene');
@@ -1077,6 +1097,7 @@ export function mountDashboard(funnels, opts = {}) {
       const on = box.querySelector('.l-on').checked, text = box.querySelector('.l-times').value;
       const schedule = text.trim() ? cronOf(text) : null;
       if (text.trim() && !schedule) return say(t('launch.badTimes'));
+      if (schedule && cronMinGap(schedule) < MIN_GAP) return say(t('launch.tooOften', MIN_GAP));
       // Those of apps the main computer doesn't have stay as they are, in their places.
       const executors = merged(l.executors, [...list.querySelectorAll('.ex-row:not(.missing)')].map(read));
       if (!executors.some(x => x.enabled)) return say(t('launch.noExecutors'));

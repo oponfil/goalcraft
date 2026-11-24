@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=6e1df008';
-import vi from './lang/vi.js?v=6e1df008';
-import ja from './lang/ja.js?v=6e1df008';
-import pt from './lang/pt.js?v=6e1df008';
-import tr from './lang/tr.js?v=6e1df008';
-import ko from './lang/ko.js?v=6e1df008';
+import es from './lang/es.js?v=f23a0f66';
+import vi from './lang/vi.js?v=f23a0f66';
+import ja from './lang/ja.js?v=f23a0f66';
+import pt from './lang/pt.js?v=f23a0f66';
+import tr from './lang/tr.js?v=f23a0f66';
+import ko from './lang/ko.js?v=f23a0f66';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -482,6 +482,7 @@ const STRINGS = {
   'launch.queued': L('Starting: it runs as soon as a computer takes it.', 'Запуск поставлен: начнётся, как только его возьмёт компьютер.'),
   'launch.waiting': L('A start is already waiting.', 'Запуск уже ждёт в очереди.'),
   'launch.badTimes': L('Write times like 9:00, 18:00 (same minutes), or a cron of five fields.', 'Напишите время вида 9:00, 18:00 (с одинаковыми минутами) или cron из пяти полей.'),
+  'launch.tooOften': L((n) => `At most every ${n} minutes: a role doesn't start more often (its starts wait their turn).`, (n) => `Не чаще раза в ${n} минут: чаще роль не запускается (запуски ждут своей очереди).`),
   'launch.noExecutors': L('Turn on at least one executor.', 'Включите хотя бы одного исполнителя.'),
   'launch.notStarted': L('did not start', 'не начал'),
   'launch.silent': L('went silent', 'замолчал'),

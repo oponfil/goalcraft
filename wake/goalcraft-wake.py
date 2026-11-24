@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-24.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-24.5'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1874,8 +1874,35 @@ def launch_post(key, body):
         return json.load(r)
 
 
+UUID = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', re.I)
+
+
+def claude_resume(l):
+    """The Claude Code session and folder a start goes on in (an answer: its question's conversation; a
+    message: the agent's own), when it is on this computer: its link is the app's (local_<id>) or the
+    resume one (resume?session=<id>). None: a new conversation."""
+    m = UUID.search(l.get('resume') or '')
+    if not m:
+        return None
+    s = app_session(f'local_{m.group(0)}')
+    cli = (s or {}).get('cliSessionId') or m.group(0)
+    if not glob.glob(str(PROJECTS / '*' / f'{cli}.jsonl')):
+        return None
+    cwd = s.get('cwd') if s and s.get('cwd') and os.path.isdir(s['cwd']) else str(HOME)
+    return cli, cwd
+
+
+def codex_resume(l):
+    """The Codex thread a start goes on in, when it is on this computer; None: a new one."""
+    m = UUID.search(l.get('resume') or '')
+    if not m or not glob.glob(str(CODEX_SESSIONS / '*' / '*' / '*' / f'rollout-*{m.group(0)}.jsonl')):
+        return None
+    return m.group(0)
+
+
 def launch_command(l):
-    """The command that starts a role's run in a new conversation of its app, or None and why not."""
+    """The command that starts a role's run: in the conversation it goes on in (l['resumed']), else in a
+    new one of its app; or None and why not."""
     note, model, effort, full = l['prompt'], l.get('model'), l.get('effort'), l.get('full_access', True)
     if l['app'] == 'claude':
         claude = find_claude()
@@ -1883,22 +1910,25 @@ def launch_command(l):
             return None, 'claude command not found'
         # --chrome: Claude in Chrome, which a run from the command line has only when asked for (roles that
         # apply, answer on hh.ru or send mail through the person's Chrome need it).
-        cmd = [claude, '-p', '--chrome', '--session-id', l['session']]
+        cmd = [claude, '-p', '--chrome'] + (['--resume', l['session']] if l.get('resumed') else ['--session-id', l['session']])
         cmd += ['--model', model] if model else []
         cmd += ['--effort', effort] if effort else []
         cmd += ['--permission-mode', 'bypassPermissions'] if full else ['--allowedTools', *GOALCRAFT_TOOLS]
         # Its name in the Claude app (the role's name on the board): without one the app names it by its folder.
-        cmd += ['--name', l['title']] if l.get('title') and '--name' in claude_help(claude) else []
+        cmd += ['--name', l['title']] if l.get('title') and not l.get('resumed') and '--name' in claude_help(claude) else []
         return cmd + ['--', note], None
     if l['app'] == 'codex':
         codex = find('codex')
         if not codex:
             return None, 'codex command not found'
-        cmd = [codex, 'exec', '--skip-git-repo-check']
+        thread = codex_resume(l)
+        cmd = [codex, 'exec'] + (['resume'] if thread else []) + ['--skip-git-repo-check']
         cmd += ['-m', model] if model else []
         cmd += ['-c', f'model_reasoning_effort="{effort}"'] if effort else []
         cmd += ['--dangerously-bypass-approvals-and-sandbox'] if full else []
-        return cmd + [note], None
+        if thread:
+            l['resumed'] = True
+        return cmd + ([thread] if thread else []) + [note], None
     if l['app'] == 'antigravity':
         api = agentapi_command()
         if not api:
@@ -1942,9 +1972,17 @@ def run_launch(key, l):
         started = time.time()
         try:
             if l['app'] == 'claude':
-                l['session'] = str(uuid.uuid4())
-                # The link that opens this run in the Claude app, for its card; the agent sends it.
-                chat = claude_app_session(l)
+                # The conversation it goes on in, when it is here (with its folder); else a new one.
+                found = claude_resume(l)
+                if found:
+                    l['session'], l['cwd'], l['resumed'] = found[0], found[1], True
+                else:
+                    l['session'] = str(uuid.uuid4())
+                    if l.get('resume'):
+                        log(f'launch {who}: its conversation {l["resume"]} is not on this computer: a new one')
+                # The link that opens this run in the Claude app, for its card; the agent sends it: the
+                # conversation's own when it goes on in one, so the card keeps opening that one.
+                chat = l['resume'] if l.get('resumed') else claude_app_session(l)
                 if chat:
                     l['prompt'] += f'\n\nYour chat_url for set_agent_state: {chat}'
                 # Claude in Chrome sees every Chrome signed in to the account (this computer's and others'),
@@ -1968,7 +2006,7 @@ def run_launch(key, l):
                 done(False, err)
                 return
             cmd, env = made if isinstance(made, tuple) else (made, None)
-            out = subprocess.run(cmd, cwd=str(HOME), env=env, capture_output=True, encoding='utf-8', errors='replace',
+            out = subprocess.run(cmd, cwd=l.get('cwd') or str(HOME), env=env, capture_output=True, encoding='utf-8', errors='replace',
                                  creationflags=NO_WINDOW, timeout=4 * 3600)
             text = (out.stdout.strip() or out.stderr.strip())
             last = (text.splitlines() or [''])[-1][:200]
@@ -1976,7 +2014,7 @@ def run_launch(key, l):
                 m = re.search(r'session id:\s*([0-9a-f-]{36})', out.stdout + out.stderr)
                 if m:
                     remember_launch({'launch': lid, 'agent': l['agent'], 'funnel_id': l['funnel_id'], 'app': 'codex', 'session': m.group(1)})
-            log(f'launched {who}: finished in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
+            log(f'launched {who}{" (went on in its conversation)" if l.get("resumed") else ""}: finished in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if l['app'] != 'antigravity':  # Antigravity's agentapi returns once the conversation is under way
                 done(out.returncode == 0, None if out.returncode == 0 else (out.stderr.strip() or last)[-300:])
             elif out.returncode:

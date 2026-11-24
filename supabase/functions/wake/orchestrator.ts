@@ -8,6 +8,7 @@
 // agent itself says when it begins and ends its run (set_agent_state, see the MCP server).
 import cronParser from 'npm:cron-parser@4.9.0'
 
+const MIN_GAP_MS = 10 * 60e3      // a role starts on its schedule at most this often
 export const SILENT = 10 * 60e3  // the board's amber triangle: this long without a word, a run is over
 const ONLINE = 3 * 60e3          // a computer whose script asked this recently is on
 
@@ -96,6 +97,25 @@ export function prompt(role: Row, funnel: Row, presence: Row | null, ex: Row, re
   return lines.join('\n')
 }
 
+// The app a conversation is in, by its link, when the wake script can go on in it (Claude Code's
+// --resume, codex exec resume); null for one it can't (Antigravity, a web chat): a new one then.
+// Grok Bot's bot is one conversation anyway.
+export function chatApp(url: string | null | undefined): string | null {
+  if (!url) return null
+  return /^claude:/i.test(url) ? 'claude' : /^codex:/i.test(url) ? 'codex' : null
+}
+const CHAT_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+// The computer a conversation of the agent is on: that of the start whose run worked in it (its link may
+// be written two ways, claude://resume?session=<id> and the app's own, so it is matched by its id).
+async function chatPc(admin: any, funnelId: string, agent: string, url: string | null): Promise<string | null> {
+  const id = url?.match(CHAT_ID)?.[0]
+  if (!id) return null
+  const { data } = await admin.from('agent_runs').select('launch:role_launches!agent_runs_launch_id_fkey (computer)')
+    .eq('funnel_id', funnelId).eq('agent', agent).like('chat_url', `%${id}%`).not('launch_id', 'is', null)
+    .order('started_at', { ascending: false }).limit(1)
+  return (data?.[0] as any)?.launch?.computer ?? null
+}
+
 // One pass for one person (see above). Returns the starts this computer (key) may take now.
 export async function dispatch(admin: any, user: string, key: Row) {
   const now = Date.now(), iso = (t: number) => new Date(t).toISOString()
@@ -105,10 +125,10 @@ export async function dispatch(admin: any, user: string, key: Row) {
     admin.from('role_launches').select('*').eq('user_id', user).is('ended_at', null),
     admin.from('wake_keys').select('id, computer, last_used_at, inventory, created_at').eq('user_id', user),
     admin.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, session_percent, session_resets_at').eq('user_id', user).gte('at', iso(now - 2 * 86400e3)),
-    admin.from('presence').select('funnel_id, agent, zone, state, next_run_at, pause_reason, updated_at, display_name, provider').eq('user_id', user),
+    admin.from('presence').select('funnel_id, agent, zone, state, next_run_at, pause_reason, updated_at, display_name, provider, chat_url').eq('user_id', user),
     admin.from('funnels').select('id, key, title, guide_url').eq('user_id', user),
     admin.from('agent_messages').select('id, funnel_id, agent, sent_at').eq('user_id', user).is('read_at', null).is('woken_at', null).gte('sent_at', iso(now - 86400e3)),
-    admin.from('questions').select('id, funnel_id, agent, answered_at').eq('user_id', user).not('answered_at', 'is', null).is('replied_at', null).is('woken_at', null).gte('answered_at', iso(now - 86400e3)),
+    admin.from('questions').select('id, funnel_id, agent, answered_at, chat_url, computer').eq('user_id', user).not('answered_at', 'is', null).is('replied_at', null).is('woken_at', null).gte('answered_at', iso(now - 86400e3)),
   ])
   if (roles.error || execs.error || open.error || keys.error) throw new Error('orchestrator: read failed')
   if (!roles.data?.length) return []
@@ -147,7 +167,8 @@ export async function dispatch(admin: any, user: string, key: Row) {
     for (const l of [...starts]) {
       if (l.claimed_at && !l.started_at && now - Date.parse(l.claimed_at) > SILENT) {
         await end(l, 'not_started', 'the agent did not report work within 10 minutes')
-        const { data: again } = await admin.from('role_launches').insert({ funnel_id: l.funnel_id, agent: l.agent, user_id: user, reason: l.reason, due_at: iso(now) }).select('*').single()
+        const { data: again } = await admin.from('role_launches').insert({ funnel_id: l.funnel_id, agent: l.agent, user_id: user, reason: l.reason, due_at: iso(now),
+          chat_url: l.chat_url ?? null, chat_computer: l.chat_computer ?? null }).select('*').single()
         if (again) starts.push({ ...again, _skip: [l.executor_id, ...(l._skip ?? [])] })
       } else if (l.started_at && (!p || p.state !== 'work' && p.state !== 'ask' || now - Date.parse(p.updated_at) > SILENT)) {
         await end(l, p && (p.state === 'sleep' || p.state === 'pause') ? 'done' : 'silent')
@@ -174,27 +195,36 @@ export async function dispatch(admin: any, user: string, key: Row) {
       return data?.[0] ?? null
     }
     // Due now: the schedule's last time (not before the role was set up or last changed), the time the
-    // agent named (without a schedule), a message or an answer. At most one start waits.
+    // agent named (without a schedule), a message or an answer. The schedule's starts queue up behind a
+    // run that takes longer than its step (each its turn, one run at a time; at most every 10 minutes);
+    // a message or an answer waits only when nothing does (the next run reads it anyway).
     let due: { reason: string, at: number } | null = null
-    if (!queued && !paused) {
+    if (!paused) {
       if (scheduled) {
         const prev = cronPrev(role.schedule, role.time_zone, new Date(now))
         const last = await lastDue('schedule')
-        if (prev && prev.getTime() > Date.parse(role.updated_at) && (!last || Date.parse(last.due_at) < prev.getTime())) due = { reason: 'schedule', at: prev.getTime() }
-      } else if (p?.state === 'sleep' && p.next_run_at && Date.parse(p.next_run_at) <= now) {
+        if (prev && prev.getTime() > Date.parse(role.updated_at) && (!last || Date.parse(last.due_at) < prev.getTime())
+          && (!last || prev.getTime() - Date.parse(last.due_at) >= MIN_GAP_MS)) due = { reason: 'schedule', at: prev.getTime() }
+      } else if (!queued && p?.state === 'sleep' && p.next_run_at && Date.parse(p.next_run_at) <= now) {
         const last = await lastDue('schedule')
         if (!last || Date.parse(last.due_at) < Date.parse(p.next_run_at)) due = { reason: 'schedule', at: Date.parse(p.next_run_at) }
       }
       const msgs = (unread.data ?? []).filter((m: Row) => m.funnel_id === role.funnel_id && m.agent === role.agent)
       const ans = (answered.data ?? []).filter((a: Row) => a.funnel_id === role.funnel_id && a.agent === role.agent)
-      if (!due && (msgs.length || ans.length)) {
+      let chat: { chat_url: string, chat_computer: string | null } | null = null
+      if (!due && !queued && (msgs.length || ans.length)) {
         due = { reason: msgs.length ? 'message' : 'answer', at: now }
+        // An answer goes on in the conversation its question was asked in; a message in the agent's own,
+        // the one its card opens. Never a new one, while that conversation can be continued.
+        const asked = [...ans].sort((a: Row, b: Row) => Date.parse(b.answered_at) - Date.parse(a.answered_at)).find((a: Row) => chatApp(a.chat_url))
+        if (!msgs.length && asked) chat = { chat_url: asked.chat_url, chat_computer: asked.computer ?? await chatPc(admin, role.funnel_id, role.agent, asked.chat_url) }
+        else if (chatApp(p?.chat_url)) chat = { chat_url: p!.chat_url, chat_computer: await chatPc(admin, role.funnel_id, role.agent, p!.chat_url) }
         const t = iso(now)
         if (msgs.length) await admin.from('agent_messages').update({ woken_at: t }).in('id', msgs.map((m: Row) => m.id))
         if (ans.length) await admin.from('questions').update({ woken_at: t }).in('id', ans.map((a: Row) => a.id))
       }
       if (due) {
-        const { data } = await admin.from('role_launches').insert({ funnel_id: role.funnel_id, agent: role.agent, user_id: user, reason: due.reason, due_at: iso(due.at) }).select('*').single()
+        const { data } = await admin.from('role_launches').insert({ funnel_id: role.funnel_id, agent: role.agent, user_id: user, reason: due.reason, due_at: iso(due.at), ...chat }).select('*').single()
         if (data) starts.push(data)
       }
     }
@@ -205,7 +235,8 @@ export async function dispatch(admin: any, user: string, key: Row) {
     const horizon = (scheduled && cronNext(role.schedule, role.time_zone, new Date(now))?.getTime()) || now + 86400e3
     // Busy: a start taken and not over, or the agent at work by itself (reporting): the waiting one waits.
     const busy = starts.some((l: Row) => l.claimed_at) || (p && (p.state === 'work' || p.state === 'ask') && now - Date.parse(p.updated_at) < SILENT)
-    const waiting = starts.find((l: Row) => !l.claimed_at)
+    // The one whose turn it is: the oldest waiting.
+    const waiting = starts.filter((l: Row) => !l.claimed_at).sort((a: Row, b: Row) => Date.parse(a.due_at) - Date.parse(b.due_at))[0]
     if (waiting && !busy) {
       // Executors that did not start this reason within the last hour are left out this time.
       const { data: failed } = await admin.from('role_launches').select('executor_id').eq('funnel_id', role.funnel_id).eq('agent', role.agent)
@@ -215,10 +246,15 @@ export async function dispatch(admin: any, user: string, key: Row) {
       // a spare allowed (computer_fallback), while that one is off. Without it the start waits for it.
       const all = keys.data ?? []
       const home = role.computer ?? [...all].sort((a: Row, b: Row) => Date.parse(a.created_at) - Date.parse(b.created_at))[0]?.computer
-      const allowed = role.computer_fallback ? all : all.filter((k: Row) => k.computer === home)
-      const ex = choose(role, mine, allowed, q, now, horizon - now, skip)
+      // A start that goes on in a conversation (an answer, a message): on that conversation's app and
+      // computer, where it is. With no executor on for that app, it opens a new one as any start does.
+      const goOn = waiting.chat_url && mine.some((e: Row) => e.enabled && e.app === chatApp(waiting.chat_url)) ? waiting : null
+      const there = goOn?.chat_computer ?? null
+      const allowed = there ? all.filter((k: Row) => k.computer === there) : role.computer_fallback ? all : all.filter((k: Row) => k.computer === home)
+      const ex = choose(role, goOn ? mine.filter((e: Row) => e.app === chatApp(goOn.chat_url)) : mine, allowed, q, now, horizon - now, skip)
       if (!ex) {
-        const note = role.computer_fallback ? 'no executor can take it now (computers off, quotas used up)' : `waiting for ${home} (no spare computer allowed), or quotas used up`
+        const note = there ? `waiting for ${there}, where its conversation is, or quotas used up`
+          : role.computer_fallback ? 'no executor can take it now (computers off, quotas used up)' : `waiting for ${home} (no spare computer allowed), or quotas used up`
         if (waiting.note !== note) await admin.from('role_launches').update({ note }).eq('id', waiting.id)
       } else {
         if (waiting.executor_id !== ex.id) {
@@ -230,9 +266,14 @@ export async function dispatch(admin: any, user: string, key: Row) {
         const main = (k: Row) => k.computer === home
         const able = allowed.filter((k: Row) => canRun(k, ex, now))
           .sort((a: Row, b: Row) => Number(main(b)) - Number(main(a)) || Date.parse(a.created_at) - Date.parse(b.created_at))
+        // Its conversation: the one it goes on in; for a start on the schedule or Run now, the agent's own
+        // when its executor doesn't open a new one each time (and it is on this app and computer).
+        const own = !goOn && ex.new_chat === false && chatApp(p?.chat_url) === ex.app ? p!.chat_url : null
+        const ownPc = own ? await chatPc(admin, role.funnel_id, role.agent, own) : null
+        const resume = goOn?.chat_url ?? (own && (!ownPc || ownPc === key.computer) ? own : null)
         if (able[0]?.id === key.id) {
           const f = fun.get(role.funnel_id)
-          offer.push({
+          offer.push({ resume,
             launch: waiting.id, funnel_id: f?.key, agent: role.agent, app: ex.app, model: ex.model, effort: ex.effort,
             new_chat: ex.new_chat, full_access: ex.full_access, bot_id: ex.bot_id, prompt: prompt(role, f ?? {}, p, ex, waiting.reason),
             // The conversation's name in its app (a run from the command line has none: the app shows its folder).

@@ -9,6 +9,26 @@ export function cronNext(expr: string, tz: string, at = new Date()): string | nu
   try { return cronParser.parseExpression(expr, { currentDate: at, tz }).next().toDate().toISOString() } catch { return null }
 }
 
+// The shortest time between two starts of a cron, in minutes, from its minute field (a role runs at
+// most every 10 minutes): its minutes in an hour, and the next hour's first after the last.
+export function cronMinGap(cron: string) {
+  const field = (cron || '').trim().split(/\s+/)[0];
+  if (!field) return 60;
+  const mins = new Set<number>();
+  for (const part of field.split(',')) {
+    const m = /^(\*|\d{1,2}(?:-\d{1,2})?)(?:\/(\d{1,2}))?$/.exec(part);
+    if (!m) return 60;
+    const [a, b] = m[1] === '*' ? [0, 59] : m[1].split('-').map(Number).concat(m[1].includes('-') ? [] : [m[2] ? 59 : Number(m[1])]);
+    for (let x = a; x <= b; x += Number(m[2] || 1)) mins.add(x);
+  }
+  const list = [...mins].sort((x, y) => x - y);
+  if (!list.length) return 60;
+  let gap = 60 - list[list.length - 1] + list[0];
+  for (let i = 1; i < list.length; i++) gap = Math.min(gap, list[i] - list[i - 1]);
+  return gap;
+}
+export const MIN_GAP = 10;
+
 // The role's launch settings, or null for an agent the orchestrator doesn't start.
 export async function roleOf(admin: Db, funnelId: string, agent: string) {
   // Every agent has Launch; it is a role Goalcraft starts only with an executor on.
