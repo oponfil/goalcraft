@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=42983e1e';
-import vi from './lang/vi.js?v=42983e1e';
-import ja from './lang/ja.js?v=42983e1e';
-import pt from './lang/pt.js?v=42983e1e';
-import tr from './lang/tr.js?v=42983e1e';
-import ko from './lang/ko.js?v=42983e1e';
+import es from './lang/es.js?v=5a41ff22';
+import vi from './lang/vi.js?v=5a41ff22';
+import ja from './lang/ja.js?v=5a41ff22';
+import pt from './lang/pt.js?v=5a41ff22';
+import tr from './lang/tr.js?v=5a41ff22';
+import ko from './lang/ko.js?v=5a41ff22';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -475,6 +475,7 @@ const STRINGS = {
   'launch.turnOn': L('Turn on', 'Включить'),
   'launch.turnOff': L('Turn off', 'Выключить'),
   'launch.runNow': L('Run now', 'Запустить сейчас'),
+  'launch.runNowTip': L('Start the role now, outside its schedule, on its executors in order.', 'Запустить роль сейчас, вне расписания, на её исполнителях по порядку.'),
   'launch.queued': L('Starting: it runs as soon as a computer takes it.', 'Запуск поставлен: начнётся, как только его возьмёт компьютер.'),
   'launch.waiting': L('A start is already waiting.', 'Запуск уже ждёт в очереди.'),
   'launch.badTimes': L('Write times like 9:00, 18:00 (same minutes), or a cron of five fields.', 'Напишите время вида 9:00, 18:00 (с одинаковыми минутами) или cron из пяти полей.'),

@@ -221,8 +221,8 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop details.launch-box summary::-webkit-details-marker { display: none; }
 #pop details.launch-box summary .l-title::before { content: "▸ "; }
 #pop details.launch-box[open] summary .l-title::before { content: "▾ "; }
-#pop details.launch-box summary:hover:not(:has(.l-run:hover)) .l-title { color: var(--text); }  /* not while on Run now */
-#pop .l-run { margin-left: auto; color: #F2C14E; text-decoration: none; white-space: nowrap; }
+#pop details.launch-box summary:hover .l-title { color: var(--text); }
+#pop .l-run { align-self: center; margin-left: 4px; color: #F2C14E; text-decoration: none; white-space: nowrap; cursor: pointer; }
 #pop .l-run:hover { text-decoration: underline; }
 #pop .l-run.busy { opacity: 0.5; pointer-events: none; }
 #pop .launch-box .l-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; color: var(--text); }
@@ -574,3 +574,5 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.scripts ul:has(li.pick-here) { grid-template-columns: minmax(100px, 1fr) auto auto auto; }
 #pop details.scripts .here { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); white-space: nowrap; cursor: pointer; }
 #pop details.scripts .here:has(input:checked) { color: var(--text); }
+/* A chat's icon beside Send opens it: a pointing hand, as in the past runs (not the hint's question mark). */
+#pop .ask-buttons a.run-chat { cursor: pointer; }

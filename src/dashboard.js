@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=42983e1e';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=42983e1e';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=42983e1e';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=5a41ff22';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=5a41ff22';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=5a41ff22';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -897,7 +897,7 @@ export function mountDashboard(funnels, opts = {}) {
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '')}</div>
+        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '')}${opts.onRunNow ? `<a href="#" class="l-run" data-tip="${esc(t('launch.runNowTip'))}">${esc(t('launch.runNow'))}</a>` : ''}</div>
         <div class="pop-msg"></div></div>`
       : chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '');
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
@@ -998,7 +998,7 @@ export function mountDashboard(funnels, opts = {}) {
         + `<label class="l-spare" data-tip="${esc(spareTip(l.computer_fallback))}"><input type="checkbox" class="switch l-fallback"${l.computer_fallback ? ' checked' : ''}>${esc(t('launch.spare'))}</label></div>`
       : pcs.length ? `<p class="l-row l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
     const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener" data-tip="${esc(t('launch.guideTip'))}">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
-    return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(launchTitle(l.schedule_on, l.schedule))}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
+    return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(launchTitle(l.schedule_on, l.schedule))}</span></summary>
       <div class="l-row"><label class="l-sched" data-tip="${esc(t('launch.scheduleTip'))}"><input type="checkbox" class="switch l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>${guide}</div>
       <input class="l-times" value="${esc(timesOf(l.schedule))}" placeholder="${esc(t('launch.times'))}">
       <p class="pop-note l-free"${l.schedule && l.schedule_on ? ' hidden' : ''}>${esc(t('launch.noSchedule'))}</p>
@@ -1062,7 +1062,7 @@ export function mountDashboard(funnels, opts = {}) {
     // leaving the field or Enter), the order once dropped. Saves go one after another.
     let saving = Promise.resolve();
     const save = () => (saving = saving.then(saveNow));
-    box.addEventListener('change', e => { if (!e.target.closest('.l-run')) save(); });
+    box.addEventListener('change', save);
     const saveNow = async () => {
       const on = box.querySelector('.l-on').checked, text = box.querySelector('.l-times').value;
       const schedule = text.trim() ? cronOf(text) : null;
@@ -1083,16 +1083,17 @@ export function mountDashboard(funnels, opts = {}) {
       // Saved as it changes: only what went wrong is said.
       say(error || '');
     };
-    // Run now sits on Launch's own line: it starts the role, and doesn't open or close the settings.
-    box.querySelector('.l-run').addEventListener('click', async e => {
+    // Run now sits beside Send and the chat's icon: it starts the role; what came of it is said there.
+    pop.querySelector('.write .l-run')?.addEventListener('click', async e => {
       e.preventDefault(); e.stopPropagation();
-      const link = e.currentTarget;
+      const link = e.currentTarget, note = link.closest('.write').querySelector('.pop-msg');
+      const tell = (text, ok) => { note.textContent = text; note.className = 'pop-msg' + (ok ? ' ok' : ''); };
       if (link.classList.contains('busy')) return;
-      if (!a.launch.executors.some(x => x.enabled !== false)) return say(t('launch.noExecutors'));
+      if (!a.launch.executors.some(x => x.enabled !== false)) return tell(t('launch.noExecutors'));
       link.classList.add('busy');
       const error = await opts.onRunNow(a);
       link.classList.remove('busy');
-      say(error ? (/duplicate|unique/i.test(error) ? t('launch.waiting') : error) : t('launch.queued'), !error);
+      tell(error ? (/duplicate|unique/i.test(error) ? t('launch.waiting') : error) : t('launch.queued'), !error);
     });
   }
 
