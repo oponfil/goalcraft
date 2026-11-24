@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=342c9c71';
-import vi from './lang/vi.js?v=342c9c71';
-import ja from './lang/ja.js?v=342c9c71';
-import pt from './lang/pt.js?v=342c9c71';
-import tr from './lang/tr.js?v=342c9c71';
-import ko from './lang/ko.js?v=342c9c71';
+import es from './lang/es.js?v=00c225b3';
+import vi from './lang/vi.js?v=00c225b3';
+import ja from './lang/ja.js?v=00c225b3';
+import pt from './lang/pt.js?v=00c225b3';
+import tr from './lang/tr.js?v=00c225b3';
+import ko from './lang/ko.js?v=00c225b3';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -448,7 +448,9 @@ const STRINGS = {
   'launch.evenTip': L((n) => `Now: evenly by the quotas. Each run goes to the executor whose plan's quota would go unused soonest.\nOff: in order, the first in the list whose plan has used under ${n}% of its quota.`, (n) => `Сейчас: равномерно по квотам. Каждый запуск берёт исполнитель, чья квота быстрее всего пропадёт неиспользованной.\nВыключить: по порядку, первый в списке, у кого израсходовано меньше ${n}% квоты.`),
   'launch.orderTip': L((n) => `Now: in order. Each run goes to the first in the list whose plan has used under ${n}% of its quota.\nOn: evenly by the quotas, to the executor whose quota would go unused soonest.`, (n) => `Сейчас: по порядку. Запуск берёт первый в списке, у кого израсходовано меньше ${n}% квоты.\nВключить: равномерно по квотам, к тому, чья квота быстрее всего пропадёт неиспользованной.`),
   'launch.computer': L('Computer', 'Компьютер'),
-  'launch.computerTip': L('The main computer: the role starts there whenever it is on; only when it is off does another computer take the run.', 'Основной компьютер: роль запускается на нём, когда он в сети; только если он не в сети, запуск берёт другой компьютер.'),
+  'launch.computerTip': L('The computer the role starts on.', 'Компьютер, на котором запускается роль.'),
+  'launch.spare': L('Spare', 'Резерв'),
+  'launch.spareTip': L('On: while this computer is off, another one takes the run. Off: the run waits for this computer.', 'Включено: пока этот компьютер не в сети, запуск берёт другой. Выключено: запуск ждёт этот компьютер.'),
   'launch.off': L('off', 'не в сети'),
   'launch.notInstalled': L((app, pc) => `${app} is not installed on ${pc}. Install it there to use it.`, (app, pc) => `${app} не установлен на компьютере ${pc}. Чтобы им пользоваться, установите его там.`),
   'launch.drag': L('Drag to change the order', 'Перетащите, чтобы поменять порядок'),

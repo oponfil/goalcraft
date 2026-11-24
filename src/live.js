@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=342c9c71';
+import { supabase } from './auth.js?v=00c225b3';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -221,7 +221,7 @@ export async function loadFunnels() {
         questions (id, agent, question, answer, asked_at, answered_at, chat_url, reply, replied_at, reply_seen_at),
         agent_messages (id, agent, from_agent, text, reply, replied_at, reply_seen_at),
         person_tasks (id, position, title, detail, url, due_at, done_at),
-        role_launch (agent, schedule, schedule_on, time_zone, mode, quota_limit, guide_url, computer,
+        role_launch (agent, schedule, schedule_on, time_zone, mode, quota_limit, guide_url, computer, computer_fallback,
           role_executors (id, position, enabled, app, computer, model, effort, new_chat, full_access, bot_id))`)
       // In the person's order (see saveFunnelOrder); new ones, not placed yet, after them by age.
       .order('position', { nullsFirst: false }).order('created_at'),

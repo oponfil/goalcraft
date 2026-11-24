@@ -211,18 +211,24 @@ export async function dispatch(admin: any, user: string, key: Row) {
       const { data: failed } = await admin.from('role_launches').select('executor_id').eq('funnel_id', role.funnel_id).eq('agent', role.agent)
         .in('outcome', ['not_started', 'failed']).gte('ended_at', iso(now - 3600e3))
       const skip = new Set<string>([...(waiting._skip ?? []), ...(failed ?? []).map((f: Row) => f.executor_id)].filter(Boolean))
-      const ex = choose(role, mine, keys.data ?? [], q, now, horizon - now, skip)
+      // The role's computer (none chosen: the first one set up) takes its starts; another one only with
+      // a spare allowed (computer_fallback), while that one is off. Without it the start waits for it.
+      const all = keys.data ?? []
+      const home = role.computer ?? [...all].sort((a: Row, b: Row) => Date.parse(a.created_at) - Date.parse(b.created_at))[0]?.computer
+      const allowed = role.computer_fallback ? all : all.filter((k: Row) => k.computer === home)
+      const ex = choose(role, mine, allowed, q, now, horizon - now, skip)
       if (!ex) {
-        if (!waiting.note) await admin.from('role_launches').update({ note: 'no executor can take it now (computers off, quotas used up)' }).eq('id', waiting.id)
+        const note = role.computer_fallback ? 'no executor can take it now (computers off, quotas used up)' : `waiting for ${home} (no spare computer allowed), or quotas used up`
+        if (waiting.note !== note) await admin.from('role_launches').update({ note }).eq('id', waiting.id)
       } else {
         if (waiting.executor_id !== ex.id) {
           await admin.from('role_launches').update({ executor_id: ex.id, app: ex.app, model: ex.model, effort: ex.effort, note: null }).eq('id', waiting.id)
           Object.assign(waiting, { executor_id: ex.id, app: ex.app, model: ex.model, effort: ex.effort })
         }
-        // The role's main computer takes it whenever it is on and can run it; else the next one that can,
-        // in the order the scripts were set up (the first one set up is the main one when none is chosen).
-        const main = (k: Row) => (role.computer ? k.computer === role.computer : false)
-        const able = (keys.data ?? []).filter((k: Row) => canRun(k, ex, now))
+        // The role's computer takes it whenever it is on and can run it; with a spare allowed, else the
+        // next one that can, in the order the scripts were set up.
+        const main = (k: Row) => k.computer === home
+        const able = allowed.filter((k: Row) => canRun(k, ex, now))
           .sort((a: Row, b: Row) => Number(main(b)) - Number(main(a)) || Date.parse(a.created_at) - Date.parse(b.created_at))
         if (able[0]?.id === key.id) {
           const f = fun.get(role.funnel_id)

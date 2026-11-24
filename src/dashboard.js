@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=342c9c71';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=342c9c71';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=342c9c71';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=00c225b3';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=00c225b3';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=00c225b3';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -752,11 +752,12 @@ export function mountDashboard(funnels, opts = {}) {
     // The sheets on top open the funnel's list straight away.
     if (h.type === 'source' || h.type === 'guide') { hidePop(); return window.open(h.url, '_blank', 'noopener'); }
     showPop(e, content(h));
-    popAgent = h.type === 'agent' ? { a: h.a, named: h.a.shownName } : null;
+    // An agent's card is the same whether it was opened by the agent or by its question bubble.
+    popAgent = { a: h.a, named: h.a.shownName };
     bindRuns(h.a);
-    if (h.type === 'ask' && opts.onAnswer) bindAnswer(h.a);
-    if (h.type === 'agent' && opts.onMessage) bindMessage(h.a);
-    if (h.type === 'agent') bindLaunch(h.a);
+    if (opts.onAnswer) bindAnswer(h.a);
+    if (opts.onMessage) bindMessage(h.a);
+    bindLaunch(h.a);
   });
 
   // A supervisor's status word in its own colour: all good, bottleneck, recommendation, question.
@@ -833,35 +834,25 @@ export function mountDashboard(funnels, opts = {}) {
     // Overdue (it should have run by now) or silent at work: when it was last heard from.
     const missed = scene.overdue(a)
       ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.t + (a.seenAgo || 0))))}</p>` : '';
-    if (h.type === 'ask') {
-      // Each open question with its own answer box and, beside Send, the chat it was asked from (or
-      // the agent's chat): an agent working in several chats asks from each. The demo links to the
-      // agent's chat instead.
-      // The question's own chat, or the agent's; the site's front page alone is no chat of its own.
-      const mine = url => (url && url !== info.chat && url !== web ? url : a.chat);
-      const openBtn = url => {
-        const link = chatLink(info, url);
-        return link ? openBtnHtml(link, webOf(url, info), info, (opts.live ? whereTip(mine(url), info, inAntigravity) : ''), opts.live && elsewhere(a)) : '';
-      };
-      // The first question (the one asked first) shows with its answer box; the rest fold under
-      // "N more questions" and open with their own boxes.
-      // Each question folds to one line and opens by itself; the first starts open, with its answer box.
-      const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>${esc(q.question)}</summary>`
-        + `<div class="ask" data-qid="${esc(q.id)}">${opts.onAnswer
-        ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
-          <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
-          <div class="pop-msg"></div>` : ''}</div></details>`;
-      const asks = a.questions.map(askHtml).join('');
-      const reply = opts.onAnswer ? ''
-        : `<a class="btn primary" style="${paint}" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.replyIn', info.product || info.name))}</a>`;
-      // Standing, the agent is waiting and takes the answer at once; asleep, only on its next run.
-      const asleep = a.state === 'sleep', left = scene.sleepLeft(a);
-      const when = left > 0 ? fmtDuration(left) : null;
-      // Its state right under its name (when it takes the answer, or how late it is), then its work.
-      return `<div class="pop-title">${t(asleep ? 'board.askedAsleep' : 'board.asking', who)}</div>
-        <div class="pop-status">${asleep && !missed ? `<p class="pop-note">${esc(t('board.nextRun', when))}</p>` : ''}${missed}</div>
-        <div class="pop-sub where">${where}</div>${launchHtml(a)}${asks}${reply}${history}`;
-    }
+    // One card for an agent, whatever it does: its questions, when it has any, are a block in it.
+    // Each open question with its own answer box and, beside Send, the chat it was asked from (or the
+    // agent's chat): an agent working in several chats asks from each. The demo links to the agent's
+    // chat instead. The question's own chat, or the agent's; the site's front page alone is no chat.
+    const mine = url => (url && url !== info.chat && url !== web ? url : a.chat);
+    const openBtn = url => {
+      const link = chatLink(info, url);
+      return link ? openBtnHtml(link, webOf(url, info), info, (opts.live ? whereTip(mine(url), info, inAntigravity) : ''), opts.live && elsewhere(a)) : '';
+    };
+    // Each question folds to one line and opens by itself; the first starts open, with its answer box.
+    const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>${esc(q.question)}</summary>`
+      + `<div class="ask" data-qid="${esc(q.id)}">${opts.onAnswer
+      ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
+        <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
+        <div class="pop-msg"></div>` : ''}</div></details>`;
+    // Asleep, it takes the answers only on its next run: when that is.
+    const left = scene.sleepLeft(a), takes = a.state === 'sleep' && !missed && left > 0 ? `<p class="pop-note">${esc(t('board.nextRun', fmtDuration(left)))}</p>` : '';
+    const replyIn = opts.onAnswer ? '' : `<a class="btn primary" style="${paint}" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.replyIn', info.product || info.name))}</a>`;
+    const questions = a.questions?.length ? `<div class="asks">${takes}${a.questions.map(askHtml).join('')}${replyIn}</div>` : '';
     const lost = scene.lost(a) ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.silence(a))))}</p>` : '';
     // On pause: why, as it or its supervisor said, or the used-up limit with when it resets.
     // A role paused by its schedule turned off says so on its Launch line ("Paused"), not here too.
@@ -878,7 +869,7 @@ export function mountDashboard(funnels, opts = {}) {
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
       <div class="pop-status">${paused}${missed}${lost}</div>
       <div class="pop-sub where">${where}</div>
-      ${launchHtml(a)}${write}${history}`;
+      ${questions}${launchHtml(a)}${write}${history}`;
   }
 
   // A role Goalcraft starts itself (the orchestrator): in its card, Launch with Run now on its line;
@@ -964,8 +955,11 @@ export function mountDashboard(funnels, opts = {}) {
     const apps = opts.launchApps?.() ?? {}, pcs = opts.launchComputers?.() ?? [];
     // The main computer: the one chosen, else the first one set up.
     const main = pcs.find(c => c.name === l.computer) ?? pcs[0];
+    // Computer, its list and, with more than one, Spare: another computer takes the start while this one
+    // is off (off by default: the start waits for it).
     const computer = pcs.length > 1
-      ? `<label class="l-row" data-tip="${esc(t('launch.computerTip'))}">${esc(t('launch.computer'))}<select class="l-computer">${pcs.map(c => `<option value="${esc(c.name)}"${c === main ? ' selected' : ''}>${esc(c.name)}${c.on ? '' : ` (${esc(t('launch.off'))})`}</option>`).join('')}</select></label>`
+      ? `<div class="l-row l-pc"><span data-tip="${esc(t('launch.computerTip'))}">${esc(t('launch.computer'))}</span><select class="l-computer">${pcs.map(c => `<option value="${esc(c.name)}"${c === main ? ' selected' : ''}>${esc(c.name)}${c.on ? '' : ` (${esc(t('launch.off'))})`}</option>`).join('')}</select>`
+        + `<label class="l-spare" data-tip="${esc(t('launch.spareTip'))}"><input type="checkbox" class="switch l-fallback"${l.computer_fallback ? ' checked' : ''}>${esc(t('launch.spare'))}</label></div>`
       : pcs.length ? `<p class="l-row l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
     const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener" data-tip="${esc(t('launch.guideTip'))}">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
     return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(launchTitle(l.schedule_on, l.schedule))}</span><a href="#" class="l-run">${esc(t('launch.runNow'))}</a></summary>
@@ -1043,7 +1037,7 @@ export function mountDashboard(funnels, opts = {}) {
       if (grokOff) return say(t('launch.botNeeded'));
       const patch = { schedule, schedule_on: on && !!schedule, mode: box.querySelector('.l-even').checked ? 'even' : 'priority' };
       const pc = box.querySelector('.l-computer');
-      if (pc) patch.computer = pc.value;
+      if (pc) Object.assign(patch, { computer: pc.value, computer_fallback: box.querySelector('.l-fallback').checked });
       const error = await opts.onLaunch(a, patch, executors);
       if (!error) {
         Object.assign(l, patch, { executors });
@@ -1177,15 +1171,16 @@ export function mountDashboard(funnels, opts = {}) {
         // The demo has no agent to reply: a moment later it answers back as a real one would.
         if (!opts.live) setTimeout(() => { a.replies = [...(a.replies || []), { id: 'demo-' + Date.now(), question: asked, answer: text, reply: t('demo.reply') }]; }, 1200);
         if (a.questions.length) return;
+        // None left: the block goes, the card stays; a waiting agent takes the answers at once.
+        pop.querySelector('.asks')?.remove();
         if (a.state !== 'sleep') a.state = 'work';
-        hidePop();
       });
     });
   }
 
   // What an agent is doing now, and the card's title that says it: its name with a moon or a bolt
   // while it sleeps or works, in words otherwise (starting or finishing a shift, overdue, silent).
-  const agentState = a => a.state === 'pause' ? 'board.paused' : scene.overdue(a) ? 'board.overdue' : scene.lost(a) ? 'board.lost' : a.state === 'sleep' ? 'board.resting'
+  const agentState = a => a.state === 'pause' ? 'board.paused' : scene.overdue(a) ? 'board.overdue' : scene.lost(a) ? 'board.lost' : a.state === 'ask' ? 'board.asking' : a.state === 'sleep' ? 'board.resting'
     : a.state === 'walk' ? (a.to === 'work' ? 'board.starting' : 'board.finished')
       : 'board.working';
   function agentTitle(a, named) {

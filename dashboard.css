@@ -550,3 +550,9 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.scripts .n { color: var(--muted); white-space: nowrap; text-align: right; cursor: help; }
 #pop details.scripts .pop-note { margin: 8px 0 0; font-size: 12px; }
 #pop details.limits .when { color: var(--muted); font-size: 12px; white-space: nowrap; }
+/* Computer, its list and Spare on one line. */
+#pop .launch-box .l-pc select { margin-left: 0; flex: 1 1 auto; min-width: 0; }
+#pop .launch-box .l-spare { display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; }
+/* The agent's questions, a block of its card when it has any. */
+#pop .asks { margin-top: 8px; }
+#pop .asks > .pop-note { margin: 4px 0 0; }
