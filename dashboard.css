@@ -166,6 +166,7 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 .btn.off, .btn.off:hover { background: none; opacity: 0.45; }
 #pop .btn.off[data-tip] { cursor: not-allowed; }
 #pop textarea {
+  display: block;  /* inline, it kept a line's descent below it: the gap to its buttons was 13px, not 8 */
   width: 100%;
   margin: 0 0 8px;
   padding: 8px;
@@ -559,3 +560,8 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 /* The agent's questions, a block of its card when it has any. */
 #pop .asks { margin-top: 8px; }
 #pop .asks > .pop-note { margin: 4px 0 0; }
+/* Asleep with questions, "takes the answer when it wakes" belongs to the head: under the result as close
+   as the result is under the name. */
+#pop .pop-sub.where:has(+ .asks > .pop-note:first-child) { margin-bottom: 0; }
+#pop .asks:has(> .pop-note:first-child) { margin-top: 4px; }
+#pop .asks > .pop-note:first-child { margin: 0 0 12px; }
