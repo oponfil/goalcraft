@@ -574,5 +574,11 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.scripts ul:has(li.pick-here) { grid-template-columns: minmax(100px, 1fr) auto auto auto; }
 #pop details.scripts .here { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); white-space: nowrap; cursor: pointer; }
 #pop details.scripts .here:has(input:checked) { color: var(--text); }
+/* "this one": a square pixel mark, as the board's switches are (not the browser's round radio). */
+#pop details.scripts .here input { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 14px; height: 14px; margin: 0; border: 2px solid #4A3F35; background: #1B1714; cursor: pointer; }
+#pop details.scripts .here:hover input { border-color: #6B5A48; }
+#pop details.scripts .here input:checked { border-color: #F2C14E; }
+#pop details.scripts .here input:checked::after { content: ""; position: absolute; top: 2px; left: 2px; width: 6px; height: 6px; background: #F2C14E; }
+#pop details.scripts .here input:focus-visible { outline: 1px solid var(--muted); outline-offset: 1px; }
 /* A chat's icon beside Send opens it: a pointing hand, as in the past runs (not the hint's question mark). */
 #pop .ask-buttons a.run-chat { cursor: pointer; }
