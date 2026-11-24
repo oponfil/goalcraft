@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-24.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-24.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1940,6 +1940,13 @@ def run_launch(key, l):
                 chat = claude_app_session(l)
                 if chat:
                     l['prompt'] += f'\n\nYour chat_url for set_agent_state: {chat}'
+                # Claude in Chrome sees every Chrome signed in to the account (this computer's and others'),
+                # and with more than one it asks which; a run here has no one to ask. Its owner's choice,
+                # once for all runs: the Chrome of the computer the run is on.
+                l['prompt'] += ('\n\nChrome: use the Chrome on this computer, where this run is. If Claude in Chrome says'
+                                ' several browsers are connected and none is selected, call select_browser with the deviceId'
+                                ' of the one list_connected_browsers marks isLocal: true. Your owner chose this for every'
+                                ' run Goalcraft starts, so don\'t ask which browser.')
             if l['app'] in ('claude', 'antigravity'):
                 remember_launch({'launch': lid, 'agent': l['agent'], 'funnel_id': l['funnel_id'], 'app': l['app'], 'session': l.get('session')})
             if l['app'] == 'grok':
