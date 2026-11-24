@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=25231f02';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=25231f02';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=25231f02';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=a0d7685d';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=a0d7685d';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=a0d7685d';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -772,13 +772,14 @@ export function mountDashboard(funnels, opts = {}) {
     canvas.style.cursor = h && h.type !== 'stage' && h.type !== 'result' && (h.type !== 'count' || opts.history) ? 'pointer' : 'default';
     // A tank shows only its number and flow; what it holds pops up on hover. The sheet on top says
     // where the list it opens is kept.
-    if (!['stage', 'count', 'source', 'guide', 'result'].includes(h?.type) || e.pointerType === 'touch') return (tip.hidden = true);
+    if (!['stage', 'count', 'source', 'guide', 'result', 'agent'].includes(h?.type) || e.pointerType === 'touch') return (tip.hidden = true);
     showTip(e, h);
   });
   let tipTimer;
   function showTip(e, h) {
     tip.classList.remove('over');
     if (h.type === 'result') tip.textContent = h.title;
+    else if (h.type === 'agent') tip.textContent = agentTip(h.a);
     else if (h.type === 'source') tip.textContent = t('board.sheet', sheetPlace(h.url));
     else if (h.type === 'guide') tip.textContent = t('board.guide', sheetPlace(h.url));
     else {
@@ -804,6 +805,17 @@ export function mountDashboard(funnels, opts = {}) {
     tip.style.top = e.clientY + 18 + 'px';
   }
   canvas.addEventListener('pointerleave', () => { tip.hidden = true; });
+  // An agent on hover, before its card: its name as on its card, then the app, model and effort of the
+  // conversation it works in ("Claude Opus 5.5 · medium"); without one known, its app.
+  function agentTip(a) {
+    const info = agentInfo(a.agent, { provider: a.provider, chat: a.chat });
+    const name = a.name || (a.sup ? t('board.supervisorName', a.f.title) : info.name);
+    const run = a.chatRun, app = run?.app ? (APP_NAMES[run.app] ?? run.app) : (info.product || (a.name ? info.name : ''));
+    const model = modelName(run?.model);
+    const how = [model && model.startsWith(app) ? '' : app, model, run?.effort].filter(Boolean).join(' · ');
+    return how ? `${name}
+${how}` : name;
+  }
   // The service a list or notes link leads to, by its address; any other site by its own name.
   function sheetPlace(url) {
     let host;
