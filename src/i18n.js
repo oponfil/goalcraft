@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=31f3025b';
-import vi from './lang/vi.js?v=31f3025b';
-import ja from './lang/ja.js?v=31f3025b';
-import pt from './lang/pt.js?v=31f3025b';
-import tr from './lang/tr.js?v=31f3025b';
-import ko from './lang/ko.js?v=31f3025b';
+import es from './lang/es.js?v=ad12d40a';
+import vi from './lang/vi.js?v=ad12d40a';
+import ja from './lang/ja.js?v=ad12d40a';
+import pt from './lang/pt.js?v=ad12d40a';
+import tr from './lang/tr.js?v=ad12d40a';
+import ko from './lang/ko.js?v=ad12d40a';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -352,6 +352,7 @@ const STRINGS = {
   'board.lost': L((who) => `No word from ${who}`, (who) => `${who} не выходит на связь`, (who) => `${who} 没有消息`, (who) => `ไม่มีสัญญาณจาก ${who}`),
   'board.runs': L('Previous runs', 'Предыдущие запуски', '之前的运行', 'การรันก่อนหน้า'),
   'board.onComputer': L((pc) => `computer ${pc}`, (pc) => `компьютер ${pc}`),
+  'board.chatOnlyThere': L((pc) => `This conversation is on ${pc}: it opens only there.`, (pc) => `Беседа на компьютере ${pc}: открыть её можно только там.`),
   'board.question': L((n) => `Question ${n}`, (n) => `Вопрос ${n}`),
   'board.usageDay': L((n) => `Spent in 7 days: ${n}`, (n) => `Расход за неделю: ${n}`, (n) => `近 7 天消耗：${n}`, (n) => `ค่าใช้จ่าย 7 วันล่าสุด: ${n}`),
   'board.tokens': L((n) => `${n} tokens`, (n) => `${n} токенов`, (n) => `${n} 个 token`, (n) => `${n} โทเค็น`),

@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=31f3025b';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=31f3025b';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=31f3025b';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=ad12d40a';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=ad12d40a';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ad12d40a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -854,7 +854,7 @@ export function mountDashboard(funnels, opts = {}) {
     const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>${esc(t('board.question', i + 1))}</summary>`
       + `<div class="ask" data-qid="${esc(q.id)}"><p class="ask-text">${esc(q.question)}</p>${opts.onAnswer
       ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web, q.computer)}</div>
+        <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${chatIcon(a, q.chat || a.chat, q.chat ? q.run : a.chatRun, q.computer ?? elsewhere(a)) || openBtn(q.chat || web, q.computer)}</div>
         <div class="pop-msg"></div>` : ''}</div></details>`;
     // Asleep, it takes the answers only on its next run: when that is.
     const left = scene.sleepLeft(a), takes = a.state === 'sleep' && !missed && left > 0 ? `<p class="pop-note">${esc(t('board.nextRun', fmtDuration(left)))}</p>` : '';
@@ -870,9 +870,9 @@ export function mountDashboard(funnels, opts = {}) {
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : ''}</div>
+        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '')}</div>
         <div class="pop-msg"></div></div>`
-      : chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '';
+      : chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '');
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
       <div class="pop-status">${paused}${missed}${lost}</div>
       <div class="pop-sub where">${where}</div>
@@ -1077,12 +1077,18 @@ export function mountDashboard(funnels, opts = {}) {
   // saying on hover the app, model, effort and conversation ("The agent works in the ChatGPT (Codex)
   // app · gpt-6.2-sol · medium · conversation 01a2…"); without one, the app, model and effort.
   const APP_OF_URL = [[/^codex:/i, 'codex'], [/^claude:/i, 'claude'], [/^antigravity:/i, 'antigravity'], [/^grokbot:/i, 'grok']];
-  const runApp = (a, r, app, model, effort) => {
+  // A chat's app icon, opening the chat, with where it is on hover: the app and the conversation, the
+  // computer (when there are several), the model and effort. On another computer it opens only there:
+  // greyed, it says so. The same in a past run's row and beside a card's Send.
+  const runApp = (a, r, app, model, effort, awayHere = null) => {
     const url = r.chat_url;
     app = app ?? APP_OF_URL.find(([re]) => re.test(url || ''))?.[1];
     if (!app) return '';
-    // With more than one computer, the one the run went on too (a run Goalcraft started knows it).
-    const pc = r.launch?.computer && (opts.launchComputers?.() ?? []).length > 1 ? t('board.onComputer', r.launch.computer) : '';
+    const pcs = opts.launchComputers?.() ?? [], pcName = r.launch?.computer ?? awayHere?.name ?? null;
+    const pc = pcName && pcs.length > 1 ? t('board.onComputer', pcName) : '';
+    const pcOs = r.launch?.computer ? pcs.find(c => c.name === r.launch.computer)?.os : awayHere?.os;
+    const away = opts.live && pcOs && MY_OS && pcOs !== MY_OS;
+    const logo = APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app);
     if (!url || !opts.live) return appMark(app, model, effort, pc);
     const inAntigravity = /^antigravity:/i.test(url), inGrokBot = /^grokbot:/i.test(url);
     const base = agentInfo(a.agent, { provider: a.provider, chat: url, app });
@@ -1091,8 +1097,11 @@ export function mountDashboard(funnels, opts = {}) {
     if (!link) return appMark(app, model, effort, pc);
     const [where, ...rest] = whereTip(url, info, inAntigravity).split(' · ');
     const tip = [where, pc, modelName(model), effort, ...rest].filter(Boolean).join(' · ');
-    return `<a class="app-mark run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</a>`;
+    if (away) return `<span class="app-mark run-chat off" aria-disabled="true" data-tip="${esc(tip + '\n' + t('board.chatOnlyThere', pcName))}">${logo}</span>`;
+    return `<a class="app-mark run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${logo}</a>`;
   };
+  // A card's chat as its app icon beside Send (the agent's chat, or a question's), as in its past runs.
+  const chatIcon = (a, url, run, pc) => (url ? runApp(a, { chat_url: url, launch: { computer: run?.computer ?? null } }, run?.app, run?.model, run?.effort, run?.computer ? null : pc) : '');
   // The last week's spending, in dollars at API prices (tokens when no price is known), with the tokens
   // by kind on hover. No share of a plan's limit: a role may work on several apps, each with its own.
   const weekLine = u => {
