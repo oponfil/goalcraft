@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=ad12d40a';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=ad12d40a';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ad12d40a';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=42983e1e';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=42983e1e';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=42983e1e';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -54,7 +54,25 @@ const MY_OS = (() => {
 })();
 // The agent's chat is on another computer: its computer when its system isn't this browser's (two
 // computers with the same system can't be told apart, so their chats stay open to try).
-const elsewhere = a => (a.computer?.os && MY_OS && a.computer.os !== MY_OS ? a.computer : null);
+// This computer: the one picked in this browser (kept in it, see the wake scripts in Spending), else
+// the first one set up with this browser's system. A page can't read the computer's name, only its system.
+const HERE_KEY = 'goalcraft-this-computer';
+let pcsKnown = () => [];
+const herePicked = () => { try { return localStorage.getItem(HERE_KEY); } catch { return null; } };
+const hereComputer = () => {
+  const pcs = pcsKnown(), name = herePicked();
+  return pcs.find(c => c.name === name) ?? (MY_OS ? pcs.find(c => c.os === MY_OS) : null) ?? null;
+};
+// A chat's computer { name, os }, when it isn't this one: by name once this one is known, else by
+// system (a phone or tablet opens no computer's chat).
+const awayFrom = pc => {
+  if (!pc || !MY_OS) return null;
+  if (MY_OS === 'mobile') return pc;
+  const here = hereComputer();
+  if (here && pc.name) return pc.name !== here.name ? pc : null;
+  return pc.os && pc.os !== MY_OS ? pc : null;
+};
+const elsewhere = a => awayFrom(a.computer);
 const opens = (url, web) => (/^https?:/.test(url) ? 'target="_blank" rel="noopener"' : `data-web="${esc(web)}"`);
 
 // No app on this computer: the app link does nothing and the page keeps the focus, so after a
@@ -120,11 +138,17 @@ function openApp(e) {
 // opts.onAnswer(questionId, text): the person answered one of an agent's questions (live only).
 // opts.onCloseReplies(ids): the person closed the agent's replies to their answers (live only).
 export function mountDashboard(funnels, opts = {}) {
+  pcsKnown = opts.launchComputers ?? (() => []);
   const canvas = document.getElementById('scene');
   const scroller = document.getElementById('scroller');
   const track = document.getElementById('titles-track');
   const clock = document.getElementById('day');
   const pop = document.getElementById('pop');
+  // This computer picked among the wake scripts (Spending): kept in this browser for the chats' buttons.
+  pop.addEventListener('change', e => {
+    if (!e.target.matches('input[name="here-pc"]')) return;
+    try { localStorage.setItem(HERE_KEY, e.target.value); } catch {}
+  });
   chatOpened = opts.onChatOpened ?? null;
   pop.addEventListener('click', openApp);
   const tip = document.createElement('div');
@@ -500,11 +524,14 @@ export function mountDashboard(funnels, opts = {}) {
     const open = spendState.scriptsOpen ? ' open' : '';
     if (!list.length) return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} <span class="warn">●</span></summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
     const up = c => scriptUp(c, now), current = c => scriptCurrent(w, c), statusOf = c => scriptStatus(w, c, now);
+    const hereName = hereComputer()?.name;
     const rows = list.map(c => {
       const [level, text, tip] = statusOf(c);
       const version = t(current(c) ? 'wake.versionCurrent' : 'wake.versionOld', c.version ?? '?', w.latest ?? '');
       const n = c.agents?.length ?? 0;
-      return `<li><span class="who" data-tip="${esc(version)}">${esc(c.computer || t('wake.oldComputer'))}</span>`
+      // With several computers, which one this browser is on: picked by its system, changed here.
+      const here = list.length > 1 && c.computer ? `<label class="here" data-tip="${esc(t('wake.hereTip'))}"><input type="radio" name="here-pc" value="${esc(c.computer)}"${c.computer === hereName ? ' checked' : ''}>${esc(t('wake.here'))}</label>` : '';
+      return `<li${list.length > 1 ? ' class="pick-here"' : ''}><span class="who" data-tip="${esc(version)}">${esc(c.computer || t('wake.oldComputer'))}</span>${here}`
         + `<span class="${level}" data-tip="${esc(tip)}">● ${esc(text)}</span>`
         + `<span class="n" data-tip="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span></li>`;
     }).join('');
@@ -845,7 +872,7 @@ export function mountDashboard(funnels, opts = {}) {
     const severalPcs = (opts.launchComputers?.() ?? []).length > 1;
     const openBtn = (url, pc) => {
       const link = chatLink(info, url);
-      const away = pc ? (pc.os && MY_OS && pc.os !== MY_OS ? pc : null) : elsewhere(a);
+      const away = pc ? awayFrom(pc) : elsewhere(a);
       const tipText = opts.live ? [whereTip(mine(url), info, inAntigravity), pc && severalPcs ? t('board.onComputer', pc.name) : ''].filter(Boolean).join(' · ') : '';
       return link ? openBtnHtml(link, webOf(url, info), info, tipText, opts.live && away) : '';
     };
@@ -1087,7 +1114,7 @@ export function mountDashboard(funnels, opts = {}) {
     const pcs = opts.launchComputers?.() ?? [], pcName = r.launch?.computer ?? awayHere?.name ?? null;
     const pc = pcName && pcs.length > 1 ? t('board.onComputer', pcName) : '';
     const pcOs = r.launch?.computer ? pcs.find(c => c.name === r.launch.computer)?.os : awayHere?.os;
-    const away = opts.live && pcOs && MY_OS && pcOs !== MY_OS;
+    const away = opts.live && !!(pcName || pcOs) && !!awayFrom({ name: pcName, os: pcOs });
     const logo = APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app);
     if (!url || !opts.live) return appMark(app, model, effort, pc);
     const inAntigravity = /^antigravity:/i.test(url), inGrokBot = /^grokbot:/i.test(url);

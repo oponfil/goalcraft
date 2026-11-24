@@ -570,3 +570,7 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 /* A card's chat beside Send: its app icon, a little larger, in place of an Open button. */
 #pop .ask-buttons .app-mark { padding: 0 6px; align-self: center; }
 #pop .ask-buttons .app-mark svg { width: 22px; height: 22px; }
+/* With several computers, which one this browser is on: a choice beside each name. */
+#pop details.scripts ul:has(li.pick-here) { grid-template-columns: minmax(100px, 1fr) auto auto auto; }
+#pop details.scripts .here { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); white-space: nowrap; cursor: pointer; }
+#pop details.scripts .here:has(input:checked) { color: var(--text); }

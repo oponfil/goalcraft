@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=ad12d40a';
-import vi from './lang/vi.js?v=ad12d40a';
-import ja from './lang/ja.js?v=ad12d40a';
-import pt from './lang/pt.js?v=ad12d40a';
-import tr from './lang/tr.js?v=ad12d40a';
-import ko from './lang/ko.js?v=ad12d40a';
+import es from './lang/es.js?v=42983e1e';
+import vi from './lang/vi.js?v=42983e1e';
+import ja from './lang/ja.js?v=42983e1e';
+import pt from './lang/pt.js?v=42983e1e';
+import tr from './lang/tr.js?v=42983e1e';
+import ko from './lang/ko.js?v=42983e1e';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -403,6 +403,8 @@ const STRINGS = {
   'wake.p.keychain_denied': L((a) => `Access to "${a}" in the keychain was refused: that plan's limit isn't read`, (a) => `Доступ к «${a}» в связке ключей запрещён: лимит этого плана не читается`, (a) => `钥匙串中“${a}”的访问被拒绝：读不到该套餐的额度`, (a) => `การเข้าถึง "${a}" ในพวงกุญแจถูกปฏิเสธ: อ่านโควตาของแผนนั้นไม่ได้`),
   'wake.p.cant_wake': L((a, why) => `Can't wake ${a}: ${why}`, (a, why) => `Не разбудить ${a}: ${why}`, (a, why) => `无法唤醒 ${a}：${why}`, (a, why) => `ปลุก ${a} ไม่ได้: ${why}`),
   'wake.p.wake_failed': L((a, why) => `Waking ${a} failed: ${why}`, (a, why) => `Не удалось разбудить ${a}: ${why}`, (a, why) => `唤醒 ${a} 失败：${why}`, (a, why) => `ปลุก ${a} ไม่สำเร็จ: ${why}`),
+  'wake.here': L('this one', 'этот'),
+  'wake.hereTip': L('The computer this browser is on: chats on the others are greyed here. Chosen by its system; change it if it is another one.', 'Компьютер, на котором открыт этот браузер: беседы на других здесь серые. Выбран по системе; поменяйте, если это другой.'),
   'wake.silent': L((d) => `silent for ${d}`, (d) => `не на связи ${d}`, (d) => `已 ${d} 未联系`, (d) => `ขาดการติดต่อ ${d}`),
   'wake.silentTip': L('Its computer is off or asleep, or the script stopped: the spending of runs there is not counted meanwhile.', 'Компьютер выключен или спит, либо скрипт остановился: расход запусков там пока не учитывается.', '电脑关机或休眠，或脚本已停止：期间那里运行的消耗不会被统计。', 'คอมพิวเตอร์ปิดหรือหลับอยู่ หรือสคริปต์หยุดทำงาน: ระหว่างนี้ค่าใช้จ่ายของการรันที่นั่นจะไม่ถูกนับ'),
   'wake.updatesTip': L((v) => `Latest: ${v}. It updates itself within minutes.`, (v) => `Новая: ${v}. Обновится сама в течение нескольких минут.`, (v) => `最新：${v}。几分钟内会自动更新。`, (v) => `ล่าสุด: ${v} จะอัปเดตเองภายในไม่กี่นาที`),
