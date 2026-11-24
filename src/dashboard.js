@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=d0d67dab';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=d0d67dab';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=d0d67dab';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=99d8bead';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=99d8bead';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=99d8bead';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1173,7 +1173,9 @@ export function mountDashboard(funnels, opts = {}) {
         const when = { format: d => (d.toDateString() === today ? hm : dayHm).format(d) };
         // Each run at API prices; hovering one shows its tokens by kind.
         list.innerHTML = (rows.length ? rows.map(r => {
-          const took = r.ended_at ? fmtDuration((Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
+          // A scheduled run with the short ones after it (answers to messages): their time added up.
+          const took = r.ended_at ? fmtDuration(r.took ?? (Date.parse(r.ended_at) - Date.parse(r.started_at)) / 1000) : t('board.runNow');
+          const tookTip = r.parts > 1 ? ` data-tip="${esc(t('board.runParts', r.parts))}"` : '';
           // A run says only how it ended: a supervisor's run, what it found (its final word, the summary on
           // hover); a worker's, what it added. A run Goalcraft started that went silent or did not start
           // says that instead, in amber with a sign, what happened on hover.
@@ -1189,7 +1191,7 @@ export function mountDashboard(funnels, opts = {}) {
           // On which app and model (a run Goalcraft didn't start: the app its tokens were counted on).
           const app = r.app ?? ru?.app;
           const by = `<span class="by">${runApp(a, r, app, r.model ?? ru?.model, r.launch?.effort)}</span>`;
-          return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took">${esc(took)}</span>
+          return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took"${tookTip}>${esc(took)}</span>
             <span>${found}</span>${by}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
         pop.style.top = Math.max(8, Math.min(window.innerHeight - pop.offsetHeight - 8, pop.offsetTop)) + 'px';

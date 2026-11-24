@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=d0d67dab';
+import { supabase } from './auth.js?v=99d8bead';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -166,6 +166,8 @@ function dayUsage(rows) {
 // session of that app cost meanwhile, over the last week, within one window), and how much is used
 // now. Neither app logs it per run as Codex does, so a run's share is its cost times this rate.
 let limits = {};
+// The services Goalcraft supports (Kimi no longer): the spending card shows only theirs.
+const SUPPORTED = new Set(['claude', 'codex', 'antigravity', 'grok']);
 // Claude gives whole percents: wait until enough has been spent for the rate to mean something;
 // Antigravity's are exact.
 const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3 }, grok: { usd: 1, pct: 0.1 }, kimi: { usd: 2, pct: 1 } };
@@ -289,7 +291,7 @@ export async function answer(questionId, text) {
 // Each plan's limit as last read, for the spending card's list: how much is used and when it resets
 // (a week, Kimi's a month). Only weekly or monthly ones: Claude's 5-hour window isn't kept here.
 export function planLimits() {
-  return Object.entries(limits).filter(([, l]) => l.week != null)
+  return Object.entries(limits).filter(([key, l]) => l.week != null && SUPPORTED.has(key.split(':')[0]))
     .map(([key, l]) => ({ key, used: l.week, resets: l.resets, days: LIMIT_DAYS[key.split(':')[0]] ?? 7 }));
 }
 
@@ -328,7 +330,8 @@ export async function spending(from) {
     .gte('started_at', new Date(from).toISOString()).order('started_at'));
   if (error) throw error;
   // limit: which limit its share is of ("claude", "codex", "antigravity:gemini-4-argon"…).
-  return data.map(withLimit).map(r => ({ funnel: r.funnel_id, agent: r.agent, app: r.app, quota: limitKey(r), at: Date.parse(r.started_at),
+  // Only the four services Goalcraft supports: Claude, ChatGPT (Codex), Gemini (Antigravity), Grok.
+  return data.filter(r => SUPPORTED.has(r.app)).map(withLimit).map(r => ({ funnel: r.funnel_id, agent: r.agent, app: r.app, quota: limitKey(r), at: Date.parse(r.started_at),
     cost: r.cost_usd == null ? null : Number(r.cost_usd), limit: r.limit_used == null ? null : Number(r.limit_used) }));
 }
 
@@ -341,6 +344,28 @@ export async function runs(a) {
     .order('started_at', { ascending: false }));
   if (error) throw error;
   if (!data.length) return data;
+  // One run of a scheduled role is its start on the schedule (or Run now) and everything it did until
+  // the next one: the short runs that answered a message or the person's answer, and the person's own
+  // talk in its chat, are part of it. It shows from that start, with their time, items and cost added up,
+  // the last word said, and the start's own chat. A role with no schedule: each run on its own.
+  const scheduled = a.launch?.schedule && a.launch?.schedule_on;
+  const groups = [];
+  for (const r of [...data].reverse()) {
+    const starts = !scheduled || ['schedule', 'manual'].includes(r.launch?.reason) || !groups.length;
+    if (starts) groups.push([r]); else groups[groups.length - 1].push(r);
+  }
+  const merged = groups.map(g => {
+    const first = g[0], last = g[g.length - 1];
+    if (g.length === 1) return first;
+    const secs = r => ((r.ended_at ? Date.parse(r.ended_at) : Date.now()) - Date.parse(r.started_at)) / 1000;
+    const said = [...g].reverse().find(r => r.status);
+    // Gone wrong only when every start in it did (one that went silent, then answered, did its work).
+    const bad = g.filter(r => r.launch).every(r => ['silent', 'not_started', 'failed'].includes(r.launch.outcome));
+    return { ...first, ended_at: last.ended_at, took: g.reduce((n, r) => n + secs(r), 0), parts: g.length,
+      added: g.reduce((n, r) => n + (r.added || 0), 0), status: said?.status ?? first.status, summary: said?.summary ?? first.summary,
+      launch: first.launch && { ...first.launch, outcome: bad ? first.launch.outcome : 'done' } };
+  });
+  data.splice(0, data.length, ...merged.reverse());
   // Each run's tokens: every stretch the wake script counted goes to the one run it overlaps most
   // (a few minutes' slack for the agent's first and last signal).
   const from = data[data.length - 1].started_at;

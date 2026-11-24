@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=d0d67dab';
-import vi from './lang/vi.js?v=d0d67dab';
-import ja from './lang/ja.js?v=d0d67dab';
-import pt from './lang/pt.js?v=d0d67dab';
-import tr from './lang/tr.js?v=d0d67dab';
-import ko from './lang/ko.js?v=d0d67dab';
+import es from './lang/es.js?v=99d8bead';
+import vi from './lang/vi.js?v=99d8bead';
+import ja from './lang/ja.js?v=99d8bead';
+import pt from './lang/pt.js?v=99d8bead';
+import tr from './lang/tr.js?v=99d8bead';
+import ko from './lang/ko.js?v=99d8bead';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -351,6 +351,7 @@ const STRINGS = {
   'board.silent': L((n) => `Agents not heard from in time: ${n}`, (n) => `Не вышли на связь вовремя: ${n}`, (n) => `未按时联系的智能体：${n}`, (n) => `เอเจนต์ที่ไม่ติดต่อตามเวลา: ${n}`),
   'board.lost': L((who) => `No word from ${who}`, (who) => `${who} не выходит на связь`, (who) => `${who} 没有消息`, (who) => `ไม่มีสัญญาณจาก ${who}`),
   'board.runs': L('Previous runs', 'Предыдущие запуски', '之前的运行', 'การรันก่อนหน้า'),
+  'board.runParts': L((n) => `${n} starts together: the scheduled one, then answers to messages`, (n) => `Вместе ${n} ${[2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'запуска' : 'запусков'}: по расписанию и ответы на сообщения`, (n) => `共 ${n} 次启动：按计划的一次，以及回复消息`, (n) => `รวม ${n} ครั้ง: ตามกำหนดเวลา และการตอบข้อความ`),
   'board.onComputer': L((pc) => `computer ${pc}`, (pc) => `компьютер ${pc}`),
   'board.chatOnlyThere': L((pc) => `This conversation is on ${pc}: it opens only there.`, (pc) => `Беседа на компьютере ${pc}: открыть её можно только там.`),
   'board.question': L((n) => `Question ${n}`, (n) => `Вопрос ${n}`),
