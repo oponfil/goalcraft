@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=b632bc9a';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=b632bc9a';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=b632bc9a';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=839b4b37';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=839b4b37';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=839b4b37';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -904,6 +904,15 @@ export function mountDashboard(funnels, opts = {}) {
     const m = /^(\d{1,2}) ([\d,]+) \* \* \*$/.exec(cron || '');
     return m ? m[2].split(',').map(h => `${h}:${m[1].padStart(2, '0')}`).join(', ') : (cron || '');
   };
+  // The schedule in words for the title: its times, "every hour at :48" or "every 3 h from 0:48"; another cron as it is.
+  const scheduleWords = cron => {
+    const m = /^(\d{1,2}) (\*|\d{1,2}(?:-\d{1,2})?)(?:\/(\d{1,2}))? \* \* \*$/.exec(cron || '');
+    const all = m?.[2] === '*', [from, to] = all ? [0] : (m?.[2].split('-') ?? []);
+    if (!m || (!all && to === undefined && !m[3])) return timesOf(cron);
+    const mm = m[1].padStart(2, '0'), step = +(m[3] || 1);
+    const words = step === 1 ? t('launch.hourly', mm) : t('launch.everyH', step, `${+from}:${mm}`);
+    return to === undefined ? words : `${words} – ${+to}:${mm}`;
+  };
   // An executor's mark: its app's logo, with the app, model and effort on hover.
   // A model as people call it: claude-opus-5-5 is Claude Opus 5.5; other apps' names are as they are.
   const modelName = m => m?.replace(/^claude-([a-z]+)-(\d+)-(\d+)$/, (_, n, a, b) => `Claude ${n[0].toUpperCase()}${n.slice(1)} ${a}.${b}`) ?? m;
@@ -946,7 +955,7 @@ export function mountDashboard(funnels, opts = {}) {
   const modeHtml = (even, limit) => `<label class="l-row l-mode" data-tip="${esc(t(even ? 'launch.evenTip' : 'launch.orderTip', limit))}"><input type="checkbox" class="switch l-even"${even ? ' checked' : ''}><span>${esc(t(even ? 'launch.even' : 'launch.inOrder'))}</span></label>`;
   // Launch's line says when the role runs: "Launch · 9:00, 18:00" on schedule, "Paused" with the
   // schedule off (the role waits on pause; Run now still starts it).
-  const launchTitle = (on, schedule) => (on && schedule ? `${t('launch.title')} · ${timesOf(schedule)}` : t('launch.paused'));
+  const launchTitle = (on, schedule) => (on && schedule ? `${t('launch.title')} · ${scheduleWords(schedule)}` : t('launch.paused'));
   function launchHtml(a) {
     if (!opts.onLaunch) return '';
     // Every agent has Launch: one Goalcraft doesn't start yet opens on pause, with no executor on, and

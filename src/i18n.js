@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=b632bc9a';
-import vi from './lang/vi.js?v=b632bc9a';
-import ja from './lang/ja.js?v=b632bc9a';
-import pt from './lang/pt.js?v=b632bc9a';
-import tr from './lang/tr.js?v=b632bc9a';
-import ko from './lang/ko.js?v=b632bc9a';
+import es from './lang/es.js?v=839b4b37';
+import vi from './lang/vi.js?v=839b4b37';
+import ja from './lang/ja.js?v=839b4b37';
+import pt from './lang/pt.js?v=839b4b37';
+import tr from './lang/tr.js?v=839b4b37';
+import ko from './lang/ko.js?v=839b4b37';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -435,6 +435,8 @@ const STRINGS = {
   // A role Goalcraft starts itself (the orchestrator): its card's Launch block.
   'launch.title': L('Launch', 'Запуск'),
   'launch.paused': L('Paused', 'Пауза'),
+  'launch.hourly': L(mm => `every hour at :${mm}`, mm => `каждый час в :${mm}`),
+  'launch.everyH': L((n, at) => `every ${n} h from ${at}`, (n, at) => `каждые ${n} ч с ${at}`),
   'launch.guide': L('Instructions', 'Инструкция'),
   'launch.guideTip': L('Open the prompt for the agent: what the role does on every run. Each run starts by reading it.', 'Открыть промпт для агента: что роль делает на каждом запуске. Агент читает его в начале каждого запуска.'),
   'launch.schedule': L('On schedule', 'По расписанию'),
