@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=223cd0ff';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=223cd0ff';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=223cd0ff';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=45cc1567';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=45cc1567';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=45cc1567';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -870,6 +870,13 @@ export function mountDashboard(funnels, opts = {}) {
   // What a supervisor found, by its word ("Recommendation"); what it said on hover.
   const supStatus = (s, said) => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}"${said ? ` data-tip="${esc(said)}"` : ''}>${esc(t('board.supStatus.' + s))}</span>`;
 
+  // Run now only when the role can start: nothing of it waits or goes on. Else what is going on instead.
+  const runState = a => a.state === 'work' || a.start?.taken?.started_at ? t('launch.running')
+    : a.start?.taken ? t('launch.starting', a.start.taken.computer ?? '') : a.start?.waiting ? t('launch.inQueue') : '';
+  const runNowHtml = a => {
+    const now = runState(a);
+    return now ? `<span class="l-run-state">${esc(now)}</span>` : `<a href="#" class="l-run" data-tip="${esc(t('launch.runNowTip'))}">${esc(t('launch.runNow'))}</a>`;
+  };
   function content(h) {
     // An empty platform: the funnel has no supervisor yet; the Connect page tells how to appoint one.
     if (h.type === 'nosup') {
@@ -1137,14 +1144,7 @@ export function mountDashboard(funnels, opts = {}) {
       // Saved as it changes: only what went wrong is said.
       say(error || '');
     };
-    // Run now only when the role can start: nothing of it waits or goes on. Else what is going on instead.
-  const runState = a => a.state === 'work' || a.start?.taken?.started_at ? t('launch.running')
-    : a.start?.taken ? t('launch.starting', a.start.taken.computer ?? '') : a.start?.waiting ? t('launch.inQueue') : '';
-  const runNowHtml = a => {
-    const now = runState(a);
-    return now ? `<span class="l-run-state">${esc(now)}</span>` : `<a href="#" class="l-run" data-tip="${esc(t('launch.runNowTip'))}">${esc(t('launch.runNow'))}</a>`;
-  };
-  // Run now sits beside Send and the chat's icon: it starts the role; what came of it is said there.
+    // Run now sits beside Send and the chat's icon: it starts the role; what came of it is said there.
     pop.querySelector('.write .l-run')?.addEventListener('click', async e => {
       e.preventDefault(); e.stopPropagation();
       const link = e.currentTarget, note = link.closest('.write').querySelector('.pop-msg');
