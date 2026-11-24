@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=00c225b3';
-import vi from './lang/vi.js?v=00c225b3';
-import ja from './lang/ja.js?v=00c225b3';
-import pt from './lang/pt.js?v=00c225b3';
-import tr from './lang/tr.js?v=00c225b3';
-import ko from './lang/ko.js?v=00c225b3';
+import es from './lang/es.js?v=7f782a7d';
+import vi from './lang/vi.js?v=7f782a7d';
+import ja from './lang/ja.js?v=7f782a7d';
+import pt from './lang/pt.js?v=7f782a7d';
+import tr from './lang/tr.js?v=7f782a7d';
+import ko from './lang/ko.js?v=7f782a7d';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -480,6 +480,7 @@ const STRINGS = {
   'launch.notStartedTip': L((pc) => `The app${pc ? ` on ${pc}` : ''} was started, but the agent didn't report work within 10 minutes; Goalcraft went on to the next executor.`,
     (pc) => `Приложение${pc ? ` на компьютере ${pc}` : ''} запустили, но агент за 10 минут не сообщил, что работает; Goalcraft перешёл к следующему исполнителю.`),
   'launch.failed': L('failed to start', 'не запустился'),
+  'launch.addedBefore': L((n) => `Added before that: ${n}`, (n) => `До этого успел добавить: ${n}`),
   'board.noRuns': L('No runs recorded yet.', 'Запусков пока не записано.', '还没有记录到运行。', 'ยังไม่มีการรันที่บันทึกไว้'),
   'board.runsFailed': L('Could not load the runs.', 'Не удалось загрузить запуски.', '无法加载运行记录。', 'โหลดการรันไม่สำเร็จ'),
   'board.paused': L((who) => `${who} is paused`, (who) => `${who} на паузе`, (who) => `${who} 已暂停`, (who) => `${who} หยุดชั่วคราว`),
