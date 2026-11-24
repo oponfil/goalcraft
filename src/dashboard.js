@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=f1366ab1';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=f1366ab1';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=f1366ab1';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=74b93da4';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=74b93da4';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=74b93da4';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -22,7 +22,7 @@ const shortId = s => s;  // whole: the hint wraps
 const whereTip = (mine, info, inAntigravity) => {
   let m;
   if ((m = /^codex:\/\/threads\/([\w-]+)/.exec(mine || ''))) return t('board.chatApp', 'ChatGPT (Codex)', shortId(m[1]));
-  if ((m = /^claude:\/\/claude\.ai\/epitaxy\/(?:local_)?([\w-]+)/.exec(mine || ''))) return t('board.chatApp', 'Claude', shortId(m[1]));
+  if ((m = /^claude:\/\/claude\.ai\/epitaxy\/(?:local_)?([\w-]+)/.exec(mine || '') || /^claude:\/\/resume\?session=([\w-]+)/.exec(mine || ''))) return t('board.chatApp', 'Claude', shortId(m[1]));
   if ((m = /^grokbot:.*[?&]id=([\w-]+)/.exec(mine || ''))) return t('board.chatApp', 'Grok Bot', shortId(m[1]));
   if (/^https?:/.test(mine || '')) {
     try {
@@ -90,10 +90,20 @@ const measureTip = m => {
 const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', grok: 'Grok Bot', kimi: 'Kimi' };
 const TASKS_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>';
 
+// A Claude run Goalcraft started from the command line opens in the Claude app by its resume link, which
+// brings the session into the app; that works once, so after it the link is the app's conversation
+// (local_<session>), on this card and everywhere it is kept (onChatOpened).
+const RESUME = /^claude:\/\/resume\?session=([\w-]+)$/;
+let chatOpened = null;
 function openApp(e) {
   const link = e.target.closest('a[data-web]');
   if (!link) return;
   e.preventDefault();
+  const resumed = RESUME.exec(link.getAttribute('href') || '');
+  if (resumed) {
+    const from = link.getAttribute('href'), to = `claude://claude.ai/epitaxy/local_${resumed[1]}`;
+    setTimeout(() => { link.setAttribute('href', to); chatOpened?.(from, to); }, 0);
+  }
   let left = false;
   const away = () => { left = true; };
   window.addEventListener('blur', away, { once: true });
@@ -115,6 +125,7 @@ export function mountDashboard(funnels, opts = {}) {
   const track = document.getElementById('titles-track');
   const clock = document.getElementById('day');
   const pop = document.getElementById('pop');
+  chatOpened = opts.onChatOpened ?? null;
   pop.addEventListener('click', openApp);
   const tip = document.createElement('div');
   tip.id = 'tip'; tip.hidden = true; document.body.append(tip);

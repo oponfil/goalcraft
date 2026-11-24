@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=f1366ab1';
+import { supabase } from './auth.js?v=74b93da4';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -387,6 +387,13 @@ export async function runNow(a) {
 export async function sendMessage(a, text) {
   const { error } = await supabase.from('agent_messages').insert({ funnel_id: a.f.id, agent: a.agent, text });
   return error?.message;
+}
+
+// A Claude run's resume link was opened, which brings its session into the Claude app once: from then on
+// it is the app's conversation, so its card and runs keep that link instead.
+export async function chatOpened(from, to) {
+  await supabase.from('presence').update({ chat_url: to }).eq('chat_url', from);
+  await supabase.from('agent_runs').update({ chat_url: to }).eq('chat_url', from);
 }
 
 // The person closed the agent's replies: they stop showing. Replies to messages have "m:" ids.

@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-24.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-24.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1913,29 +1913,11 @@ def launch_command(l):
 
 
 def claude_app_session(l):
-    """Register a Claude run started here from the command line (claude -p, in the home folder) as a
-    conversation of the Claude app, as the app keeps its own: a file in claude-code-sessions/<account>/<org>/
-    naming the command line's session. Made like the app's newest one, without what belongs to that run.
-    Its link (claude://claude.ai/epitaxy/local_…), or None (no app here, or it failed)."""
-    import uuid
-    try:
-        files = sorted(SESSIONS.glob('*/*/local_*.json'), key=lambda p: p.stat().st_mtime, reverse=True)
-        if not files:
-            return None
-        tmpl = json.loads(files[0].read_text(encoding='utf-8'))
-        keep = ('enabledMcpTools', 'remoteMcpServersConfig', 'chromePermissionMode', 'alwaysAllowedReasons')
-        now = int(time.time() * 1000)
-        sid = f'local_{uuid.uuid4()}'
-        d = {k: tmpl[k] for k in keep if k in tmpl}
-        d.update({'sessionId': sid, 'cliSessionId': l['session'], 'cwd': str(HOME), 'originCwd': str(HOME),
-                  'createdAt': now, 'lastActivityAt': now, 'lastTurnEdgeAt': now, 'model': l.get('model') or tmpl.get('model'),
-                  'effort': l.get('effort') or tmpl.get('effort'), 'isArchived': False, 'permissionMode': 'bypassPermissions',
-                  'title': f'Goalcraft · {l["funnel_id"]} · {l["agent"]}', 'completedTurns': 0})
-        (files[0].parent / f'{sid}.json').write_text(json.dumps(d, ensure_ascii=False), encoding='utf-8')
-        return f'claude://claude.ai/epitaxy/{sid}'
-    except Exception as e:
-        log(f'claude app conversation: {e!r}')
-        return None
+    """The link that opens a Claude run started here from the command line in the Claude app: the app's
+    own resume link (claude://resume?session=<its session>) brings the session into the app and opens it,
+    with no restart. Only the first open imports it; after that it is the app's conversation
+    local_<session>, and the board puts that link in its place once it has opened this one."""
+    return f'claude://resume?session={l["session"]}'
 
 
 def run_launch(key, l):
@@ -1954,8 +1936,7 @@ def run_launch(key, l):
         try:
             if l['app'] == 'claude':
                 l['session'] = str(uuid.uuid4())
-                # A conversation of the Claude app for it, so its card opens this run (the app lists it once
-                # it reads its conversations again, at its next start); the agent sends its link.
+                # The link that opens this run in the Claude app, for its card; the agent sends it.
                 chat = claude_app_session(l)
                 if chat:
                     l['prompt'] += f'\n\nYour chat_url for set_agent_state: {chat}'
