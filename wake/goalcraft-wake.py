@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-24.3'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-24.4'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -243,21 +243,26 @@ def find_claude():
     return max(bundled, key=os.path.getmtime) if bundled else None
 
 
-modes_of = {}  # claude command → the permission modes it takes
+help_of = {}  # claude command → its --help text
+
+
+def claude_help(claude):
+    if claude not in help_of:
+        try:
+            help_of[claude] = subprocess.run([claude, '--help'], capture_output=True, encoding='utf-8', errors='replace',
+                                             timeout=30, creationflags=NO_WINDOW).stdout or ''
+        except Exception:
+            help_of[claude] = ''
+    return help_of[claude]
 
 
 def claude_modes(claude):
     """The permission modes this claude takes (its --help lists them), so a woken session keeps its own."""
-    if claude not in modes_of:
-        try:
-            text = subprocess.run([claude, '--help'], capture_output=True, encoding='utf-8', errors='replace',
-                                  timeout=30, creationflags=NO_WINDOW).stdout
-            part = text.split('--permission-mode', 1)[1].split('--', 1)[0]
-            modes_of[claude] = set(re.findall(r'"([A-Za-z]+)"', part))
-        except Exception:
-            modes_of[claude] = set()
-        modes_of[claude] = modes_of[claude] or {'acceptEdits', 'auto', 'bypassPermissions', 'dontAsk', 'plan'}
-    return modes_of[claude]
+    try:
+        modes = set(re.findall(r'"([A-Za-z]+)"', claude_help(claude).split('--permission-mode', 1)[1].split('--', 1)[0]))
+    except Exception:
+        modes = set()
+    return modes or {'acceptEdits', 'auto', 'bypassPermissions', 'dontAsk', 'plan'}
 
 
 def claude_command(item):
@@ -278,7 +283,7 @@ def claude_command(item):
     if s.get('model'):
         cmd += ['--model', s['model']]
     cwd = s.get('cwd') if s.get('cwd') and os.path.isdir(s['cwd']) else str(HOME)
-    return (cmd + [note(item)], cwd), None, True
+    return (cmd + ['--', note(item)], cwd), None, True
 
 
 def codex_command(item):
@@ -1882,7 +1887,9 @@ def launch_command(l):
         cmd += ['--model', model] if model else []
         cmd += ['--effort', effort] if effort else []
         cmd += ['--permission-mode', 'bypassPermissions'] if full else ['--allowedTools', *GOALCRAFT_TOOLS]
-        return cmd + [note], None
+        # Its name in the Claude app (the role's name on the board): without one the app names it by its folder.
+        cmd += ['--name', l['title']] if l.get('title') and '--name' in claude_help(claude) else []
+        return cmd + ['--', note], None
     if l['app'] == 'codex':
         codex = find('codex')
         if not codex:

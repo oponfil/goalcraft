@@ -235,6 +235,8 @@ export async function dispatch(admin: any, user: string, key: Row) {
           offer.push({
             launch: waiting.id, funnel_id: f?.key, agent: role.agent, app: ex.app, model: ex.model, effort: ex.effort,
             new_chat: ex.new_chat, full_access: ex.full_access, bot_id: ex.bot_id, prompt: prompt(role, f ?? {}, p, ex, waiting.reason),
+            // The conversation's name in its app (a run from the command line has none: the app shows its folder).
+            title: p?.display_name || role.agent,
           })
         }
       }
