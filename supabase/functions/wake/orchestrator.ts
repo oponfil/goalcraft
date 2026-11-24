@@ -121,6 +121,9 @@ export async function dispatch(admin: any, user: string, key: Row) {
     const rk = `${role.funnel_id}|${role.agent}`
     const p = pres.get(rk) ?? null
     const mine = (execs.data ?? []).filter((e: Row) => e.funnel_id === role.funnel_id && e.agent === role.agent)
+    // Every agent has Launch; Goalcraft starts only those with an executor on (the others run as before,
+    // in their own apps).
+    if (!mine.some((e: Row) => e.enabled)) continue
     let starts = (open.data ?? []).filter((l: Row) => l.funnel_id === role.funnel_id && l.agent === role.agent)
     const end = async (l: Row, outcome: string, note?: string) => {
       await admin.from('role_launches').update({ ended_at: iso(now), outcome, ...(note ? { note } : {}) }).eq('id', l.id).is('ended_at', null)

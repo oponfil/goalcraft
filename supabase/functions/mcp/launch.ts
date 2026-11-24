@@ -11,8 +11,12 @@ export function cronNext(expr: string, tz: string, at = new Date()): string | nu
 
 // The role's launch settings, or null for an agent the orchestrator doesn't start.
 export async function roleOf(admin: Db, funnelId: string, agent: string) {
-  const { data } = await admin.from('role_launch').select('schedule, schedule_on, time_zone').eq('funnel_id', funnelId).eq('agent', agent).maybeSingle()
-  return data ?? null
+  // Every agent has Launch; it is a role Goalcraft starts only with an executor on.
+  const [{ data }, { count }] = await Promise.all([
+    admin.from('role_launch').select('schedule, schedule_on, time_zone').eq('funnel_id', funnelId).eq('agent', agent).maybeSingle(),
+    admin.from('role_executors').select('agent', { count: 'exact', head: true }).eq('funnel_id', funnelId).eq('agent', agent).eq('enabled', true),
+  ])
+  return data && count ? data : null
 }
 
 // The agent begins a run: the start a script took for it and the agent has not begun yet is this one.

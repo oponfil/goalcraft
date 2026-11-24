@@ -246,8 +246,9 @@ Deno.serve(async (req) => {
   if (presence.error || messages.error || answers.error || wakes.error || replies.error) return json({ error: 'failed' }, 500)
   const wokeAfter = new Map((wakes.data ?? []).map((w: any) => [`${w.funnel_id}|${w.agent}`, Date.parse(w.signal_at)]))
 
-  // Roles the orchestrator starts are its own: the old wake leaves them alone.
-  const { data: launched } = await admin.from('role_launch').select('funnel_id, agent').eq('user_id', user)
+  // Agents the orchestrator starts (an executor on in their Launch) are its own: the old wake leaves them
+  // alone. Every agent has Launch; one with no executor on is still woken here, in its own app's chat.
+  const { data: launched } = await admin.from('role_executors').select('funnel_id, agent').eq('user_id', user).eq('enabled', true)
   const orchestrated = new Set((launched ?? []).map((r: any) => `${r.funnel_id}|${r.agent}`))
   const wake = new Map<string, any>()
   const add = (p: any, reason: string, chat: string | null, mark: (m: any) => void) => {
