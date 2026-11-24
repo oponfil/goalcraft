@@ -102,6 +102,8 @@ A funnel's supervisor tells you once when a script needs that or has stopped, an
 | `python3 ~/.goalcraft/goalcraft-wake.py uninstall` | Stops it and removes it from the login items |
 | `tail -f ~/.goalcraft/wake.log` | What it woke and what each agent answered |
 
+To stop it on one computer for a while, without uninstalling: on the board, Spending → Wake scripts → ■ next to that computer. From its next check (within 10 seconds) it wakes no agents, starts no launches and sends no readings; it only asks Goalcraft once a minute whether it may go on, and the wake function hands it nothing meanwhile (`wake_keys.stopped_at`). The board shows it grey, "stopped", not as a problem. ▶ starts it again within a minute. It stays stopped across restarts until started.
+
 On Windows run the same commands with `py` (or `python`) instead of `python3`; the log is `%USERPROFILE%\.goalcraft\wake.log`. On Linux it saves the key and asks you to keep `goalcraft-wake.py run` running yourself (cron, systemd).
 
 ## Launches: Goalcraft starts the roles

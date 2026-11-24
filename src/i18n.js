@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=c488ec39';
-import vi from './lang/vi.js?v=c488ec39';
-import ja from './lang/ja.js?v=c488ec39';
-import pt from './lang/pt.js?v=c488ec39';
-import tr from './lang/tr.js?v=c488ec39';
-import ko from './lang/ko.js?v=c488ec39';
+import es from './lang/es.js?v=4368fab1';
+import vi from './lang/vi.js?v=4368fab1';
+import ja from './lang/ja.js?v=4368fab1';
+import pt from './lang/pt.js?v=4368fab1';
+import tr from './lang/tr.js?v=4368fab1';
+import ko from './lang/ko.js?v=4368fab1';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -396,6 +396,12 @@ const STRINGS = {
   'wake.allGood': L('All is well: it wakes the agents here and sends what they spend', 'Всё в порядке: будит агентов на этом компьютере и присылает их расход', '一切正常：唤醒这里的智能体并发送它们的消耗', 'ทุกอย่างปกติ: ปลุกเอเจนต์ที่นี่และส่งค่าใช้จ่ายของพวกเขา'),
   'wake.versionCurrent': L((v) => `Script version ${v}, the latest`, (v) => `Версия скрипта ${v}, актуальная`, (v) => `脚本版本 ${v}，最新`, (v) => `สคริปต์เวอร์ชัน ${v} ล่าสุด`),
   'wake.versionOld': L((v, l) => `Script version ${v}, old: the latest is ${l}`, (v, l) => `Версия скрипта ${v}, старая: новая ${l}`, (v, l) => `脚本版本 ${v}，旧版：最新为 ${l}`, (v, l) => `สคริปต์เวอร์ชัน ${v} เก่า: ล่าสุดคือ ${l}`),
+  'wake.stopped': L('stopped', 'остановлен', '已停止', 'หยุดอยู่'),
+  'wake.stoppedTip': L('Stopped from here: it wakes no agents on this computer and sends no spending until you start it again (it picks that up within a minute)', 'Остановлен отсюда: не будит агентов на этом компьютере и не присылает расход, пока не запустите снова (запуск подхватит в течение минуты)', '已在此停止：在你重新启动前，不唤醒这台电脑上的智能体，也不发送消耗（一分钟内生效）', 'หยุดจากที่นี่: ไม่ปลุกเอเจนต์บนคอมพิวเตอร์นี้และไม่ส่งค่าใช้จ่ายจนกว่าจะเริ่มใหม่ (มีผลภายในหนึ่งนาที)'),
+  'wake.stop': L('Stop', 'Остановить', '停止', 'หยุด'),
+  'wake.start': L('Start', 'Запустить', '启动', 'เริ่ม'),
+  'wake.stopTip': L('Stop the script on this computer: it stops waking agents here and sending spending until you start it again. Agents with a run here go to another computer if one can take it', 'Остановить скрипт на этом компьютере: перестанет будить здесь агентов и присылать расход, пока не запустите снова. Запуски агентов возьмёт другой компьютер, если может', '停止这台电脑上的脚本：在你重新启动前，不再唤醒这里的智能体，也不发送消耗。其他电脑能接手的运行会转过去', 'หยุดสคริปต์บนคอมพิวเตอร์นี้: จะไม่ปลุกเอเจนต์ที่นี่และไม่ส่งค่าใช้จ่ายจนกว่าจะเริ่มใหม่ คอมพิวเตอร์อื่นจะรับการรันถ้าทำได้'),
+  'wake.startTip': L('Start the script on this computer again: it goes on within a minute', 'Запустить скрипт на этом компьютере снова: заработает в течение минуты', '重新启动这台电脑上的脚本：一分钟内恢复', 'เริ่มสคริปต์บนคอมพิวเตอร์นี้อีกครั้ง: ทำงานต่อภายในหนึ่งนาที'),
   'wake.troubled': L('running, with problems', 'работает, есть проблемы', '运行中，有问题', 'ทำงานอยู่ มีปัญหา'),
   'wake.p.claude_signed_out': L('Claude Code is signed out: Claude agents here aren\'t woken and the Claude limit isn\'t read.\nIn a terminal on this computer run: claude auth login', 'Вход Claude Code истёк: агентов Claude здесь не будят, лимит Claude не читается.\nВ терминале на этом компьютере выполните: claude auth login', 'Claude Code 已登出：这里的 Claude 智能体不会被唤醒，也读不到 Claude 额度。\n请在这台电脑的终端运行：claude auth login', 'Claude Code ออกจากระบบแล้ว: เอเจนต์ Claude ที่นี่จะไม่ถูกปลุก และอ่านโควตา Claude ไม่ได้\nให้รันในเทอร์มินัลบนเครื่องนี้: claude auth login'),
   'wake.p.claude_missing': L('Claude Code isn\'t installed here: Claude agents can\'t be woken.\nInstall it and run: claude auth login', 'Claude Code здесь не установлен: агентов Claude не разбудить.\nУстановите его и выполните: claude auth login', '这里没有安装 Claude Code：无法唤醒 Claude 智能体。\n请安装后运行：claude auth login', 'ไม่ได้ติดตั้ง Claude Code ที่นี่: ปลุกเอเจนต์ Claude ไม่ได้\nติดตั้งแล้วรัน: claude auth login'),

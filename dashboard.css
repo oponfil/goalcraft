@@ -502,10 +502,13 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
   background: none; border: 2px solid var(--border); color: var(--text); font: 500 13px var(--font); cursor: pointer;
 }
 .sitebar .spend-btn:hover { border-color: var(--muted); }
-.sitebar .spend-btn .wake-dot { width: 9px; height: 9px; border-radius: 50%; margin: 0 3px; flex: none; }  /* the wake scripts' state */
-.sitebar .spend-btn .wake-dot.ok { background: #9FE870; }
-.sitebar .spend-btn .wake-dot.warn { background: #F2A33C; }
-.sitebar .spend-btn .wake-dot.off { background: #FF5A4E; }
+/* The wake scripts' marks, one a computer: a play sign in its status's color, a pause sign when stopped. */
+.wake-mark { display: inline-flex; vertical-align: -1px; }
+.sitebar .spend-btn .wake-marks { display: inline-flex; align-items: center; gap: 3px; flex: none; }
+.sitebar .spend-btn .wake-mark.ok { color: #9FE870; }
+.sitebar .spend-btn .wake-mark.warn { color: #F2A33C; }
+.sitebar .spend-btn .wake-mark.off { color: #FF5A4E; }
+.sitebar .spend-btn .wake-mark.stopped { color: #8C8781; }
 @media (max-width: 560px) { .sitebar .spend-btn { padding: 4px 7px; } }
 #pop.wide { width: min(560px, calc(100vw - 16px)); }
 #pop .hist-controls + .hist-controls { margin-top: 6px; }
@@ -548,7 +551,12 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.limits .bar.split { display: flex; gap: 2px; background: none; }  /* Antigravity: a part per quota, its percent on hover */
 #pop details.limits .bar.split > span { flex: 1; height: 100%; background: #3A322B; cursor: help; }
 #pop details.limits b { font-weight: 600; text-align: right; min-width: 44px; }
-#pop details.scripts ul { grid-template-columns: minmax(120px, 1fr) auto auto; }
+#pop details.scripts ul { grid-template-columns: minmax(120px, 1fr) auto auto auto; }
+#pop details.scripts .stopped { color: var(--muted); white-space: nowrap; cursor: help; }  /* stopped from the board: not a problem */
+#pop details.scripts .script-btn { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0;
+  background: none; border: 2px solid var(--border); color: var(--text); cursor: pointer; }
+#pop details.scripts .script-btn:hover { border-color: var(--muted); }
+#pop details.scripts .script-btn:disabled { opacity: 0.45; cursor: wait; }
 #pop details.scripts .who { white-space: normal; overflow: visible; overflow-wrap: anywhere; cursor: help; }  /* the computer's name whole; its version on hover */
 #pop details.scripts .ok, #pop details.scripts .warn, #pop details.scripts .off { white-space: nowrap; cursor: help; }  /* what is wrong, on hover */
 #pop details.scripts .ok { color: #9FE870; }
@@ -574,7 +582,7 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop .ask-buttons .app-mark { padding: 0 6px; align-self: center; }
 #pop .ask-buttons .app-mark svg { width: 22px; height: 22px; }
 /* With several computers, which one this browser is on: a choice beside each name. */
-#pop details.scripts ul:has(li.pick-here) { grid-template-columns: minmax(100px, 1fr) auto auto auto; }
+#pop details.scripts ul:has(li.pick-here) { grid-template-columns: minmax(100px, 1fr) auto auto auto auto; }
 #pop details.scripts .here { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); white-space: nowrap; cursor: pointer; }
 #pop details.scripts .here:has(input:checked) { color: var(--text); }
 /* "this one": a square pixel mark, as the board's switches are (not the browser's round radio). */

@@ -55,10 +55,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-24.5'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-24.6'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
+STOPPED_EVERY = 60  # stopped from the board: it only asks this often whether it may go on
+stopped = False  # stopped from the board (Stop in the scripts list): it wakes, starts and reads nothing
 HOME = pathlib.Path.home()
 DIR = HOME / '.goalcraft'
 CONFIG = DIR / 'wake.json'
@@ -1696,6 +1698,14 @@ def check(key):
         log(f'check failed: {e}')
         return None
     update(got.get('script'))
+    # Stopped from the board: nothing else until it is started there again (it still updates itself).
+    global stopped
+    if bool(got.get('stopped')) != stopped:
+        stopped = bool(got.get('stopped'))
+        log('stopped from the board: waking and reading nothing until it is started there again' if stopped
+            else 'started again from the board')
+    if stopped:
+        return 200
     take_launches(key, got.get('launches'))  # the orchestrator's starts for this computer
     now, ready = time.time(), []
     try_again(now)
@@ -2238,10 +2248,12 @@ def run():
                 if WINDOWS:  # the task would start it again every 10 minutes; setting it up again adds the task back
                     subprocess.run(['schtasks', '/Delete', '/TN', TASK, '/F'], capture_output=True, creationflags=NO_WINDOW)
                 return
-            if time.time() - counted > USAGE_EVERY:
+            if stopped:  # stopped from the board: no readings; it asks again in a minute
+                time.sleep(STOPPED_EVERY - EVERY)
+            elif time.time() - counted > USAGE_EVERY:
                 counted = time.time()
                 threading.Thread(target=report_usage, args=(key,), daemon=True).start()
-            if time.time() >= limit_next:
+            if not stopped and time.time() >= limit_next:
                 limit_next_after(LIMIT_EVERY)  # until this reading ends; a failed one is tried again sooner
                 threading.Thread(target=limit_job, args=(key,), daemon=True).start()
         except Exception as e:  # one bad check doesn't stop the script

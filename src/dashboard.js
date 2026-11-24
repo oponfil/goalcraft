@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=c488ec39';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=c488ec39';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c488ec39';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=4368fab1';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=4368fab1';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=4368fab1';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -515,8 +515,8 @@ export function mountDashboard(funnels, opts = {}) {
   // outdated), its title carries the worst one's dot.
   const SPANS = { h: 3600e3, d: 864e5, w: 7 * 864e5 };
   const SELF_UPDATING = '2026-11-18';  // the first version that updates itself
-  // One status a computer, its details on hover: gone silent (red), an error (red), a warning or an
-  // old version (amber), or all well (green).
+  // One status a computer, its details on hover: stopped from the board (grey, not a problem), gone
+  // silent (red), an error (red), a warning or an old version (amber), or all well (green).
   const scriptUp = (c, now) => now - c.seen < 2 * 60e3;
   const scriptCurrent = (w, c) => !w.latest || (c.version ?? '') >= w.latest;
   const problemText = p => {
@@ -524,6 +524,7 @@ export function mountDashboard(funnels, opts = {}) {
     return said === key ? [p.code, p.agent, p.why].filter(Boolean).join(': ') : said;
   };
   function scriptStatus(w, c, now) {
+    if (c.stopped) return ['stopped', t('wake.stopped'), t('wake.stoppedTip')];
     if (!scriptUp(c, now)) return ['off', t('wake.silent', fmtDuration((now - c.seen) / 1000)), t('wake.silentTip')];
     const old = scriptCurrent(w, c) ? [] : [t((c.version ?? '') < SELF_UPDATING ? 'wake.manualTip' : 'wake.updatesTip', w.latest)];
     const said = [...(c.problems ?? []).map(problemText), ...old].join('\n');
@@ -532,13 +533,29 @@ export function mountDashboard(funnels, opts = {}) {
     if (old.length) return ['warn', t('wake.oldVersion'), said];
     return ['ok', t('wake.running'), t('wake.allGood')];
   }
-  // The worst status over the computers: 'off', 'warn' or 'ok'.
-  const worstOf = levels => levels.includes('off') ? 'off' : levels.includes('warn') ? 'warn' : 'ok';
+  // The worst status over the computers: 'off', 'warn' or 'ok'; a stopped one doesn't count, and when all
+  // are stopped it is 'stopped' (grey).
+  const worstOf = levels => {
+    const on = levels.filter(l => l !== 'stopped');
+    return on.includes('off') ? 'off' : on.includes('warn') ? 'warn' : on.length || !levels.length ? 'ok' : 'stopped';
+  };
+  // A script's mark, in its status's color: a play sign while it runs, a pause sign while it is stopped.
+  const scriptMark = level => `<span class="wake-mark ${level}">${level === 'stopped'
+    ? '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>'
+    : '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor" aria-hidden="true"><path d="M2 1v8l7-4z"/></svg>'}</span>`;
+  // Running: on and not stopped.
+  const scriptRuns = (c, now) => !c.stopped && scriptUp(c, now);
+  // Stop or start a computer's script from the list (live board only): a square while it runs, a
+  // triangle while it is stopped.
+  const STOP_ICON = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12"/></svg>';
+  const START_ICON = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
+  const scriptBtn = c => !opts.stopWakeScript || !c.id ? '<span></span>'
+    : `<button type="button" class="script-btn" data-key="${esc(c.id)}" data-stop="${c.stopped ? 0 : 1}" data-tip="${esc(t(c.stopped ? 'wake.startTip' : 'wake.stopTip'))}" aria-label="${esc(t(c.stopped ? 'wake.start' : 'wake.stop'))}">${c.stopped ? START_ICON : STOP_ICON}</button>`;
   function scriptsBlock(w) {
     if (!w) return '';
     const now = Date.now(), list = w.computers ?? [];
     const open = spendState.scriptsOpen ? ' open' : '';
-    if (!list.length) return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} <span class="warn">●</span></summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
+    if (!list.length) return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} ${scriptMark('warn')}</summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
     const up = c => scriptUp(c, now), current = c => scriptCurrent(w, c), statusOf = c => scriptStatus(w, c, now);
     const hereName = hereComputer()?.name;
     // The agents each computer ran over the hour, day or week the chart's switch shows, by funnel.
@@ -562,30 +579,33 @@ export function mountDashboard(funnels, opts = {}) {
       // With several computers, which one this browser is on: picked by its system, changed here.
       const here = list.length > 1 && c.computer ? `<label class="here" data-tip="${esc(t('wake.hereTip'))}"><input type="radio" name="here-pc" value="${esc(c.computer)}"${c.computer === hereName ? ' checked' : ''}>${esc(t('wake.here'))}</label>` : '';
       return `<li${list.length > 1 ? ' class="pick-here"' : ''}><span class="who" data-tip="${esc(version)}">${esc(c.computer || t('wake.oldComputer'))}</span>${here}`
-        + `<span class="${level}" data-tip="${esc(tip)}">● ${esc(text)}</span>`
-        + `<span class="n" data-tip="${esc(agentsTip(ran))}">${esc(t('wake.agents', n, spanText))}</span></li>`;
+        + `<span class="${level}" data-tip="${esc(tip)}">${scriptMark(level)} ${esc(text)}</span>`
+        + `<span class="n" data-tip="${esc(agentsTip(ran))}">${esc(t('wake.agents', n, spanText))}</span>${scriptBtn(c)}</li>`;
     }).join('');
-    const running = list.filter(up).length, worst = worstOf(list.map(c => statusOf(c)[0]));
-    return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}${worst !== 'ok' ? ` <span class="${worst}">●</span>` : ''}</summary>
+    const running = list.filter(c => scriptRuns(c, now)).length, worst = worstOf(list.map(c => statusOf(c)[0]));
+    return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}${worst !== 'ok' ? ` ${scriptMark(worst)}` : ''}</summary>
       <ul>${rows}</ul><p class="pop-note">${esc(t('wake.about'))}</p></details>`;
   }
-  // The dot on the Spending button, from the scripts' latest state (w: wakeScripts' answer).
+  // The Spending button's marks, from the scripts' latest state (w: wakeScripts' answer): one a computer,
+  // in place of its icon, each in its status's color (a pause sign for a stopped one); its icon when
+  // there are none.
+  let lastScripts = null;  // the scripts as last read, for the Stop / Start buttons
   function markScripts(w) {
+    if (w) lastScripts = w;
     if (!spendBtn || !w) return;
     const now = Date.now(), list = w.computers ?? [];
-    const icon = spendBtn.querySelector('svg, .wake-dot');
+    const icon = spendBtn.firstElementChild;  // the icon, or the marks put there before
     if (!list.length) {
       if (!icon.matches('svg')) icon.outerHTML = SPEND_ICON;
       spendBtn.dataset.tip = t('spend.title');
       return;
     }
     const states = list.map(c => [c, scriptStatus(w, c, now)]);
-    const worst = worstOf(states.map(([, s]) => s[0]));
-    const dot = Object.assign(document.createElement('i'), { className: `wake-dot ${worst}` });
-    icon.replaceWith(dot);
-    const head = `${t('wake.title')} · ${t('wake.count', list.filter(c => scriptUp(c, now)).length, list.length)}`;
-    const bad = states.filter(([, s]) => s[0] !== 'ok').map(([c, s]) => `${c.computer || t('wake.oldComputer')}: ${s[1]}`);
-    spendBtn.dataset.tip = [t('spend.title'), head, ...bad].join('\n');
+    const marks = Object.assign(document.createElement('span'), { className: 'wake-marks', innerHTML: states.map(([, s]) => scriptMark(s[0])).join('') });
+    icon.replaceWith(marks);
+    const head = `${t('wake.title')} · ${t('wake.count', list.filter(c => scriptRuns(c, now)).length, list.length)}`;
+    const each = states.map(([c, s]) => `${c.computer || t('wake.oldComputer')}: ${s[1]}`);
+    spendBtn.dataset.tip = [t('spend.title'), head, ...each].join('\n');
   }
   // At most every half minute: the board redraws with every write of an agent.
   let scriptsAt = 0;
@@ -1354,6 +1374,26 @@ export function mountDashboard(funnels, opts = {}) {
     el.addEventListener('pointerleave', dropTip);
   }
   spendBtn?.addEventListener('pointerdown', dropTip);
+  // Stop or start a computer's wake script (its button in the scripts list): saved at once, the list
+  // and the Spending button's dot redrawn; the script itself follows on its next check.
+  pop.addEventListener('click', async e => {
+    const b = e.target.closest('.script-btn');
+    if (!b || b.disabled || !opts.stopWakeScript) return;
+    b.disabled = true;
+    const stop = b.dataset.stop === '1';
+    try { await opts.stopWakeScript(b.dataset.key, stop); }
+    catch (err) { console.error(err); b.disabled = false; return; }
+    const c = lastScripts?.computers?.find(x => x.id === b.dataset.key);
+    if (c) c.stopped = stop;
+    const block = pop.querySelector('details.scripts');
+    if (block && lastScripts) {
+      spendState.scriptsOpen = block.open;  // it stays open as it was
+      block.outerHTML = scriptsBlock(lastScripts);
+      pop.querySelector('details.scripts')?.addEventListener('toggle', ev => { spendState.scriptsOpen = ev.target.open; });
+    }
+    dropTip();
+    markScripts(lastScripts);
+  });
   // The scripts' dot on the Spending button: now, and again with every new data (setFunnels).
   checkScripts();
   // A link in the card (Appoint a supervisor, Open in Claude…) takes the person elsewhere: the card

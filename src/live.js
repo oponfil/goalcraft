@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=c488ec39';
+import { supabase } from './auth.js?v=4368fab1';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -242,7 +242,7 @@ export async function loadFunnels() {
       .select('funnel_id, agent, app, model, tokens, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, cost_usd, limit_percent, limit_used, limit_window_minutes, ended_at, wake_key_id')
       .gte('ended_at', new Date(now - 7 * DAY).toISOString()).order('ended_at').order('agent').order('run_key')),
     // The computers the runs came from (see computers).
-    supabase.from('wake_keys').select('id, computer, os, inventory, last_used_at, created_at').order('created_at'),
+    supabase.from('wake_keys').select('id, computer, os, inventory, last_used_at, created_at, stopped_at').order('created_at'),
   ]);
   if (funnels.error) throw funnels.error;
   computers = new Map((keys.data ?? []).map(k => [k.id, { name: k.computer, os: k.os }]));
@@ -256,7 +256,7 @@ export async function loadFunnels() {
   // What the person's computers can run for Goalcraft's launches: each app's models, from every computer.
   inventory = {};
   // The computers that run the wake script, in the order they were set up (the first is a role's main one by default).
-  launchComputers = (keys.data ?? []).filter(k => k.computer).map(k => ({ name: k.computer, os: k.os, on: k.last_used_at && now - Date.parse(k.last_used_at) < 3 * 60e3,
+  launchComputers = (keys.data ?? []).filter(k => k.computer).map(k => ({ name: k.computer, os: k.os, on: !k.stopped_at && k.last_used_at && now - Date.parse(k.last_used_at) < 3 * 60e3,
     // The apps it has (Grok Bot when signed in there).
     apps: Object.entries(k.inventory ?? {}).filter(([app, v]) => app !== 'grok' || v.signed_in).map(([app]) => app) }));
   for (const k of keys.data ?? []) for (const [app, v] of Object.entries(k.inventory ?? {})) {
@@ -295,13 +295,20 @@ export function planLimits() {
     .map(([key, l]) => ({ key, used: l.week, resets: l.resets, days: LIMIT_DAYS[key.split(':')[0]] ?? 7 }));
 }
 
+// Stop a computer's wake script, or start it again (the Stop / Start button in the scripts list): the
+// script reads it on its next check (within 10 seconds when running, a minute when stopped).
+export async function stopWakeScript(id, stop) {
+  const { error } = await supabase.from('wake_keys').update({ stopped_at: stop ? new Date().toISOString() : null }).eq('id', id);
+  if (error) throw error;
+}
+
 // The person's wake scripts, one per computer: whether each runs (it checks in every 10 seconds), its
 // version against the latest, and the agents whose runs it counted over the last week (each funnel's
 // agent once, with its latest run there, so the card can say how many for the hour, day or week it shows).
 // The spending card shows them, since only runs on a computer with a running script are counted.
 export async function wakeScripts() {
   const [keys, latest, counted] = await Promise.all([
-    supabase.from('wake_keys').select('id, computer, script_version, last_used_at, problems').not('last_used_at', 'is', null).order('last_used_at', { ascending: false }),
+    supabase.from('wake_keys').select('id, computer, script_version, last_used_at, problems, stopped_at').not('last_used_at', 'is', null).order('last_used_at', { ascending: false }),
     fetch(new URL('../wake/release.json', import.meta.url), { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null),
     all(() => supabase.from('agent_usage').select('wake_key_id, funnel_id, agent, ended_at').gte('ended_at', new Date(Date.now() - 7 * DAY).toISOString()).order('ended_at')),
   ]);
@@ -316,7 +323,7 @@ export async function wakeScripts() {
   return {
     latest: latest?.version ?? null,
     computers: keys.data.map(k => ({
-      computer: k.computer, version: k.script_version, seen: Date.parse(k.last_used_at), problems: k.problems ?? [],
+      id: k.id, computer: k.computer, version: k.script_version, seen: Date.parse(k.last_used_at), problems: k.problems ?? [], stopped: !!k.stopped_at,
       agents: [...(agents.get(k.id) ?? [])].map(([k, at]) => ({ funnel: k.split('|')[0], agent: k.split('|').slice(1).join('|'), at })),
     })),
   };

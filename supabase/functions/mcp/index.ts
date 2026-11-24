@@ -196,7 +196,7 @@ function server(db: Db, caller: Caller) {
   // every request), whether it runs, and the latest on goalcraft.ai. Scripts from 18 November 2026 on
   // update themselves; an older one needs the update command once.
   async function wakeScript() {
-    const { data } = await db.from('wake_keys').select('computer, script_version, last_used_at, problems').not('last_used_at', 'is', null)
+    const { data } = await db.from('wake_keys').select('computer, script_version, last_used_at, problems, stopped_at').not('last_used_at', 'is', null)
       .order('last_used_at', { ascending: false })
     if (!data?.length) return null
     const latest = await latestWake()
@@ -208,7 +208,9 @@ function server(db: Db, caller: Caller) {
         const old = (k.script_version ?? '') < SELF_UPDATING
         return {
           computer: k.computer ?? 'a computer (its script is from before scripts named their computer)',
-          version: k.script_version, running: seen != null && Date.now() - seen < 5 * 60e3, last_seen_at: k.last_used_at,
+          version: k.script_version, running: !k.stopped_at && seen != null && Date.now() - seen < 5 * 60e3, last_seen_at: k.last_used_at,
+          // Stopped by the person on the board: it wakes and starts nothing here until they start it again.
+          ...(k.stopped_at ? { stopped_at: k.stopped_at } : {}),
           updates_itself: !old,
           // What the script says is wrong there: { code, level: error | warning, agent?, why? }.
           ...(k.problems?.length ? { problems: k.problems } : {}),

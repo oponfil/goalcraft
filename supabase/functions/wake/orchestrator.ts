@@ -35,6 +35,7 @@ type Row = Record<string, any>
 // What a computer can run, as its script last said (inventory), and whether it is on now.
 function canRun(key: Row, ex: Row, now: number) {
   if (!key.last_used_at || now - Date.parse(key.last_used_at) > ONLINE) return false
+  if (key.stopped_at) return false  // stopped from the board: it runs nothing until started again
   if (ex.computer && ex.computer !== key.computer) return false
   const inv = key.inventory?.[ex.app]
   if (!inv) return false
@@ -123,7 +124,7 @@ export async function dispatch(admin: any, user: string, key: Row) {
     admin.from('role_launch').select('*').eq('user_id', user),
     admin.from('role_executors').select('*').eq('user_id', user).order('position'),
     admin.from('role_launches').select('*').eq('user_id', user).is('ended_at', null),
-    admin.from('wake_keys').select('id, computer, last_used_at, inventory, created_at').eq('user_id', user),
+    admin.from('wake_keys').select('id, computer, last_used_at, inventory, created_at, stopped_at').eq('user_id', user),
     admin.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, session_percent, session_resets_at').eq('user_id', user).gte('at', iso(now - 2 * 86400e3)),
     admin.from('presence').select('funnel_id, agent, zone, state, next_run_at, pause_reason, updated_at, display_name, provider, chat_url').eq('user_id', user),
     admin.from('funnels').select('id, key, title, guide_url').eq('user_id', user),

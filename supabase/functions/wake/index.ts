@@ -12,6 +12,8 @@
 //                          bot_id, prompt }] }: the orchestrator's starts this computer can do (orchestrator.ts);
 //   POST /wake { launch_claim: id } → { claimed }; { launch_done: id, ok, note } → { ok }: the script took a start,
 //                          and its app finished; { inventory: { app: { models, running?, signed_in? } } } → { saved }
+//   Stopped from the board (wake_keys.stopped_at): GET /wake?claim=1 → { wake: [], launches: [], stopped: true, script }:
+//                          the script only asks again every minute until it is started; claims are refused
 //   GET /wake?agents=1   → { agents: [{ agent, funnel_id, app, session }] }: the agents on this computer whose
 //                          token use the script reads (nobody is woken or marked)
 //   POST /wake { usage: [{ funnel_id, agent, run_key, app, model, started_at, ended_at, tokens, new_tokens,
@@ -183,7 +185,7 @@ async function saveUsage(user: string, keyId: string, body: any) {
 Deno.serve(async (req) => {
   const key = (req.headers.get('authorization') ?? '').replace(/^Bearer /, '').trim()
   if (!key) return json({ error: 'no_key' }, 401)
-  const { data: owner } = await admin.from('wake_keys').select('id, user_id, computer, created_at, inventory').eq('key_hash', await sha256(key)).maybeSingle()
+  const { data: owner } = await admin.from('wake_keys').select('id, user_id, computer, created_at, inventory, stopped_at').eq('key_hash', await sha256(key)).maybeSingle()
   if (!owner) return json({ error: 'bad_key' }, 401)
   const user = owner.user_id, now = Date.now(), iso = (t: number) => new Date(t).toISOString()
   // The script's version, from its User-Agent ("goalcraft-wake/2026-10-24"); older ones say "1".
@@ -206,6 +208,17 @@ Deno.serve(async (req) => {
   // ?check=1: the script only checks its key (when it is installed); nobody is woken or marked.
   const params = new URL(req.url).searchParams
   if (params.has('check')) return json({ ok: true, script })
+  // Stopped from the board: this computer wakes nobody and starts nothing until the person starts it
+  // again; it still says it is there (last_used_at above) and still updates itself.
+  if (owner.stopped_at) {
+    if (req.method === 'POST') {
+      const body = await req.json().catch(() => null)
+      if (Array.isArray(body?.claim)) return json({ claimed: body.claim.map(() => false) })
+      if (typeof body?.launch_claim === 'string') return json({ claimed: false })
+      return json({ saved: 0, stopped: true })
+    }
+    return json(params.has('agents') ? { agents: [], stopped: true } : { wake: [], launches: [], stopped: true, script })
+  }
   if (req.method === 'POST') {
     const body = await req.json().catch(() => null)
     if (Array.isArray(body?.claim)) return claim(user, body.claim)
