@@ -425,6 +425,9 @@ function server(db: Db, caller: Caller) {
     // A role's shirt is the app Goalcraft started it on, whatever its agent calls itself.
     const launched = role ? await launchedApp(caller.admin, f.id, a.agent) : null
     const provider = (launched && LAUNCH_PROVIDER[launched]) || a.provider
+    // A new run Goalcraft started whose agent names no chat: the last run's link (another app's, say a Grok
+    // bot's) goes, so the card doesn't open a conversation that isn't this one.
+    const chat = chat_url === undefined && launched && newRun ? null : chat_url
     if (state === 'sleep' || state === 'pause') {
       check(await endRun(db, f.id, a.agent))
       if (role) await endLaunches(caller.admin, f.id, a.agent)
@@ -433,7 +436,7 @@ function server(db: Db, caller: Caller) {
       funnel_id: f.id, agent: a.agent, zone, state, ...found, ...(a.name && { display_name: a.name }), ...(provider && { provider }),
       next_run_at: state === 'sleep' ? next_run_at : null,
       pause_reason: state === 'pause' ? reason : null,
-      question_id, ...(chat_url !== undefined && { chat_url }),
+      question_id, ...(chat !== undefined && { chat_url: chat }),
       ...run,
       ...(a.added != null && { run_added: a.added, run_manual: true }),
     }, { onConflict: 'funnel_id,agent' }))
