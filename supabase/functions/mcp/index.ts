@@ -8,7 +8,7 @@ import { pipeline } from 'npm:@supabase/middleware@1.0.0'
 import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1.9.0'
 import { z } from 'npm:zod@4.6.5'
 import { emailQuestion } from './notify.ts'
-import { beginLaunch, cronNext, endLaunches, LAUNCH_PROVIDER, launchedApp, roleOf } from './launch.ts'
+import { beginLaunch, claudeRunChat, cronNext, endLaunches, LAUNCH_PROVIDER, launchedApp, roleOf } from './launch.ts'
 
 type Db = any // the Supabase client scoped to the caller
 // Who is calling, and an admin client to read their current settings (for question emails). chat:
@@ -379,7 +379,12 @@ function server(db: Db, caller: Caller) {
     if (zone != null && (a.status || a.summary)) fail('status and summary are for the supervisor (zone "supervisor"); a worker reports what it added')
     if (zone == null && a.added != null) fail('The supervisor adds no items: give what you found as status and summary')
     if (a.state === 'ask' && !a.question) fail('state "ask" needs a question')
-    const chat_url = a.chat_url ?? caller.chat
+    // A role Goalcraft starts (the orchestrator): with a schedule it wakes on it, whatever its agent says;
+    // without one, an agent that goes to sleep naming no time goes on pause.
+    const role = await roleOf(caller.admin, f.id, a.agent)
+    const launched = role ? await launchedApp(caller.admin, f.id, a.agent) : null
+    let chat_url = a.chat_url ?? caller.chat
+    if (launched === 'claude') chat_url = await claudeRunChat(db, f.id, a.agent, chat_url)
     let question_id: string | null = null
     const asked = a.state === 'ask' ? a.question! : null
     if (asked) {
@@ -399,9 +404,6 @@ function server(db: Db, caller: Caller) {
     // and is kept through the next sleep, so the person sees what the last run added.
     const prev = check(await db.from('presence').select('zone, state').eq('funnel_id', f.id).eq('agent', a.agent).maybeSingle()) as any
     const newRun = a.state === 'work' && (!prev || prev.state === 'sleep' || prev.state === 'pause' || prev.zone !== zone)
-    // A role Goalcraft starts (the orchestrator): with a schedule it wakes on it, whatever its agent says;
-    // without one, an agent that goes to sleep naming no time goes on pause.
-    const role = await roleOf(caller.admin, f.id, a.agent)
     let state = a.state, next_run_at = a.next_run_at ?? null, reason = a.reason ?? null
     if (role && state === 'sleep') {
       if (role.schedule && role.schedule_on) next_run_at = cronNext(role.schedule, role.time_zone)
@@ -423,7 +425,6 @@ function server(db: Db, caller: Caller) {
     // The run's own conversation, so its row in the card opens the chat it was worked in.
     if (chat_url) check(await openRun(db, f.id, a.agent).update({ chat_url }))
     // A role's shirt is the app Goalcraft started it on, whatever its agent calls itself.
-    const launched = role ? await launchedApp(caller.admin, f.id, a.agent) : null
     const provider = (launched && LAUNCH_PROVIDER[launched]) || a.provider
     // A new run Goalcraft started whose agent names no chat: the last run's link (another app's, say a Grok
     // bot's) goes, so the card doesn't open a conversation that isn't this one.

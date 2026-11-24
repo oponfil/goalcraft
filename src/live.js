@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=839b4b37';
+import { supabase } from './auth.js?v=dd1c4344';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -395,6 +395,7 @@ export async function sendMessage(a, text) {
 export async function chatOpened(from, to) {
   await supabase.from('presence').update({ chat_url: to }).eq('chat_url', from);
   await supabase.from('agent_runs').update({ chat_url: to }).eq('chat_url', from);
+  await supabase.from('questions').update({ chat_url: to }).eq('chat_url', from);
 }
 
 // The person closed the agent's replies: they stop showing. Replies to messages have "m:" ids.

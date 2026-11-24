@@ -37,6 +37,20 @@ export async function launchedApp(admin: Db, funnelId: string, agent: string): P
   return data?.[0]?.app ?? null
 }
 
+// A Claude run Goalcraft started from the command line is not in the Claude app until its resume link
+// (claude://resume?session=<id>) brings it in, once; after that the app knows it as local_<id>, and the
+// board, having opened the resume link, keeps that link instead. Its agent may send either (or the app's
+// link it makes from its session itself, as the instructions say for the app's own runs): until the board
+// has opened it, the link is the resume one, so "Open" finds the conversation.
+const CLAUDE_RUN_CHAT = /^claude:\/\/(?:claude\.ai\/epitaxy\/local_|resume\?session=)([0-9a-f-]{36})$/
+export async function claudeRunChat(db: Db, funnelId: string, agent: string, sent: string | undefined) {
+  const id = sent && CLAUDE_RUN_CHAT.exec(sent)?.[1]
+  if (!id) return sent
+  const opened = `claude://claude.ai/epitaxy/local_${id}`
+  const { data } = await db.from('presence').select('chat_url').eq('funnel_id', funnelId).eq('agent', agent).maybeSingle()
+  return data?.chat_url === opened ? opened : `claude://resume?session=${id}`
+}
+
 // The run is over (sleep, pause, the agent left): its start ends as done.
 export async function endLaunches(admin: Db, funnelId: string, agent: string) {
   await admin.from('role_launches').update({ ended_at: new Date().toISOString(), outcome: 'done' })
