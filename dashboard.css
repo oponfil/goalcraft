@@ -421,6 +421,11 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 
 /* Zoom in the top bar next to the logo: − 100% +, framed like the Refresh button. */
 #zoom { display: inline-flex; align-items: center; border: 2px solid var(--border); margin: 0 auto 0 24px; }
+/* Spending right after the zoom; the space before the links comes after it then. */
+#zoom:has(+ .spend-btn) { margin-right: 0; }
+.sitebar #zoom + .spend-btn { margin: 0 auto 0 10px; height: 30px; }
+.sitebar.tight .spend-btn .wide { display: none; }
+@media (max-width: 560px) { .sitebar .spend-btn .wide { display: none; } }
 #zoom button { height: 26px; min-width: 26px; padding: 0 6px; background: none; border: 0; color: var(--text); font: 600 15px/1 var(--font); cursor: pointer; }
 #zoom button.pct { min-width: 48px; font-size: 13px; font-weight: 500; color: var(--muted); }
 #zoom button + button { border-left: 2px solid var(--border); }

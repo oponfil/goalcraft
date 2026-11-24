@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=8064fc26';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=8064fc26';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=8064fc26';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=306b4891';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=306b4891';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=306b4891';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -223,7 +223,7 @@ export function mountDashboard(funnels, opts = {}) {
   zoomBox.id = 'zoom';
   zoomBox.innerHTML = `<button type="button" data-d="-1" aria-label="${esc(t('board.zoomOut'))}" title="${esc(t('board.zoomOut'))}">−</button><button type="button" class="pct" data-d="0"></button><button type="button" data-d="1" aria-label="${esc(t('board.zoomIn'))}" title="${esc(t('board.zoomIn'))}">+</button>`;
   document.querySelector('.sitebar .logo').after(zoomBox);
-  // What the agents spent, over all funnels: a button at the start of the top bar's links.
+  // What the agents spent, over all funnels: a button right after the zoom.
   // Once there are wake scripts, a dot takes the icon's place: green while all of them are well, the
   // worst one's color (red, amber) when one is in trouble; what is wrong on hover (markScripts).
   let spendBtn = null;
@@ -233,7 +233,7 @@ export function mountDashboard(funnels, opts = {}) {
     spendBtn.dataset.tip = t('spend.title');
     spendBtn.innerHTML = `${SPEND_ICON}<span class="wide">${esc(t('spend.button'))}</span>`;
     spendBtn.addEventListener('click', e => { e.stopPropagation(); showSpend(e); });
-    document.querySelector('.sitebar .links').prepend(spendBtn);
+    zoomBox.after(spendBtn);
   }
   // The bar in one line: compact (the logo's mark, − + only) when it doesn't fit, tighter still if
   // it doesn't fit then either, and at the tightest (a 320px phone) only the sign-in or profile link. Checked when the window or the bar's text changes.
