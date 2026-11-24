@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-23.6'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-24.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1876,7 +1876,9 @@ def launch_command(l):
         claude = find_claude()
         if not claude:
             return None, 'claude command not found'
-        cmd = [claude, '-p', '--session-id', l['session']]
+        # --chrome: Claude in Chrome, which a run from the command line has only when asked for (roles that
+        # apply, answer on hh.ru or send mail through the person's Chrome need it).
+        cmd = [claude, '-p', '--chrome', '--session-id', l['session']]
         cmd += ['--model', model] if model else []
         cmd += ['--effort', effort] if effort else []
         cmd += ['--permission-mode', 'bypassPermissions'] if full else ['--allowedTools', *GOALCRAFT_TOOLS]
@@ -1910,6 +1912,32 @@ def launch_command(l):
     return None, f'unknown app {l["app"]}'
 
 
+def claude_app_session(l):
+    """Register a Claude run started here from the command line (claude -p, in the home folder) as a
+    conversation of the Claude app, as the app keeps its own: a file in claude-code-sessions/<account>/<org>/
+    naming the command line's session. Made like the app's newest one, without what belongs to that run.
+    Its link (claude://claude.ai/epitaxy/local_…), or None (no app here, or it failed)."""
+    import uuid
+    try:
+        files = sorted(SESSIONS.glob('*/*/local_*.json'), key=lambda p: p.stat().st_mtime, reverse=True)
+        if not files:
+            return None
+        tmpl = json.loads(files[0].read_text(encoding='utf-8'))
+        keep = ('enabledMcpTools', 'remoteMcpServersConfig', 'chromePermissionMode', 'alwaysAllowedReasons')
+        now = int(time.time() * 1000)
+        sid = f'local_{uuid.uuid4()}'
+        d = {k: tmpl[k] for k in keep if k in tmpl}
+        d.update({'sessionId': sid, 'cliSessionId': l['session'], 'cwd': str(HOME), 'originCwd': str(HOME),
+                  'createdAt': now, 'lastActivityAt': now, 'lastTurnEdgeAt': now, 'model': l.get('model') or tmpl.get('model'),
+                  'effort': l.get('effort') or tmpl.get('effort'), 'isArchived': False, 'permissionMode': 'bypassPermissions',
+                  'title': f'Goalcraft · {l["funnel_id"]} · {l["agent"]}', 'completedTurns': 0})
+        (files[0].parent / f'{sid}.json').write_text(json.dumps(d, ensure_ascii=False), encoding='utf-8')
+        return f'claude://claude.ai/epitaxy/{sid}'
+    except Exception as e:
+        log(f'claude app conversation: {e!r}')
+        return None
+
+
 def run_launch(key, l):
     """Start one role's run (in its own thread: a run takes as long as the agent works)."""
     lid, who = l['launch'], f'{l["agent"]} in {l["funnel_id"]} on {l["app"]}' + (f' ({l["model"]})' if l.get('model') else '')
@@ -1926,6 +1954,11 @@ def run_launch(key, l):
         try:
             if l['app'] == 'claude':
                 l['session'] = str(uuid.uuid4())
+                # A conversation of the Claude app for it, so its card opens this run (the app lists it once
+                # it reads its conversations again, at its next start); the agent sends its link.
+                chat = claude_app_session(l)
+                if chat:
+                    l['prompt'] += f'\n\nYour chat_url for set_agent_state: {chat}'
             if l['app'] in ('claude', 'antigravity'):
                 remember_launch({'launch': lid, 'agent': l['agent'], 'funnel_id': l['funnel_id'], 'app': l['app'], 'session': l.get('session')})
             if l['app'] == 'grok':
