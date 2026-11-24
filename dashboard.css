@@ -84,12 +84,12 @@ body {
 #scroller::-webkit-scrollbar-track { background: #241F1B; }
 #scroller::-webkit-scrollbar-thumb { background: #6B5A48; border: 2px solid #241F1B; }
 #scroller::-webkit-scrollbar-thumb:hover { background: #8A745C; }
-/* A card (and its runs list) scrolls up and down with the board's own bar: square, in its colours. */
-@supports (-moz-appearance: none) { #pop, #pop .runs-list { scrollbar-color: #6B5A48 transparent; } }
-#pop::-webkit-scrollbar, #pop .runs-list::-webkit-scrollbar { width: 10px; }
-#pop::-webkit-scrollbar-track, #pop .runs-list::-webkit-scrollbar-track { background: transparent; }
-#pop::-webkit-scrollbar-thumb, #pop .runs-list::-webkit-scrollbar-thumb { background: #6B5A48; border: 2px solid var(--panel); }
-#pop::-webkit-scrollbar-thumb:hover, #pop .runs-list::-webkit-scrollbar-thumb:hover { background: #8A745C; }
+/* A card scrolls up and down with the board's own bar, one for the whole card: square, in its colours. */
+@supports (-moz-appearance: none) { #pop { scrollbar-color: #6B5A48 transparent; } }
+#pop::-webkit-scrollbar { width: 10px; }
+#pop::-webkit-scrollbar-track { background: transparent; }
+#pop::-webkit-scrollbar-thumb { background: #6B5A48; border: 2px solid var(--panel); }
+#pop::-webkit-scrollbar-thumb:hover { background: #8A745C; }
 #scene { display: block; flex: none; image-rendering: pixelated; touch-action: pan-x pan-y; }
 #scene[hidden], #titles[hidden] { display: none; }
 /* What a tank holds, next to the cursor while it hovers the tank. */
@@ -188,7 +188,8 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop details.runs { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 13px; }
 #pop details.runs summary { cursor: pointer; color: var(--muted); }
 #pop details.runs summary:hover { color: var(--text); }
-#pop .runs-list { margin-top: 6px; max-height: 220px; overflow-y: auto; scrollbar-gutter: stable; padding-right: 4px; }
+/* No scroll of its own: the card has one scrollbar for all of it. */
+#pop .runs-list { margin-top: 6px; }
 #pop .runs-day .pop-note { margin: 6px 0 0; }
 /* A run's tokens, at the end of its row, as the wake script counted them. */
 #pop .run-row .tok { color: var(--muted); white-space: nowrap; min-width: 3.6em; text-align: right; }  /* money last, the same place in every row */
@@ -437,7 +438,7 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
   border: 2px solid var(--border); color: var(--text); font: 600 13px/1 var(--font); cursor: pointer; text-shadow: none; }
 .col-title .tasks-btn:hover { border-color: var(--muted); }
 .col-title .tasks-btn[hidden] { display: none; }
-#pop ol.tasks { margin: 10px 0 0; padding-left: 20px; max-height: 60vh; overflow-y: auto; }
+#pop ol.tasks { margin: 10px 0 0; padding-left: 20px; }
 #pop ol.tasks li { margin: 0 0 10px; }
 #pop .task-title { font-weight: 600; }
 #pop .task-detail { color: var(--muted); font-size: 13px; margin-top: 2px; }
