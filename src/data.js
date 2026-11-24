@@ -1,5 +1,5 @@
 // Demo data shown on the landing page. In the product this comes from agents via MCP.
-import { lang } from './i18n.js?v=a12e2e4a';
+import { lang } from './i18n.js?v=af9a7911';
 
 export const AGENTS = {
   // app: turns a web chat link into one that opens the desktop app, where the app has a link scheme.
@@ -110,7 +110,7 @@ export const FUNNELS = [
       { agent: 'hermes', zone: -1, state: 'sleep', wakeIn: 14 },
       {
         agent: 'claude', zone: 0, state: 'ask',
-        // Three open questions: each folds to its first lines and opens by itself.
+        // Three open questions: each folds to one line; the first starts open.
         questions: [
           { id: 'demo-claude-salary', question: 'The form asks for a salary expectation. Send the application with $120k?' },
           { id: 'demo-claude-call', question: 'A recruiter offers a call on Thursday at 3pm. Accept it?' },

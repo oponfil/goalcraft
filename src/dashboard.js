@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=a12e2e4a';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=a12e2e4a';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=a12e2e4a';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=af9a7911';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=af9a7911';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=af9a7911';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -845,14 +845,12 @@ export function mountDashboard(funnels, opts = {}) {
       };
       // The first question (the one asked first) shows with its answer box; the rest fold under
       // "N more questions" and open with their own boxes.
-      // One question shows open with its answer box; several each fold to their first lines, and each
-      // opens by itself (the person picks which to answer).
-      const fold = a.questions.length > 1;
-      const askHtml = q => (fold ? `<details class="ask-item"><summary>${esc(q.question)}</summary>` : '')
-        + `<div class="ask" data-qid="${esc(q.id)}">${fold ? '' : `<p>${esc(q.question)}</p>`}${opts.onAnswer
+      // Each question folds to one line and opens by itself; the first starts open, with its answer box.
+      const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>${esc(q.question)}</summary>`
+        + `<div class="ask" data-qid="${esc(q.id)}">${opts.onAnswer
         ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
           <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
-          <div class="pop-msg"></div>` : ''}</div>` + (fold ? '</details>' : '');
+          <div class="pop-msg"></div>` : ''}</div></details>`;
       const asks = a.questions.map(askHtml).join('');
       const reply = opts.onAnswer ? ''
         : `<a class="btn primary" style="${paint}" href="${esc(chat)}" ${opens(chat, web)}>${esc(t('board.replyIn', info.product || info.name))}</a>`;
@@ -1160,8 +1158,8 @@ export function mountDashboard(funnels, opts = {}) {
   }
 
   function bindAnswer(a) {
-    // One question: its box takes the cursor; folded ones take it as each opens.
-    if (!pop.querySelector('.ask-item')) pop.querySelector('.answer')?.focus();
+    // The open question's box takes the cursor; a folded one takes it as it opens.
+    pop.querySelector('details.ask-item[open] .answer')?.focus();
     pop.querySelectorAll('details.ask-item').forEach(d => d.addEventListener('toggle', () => { if (d.open) d.querySelector('.answer')?.focus(); }));
     pop.querySelectorAll('.ask[data-qid]').forEach(block => {
       const box = block.querySelector('.answer'), send = block.querySelector('.send'), msg = block.querySelector('.pop-msg');
