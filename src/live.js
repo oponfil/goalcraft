@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=4368fab1';
+import { supabase } from './auth.js?v=223cd0ff';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -127,6 +127,11 @@ function agentOf(f, p, now, usage = []) {
         })(),
         // What this run added (the last run's, while the agent sleeps); null = not known.
         added: p.run_added,
+        // Its start going on: taken by a computer (and begun or not), or waiting its turn; null: none.
+        start: (() => {
+          const open = openStarts.get(`${f.id}|${p.agent}`) ?? [];
+          return open.length ? { taken: open.find(l => l.claimed_at) ?? null, waiting: open.some(l => !l.claimed_at) } : null;
+        })(),
         // How Goalcraft starts it, when it does (a role of the orchestrator): its schedule and executors.
         launch: (() => {
           const l = (f.role_launch ?? []).find(r => r.agent === p.agent);
@@ -166,6 +171,8 @@ function dayUsage(rows) {
 // session of that app cost meanwhile, over the last week, within one window), and how much is used
 // now. Neither app logs it per run as Codex does, so a run's share is its cost times this rate.
 let limits = {};
+// A role's starts not over yet, by "funnel id|agent" (see loadFunnels).
+let openStarts = new Map();
 // The services Goalcraft supports (Kimi no longer): the spending card shows only theirs.
 const SUPPORTED = new Set(['claude', 'codex', 'antigravity', 'grok']);
 // Claude gives whole percents: wait until enough has been spent for the rate to mean something;
@@ -221,7 +228,7 @@ export async function loadFunnels() {
     const keys = [...new Set(readings.data.map(r => (r.quota ? `${r.app}:${r.quota}` : r.app)))];
     limits = Object.fromEntries(keys.map(k => [k, limitRate(readings.data.filter(r => (r.quota ? `${r.app}:${r.quota}` : r.app) === k), LIMIT_MIN[k.split(':')[0]])]));
   }
-  const [funnels, reports, usage, keys] = await Promise.all([
+  const [funnels, reports, usage, keys, opened] = await Promise.all([
     supabase.from('funnels')
       .select(`id, title, position, theme, source_url, guide_url, result, goal_total, goal_due, results, result_titles, output_flow_per_day,
         stages (key, position, label, count, active, fill_percent, flow_per_day),
@@ -243,8 +250,12 @@ export async function loadFunnels() {
       .gte('ended_at', new Date(now - 7 * DAY).toISOString()).order('ended_at').order('agent').order('run_key')),
     // The computers the runs came from (see computers).
     supabase.from('wake_keys').select('id, computer, os, inventory, last_used_at, created_at, stopped_at').order('created_at'),
+    // The starts not over yet: waiting their turn, or taken by a computer.
+    supabase.from('role_launches').select('funnel_id, agent, reason, claimed_at, started_at, computer').is('ended_at', null),
   ]);
   if (funnels.error) throw funnels.error;
+  openStarts = new Map();
+  for (const l of opened.data ?? []) openStarts.set(`${l.funnel_id}|${l.agent}`, [...(openStarts.get(`${l.funnel_id}|${l.agent}`) ?? []), l]);
   computers = new Map((keys.data ?? []).map(k => [k.id, { name: k.computer, os: k.os }]));
   // The run each open chat (an agent's, a question's) was worked in: its app, model, effort and computer,
   // for the chat's icon and its hint.
@@ -443,7 +454,10 @@ export async function saveLaunch(a, patch, executors) {
 }
 
 // The person pressed Run now: Goalcraft starts the role at once (after a run of it already going).
+// Not while a start of it waits or goes on: one at a time.
 export async function runNow(a) {
+  const { data: open } = await supabase.from('role_launches').select('id').eq('funnel_id', a.f.id).eq('agent', a.agent).is('ended_at', null).limit(1);
+  if (open?.length) return 'busy';
   const { error } = await supabase.from('role_launches').insert({ funnel_id: a.f.id, agent: a.agent, reason: 'manual' });
   return error?.message;
 }
@@ -478,7 +492,7 @@ export function watch(onChange) {
   let timer;
   const kick = () => { clearTimeout(timer); timer = setTimeout(onChange, 400); };
   const channel = supabase.channel('my-funnels');
-  for (const table of ['funnels', 'stages', 'presence', 'questions', 'agent_messages', 'person_tasks', 'role_launch', 'role_executors']) {
+  for (const table of ['funnels', 'stages', 'presence', 'questions', 'agent_messages', 'person_tasks', 'role_launch', 'role_executors', 'role_launches']) {
     channel.on('postgres_changes', { event: '*', schema: 'public', table }, kick);
   }
   channel.subscribe();

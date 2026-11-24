@@ -223,6 +223,7 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop details.launch-box[open] summary .l-title::before { content: "▾ "; }
 #pop details.launch-box summary:hover .l-title { color: var(--text); }
 #pop .l-run { align-self: center; margin-left: 4px; color: #F2C14E; text-decoration: none; white-space: nowrap; cursor: pointer; }
+#pop .l-run-state { align-self: center; margin-left: 4px; color: var(--muted); font-size: 13px; }  /* in place of Run now while the role waits or works */
 #pop .l-run:hover { text-decoration: underline; }
 #pop .l-run.busy { opacity: 0.5; pointer-events: none; }
 #pop .launch-box .l-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; color: var(--text); }

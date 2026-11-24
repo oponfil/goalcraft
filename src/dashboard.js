@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=4368fab1';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=4368fab1';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=4368fab1';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=223cd0ff';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=223cd0ff';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=223cd0ff';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -947,7 +947,7 @@ export function mountDashboard(funnels, opts = {}) {
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
     // works now, or when the person's wake script wakes it).
     const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
-        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '')}${opts.onRunNow ? `<a href="#" class="l-run" data-tip="${esc(t('launch.runNowTip'))}">${esc(t('launch.runNow'))}</a>` : ''}</div>
+        <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '')}${opts.onRunNow ? runNowHtml(a) : ''}</div>
         <div class="pop-msg"></div></div>`
       : chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '');
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
@@ -1137,7 +1137,14 @@ export function mountDashboard(funnels, opts = {}) {
       // Saved as it changes: only what went wrong is said.
       say(error || '');
     };
-    // Run now sits beside Send and the chat's icon: it starts the role; what came of it is said there.
+    // Run now only when the role can start: nothing of it waits or goes on. Else what is going on instead.
+  const runState = a => a.state === 'work' || a.start?.taken?.started_at ? t('launch.running')
+    : a.start?.taken ? t('launch.starting', a.start.taken.computer ?? '') : a.start?.waiting ? t('launch.inQueue') : '';
+  const runNowHtml = a => {
+    const now = runState(a);
+    return now ? `<span class="l-run-state">${esc(now)}</span>` : `<a href="#" class="l-run" data-tip="${esc(t('launch.runNowTip'))}">${esc(t('launch.runNow'))}</a>`;
+  };
+  // Run now sits beside Send and the chat's icon: it starts the role; what came of it is said there.
     pop.querySelector('.write .l-run')?.addEventListener('click', async e => {
       e.preventDefault(); e.stopPropagation();
       const link = e.currentTarget, note = link.closest('.write').querySelector('.pop-msg');
@@ -1147,7 +1154,12 @@ export function mountDashboard(funnels, opts = {}) {
       link.classList.add('busy');
       const error = await opts.onRunNow(a);
       link.classList.remove('busy');
-      tell(error ? (/duplicate|unique/i.test(error) ? t('launch.waiting') : error) : t('launch.queued'), !error);
+      // Taken: the link gives way to where the start is; it comes back when the run is over.
+      if (!error || error === 'busy' || /duplicate|unique/i.test(error)) {
+        link.outerHTML = `<span class="l-run-state">${esc(error ? t('launch.waiting') : t('launch.inQueue'))}</span>`;
+        return tell('');
+      }
+      tell(error);
     });
   }
 

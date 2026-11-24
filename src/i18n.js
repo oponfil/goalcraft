@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=4368fab1';
-import vi from './lang/vi.js?v=4368fab1';
-import ja from './lang/ja.js?v=4368fab1';
-import pt from './lang/pt.js?v=4368fab1';
-import tr from './lang/tr.js?v=4368fab1';
-import ko from './lang/ko.js?v=4368fab1';
+import es from './lang/es.js?v=223cd0ff';
+import vi from './lang/vi.js?v=223cd0ff';
+import ja from './lang/ja.js?v=223cd0ff';
+import pt from './lang/pt.js?v=223cd0ff';
+import tr from './lang/tr.js?v=223cd0ff';
+import ko from './lang/ko.js?v=223cd0ff';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -488,6 +488,9 @@ const STRINGS = {
   'launch.runNowTip': L('Start the role now, outside its schedule, on its executors in order.', 'Запустить роль сейчас, вне расписания, на её исполнителях по порядку.'),
   'launch.queued': L('Starting: it runs as soon as a computer takes it.', 'Запуск поставлен: начнётся, как только его возьмёт компьютер.'),
   'launch.waiting': L('A start is already waiting.', 'Запуск уже ждёт в очереди.'),
+  'launch.inQueue': L('Queued: it starts as soon as a computer takes it', 'В очереди: начнётся, как только его возьмёт компьютер'),
+  'launch.starting': L((pc) => `Starting${pc ? ' on ' + pc : ''}`, (pc) => `Запускается${pc ? ' на ' + pc : ''}`),
+  'launch.running': L('Working: it can be run again once done', 'Работает: запустить снова можно, когда закончит'),
   'launch.badTimes': L('Write times like 9:00, 18:00 (same minutes), or a cron of five fields.', 'Напишите время вида 9:00, 18:00 (с одинаковыми минутами) или cron из пяти полей.'),
   'launch.tooOften': L((n) => `At most every ${n} minutes: a role doesn't start more often (its starts wait their turn).`, (n) => `Не чаще раза в ${n} минут: чаще роль не запускается (запуски ждут своей очереди).`),
   'launch.noExecutors': L('Turn on at least one executor.', 'Включите хотя бы одного исполнителя.'),
