@@ -1,8 +1,8 @@
 // The funnel the landing page and the README explain: the demo's Job Search cut to two stages,
 // with an agent in each state the labels point at. They stay in their states, so the labels always
 // point at them. The landing page runs it live; tools/render-docs.js records it.
-import { FUNNELS } from './data.js?v=df2d1e8a';
-import { Scene, CW } from './scene.js?v=df2d1e8a';
+import { FUNNELS } from './data.js?v=e5a83225';
+import { Scene, CW } from './scene.js?v=e5a83225';
 
 export const TH = 22;  // the title strip over the funnel, in scene units
 const FONT = 'Rubik, system-ui, sans-serif';

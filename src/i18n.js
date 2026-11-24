@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=df2d1e8a';
-import vi from './lang/vi.js?v=df2d1e8a';
-import ja from './lang/ja.js?v=df2d1e8a';
-import pt from './lang/pt.js?v=df2d1e8a';
-import tr from './lang/tr.js?v=df2d1e8a';
-import ko from './lang/ko.js?v=df2d1e8a';
+import es from './lang/es.js?v=e5a83225';
+import vi from './lang/vi.js?v=e5a83225';
+import ja from './lang/ja.js?v=e5a83225';
+import pt from './lang/pt.js?v=e5a83225';
+import tr from './lang/tr.js?v=e5a83225';
+import ko from './lang/ko.js?v=e5a83225';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -409,9 +409,11 @@ const STRINGS = {
   'wake.silentTip': L('Its computer is off or asleep, or the script stopped: the spending of runs there is not counted meanwhile.', 'Компьютер выключен или спит, либо скрипт остановился: расход запусков там пока не учитывается.', '电脑关机或休眠，或脚本已停止：期间那里运行的消耗不会被统计。', 'คอมพิวเตอร์ปิดหรือหลับอยู่ หรือสคริปต์หยุดทำงาน: ระหว่างนี้ค่าใช้จ่ายของการรันที่นั่นจะไม่ถูกนับ'),
   'wake.updatesTip': L((v) => `Latest: ${v}. It updates itself within minutes.`, (v) => `Новая: ${v}. Обновится сама в течение нескольких минут.`, (v) => `最新：${v}。几分钟内会自动更新。`, (v) => `ล่าสุด: ${v} จะอัปเดตเองภายในไม่กี่นาที`),
   'wake.manualTip': L((v) => `Latest: ${v}. This version doesn't update itself yet: ask an agent on that computer to update the Goalcraft wake script once.`, (v) => `Новая: ${v}. Эта версия сама ещё не обновляется: попросите агента на этом компьютере один раз обновить скрипт пробуждения Goalcraft.`, (v) => `最新：${v}。此版本还不能自动更新：请让那台电脑上的智能体手动更新一次 Goalcraft 唤醒脚本。`, (v) => `ล่าสุด: ${v} เวอร์ชันนี้ยังอัปเดตเองไม่ได้: ขอให้เอเจนต์บนเครื่องนั้นอัปเดตสคริปต์ปลุก Goalcraft หนึ่งครั้ง`),
-  'wake.agents': L((n) => `${n} agent${n === 1 ? '' : 's'}`, (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'агент' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'агента' : 'агентов'}`, (n) => `${n} 个智能体`, (n) => `${n} เอเจนต์`),
-  'wake.agentsTip': L((list) => `Runs counted here over the last week: ${list}`, (list) => `Запуски, учтённые здесь за неделю: ${list}`, (list) => `近一周在此统计的运行：${list}`, (list) => `การรันที่นับที่นี่ในสัปดาห์ที่ผ่านมา: ${list}`),
-  'wake.noAgents': L('no runs counted this week', 'за неделю запусков не было', '本周没有统计到运行', 'ไม่มีการรันในสัปดาห์นี้'),
+  'wake.agents': L((n, span) => `${n} agent${n === 1 ? '' : 's'} ${span}`, (n, span) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'агент' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'агента' : 'агентов'} ${span}`, (n, span) => `${span} ${n} 个智能体`, (n, span) => `${n} เอเจนต์${span}`),
+  'wake.agentsTip': L((span, list) => `Runs counted here ${span}:\n${list}`, (span, list) => `Запуски, учтённые здесь ${span}:\n${list}`, (span, list) => `${span}在此统计的运行：\n${list}`, (span, list) => `การรันที่นับที่นี่${span}:\n${list}`),
+  // The time the counts above cover, as the spending chart's hour / day / week switch says.
+  'wake.span': L({ h: 'in the last hour', d: 'in the last day', w: 'in the last week' }, { h: 'за час', d: 'за день', w: 'за неделю' }, { h: '近一小时', d: '近一天', w: '近一周' }, { h: 'ในชั่วโมงที่ผ่านมา', d: 'ในวันที่ผ่านมา', w: 'ในสัปดาห์ที่ผ่านมา' }),
+  'wake.noAgents': L((span) => `no runs counted ${span}`, (span) => `${span.charAt(0).toUpperCase() + span.slice(1)} запусков не было`, (span) => `${span}没有统计到运行`, (span) => `ไม่มีการรัน${span}`),
   'wake.oldComputer': L('A computer (old script)', 'Компьютер (старый скрипт)', '一台电脑（旧脚本）', 'คอมพิวเตอร์ (สคริปต์เก่า)'),
   'hist.failed': L('Could not load the history.', 'Не удалось загрузить историю.', '无法加载历史。', 'โหลดประวัติไม่สำเร็จ'),
   'board.moreQuestions': L((n) => `${n} more question${n === 1 ? '' : 's'}`, (n) => `Ещё вопросов: ${n}`, (n) => `还有 ${n} 个问题`, (n) => `อีก ${n} คำถาม`),

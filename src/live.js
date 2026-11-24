@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=df2d1e8a';
+import { supabase } from './auth.js?v=e5a83225';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -292,22 +292,28 @@ export function planLimits() {
 }
 
 // The person's wake scripts, one per computer: whether each runs (it checks in every 10 seconds), its
-// version against the latest, and the agents whose runs it counted over the last week. The spending
-// card shows them, since only runs on a computer with a running script are counted.
+// version against the latest, and the agents whose runs it counted over the last week (each funnel's
+// agent once, with its latest run there, so the card can say how many for the hour, day or week it shows).
+// The spending card shows them, since only runs on a computer with a running script are counted.
 export async function wakeScripts() {
   const [keys, latest, counted] = await Promise.all([
     supabase.from('wake_keys').select('id, computer, script_version, last_used_at, problems').not('last_used_at', 'is', null).order('last_used_at', { ascending: false }),
     fetch(new URL('../wake/release.json', import.meta.url), { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null),
-    all(() => supabase.from('agent_usage').select('wake_key_id, agent').gte('ended_at', new Date(Date.now() - 7 * DAY).toISOString()).order('ended_at')),
+    all(() => supabase.from('agent_usage').select('wake_key_id, funnel_id, agent, ended_at').gte('ended_at', new Date(Date.now() - 7 * DAY).toISOString()).order('ended_at')),
   ]);
   if (keys.error) throw keys.error;
-  const agents = new Map();
-  for (const r of counted.data ?? []) if (r.wake_key_id) agents.set(r.wake_key_id, new Set([...(agents.get(r.wake_key_id) ?? []), r.agent]));
+  const agents = new Map();  // computer → "funnel|agent" → its latest run there
+  for (const r of counted.data ?? []) {
+    if (!r.wake_key_id) continue;
+    const mine = agents.get(r.wake_key_id) ?? new Map(), k = `${r.funnel_id}|${r.agent}`, at = Date.parse(r.ended_at);
+    if (!(mine.get(k) >= at)) mine.set(k, at);
+    agents.set(r.wake_key_id, mine);
+  }
   return {
     latest: latest?.version ?? null,
     computers: keys.data.map(k => ({
       computer: k.computer, version: k.script_version, seen: Date.parse(k.last_used_at), problems: k.problems ?? [],
-      agents: [...(agents.get(k.id) ?? [])].sort(),
+      agents: [...(agents.get(k.id) ?? [])].map(([k, at]) => ({ funnel: k.split('|')[0], agent: k.split('|').slice(1).join('|'), at })),
     })),
   };
 }

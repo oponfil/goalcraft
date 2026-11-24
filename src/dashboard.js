@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=df2d1e8a';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=df2d1e8a';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=df2d1e8a';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=e5a83225';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=e5a83225';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=e5a83225';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -425,7 +425,7 @@ export function mountDashboard(funnels, opts = {}) {
       // Hour, day or week, a letter each, on the right: the same switch as Flows in the profile menu,
       // for the whole board; hovering names it in full.
       const units = `<div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" data-tip="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div>`;
-      body.innerHTML = `<div class="hist-controls">${periods.length > 1 ? `<div class="hist-periods">${periods.map(p => `<button type="button" data-p="${p}" class="${p === shown ? 'on' : ''}">${esc(periodLabel(u, p))}</button>`).join('')}</div>` : '<span></span>'}${units}</div>
+      body.innerHTML = `<div class="hist-controls">${periods.length ? `<div class="hist-periods">${periods.map(p => `<button type="button" data-p="${p}" class="${p === shown ? 'on' : ''}">${esc(periodLabel(u, p))}</button>`).join('')}</div>` : '<span></span>'}${units}</div>
         <p class="pop-note">${esc(t('hist.total', fmtCount(sum), avgFmt.format(sum / n), t('flow.' + u)))}</p>
         <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(fmtCount(v))}</span>`).join('')}</div>
           <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}
@@ -498,6 +498,7 @@ export function mountDashboard(funnels, opts = {}) {
   // are counted, so each shows whether it runs, whether its version is the latest, and whose runs it
   // counted. Folded until the viewer opens it; when something is off (none yet, one silent, in trouble or
   // outdated), its title carries the worst one's dot.
+  const SPANS = { h: 3600e3, d: 864e5, w: 7 * 864e5 };
   const SELF_UPDATING = '2026-11-18';  // the first version that updates itself
   // One status a computer, its details on hover: gone silent (red), an error (red), a warning or an
   // old version (amber), or all well (green).
@@ -525,15 +526,29 @@ export function mountDashboard(funnels, opts = {}) {
     if (!list.length) return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} <span class="warn">●</span></summary><p class="pop-note">${esc(t('wake.none'))}</p></details>`;
     const up = c => scriptUp(c, now), current = c => scriptCurrent(w, c), statusOf = c => scriptStatus(w, c, now);
     const hereName = hereComputer()?.name;
+    // The agents each computer ran over the hour, day or week the chart's switch shows, by funnel.
+    const span = SPANS[flowUnit] ? flowUnit : 'd', spanText = t('wake.span')[span];
+    const funnelTitle = id => scene.funnels.find(f => (f.id ?? f.title) === id)?.title;
+    const nameOf = x => {
+      const a = scene.agents.find(a => a.agent === x.agent && (a.f.id ?? a.f.title) === x.funnel);
+      return a?.name || (a?.sup ? t('board.supervisorName', a.f.title) : x.agent);
+    };
+    const ranHere = c => (c.agents ?? []).map(x => typeof x === 'string' ? { agent: x, at: now } : x).filter(x => now - x.at <= SPANS[span]);
+    const agentsTip = ran => {
+      if (!ran.length) return t('wake.noAgents', spanText);
+      const by = new Map();
+      for (const x of ran) { const f = funnelTitle(x.funnel) ?? ''; by.set(f, [...(by.get(f) ?? []), nameOf(x)]); }
+      return t('wake.agentsTip', spanText, [...by].map(([f, names]) => (f ? `${f}: ` : '') + names.join(', ')).join('\n'));
+    };
     const rows = list.map(c => {
       const [level, text, tip] = statusOf(c);
       const version = t(current(c) ? 'wake.versionCurrent' : 'wake.versionOld', c.version ?? '?', w.latest ?? '');
-      const n = c.agents?.length ?? 0;
+      const ran = ranHere(c), n = ran.length;
       // With several computers, which one this browser is on: picked by its system, changed here.
       const here = list.length > 1 && c.computer ? `<label class="here" data-tip="${esc(t('wake.hereTip'))}"><input type="radio" name="here-pc" value="${esc(c.computer)}"${c.computer === hereName ? ' checked' : ''}>${esc(t('wake.here'))}</label>` : '';
       return `<li${list.length > 1 ? ' class="pick-here"' : ''}><span class="who" data-tip="${esc(version)}">${esc(c.computer || t('wake.oldComputer'))}</span>${here}`
         + `<span class="${level}" data-tip="${esc(tip)}">● ${esc(text)}</span>`
-        + `<span class="n" data-tip="${esc(n ? t('wake.agentsTip', c.agents.join(', ')) : t('wake.noAgents'))}">${esc(t('wake.agents', n))}</span></li>`;
+        + `<span class="n" data-tip="${esc(agentsTip(ran))}">${esc(t('wake.agents', n, spanText))}</span></li>`;
     }).join('');
     const running = list.filter(up).length, worst = worstOf(list.map(c => statusOf(c)[0]));
     return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}${worst !== 'ok' ? ` <span class="${worst}">●</span>` : ''}</summary>
@@ -611,6 +626,11 @@ export function mountDashboard(funnels, opts = {}) {
       const totals = new Map(), runs = new Map();
       for (const r of mine) { const k = groupOf(r); totals.set(k, (totals.get(k) || 0) + value(r)); runs.set(k, (runs.get(k) || 0) + 1); }
       const groups = [...totals.keys()].sort((a, b) => totals.get(b) - totals.get(a));
+      // By funnel, every funnel is listed: one with no runs in the period says 0 runs, $0.
+      if (split === 'funnel') for (const f of scene.funnels) {
+        const k = f.id ?? f.title;
+        if (!totals.has(k)) { groups.push(k); totals.set(k, 0); runs.set(k, 0); }
+      }
       // A service, and the first (biggest) agent of each service, in the service's own color, so the bars
       // read at once: Claude orange, ChatGPT green. Funnels, a service's other agents, and a service whose
       // color another already has, take the next color of the palette not close to one in use.
@@ -646,7 +666,7 @@ export function mountDashboard(funnels, opts = {}) {
       const btns = (list, on, attr, text) => list.map(x => `<button type="button" data-${attr}="${esc(x)}" class="${x === on ? 'on' : ''}">${esc(text(x))}</button>`).join('');
       const filtered = spendState.funnel ? funnelOf.get(spendState.funnel)?.title : null;
       body.innerHTML = `${filtered ? `<p class="spend-filter"><span>${esc(filtered)}</span> <button type="button" class="link spend-all">${esc(t('spend.allFunnels'))}</button></p>` : ''}
-        <div class="hist-controls">${periods.length > 1 ? `<div class="hist-periods spend-periods">${btns(periods.map(String), String(shown), 'p', p => periodLabel(u, Number(p)))}</div>` : '<span></span>'}
+        <div class="hist-controls">${periods.length ? `<div class="hist-periods spend-periods">${btns(periods.map(String), String(shown), 'p', p => periodLabel(u, Number(p)))}</div>` : '<span></span>'}
           <div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" data-tip="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div></div>
         <div class="hist-controls">${measures.length > 1 ? `<div class="hist-periods spend-measure">${measures.map(m => `<button type="button" data-m="${esc(m)}" class="${m === spendState.measure ? 'on' : ''}"${measureTip(m)}>${m === '$' ? '$' : `%${LIMIT_LOGOS[m] || ' ' + esc(LIMIT_NAMES[m])}`}</button>`).join('')}</div>` : '<span></span>'}
           <div class="hist-periods spend-split">${btns(splits, split, 's', s => t({ funnel: 'spend.byFunnel', agent: 'spend.byAgent', vendor: 'spend.byVendor' }[s]))}</div></div>
