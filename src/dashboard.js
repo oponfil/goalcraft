@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=f23a0f66';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=f23a0f66';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=f23a0f66';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=ec16f2ce';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=ec16f2ce';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ec16f2ce';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -986,7 +986,10 @@ export function mountDashboard(funnels, opts = {}) {
     return `<div class="ex-row" data-app="${esc(e.app)}">
       <div class="ex-top"><span class="ex-grip" draggable="true" data-tip="${esc(t('launch.drag'))}">⋮⋮</span>${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b><input type="checkbox" class="switch ex-on"${e.enabled === false ? '' : ' checked'}></div>
       <div class="ex-fields">${model}</div>
-      ${grok ? '' : `<div class="ex-checks"><label data-tip="${esc(t('launch.newChatTip'))}"><input type="checkbox" class="ex-new"${e.new_chat === false ? '' : ' checked'}>${esc(t('launch.newChat'))}</label>
+      ${grok ? '' : `<div class="ex-checks">${e.app === 'antigravity'
+        // Antigravity can't go on in a conversation from outside: always a new one, ticked for good.
+        ? `<label class="fixed" data-tip="${esc(t('launch.newChatAlways'))}"><input type="checkbox" class="ex-new" checked disabled>${esc(t('launch.newChat'))}</label>`
+        : `<label data-tip="${esc(t('launch.newChatTip'))}"><input type="checkbox" class="ex-new"${e.new_chat === false ? '' : ' checked'}>${esc(t('launch.newChat'))}</label>`}
       <label data-tip="${esc(t('launch.fullTip'))}"><input type="checkbox" class="ex-full"${e.full_access === false ? '' : ' checked'}>${esc(t('launch.full'))}</label></div>`}</div>`;
   };
   // The executors shown for a computer: the role's own, in their order, that this computer has, then the

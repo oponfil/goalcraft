@@ -468,7 +468,7 @@ function server(db: Db, caller: Caller) {
         computer: z.string().min(1).max(64).nullable().optional().describe('Only on this computer (as wake_script.computers names it); leave out for any that has the app'),
         model: z.string().min(1).max(64).optional().describe('Claude: claude-opus-5-5, claude-sonnet-5-5…; Codex: gpt-6.2-sol…; Antigravity: the model\'s label, e.g. "Gemini 4 Argon (Medium)" (its effort is part of it). Grok Bot: none, the bot\'s own'),
         effort: z.enum(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']).optional().describe('Claude and Codex'),
-        new_chat: z.boolean().optional().describe('A new conversation for every start on the schedule (default true); off: the role goes on in its own conversation. An answer always goes on in the conversation its question was asked in, a message in the role'''s own. Grok Bot always goes on in its one conversation'),
+        new_chat: z.boolean().optional().describe('A new conversation for every start on the schedule (default true); off: the role goes on in its own conversation. An answer always goes on in the conversation its question was asked in, a message in the conversation of the role. Grok Bot always goes on in its one conversation'),
         full_access: z.boolean().optional().describe('Everything allowed without asking (default true): nobody is there to approve'),
         bot_id: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/).optional().describe('Grok Bot: the bot that works the role'),
         enabled: z.boolean().optional(),
@@ -487,7 +487,7 @@ function server(db: Db, caller: Caller) {
       check(await db.from('role_executors').delete().eq('funnel_id', f.id).eq('agent', a.agent))
       if (a.executors.length) check(await db.from('role_executors').insert(a.executors.map((e, i) => ({
         funnel_id: f.id, agent: a.agent, position: i, app: e.app, computer: e.computer ?? null, model: e.model ?? null,
-        effort: e.effort ?? null, new_chat: e.app === 'grok' ? false : e.new_chat ?? true, full_access: e.full_access ?? true,
+        effort: e.effort ?? null, new_chat: e.app === 'grok' ? false : e.app === 'antigravity' ? true : e.new_chat ?? true, full_access: e.full_access ?? true,
         bot_id: e.bot_id ?? null, enabled: e.enabled ?? true,
       }))))
     }

@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=f23a0f66';
-import vi from './lang/vi.js?v=f23a0f66';
-import ja from './lang/ja.js?v=f23a0f66';
-import pt from './lang/pt.js?v=f23a0f66';
-import tr from './lang/tr.js?v=f23a0f66';
-import ko from './lang/ko.js?v=f23a0f66';
+import es from './lang/es.js?v=ec16f2ce';
+import vi from './lang/vi.js?v=ec16f2ce';
+import ja from './lang/ja.js?v=ec16f2ce';
+import pt from './lang/pt.js?v=ec16f2ce';
+import tr from './lang/tr.js?v=ec16f2ce';
+import ko from './lang/ko.js?v=ec16f2ce';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -466,6 +466,7 @@ const STRINGS = {
   'launch.botNeeded': L('Grok Bot needs its bot id to run the role.', 'Для Grok Bot укажите id бота.'),
   'launch.newChat': L('New chat', 'Новая беседа'),
   'launch.newChatTip': L('Every run in a new conversation; unticked, it goes on in the last one when there is one.', 'Каждый запуск — новая беседа; без галочки продолжает последнюю, если она есть.'),
+  'launch.newChatAlways': L('Antigravity always starts a new conversation: Goalcraft can\'t go on in one of its conversations.', 'Antigravity всегда начинает новую беседу: продолжать его беседы Goalcraft не умеет.'),
   'launch.full': L('Full access', 'Полный доступ'),
   'launch.fullTip': L('Everything allowed without asking: nobody is there to approve during a scheduled run. Unticked, the app\'s own defaults apply.', 'Всё разрешено без подтверждения: при запуске по расписанию подтвердить некому. Без галочки действуют настройки самого приложения.'),
   'launch.inBot': L('The bot that works the role. Its model and access are set in the bot itself.', 'Бот, который работает за роль. Модель и доступ задаются в самом боте.'),

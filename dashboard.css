@@ -252,6 +252,7 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .ex-row .ex-fields { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
 #pop .ex-row .ex-fields select.ex-model, #pop .ex-row .ex-fields input.ex-bot { flex: 1 1 140px; min-width: 0; }
 #pop .ex-row .ex-checks { display: flex; gap: 14px; margin-top: 6px; }
+#pop .ex-row .ex-checks label.fixed { opacity: 0.6; cursor: default; }  /* Antigravity: always a new conversation */
 #pop .ex-row label { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; white-space: nowrap; cursor: pointer; }
 #pop .ex-row label input { margin: 0; accent-color: #F2C14E; }
 #pop .ex-row .ex-note { color: var(--muted); font-size: 12px; width: 100%; }
