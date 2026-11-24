@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=f5bc5395';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=f5bc5395';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=f5bc5395';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=e730d29b';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=e730d29b';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=e730d29b';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -830,7 +830,8 @@ export function mountDashboard(funnels, opts = {}) {
     }
     // Live only: the agent's last runs, loaded when the person opens them.
     // Its last week's spending shows at once, above its runs (which open on a click).
-    const history = opts.runs ? `<div class="runs-day"></div><details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-list"></div></details>` : '';
+    // Under a line: the last week's spending, then the runs.
+    const history = opts.runs ? `<div class="history"><div class="runs-day"></div><details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-list"></div></details></div>` : '';
     // Overdue (it should have run by now) or silent at work: when it was last heard from.
     const missed = scene.overdue(a)
       ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.t + (a.seenAgo || 0))))}</p>` : '';
@@ -843,9 +844,10 @@ export function mountDashboard(funnels, opts = {}) {
       const link = chatLink(info, url);
       return link ? openBtnHtml(link, webOf(url, info), info, (opts.live ? whereTip(mine(url), info, inAntigravity) : ''), opts.live && elsewhere(a)) : '';
     };
-    // Each question folds to one line and opens by itself; the first starts open, with its answer box.
-    const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>${esc(q.question)}</summary>`
-      + `<div class="ask" data-qid="${esc(q.id)}">${opts.onAnswer
+    // Each question folds to its label ("Question 1") and opens by itself to its text and answer box;
+    // the first starts open.
+    const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>${esc(t('board.question', i + 1))}</summary>`
+      + `<div class="ask" data-qid="${esc(q.id)}"><p class="ask-text">${esc(q.question)}</p>${opts.onAnswer
       ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
         <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${openBtn(q.chat || web)}</div>
         <div class="pop-msg"></div>` : ''}</div></details>`;
@@ -907,7 +909,7 @@ export function mountDashboard(funnels, opts = {}) {
   // An executor's mark: its app's logo, with the app, model and effort on hover.
   // A model as people call it: claude-opus-5-5 is Claude Opus 5.5; other apps' names are as they are.
   const modelName = m => m?.replace(/^claude-([a-z]+)-(\d+)-(\d+)$/, (_, n, a, b) => `Claude ${n[0].toUpperCase()}${n.slice(1)} ${a}.${b}`) ?? m;
-  const appMark = (app, model, effort) => `<span class="app-mark" data-tip="${esc([APP_NAMES[app] ?? app, modelName(model), effort].filter(Boolean).join(' · '))}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</span>`;
+  const appMark = (app, model, effort, pc) => `<span class="app-mark" data-tip="${esc([APP_NAMES[app] ?? app, pc, modelName(model), effort].filter(Boolean).join(' · '))}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</span>`;
   const exRow = (e, apps) => {
     const grok = e.app === 'grok', models = [...new Set([...(apps[e.app]?.models ?? []), ...(e.model ? [e.model] : [])])];
     // Grok Bot: its bot by name (as the computers read them); one not among them by its id.
@@ -1071,14 +1073,16 @@ export function mountDashboard(funnels, opts = {}) {
     const url = r.chat_url;
     app = app ?? APP_OF_URL.find(([re]) => re.test(url || ''))?.[1];
     if (!app) return '';
-    if (!url || !opts.live) return appMark(app, model, effort);
+    // With more than one computer, the one the run went on too (a run Goalcraft started knows it).
+    const pc = r.launch?.computer && (opts.launchComputers?.() ?? []).length > 1 ? t('board.onComputer', r.launch.computer) : '';
+    if (!url || !opts.live) return appMark(app, model, effort, pc);
     const inAntigravity = /^antigravity:/i.test(url), inGrokBot = /^grokbot:/i.test(url);
     const base = agentInfo(a.agent, { provider: a.provider, chat: url, app });
     const info = inAntigravity ? { ...base, product: 'Antigravity', app: null } : inGrokBot ? { ...base, product: 'Grok Bot' } : base;
     const link = chatLink(info, url);
-    if (!link) return appMark(app, model, effort);
+    if (!link) return appMark(app, model, effort, pc);
     const [where, ...rest] = whereTip(url, info, inAntigravity).split(' · ');
-    const tip = [where, modelName(model), effort, ...rest].filter(Boolean).join(' · ');
+    const tip = [where, pc, modelName(model), effort, ...rest].filter(Boolean).join(' · ');
     return `<a class="app-mark run-chat" href="${esc(link)}" ${opens(link, webOf(url, info))} data-tip="${esc(tip)}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</a>`;
   };
   // The last week's spending, in dollars at API prices (tokens when no price is known), with the tokens
