@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=7f782a7d';
-import vi from './lang/vi.js?v=7f782a7d';
-import ja from './lang/ja.js?v=7f782a7d';
-import pt from './lang/pt.js?v=7f782a7d';
-import tr from './lang/tr.js?v=7f782a7d';
-import ko from './lang/ko.js?v=7f782a7d';
+import es from './lang/es.js?v=f5bc5395';
+import vi from './lang/vi.js?v=f5bc5395';
+import ja from './lang/ja.js?v=f5bc5395';
+import pt from './lang/pt.js?v=f5bc5395';
+import tr from './lang/tr.js?v=f5bc5395';
+import ko from './lang/ko.js?v=f5bc5395';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -475,8 +475,8 @@ const STRINGS = {
   'launch.noExecutors': L('Turn on at least one executor.', 'Включите хотя бы одного исполнителя.'),
   'launch.notStarted': L('did not start', 'не начал'),
   'launch.silent': L('went silent', 'замолчал'),
-  'launch.silentTip': L((pc) => `The agent stopped checking in before it finished the run${pc ? ` (on ${pc})` : ''}, so Goalcraft closed the run. What it found is what it last reported.`,
-    (pc) => `Агент перестал выходить на связь, не закончив запуск${pc ? ` (на компьютере ${pc})` : ''}, и Goalcraft закрыл запуск. Найденное — то, что он успел сообщить.`),
+  'launch.silentTip': L((pc) => `The agent stopped checking in before it finished the run${pc ? ` (on ${pc})` : ''} and gave no result, so Goalcraft closed the run.`,
+    (pc) => `Агент перестал выходить на связь, не закончив запуск${pc ? ` (на компьютере ${pc})` : ''}, и итога не прислал: Goalcraft закрыл запуск.`),
   'launch.notStartedTip': L((pc) => `The app${pc ? ` on ${pc}` : ''} was started, but the agent didn't report work within 10 minutes; Goalcraft went on to the next executor.`,
     (pc) => `Приложение${pc ? ` на компьютере ${pc}` : ''} запустили, но агент за 10 минут не сообщил, что работает; Goalcraft перешёл к следующему исполнителю.`),
   'launch.failed': L('failed to start', 'не запустился'),
