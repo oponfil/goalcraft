@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=a0d7685d';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=a0d7685d';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=a0d7685d';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=0517ace3';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=0517ace3';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=0517ace3';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -810,7 +810,9 @@ export function mountDashboard(funnels, opts = {}) {
   function agentTip(a) {
     const info = agentInfo(a.agent, { provider: a.provider, chat: a.chat });
     const name = a.name || (a.sup ? t('board.supervisorName', a.f.title) : info.name);
-    const run = a.chatRun, app = run?.app ? (APP_NAMES[run.app] ?? run.app) : (info.product || (a.name ? info.name : ''));
+    // Its app as known (a run's, else the one it said it is); an agent whose app is unknown shows none, not its id.
+    const known = info.name !== a.agent && !info.name.includes(' · ');
+    const run = a.chatRun, app = run?.app ? (APP_NAMES[run.app] ?? run.app) : (info.product || (known ? info.name : ''));
     const model = modelName(run?.model);
     const how = [model && model.startsWith(app) ? '' : app, model, run?.effort].filter(Boolean).join(' · ');
     return how ? `${name}
