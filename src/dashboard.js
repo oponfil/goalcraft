@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=9b820ba9';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=9b820ba9';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=9b820ba9';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=697914c6';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=697914c6';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=697914c6';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -99,11 +99,6 @@ const KIMI_LOGO = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="
 const ANTIGRAVITY_LOGO = BRAND('M21.751 22.607c1.34 1.005 3.35.335 1.508-1.508C17.73 15.74 18.904 1 12.037 1 5.17 1 6.342 15.74.815 21.1c-2.01 2.009.167 2.511 1.507 1.506 5.192-3.517 4.857-9.714 9.715-9.714 4.857 0 4.522 6.197 9.714 9.715z', 'url(#antigravity-grad)',
   '<defs><linearGradient id="antigravity-grad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#00B95C"/><stop offset=".35" stop-color="#FBBC04"/><stop offset=".65" stop-color="#FC413D"/><stop offset="1" stop-color="#3186FF"/></linearGradient></defs>');
 const LIMIT_LOGOS = { claude: CLAUDE_LOGO, codex: OPENAI_LOGO, 'antigravity:gemini-4-argon': GEMINI_LOGO, 'antigravity:gemini': GEMINI_LOGO, 'antigravity:claude-gpt': ANTIGRAVITY_LOGO, grok: GROK_LOGO, kimi: KIMI_LOGO };
-// What a measure button shows on hover: "Spending in dollars", "Spending in % of the Claude limit".
-const measureTip = m => {
-  const tip = m === '$' ? t('spend.inUsd') : t('spend.inLimit', m === 'antigravity:claude-gpt' ? 'Claude/GPT (Antigravity)' : LIMIT_NAMES[m] ?? m);
-  return ` data-tip="${esc(tip)}" aria-label="${esc(tip)}"`;
-};
 // The plans' limits by their key (live.js limitKey): Claude's, Codex's, Antigravity's quotas.
 const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', grok: 'Grok Bot', kimi: 'Kimi' };
 const TASKS_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>';
@@ -459,7 +454,7 @@ export function mountDashboard(funnels, opts = {}) {
   const brandColor = id => BRAND_CHART[id] ?? agentInfo(id).color;
   const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const near = (a, b) => { const [x, y] = [rgb(a), rgb(b)]; return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) < 90; };
-  const spendState = { measure: '$', split: 'funnel', funnel: null };
+  const spendState = { split: 'funnel', funnel: null };
   // The plans' limits, folded under the spending: how much of each is used (a week, Kimi's a month)
   // and when it resets, as the wake script last read them.
   const resetFmt = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -598,9 +593,7 @@ export function mountDashboard(funnels, opts = {}) {
     const whereOf = k => ({ provider: provOf.get(k), app: appOf.get(k.split('|')[0]) });
     // $ at API prices, or the share of one plan's limit: Claude's, Codex's, or one of Antigravity's
     // quotas (one per group of models, as its settings show them).
-    const measures = ['$', ...Object.keys(LIMIT_NAMES).filter(q => rows.some(r => r.quota === q && r.limit != null))];
-    const value = r => spendState.measure === '$' ? r.cost : r.quota === spendState.measure ? r.limit : null;
-    const fmt = v => spendState.measure === '$' ? fmtCost(v) : fmtPercent(v);
+    const value = r => r.cost, fmt = fmtCost;
     let u, all, period;
     const prepare = () => {
       u = flowUnit;
@@ -610,7 +603,6 @@ export function mountDashboard(funnels, opts = {}) {
       try { const p = localStorage.getItem(periodKey(u)); if (p !== null && PERIODS[u].includes(Number(p))) period = Number(p); } catch {}
     };
     const draw = () => {
-      if (!measures.includes(spendState.measure)) spendState.measure = '$';
       const periods = PERIODS[u].filter(p => !p || all.length > p), shown = periods.includes(period) ? period : 0;
       const bars = shown ? all.slice(-shown) : all, n = bars.length, from = bars[0].getTime();
       // By funnel, by agent, or by service (Claude, ChatGPT, Gemini…: the agents' brands added up).
@@ -654,7 +646,7 @@ export function mountDashboard(funnels, opts = {}) {
         if (i != null) cells[i].set(groupOf(r), (cells[i].get(groupOf(r)) || 0) + value(r));
       }
       const sums = cells.map(c => [...c.values()].reduce((a, b) => a + b, 0)), sum = sums.reduce((a, b) => a + b, 0);
-      const top0 = Math.max(spendState.measure === '$' ? 1 : 0.1, ...sums);
+      const top0 = Math.max(1, ...sums);
       const unit = 10 ** Math.floor(Math.log10(top0 / 3));
       const step = [1, 2, 5, 10].map(m => m * unit).find(v => top0 / v <= 4), max = Math.ceil(top0 / step) * step;
       const ticks = Array.from({ length: Math.round(max / step) + 1 }, (_, i) => i * step);
@@ -666,11 +658,10 @@ export function mountDashboard(funnels, opts = {}) {
       const btns = (list, on, attr, text) => list.map(x => `<button type="button" data-${attr}="${esc(x)}" class="${x === on ? 'on' : ''}">${esc(text(x))}</button>`).join('');
       const filtered = spendState.funnel ? funnelOf.get(spendState.funnel)?.title : null;
       body.innerHTML = `${filtered ? `<p class="spend-filter"><span>${esc(filtered)}</span> <button type="button" class="link spend-all">${esc(t('spend.allFunnels'))}</button></p>` : ''}
-        <div class="hist-controls">${periods.length ? `<div class="hist-periods spend-periods">${btns(periods.map(String), String(shown), 'p', p => periodLabel(u, Number(p)))}</div>` : '<span></span>'}
+        <div class="hist-controls spend-controls">${periods.length ? `<div class="hist-periods spend-periods">${btns(periods.map(String), String(shown), 'p', p => periodLabel(u, Number(p)))}</div>` : ''}
+          <div class="hist-periods spend-split">${btns(splits, split, 's', s => t({ funnel: 'spend.byFunnel', agent: 'spend.byAgent', vendor: 'spend.byVendor' }[s]))}</div>
           <div class="hist-periods hist-units">${FLOW_UNITS.map(x => `<button type="button" data-u="${x}" class="${x === u ? 'on' : ''}" data-tip="${esc(t('flow.' + x))}" aria-label="${esc(t('flow.' + x))}">${esc([...t('units')[x]][0])}</button>`).join('')}</div></div>
-        <div class="hist-controls">${measures.length > 1 ? `<div class="hist-periods spend-measure">${measures.map(m => `<button type="button" data-m="${esc(m)}" class="${m === spendState.measure ? 'on' : ''}"${measureTip(m)}>${m === '$' ? '$' : `%${LIMIT_LOGOS[m] || ' ' + esc(LIMIT_NAMES[m])}`}</button>`).join('')}</div>` : '<span></span>'}
-          <div class="hist-periods spend-split">${btns(splits, split, 's', s => t({ funnel: 'spend.byFunnel', agent: 'spend.byAgent', vendor: 'spend.byVendor' }[s]))}</div></div>
-        <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc(spendState.measure === '$' ? '$' + fmtCount(v) : v + '%')}</span>`).join('')}</div>
+        <div class="hist-chart"><div class="hist-y">${ticks.map(v => `<span style="bottom:${(v / max) * 100}%">${esc('$' + fmtCount(v))}</span>`).join('')}</div>
           <div class="hist-plot">${ticks.map(v => `<b style="bottom:${(v / max) * 100}%"></b>`).join('')}
             <div class="hist-bars stacked${n > 60 ? ' dense' : ''}">${bars.map((d, i) => `<span data-tip="${esc(tipOf(d, i))}">${groups.filter(k => cells[i].get(k)).map(k => `<i style="height:${(cells[i].get(k) / max) * 100}%;background:${color.get(k)}"></i>`).join('')}</span>`).join('')}</div></div></div>
         <div class="hist-axis"><span>${esc(short.format(bars[0]))}</span><span>${esc(short.format(bars[n - 1]))}</span></div>
@@ -680,7 +671,6 @@ export function mountDashboard(funnels, opts = {}) {
       body.querySelector('details.scripts')?.addEventListener('toggle', e => { spendState.scriptsOpen = e.target.open; });
       const on = (sel, fn) => body.querySelectorAll(sel).forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); fn(b); draw(); }));
       on('.spend-periods button', b => { period = Number(b.dataset.p); try { localStorage.setItem(periodKey(u), String(period)); } catch {} });
-      on('.spend-measure button', b => { spendState.measure = b.dataset.m; });
       on('.spend-split button', b => { spendState.split = b.dataset.s; });
       on('.spend-list li.pick', b => { spendState.funnel = b.dataset.f; });
       on('.spend-all', () => { spendState.funnel = null; });

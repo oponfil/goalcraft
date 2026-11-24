@@ -508,6 +508,10 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 @media (max-width: 560px) { .sitebar .spend-btn { padding: 4px 7px; } }
 #pop.wide { width: min(560px, calc(100vw - 16px)); }
 #pop .hist-controls + .hist-controls { margin-top: 6px; }
+/* Spending: period, split and hour / day / week on one line, the buttons a little tighter to fit. */
+#pop .spend-controls { gap: 6px; }  /* wraps only on a narrow screen */
+#pop .spend-controls .hist-periods button { padding: 4px 6px; font-size: 12px; }
+#pop .spend-controls .hist-units button { padding: 4px 6px; }
 #pop .hist-bars.stacked span { flex-direction: column-reverse; align-items: stretch; justify-content: flex-start; }
 #pop .hist-bars.stacked i { flex: none; }
 #pop .spend-filter { margin: 6px 0 0; color: var(--text); font-weight: 600; }
@@ -526,10 +530,8 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 /* An agent's card: its state right under its name (wakes in…, on pause, how late), then its work. */
 #pop .pop-status .pop-note { margin: 4px 0 0; }
 #pop .pop-sub.where { margin-bottom: 12px; }
-#pop .spend-measure button { display: inline-flex; align-items: center; gap: 4px; }  /* "%" and the service's logo */
 /* While a card's data loads (spending, a tank's history): a spinning wheel. */
 #pop .pop-loading { width: 22px; height: 22px; margin: 28px auto; border: 3px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
-#pop .spend-measure button[data-tip] { cursor: pointer; }
 #pop .runs-list .pop-loading { width: 18px; height: 18px; margin: 12px auto; }
 
 /* The plans' limits, folded under the spending list. */
