@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=096950c8';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=096950c8';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=096950c8';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=659d2b46';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=659d2b46';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=659d2b46';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1225,7 +1225,7 @@ ${how}` : name;
     if (!u || !counted(u)) return '';
     const tip = [u.cost != null && t('board.usageCost', fmtCost(u.cost)), usageTip(u, null)].filter(Boolean).join('\n');
     const what = u.cost != null ? fmtCost(u.cost) : t('board.tokens', fmtTokens(u.tokens));
-    return `<span class="usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', what))}</span>`;
+    return `<span class="usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', ''))}<span class="week-cost">${esc(what)}</span></span>`;
   };
   // A week of the demo's runs added up, when the agent has no count from the wake script.
   const weekOf = rows => {
@@ -1273,6 +1273,9 @@ ${how}` : name;
           return `<div class="run-row"><span class="at">${esc(when.format(new Date(r.started_at)))}</span><span class="took"${tookTip}>${esc(took)}</span>
             <span>${found}</span>${by}${tok}</div>`;
         }).join('') : `<div class="pop-note">${esc(t('board.noRuns'))}</div>`);
+        // The week's cost starts where the runs' costs do: its "$" over theirs.
+        const weekCost = pop.querySelector('.runs-day .week-cost'), costCell = list.querySelector('.run-row .tok');
+        if (weekCost && costCell) weekCost.style.minWidth = (list.getBoundingClientRect().right - costCell.getBoundingClientRect().left) + 'px';
         pop.style.top = Math.max(8, Math.min(window.innerHeight - pop.offsetHeight - 8, pop.offsetTop)) + 'px';
       } catch { list.textContent = t('board.runsFailed'); delete list.dataset.loaded; }
     });

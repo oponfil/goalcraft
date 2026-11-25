@@ -192,6 +192,7 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop details.runs summary::-webkit-details-marker { display: none; }
 #pop details.runs summary:hover .fold-title { color: var(--text); }
 #pop details.runs .runs-day { margin-left: auto; white-space: nowrap; }
+#pop details.runs .runs-day .week-cost { display: inline-block; text-align: left; }
 /* Every folding line of a card (Launch, Previous runs, a question) opens on the same triangle, in
    the same size. */
 #pop .fold-title::before { content: "▶"; display: inline-block; width: 1.4em; font-size: 0.7em; vertical-align: 1px; }
@@ -602,5 +603,5 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.scripts .here input:focus-visible { outline: 1px solid var(--muted); outline-offset: 1px; }
 /* A chat's icon beside Send opens it: a pointing hand, as in the past runs (not the hint's question mark). */
 #pop .ask-buttons a.run-chat { cursor: pointer; color: var(--text); }
-#pop .ask-buttons a.site-link { align-self: center; margin-left: 4px; color: var(--text); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
-#pop .ask-buttons a.site-link:hover { color: #F2C14E; }  /* its own colour (ChatGPT white), not a link blue */
+#pop .ask-buttons a.site-link { align-self: center; margin-left: 4px; color: var(--text); text-decoration: none; text-underline-offset: 3px; white-space: nowrap; }
+#pop .ask-buttons a.site-link:hover { text-decoration: underline; }  /* its own colour (ChatGPT white), not a link blue */
