@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=798605c0';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=798605c0';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=798605c0';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=41817aa4';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=41817aa4';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=41817aa4';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1047,7 +1047,7 @@ ${how}` : name;
   const agModelsOf = (apps, model) => [...new Set([...(apps.antigravity?.models ?? []), ...(model ? [model] : [])])];
   const agModelHtml = (e, models) => {
     const [base, level] = agParts(e.model), bases = [...new Set(models.map(m => agParts(m)[0]))];
-    return `<select class="ex-model ag-model" data-tip="${esc(t('launch.agModelTip'))}"><option value="">${esc(t('launch.anyModel'))}</option>${bases.map(b => `<option value="${esc(b)}"${b === base ? ' selected' : ''}>${esc(b)}</option>`).join('')}</select>`
+    return `<select class="ex-model ag-model" data-tip="${esc(t('launch.agModelTip'))}"><option value="">${esc(t('launch.agDefault'))}</option>${bases.map(b => `<option value="${esc(b)}"${b === base ? ' selected' : ''}>${esc(b)}</option>`).join('')}</select>`
       + agEffortHtml(models, base, level);
   };
   const exRow = (e, apps) => {
