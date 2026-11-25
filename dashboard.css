@@ -572,6 +572,9 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.scripts .ok { color: #9FE870; }
 #pop details.scripts .warn { color: #F2A33C; }
 #pop details.scripts .off { color: #FF5A4E; }
+#pop details.scripts summary .wake-marks { display: inline-flex; gap: 3px; margin-left: 4px; vertical-align: -1px; }
+#pop details.scripts summary .stopped { color: #8C8781; }
+#pop details.limits .bar[data-tip] { cursor: help; }
 #pop details.scripts .n { color: var(--muted); white-space: nowrap; text-align: right; cursor: help; }
 #pop details.scripts .pop-note { margin: 8px 0 0; font-size: 12px; }
 #pop details.limits .when { color: var(--muted); font-size: 12px; white-space: nowrap; }

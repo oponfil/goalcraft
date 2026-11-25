@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=4ef1a549';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=4ef1a549';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=4ef1a549';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=02ac799d';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=02ac799d';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=02ac799d';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -482,7 +482,7 @@ export function mountDashboard(funnels, opts = {}) {
   // The plans' limits, folded under the spending: how much of each is used (a week, Kimi's a month)
   // and when it resets, as the wake script last read them.
   const resetFmt = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  function limitsBlock() {
+  function limitsBlock(spent = []) {
     const list = opts.limits?.() ?? [];
     if (!list.length) return '';
     const order = Object.keys(LIMIT_NAMES);
@@ -496,6 +496,18 @@ export function mountDashboard(funnels, opts = {}) {
     };
     const color = u => u >= 90 ? '#FF5A4E' : u >= 70 ? '#F2A33C' : '#9FE870';
     const when = l => l.resets ? t('spend.resetsAt', resetFmt.format(nextReset(l))) : '';
+    // What Goalcraft's agents spent of it, in $ at API prices, since it last reset (its period back from
+    // the next reset; a week back from now when the reset isn't known): on hover by its bar.
+    const since = l => {
+      if (!l.resets) return new Date(Date.now() - l.days * 864e5);
+      const d = nextReset(l);
+      if (l.days > 7) d.setMonth(d.getMonth() - 1); else d.setDate(d.getDate() - l.days);
+      return d;
+    };
+    const costTip = l => {
+      const from = since(l), mine = spent.filter(r => r.quota === l.key && r.at >= from.getTime() && r.cost != null);
+      return mine.length ? t('spend.limitCost', fmtCost(mine.reduce((n, r) => n + r.cost, 0)), resetFmt.format(from)) : '';
+    };
     const row = (logo, name, l, bar) => `<li><span class="who">${logo}${esc(name)} <span class="per">${esc(t(l.days > 7 ? 'spend.perMonth' : 'spend.perWeek'))}</span></span>
         ${bar}<b>${esc(fmtPercent(used(l)))}</b><span class="when">${esc(when(l))}</span></li>`;
     const sorted = list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
@@ -504,19 +516,20 @@ export function mountDashboard(funnels, opts = {}) {
     const ag = sorted.filter(l => l.key.startsWith('antigravity:'));
     const agRow = () => {
       const top = ag.reduce((m, l) => used(l) > used(m) ? l : m);
-      const parts = ag.map(l => `<span data-tip="${esc(`${LIMIT_NAMES[l.key] ?? l.key}: ${fmtPercent(used(l))}${when(l) ? ', ' + when(l) : ''}`)}"><i style="width:${used(l)}%;background:${color(used(l))}"></i></span>`).join('');
+      const parts = ag.map(l => `<span data-tip="${esc([`${LIMIT_NAMES[l.key] ?? l.key}: ${fmtPercent(used(l))}${when(l) ? ', ' + when(l) : ''}`, costTip(l)].filter(Boolean).join('\n'))}"><i style="width:${used(l)}%;background:${color(used(l))}"></i></span>`).join('');
       return row(ANTIGRAVITY_LOGO, 'Antigravity', top, `<span class="bar split">${parts}</span>`);
     };
     const rows = sorted.map(l => {
       if (l.key.startsWith('antigravity:')) return l === ag[0] ? agRow() : '';
-      return row(LIMIT_LOGOS[l.key] ?? '', LIMIT_NAMES[l.key] ?? l.key, l, `<span class="bar"><i style="width:${used(l)}%;background:${color(used(l))}"></i></span>`);
+      const tip = costTip(l);
+      return row(LIMIT_LOGOS[l.key] ?? '', LIMIT_NAMES[l.key] ?? l.key, l, `<span class="bar"${tip ? ` data-tip="${esc(tip)}"` : ''}><i style="width:${used(l)}%;background:${color(used(l))}"></i></span>`);
     }).join('');
     return `<details class="limits"${spendState.limitsOpen ? ' open' : ''}><summary>${esc(t('spend.limits'))}</summary><ul>${rows}</ul></details>`;
   }
   // The wake scripts, one per computer, under the spending: only runs on a computer whose script runs
   // are counted, so each shows whether it runs, whether its version is the latest, and whose runs it
   // counted. Folded until the viewer opens it; when something is off (none yet, one silent, in trouble or
-  // outdated), its title carries the worst one's dot.
+  // outdated), its title says so: a mark a computer, each in its status's color.
   const SPANS = { h: 3600e3, d: 864e5, w: 7 * 864e5 };
   const SELF_UPDATING = '2026-11-18';  // the first version that updates itself
   // One status a computer, its details on hover: stopped from the board (grey, not a problem), gone
@@ -537,16 +550,10 @@ export function mountDashboard(funnels, opts = {}) {
     if (old.length) return ['warn', t('wake.oldVersion'), said];
     return ['ok', t('wake.running'), t('wake.allGood')];
   }
-  // The worst status over the computers: 'off', 'warn' or 'ok'; a stopped one doesn't count, and when all
-  // are stopped it is 'stopped' (grey).
-  const worstOf = levels => {
-    const on = levels.filter(l => l !== 'stopped');
-    return on.includes('off') ? 'off' : on.includes('warn') ? 'warn' : on.length || !levels.length ? 'ok' : 'stopped';
-  };
   // A script's mark, in its status's color: a play sign while it runs, a pause sign while it is stopped.
   const scriptMark = level => `<span class="wake-mark ${level}">${level === 'stopped'
-    ? '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>'
-    : '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor" aria-hidden="true"><path d="M2 1v8l7-4z"/></svg>'}</span>`;
+    ? '<svg viewBox="0 0 10 10" width="11" height="11" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="2.5" height="8" rx="0.6"/><rect x="6" y="1" width="2.5" height="8" rx="0.6"/></svg>'
+    : '<svg viewBox="0 0 10 10" width="11" height="11" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 1.5v7l6-3.5z"/></svg>'}</span>`;
   // Running: on and not stopped.
   const scriptRuns = (c, now) => !c.stopped && scriptUp(c, now);
   // Stop or start a computer's script from the list (live board only): a square while it runs, a
@@ -586,8 +593,8 @@ export function mountDashboard(funnels, opts = {}) {
         + `<span class="${level}" data-tip="${esc(tip)}">${scriptMark(level)} ${esc(text)}</span>`
         + `<span class="n" data-tip="${esc(agentsTip(ran))}">${esc(t('wake.agents', n, spanText))}</span>${scriptBtn(c)}</li>`;
     }).join('');
-    const running = list.filter(c => scriptRuns(c, now)).length, worst = worstOf(list.map(c => statusOf(c)[0]));
-    return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))}${worst !== 'ok' ? ` ${scriptMark(worst)}` : ''}</summary>
+    const running = list.filter(c => scriptRuns(c, now)).length;
+    return `<details class="limits scripts"${open}><summary>${esc(t('wake.title'))} · ${esc(t('wake.count', running, list.length))} <span class="wake-marks">${list.map(c => scriptMark(statusOf(c)[0])).join('')}</span></summary>
       <ul>${rows}</ul><p class="pop-note">${esc(t('wake.about'))}</p></details>`;
   }
   // The Spending button's marks, from the scripts' latest state (w: wakeScripts' answer): one a computer,
@@ -710,7 +717,7 @@ export function mountDashboard(funnels, opts = {}) {
             <div class="hist-bars stacked${n > 60 ? ' dense' : ''}">${bars.map((d, i) => `<span data-tip="${esc(tipOf(d, i))}">${groups.filter(k => cells[i].get(k)).map(k => `<i style="height:${(cells[i].get(k) / max) * 100}%;background:${color.get(k)}"></i>`).join('')}</span>`).join('')}</div></div></div>
         <div class="hist-axis"><span>${esc(short.format(bars[0]))}</span><span>${esc(short.format(bars[n - 1]))}</span></div>
         <ul class="spend-list">${groups.slice(0, 12).map(k => `<li${split === 'funnel' ? ` data-f="${esc(k)}" class="pick" data-tip="${esc(t('spend.pick'))}"` : ''}><i style="background:${color.get(k)}"></i><span class="who">${esc(label(k))}</span><span class="n">${esc(t('spend.runs', runs.get(k)))}</span><b>${esc(fmt(totals.get(k)))}</b></li>`).join('')}
-          <li class="total"><i></i><span class="who">${esc(t('spend.all'))}</span><span class="n">${esc(t('spend.runs', mine.length))}</span><b>${esc(fmt(sum))}</b></li></ul>${limitsBlock()}${scriptsBlock(scripts)}`;
+          <li class="total"><i></i><span class="who">${esc(t('spend.all'))}</span><span class="n">${esc(t('spend.runs', mine.length))}</span><b>${esc(fmt(sum))}</b></li></ul>${limitsBlock(rows)}${scriptsBlock(scripts)}`;
       body.querySelector('details.limits:not(.scripts)')?.addEventListener('toggle', e => { spendState.limitsOpen = e.target.open; });
       body.querySelector('details.scripts')?.addEventListener('toggle', e => { spendState.scriptsOpen = e.target.open; });
       const on = (sel, fn) => body.querySelectorAll(sel).forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); fn(b); draw(); }));
