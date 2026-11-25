@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=ba68eac3';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=ba68eac3';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ba68eac3';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3d948c0d';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=3d948c0d';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3d948c0d';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -885,7 +885,8 @@ ${how}` : name;
   const supStatus = (s, said) => s === 'question' ? '' : `<span class="sup-status st-${esc(s)}"${said ? ` data-tip="${esc(said)}"` : ''}>${esc(t('board.supStatus.' + s))}</span>`;
 
   // Run now only when the role can start: nothing of it waits or goes on. Else what is going on instead.
-  const runState = a => a.state === 'work' || a.start?.taken?.started_at ? t('launch.running')
+  // An agent silent for 10 minutes is taken to have finished (as Goalcraft does): it can be run again.
+  const runState = a => scene.lost(a) && !a.start?.waiting ? '' : a.state === 'work' || a.start?.taken?.started_at ? t('launch.running')
     : a.start?.taken ? t('launch.starting', a.start.taken.computer ?? '') : a.start?.waiting ? t('launch.inQueue') : '';
   const runNowHtml = a => {
     const now = runState(a);

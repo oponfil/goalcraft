@@ -384,7 +384,8 @@ function server(db: Db, caller: Caller) {
     // A role Goalcraft starts (the orchestrator): with a schedule it wakes on it, whatever its agent says;
     // without one, an agent that goes to sleep naming no time goes on pause.
     const role = await roleOf(caller.admin, f.id, a.agent)
-    const launched = role ? await launchedApp(caller.admin, f.id, a.agent) : null
+    const launch = role ? await launchedApp(caller.admin, f.id, a.agent) : null
+    const launched = launch?.app ?? null
     let chat_url = a.chat_url ?? caller.chat
     if (launched === 'claude') chat_url = await claudeRunChat(db, f.id, a.agent, chat_url)
     let question_id: string | null = null
@@ -407,7 +408,11 @@ function server(db: Db, caller: Caller) {
     // A run starts when the agent comes to work from sleep (or to another zone): its counter starts at 0
     // and is kept through the next sleep, so the person sees what the last run added.
     const prev = check(await db.from('presence').select('zone, state').eq('funnel_id', f.id).eq('agent', a.agent).maybeSingle()) as any
-    const newRun = a.state === 'work' && (!prev || prev.state === 'sleep' || prev.state === 'pause' || prev.zone !== zone)
+    // A start Goalcraft gave it and it begins now is a new run too, even when the last run's agent went
+    // silent without saying it was done (else this run would be put down to that one, its app and chat).
+    const newRun = a.state === 'work' && (!prev || prev.state === 'sleep' || prev.state === 'pause' || prev.zone !== zone || !!launch?.fresh)
+    // Antigravity has no link to one conversation: a run started there opens the app.
+    if (chat_url === undefined && launched === 'antigravity' && newRun) chat_url = 'antigravity://'
     let state = a.state, next_run_at = a.next_run_at ?? null, reason = a.reason ?? null
     if (role && state === 'sleep') {
       if (role.schedule && role.schedule_on) next_run_at = cronNext(role.schedule, role.time_zone)

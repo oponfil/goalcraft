@@ -51,10 +51,13 @@ export async function beginLaunch(admin: Db, funnelId: string, agent: string, ru
 
 // Which app the role's start now going runs on (begun, not ended), if Goalcraft started it.
 export const LAUNCH_PROVIDER: Record<string, string> = { claude: 'claude', codex: 'chatgpt', antigravity: 'gemini', grok: 'grok' }
-export async function launchedApp(admin: Db, funnelId: string, agent: string): Promise<string | null> {
-  const { data } = await admin.from('role_launches').select('app').eq('funnel_id', funnelId).eq('agent', agent)
-    .not('started_at', 'is', null).is('ended_at', null).order('started_at', { ascending: false }).limit(1)
-  return data?.[0]?.app ?? null
+// A start the script took and its agent has not begun yet counts too (fresh): its first call begins it,
+// a run of its own, even if the last run's agent never said it was done.
+export async function launchedApp(admin: Db, funnelId: string, agent: string): Promise<{ app: string, fresh: boolean } | null> {
+  const { data } = await admin.from('role_launches').select('app, started_at').eq('funnel_id', funnelId).eq('agent', agent)
+    .not('claimed_at', 'is', null).is('ended_at', null).order('claimed_at', { ascending: false }).limit(1)
+  const l = data?.[0]
+  return l?.app ? { app: l.app, fresh: !l.started_at } : null
 }
 
 // A Claude run Goalcraft started from the command line is not in the Claude app until its resume link
