@@ -93,7 +93,7 @@ export function prompt(role: Row, funnel: Row, presence: Row | null, ex: Row, re
     funnel.guide_url ? `2. Read the funnel's guide (the part common to all its roles): ${funnel.guide_url}` : '2. The funnel has no guide yet: list_funnels shows it.',
     role.guide_url ? `3. Read your own instructions and follow them for this run: ${role.guide_url}` : '3. You have no instructions of your own yet: work as the funnel\'s guide says for your zone.',
     '4. Call get_messages and take the answers to your questions (get_answer); reply to each in one short line.',
-    `5. At the end write what this run did into the "last run" block of your instructions, then set_agent_state(sleep)${scheduled ? ' (no next_run_at: Goalcraft starts you on the role\'s schedule)' : ' with next_run_at, when you should run next'}.`,
+    `5. At the end write what this run did into the "last run" block of your instructions, then set_agent_state(sleep) with summary, what this run did in one short line${scheduled ? ' (no next_run_at: Goalcraft starts you on the role\'s schedule)' : ' with next_run_at, when you should run next'}.`,
     'If something you need doesn\'t work (a tool or connector such as Basic Memory, a browser or a sheet is missing or fails, a note or page won\'t open, access is denied), don\'t retry it again and again, guess or go on without it: stop at once and ask the person with set_agent_state(ask, question): what failed, its error, and what exactly they should connect or fix, where. Then wait for the answer as usual.',
   ]
   return lines.join('\n')
@@ -307,8 +307,10 @@ export async function claimLaunch(admin: any, user: string, keyId: string, compu
 
 // The app the script started has finished: a start the agent never began failed (the next executor gets
 // the role); one it began ends when the agent says so (or goes silent).
-export async function launchDone(admin: any, user: string, id: string, ok: boolean, note: string | null) {
+export async function launchDone(admin: any, user: string, id: string, ok: boolean, note: string | null, said: string | null = null) {
   const { data: l } = await admin.from('role_launches').select('*').eq('id', id).eq('user_id', user).maybeSingle()
+  // What the agent said last, as its app printed it: its run's summary, unless the agent gave one itself.
+  if (l?.run_id && said) await admin.from('agent_runs').update({ summary: said.slice(0, 300) }).eq('id', l.run_id).is('summary', null)
   if (!l || l.ended_at) return
   if (!l.started_at) {
     await admin.from('role_launches').update({ ended_at: new Date().toISOString(), outcome: ok ? 'not_started' : 'failed', note: (note ?? '').slice(0, 300) || null }).eq('id', id)

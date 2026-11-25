@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-24.6'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-25.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1967,13 +1967,22 @@ def claude_app_session(l):
     return f'claude://resume?session={l["session"]}'
 
 
+def last_words(text):
+    """What an agent said at the end of its run (claude -p and codex exec print its last message): its first
+    lines, without Markdown's marks, for the run's line in the person's list of runs."""
+    lines = [re.sub(r'\*\*|__|`|^#+\s*|^[-*]\s+', '', x).strip() for x in (text or '').strip().splitlines()]
+    lines = [x for x in lines if x]
+    said = '\n'.join(lines[:3])
+    return (said[:297] + '...') if len(said) > 300 else said or None
+
+
 def run_launch(key, l):
     """Start one role's run (in its own thread: a run takes as long as the agent works)."""
     lid, who = l['launch'], f'{l["agent"]} in {l["funnel_id"]} on {l["app"]}' + (f' ({l["model"]})' if l.get('model') else '')
 
-    def done(ok, note):
+    def done(ok, note, said=None):
         try:
-            launch_post(key, {'launch_done': lid, 'ok': ok, 'note': note})
+            launch_post(key, {'launch_done': lid, 'ok': ok, 'note': note, **({'said': said} if said else {})})
         except Exception as e:
             log(f'launch {who}: could not report it done: {e}')
 
@@ -2026,7 +2035,8 @@ def run_launch(key, l):
                     remember_launch({'launch': lid, 'agent': l['agent'], 'funnel_id': l['funnel_id'], 'app': 'codex', 'session': m.group(1)})
             log(f'launched {who}{" (went on in its conversation)" if l.get("resumed") else ""}: finished in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if l['app'] != 'antigravity':  # Antigravity's agentapi returns once the conversation is under way
-                done(out.returncode == 0, None if out.returncode == 0 else (out.stderr.strip() or last)[-300:])
+                done(out.returncode == 0, None if out.returncode == 0 else (out.stderr.strip() or last)[-300:],
+                     last_words(out.stdout) if out.returncode == 0 else None)
             elif out.returncode:
                 done(False, (out.stderr.strip() or last)[-300:])
         except Exception as e:

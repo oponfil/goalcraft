@@ -10,7 +10,7 @@
 //                          SHA-256, so the script can update itself (wake/goalcraft-wake.py on goalcraft.ai)
 //   GET /wake?claim=1 also → { launches: [{ launch, funnel_id, agent, app, model, effort, new_chat, full_access,
 //                          bot_id, prompt }] }: the orchestrator's starts this computer can do (orchestrator.ts);
-//   POST /wake { launch_claim: id } → { claimed }; { launch_done: id, ok, note } → { ok }: the script took a start,
+//   POST /wake { launch_claim: id } → { claimed }; { launch_done: id, ok, note, said } → { ok }: the script took a start,
 //                          and its app finished; { inventory: { app: { models, running?, signed_in? } } } → { saved }
 //   Stopped from the board (wake_keys.stopped_at): GET /wake?claim=1 → { wake: [], launches: [], stopped: true, script }:
 //                          the script only asks again every minute until it is started; claims are refused
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
     if (Array.isArray(body?.claim)) return claim(user, body.claim)
     // The orchestrator (orchestrator.ts): the script took a start, finished one, or says what it can run.
     if (typeof body?.launch_claim === 'string') return json({ claimed: await claimLaunch(admin, user, owner.id, computer ?? owner.computer, body.launch_claim) })
-    if (typeof body?.launch_done === 'string') { await launchDone(admin, user, body.launch_done, body.ok !== false, typeof body.note === 'string' ? body.note : null); return json({ ok: true }) }
+    if (typeof body?.launch_done === 'string') { await launchDone(admin, user, body.launch_done, body.ok !== false, typeof body.note === 'string' ? body.note : null, typeof body.said === 'string' ? body.said : null); return json({ ok: true }) }
     if (body?.inventory && typeof body.inventory === 'object') {
       const { error } = await admin.from('wake_keys').update({ inventory: body.inventory }).eq('id', owner.id)
       return error ? json({ error: 'failed' }, 500) : json({ saved: true })

@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=bd90536a';
+import { supabase } from './auth.js?v=4ef1a549';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -400,7 +400,7 @@ export async function runs(a) {
     // Gone wrong only when every start in it did (one that went silent, then answered, did its work).
     const bad = g.filter(r => r.launch).every(r => ['silent', 'not_started', 'failed'].includes(r.launch.outcome));
     return { ...first, members: g, ended_at: last.ended_at, took: g.reduce((n, r) => n + secs(r), 0), parts: g.length,
-      added: g.reduce((n, r) => n + (r.added || 0), 0), status: said?.status ?? first.status, summary: said?.summary ?? first.summary,
+      added: g.reduce((n, r) => n + (r.added || 0), 0), status: said?.status ?? first.status, summary: said?.summary ?? g.find(r => r.summary)?.summary ?? first.summary,
       launch: first.launch && { ...first.launch, outcome: bad ? first.launch.outcome : 'done' } };
   });
   data.splice(0, data.length, ...merged.reverse());

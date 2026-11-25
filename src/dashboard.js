@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=bd90536a';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=bd90536a';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=bd90536a';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=4ef1a549';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=4ef1a549';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=4ef1a549';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1262,7 +1262,7 @@ ${how}` : name;
             !a.sup && r.added ? t('launch.addedBefore', `+${fmtCount(r.added)} ${plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result)}`) : ''].filter(Boolean).join('\n');
           const found = bad ? `<span class="run-bad"${badTip ? ` data-tip="${esc(badTip)}"` : ''}>⚠ ${esc(bad)}</span>`
             : a.sup ? (r.status ? supStatus(r.status, r.summary) : '')
-            : `<b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}`;
+            : `<span${r.summary ? ` data-tip="${esc(r.summary)}"` : ''}><b class="run">+${fmtCount(r.added)}</b> ${esc(plural(r.added, r.zone < st.length ? st[r.zone].forms : a.f.result))}</span>`;
           const ru = r.usage;
           const tok = ru && counted(ru) ? `<span class="tok" data-tip="${esc(usageTip(ru, null))}">${esc(
             ru.cost != null ? fmtCost(ru.cost) : t('board.tokens', fmtTokens(ru.tokens)))}</span>` : '<span class="tok"></span>';
