@@ -185,7 +185,11 @@ async function saveUsage(user: string, keyId: string, body: any) {
 Deno.serve(async (req) => {
   const key = (req.headers.get('authorization') ?? '').replace(/^Bearer /, '').trim()
   if (!key) return json({ error: 'no_key' }, 401)
-  const { data: owner } = await admin.from('wake_keys').select('id, user_id, computer, created_at, inventory, stopped_at').eq('key_hash', await sha256(key)).maybeSingle()
+  const { data: owner, error: lookup } = await admin.from('wake_keys').select('id, user_id, computer, created_at, inventory, stopped_at').eq('key_hash', await sha256(key)).maybeSingle()
+  // The database not answering is not a bad key: a 401 makes the script stop for good (it takes the key
+  // for removed), so a failed lookup is a 500, which it simply tries again (25.11.2026 the Mac's script
+  // stopped this way during a database hiccup).
+  if (lookup) return json({ error: 'failed' }, 500)
   if (!owner) return json({ error: 'bad_key' }, 401)
   const user = owner.user_id, now = Date.now(), iso = (t: number) => new Date(t).toISOString()
   // The script's version, from its User-Agent ("goalcraft-wake/2026-10-24"); older ones say "1".
