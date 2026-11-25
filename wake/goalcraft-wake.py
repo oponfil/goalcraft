@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-25.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-25.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -1910,6 +1910,44 @@ def codex_resume(l):
     return m.group(0)
 
 
+def codex_name(codex, thread, name):
+    """Name a Codex thread as the role is on the board, as Claude's and Antigravity's conversations are: by
+    the Codex app-server's own thread/name/set (what /rename does), which keeps the name where the app reads
+    it. Its answer is awaited: on end of input the server stops before answering. Returns why not, or None."""
+    import queue
+    p = subprocess.Popen([codex, 'app-server'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                         encoding='utf-8', errors='replace', creationflags=NO_WINDOW)
+    lines = queue.Queue()
+    threading.Thread(target=lambda: [lines.put(x) for x in p.stdout], daemon=True).start()
+
+    def ask(i, method, params):
+        p.stdin.write(json.dumps({'id': i, 'method': method, 'params': params}) + '\n')
+        p.stdin.flush()
+        until = time.time() + 30
+        while time.time() < until:
+            try:
+                m = json.loads(lines.get(timeout=max(0.1, until - time.time())))
+            except (queue.Empty, ValueError):
+                continue
+            if m.get('id') == i:
+                return m.get('error')
+        return 'no answer'
+    try:
+        err = ask(1, 'initialize', {'clientInfo': {'name': 'goalcraft-wake', 'version': VERSION}})
+        if err:
+            return str(err)
+        p.stdin.write(json.dumps({'method': 'initialized'}) + '\n')
+        err = ask(2, 'thread/name/set', {'threadId': thread, 'name': name})
+        return str(err) if err else None
+    except Exception as e:
+        return repr(e)
+    finally:
+        try:
+            p.kill()
+        except Exception:
+            pass
+
+
 def launch_command(l):
     """The command that starts a role's run: in the conversation it goes on in (l['resumed']), else in a
     new one of its app; or None and why not."""
@@ -1924,7 +1962,8 @@ def launch_command(l):
         cmd += ['--model', model] if model else []
         cmd += ['--effort', effort] if effort else []
         cmd += ['--permission-mode', 'bypassPermissions'] if full else ['--allowedTools', *GOALCRAFT_TOOLS]
-        # Its name in the Claude app (the role's name on the board): without one the app names it by its folder.
+        # Its name in the Claude app (the role's name on the board, as every app's new conversation is named:
+        # Codex's after its run, codex_name): without one the app names it by its folder.
         cmd += ['--name', l['title']] if l.get('title') and not l.get('resumed') and '--name' in claude_help(claude) else []
         return cmd + ['--', note], None
     if l['app'] == 'codex':
@@ -1955,7 +1994,7 @@ def launch_command(l):
         ident = next((m['id'] for m in antigravity_models(hub) if m['label'] == model or m['id'] == model), None) if model else None
         if model and not ident:
             return None, f'Antigravity has no model "{model}" here'
-        return (api + ['new-conversation'] + ([f'--model={ident}'] if ident else []) + [f'--title=Goalcraft: {l["agent"]}', note], env), None
+        return (api + ['new-conversation'] + ([f'--model={ident}'] if ident else []) + [f'--title={l.get("title") or "Goalcraft: " + l["agent"]}', note], env), None
     return None, f'unknown app {l["app"]}'
 
 
@@ -2033,6 +2072,11 @@ def run_launch(key, l):
                 m = re.search(r'session id:\s*([0-9a-f-]{36})', out.stdout + out.stderr)
                 if m:
                     remember_launch({'launch': lid, 'agent': l['agent'], 'funnel_id': l['funnel_id'], 'app': 'codex', 'session': m.group(1)})
+                    # A new thread is named as the role is (codex exec can't name one when it starts it).
+                    if l.get('title') and not l.get('resumed'):
+                        why = codex_name(cmd[0], m.group(1), l['title'])
+                        if why:
+                            log(f'launch {who}: could not name its Codex thread: {why}')
             log(f'launched {who}{" (went on in its conversation)" if l.get("resumed") else ""}: finished in {time.time() - started:.0f}s, exit {out.returncode}: {last}')
             if l['app'] != 'antigravity':  # Antigravity's agentapi returns once the conversation is under way
                 done(out.returncode == 0, None if out.returncode == 0 else (out.stderr.strip() or last)[-300:],
