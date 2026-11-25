@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=306b4891';
-import vi from './lang/vi.js?v=306b4891';
-import ja from './lang/ja.js?v=306b4891';
-import pt from './lang/pt.js?v=306b4891';
-import tr from './lang/tr.js?v=306b4891';
-import ko from './lang/ko.js?v=306b4891';
+import es from './lang/es.js?v=0c034a2e';
+import vi from './lang/vi.js?v=0c034a2e';
+import ja from './lang/ja.js?v=0c034a2e';
+import pt from './lang/pt.js?v=0c034a2e';
+import tr from './lang/tr.js?v=0c034a2e';
+import ko from './lang/ko.js?v=0c034a2e';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -354,7 +354,7 @@ const STRINGS = {
   'board.runParts': L((n) => `${n} starts together: the scheduled one, then answers to messages`, (n) => `Вместе ${n} ${[2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'запуска' : 'запусков'}: по расписанию и ответы на сообщения`, (n) => `共 ${n} 次启动：按计划的一次，以及回复消息`, (n) => `รวม ${n} ครั้ง: ตามกำหนดเวลา และการตอบข้อความ`),
   'board.onComputer': L((pc) => `computer ${pc}`, (pc) => `компьютер ${pc}`),
   'board.chatOnlyThere': L((pc) => `This conversation is on ${pc}: it opens only there.`, (pc) => `Беседа на компьютере ${pc}: открыть её можно только там.`),
-  'board.question': L((n) => `Question ${n}`, (n) => `Вопрос ${n}`),
+  'board.question': L((n) => n ? `Question ${n}` : 'Question', (n) => n ? `Вопрос ${n}` : 'Вопрос'),
   'board.usageDay': L((n) => `Spent in 7 days: ${n}`, (n) => `Расход за неделю: ${n}`, (n) => `近 7 天消耗：${n}`, (n) => `ค่าใช้จ่าย 7 วันล่าสุด: ${n}`),
   'board.tokens': L((n) => `${n} tokens`, (n) => `${n} токенов`, (n) => `${n} 个 token`, (n) => `${n} โทเค็น`),
   'board.tokNew': L((n) => `New input: ${n}`, (n) => `Новые входящие: ${n}`, (n) => `新输入：${n}`, (n) => `อินพุตใหม่: ${n}`),

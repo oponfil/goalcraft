@@ -487,8 +487,7 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.ask-item + details.ask-item { border-top: 1px solid var(--border); padding-top: 8px; }
 #pop details.ask-item summary { cursor: pointer; list-style: none; white-space: pre-wrap; overflow-wrap: anywhere; }
 #pop details.ask-item summary::-webkit-details-marker { display: none; }
-#pop details.ask-item summary::before { content: "▸ "; color: var(--muted); }
-#pop details.ask-item[open] summary::before { content: "▾ "; }
+#pop .write[hidden] { display: none; }
 #pop details.ask-item summary { color: var(--muted); }
 #pop details.ask-item summary:hover, #pop details.ask-item[open] summary { color: var(--text); }
 #pop .ask p.ask-text { margin: 6px 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }

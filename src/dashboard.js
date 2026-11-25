@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=306b4891';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=306b4891';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=306b4891';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=0c034a2e';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=0c034a2e';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=0c034a2e';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -947,9 +947,10 @@ ${how}` : name;
       const tipText = opts.live ? [whereTip(mine(url), info, inAntigravity), pc && severalPcs ? t('board.onComputer', pc.name) : ''].filter(Boolean).join(' · ') : '';
       return link ? openBtnHtml(link, webOf(url, info), info, tipText, opts.live && away) : '';
     };
-    // Each question folds to its label ("Question 1") and opens by itself to its text and answer box;
-    // the first starts open.
-    const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>${esc(t('board.question', i + 1))}</summary>`
+    // Each question folds to its label with a ❓ ("Question" when it is the only one, else "Question 1",
+    // "Question 2") and opens by itself to its text and answer box; the first starts open.
+    const several = (a.questions?.length ?? 0) > 1;
+    const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>❓ ${esc(t('board.question', several ? i + 1 : 0))}</summary>`
       + `<div class="ask" data-qid="${esc(q.id)}"><p class="ask-text">${esc(q.question)}</p>${opts.onAnswer
       ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
         <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${chatIcon(a, q.chat || a.chat, q.chat ? q.run : a.chatRun, q.computer ?? elsewhere(a)) || openBtn(q.chat || web, q.computer)}</div>
@@ -966,15 +967,17 @@ ${how}` : name;
       || (pl ?t('board.pausedLimit', LIMIT_NAMES[pl.key] ?? pl.key, pl.resets ? fmtDuration((pl.resets - Date.now()) / 1000) : null) : '');
     const paused = why ? `<p class="pop-note">${esc(why)}</p>` : '';
     // Write to it any time: it reads the message through MCP when it next checks in (at once if it
-    // works now, or when the person's wake script wakes it).
-    const write = opts.onMessage ? `<div class="write"><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
+    // works now, or when the person's wake script wakes it). Not while it asks: the answers are what
+    // it waits for, so the form (and Run now in it) shows once the last question is answered.
+    const asking = !!a.questions?.length;
+    const write = opts.onMessage ? `<div class="write"${asking ? ' hidden' : ''}><textarea class="message" rows="2" maxlength="2000" placeholder="${esc(t('board.message', named))}"></textarea>
         <div class="ask-buttons"><button class="btn primary send-message" style="${paint}" data-tip="${esc(t('board.sendMessageTip'))}">${esc(t('board.sendMessage'))}</button>${chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '')}${opts.onRunNow ? runNowHtml(a) : ''}</div>
         <div class="pop-msg"></div></div>`
-      : chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '');
+      : asking ? '' : chatIcon(a, a.chat, a.chatRun, elsewhere(a)) || (chat ? openBtnHtml(chat, web, info, (opts.live ? whereTip(a.chat, info, inAntigravity) : ''), opts.live && elsewhere(a)) : '');
     return `<div class="pop-title" data-state="${agentState(a)}">${agentTitle(a, named)}</div>
       <div class="pop-status">${paused}${missed}${lost}</div>
       <div class="pop-sub where">${where}</div>
-      ${questions}${launchHtml(a)}${write}${history}`;
+      ${questions}${write}${launchHtml(a)}${history}`;
   }
 
   // A role Goalcraft starts itself (the orchestrator): in its card, Launch with Run now on its line;
@@ -1307,6 +1310,7 @@ ${how}` : name;
         if (a.questions.length) return;
         // None left: the block goes, the card stays; a waiting agent takes the answers at once.
         pop.querySelector('.asks')?.remove();
+        pop.querySelector('.write')?.removeAttribute('hidden');
         if (a.state !== 'sleep') a.state = 'work';
       });
     });
