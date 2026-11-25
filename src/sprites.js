@@ -1,6 +1,6 @@
 // Agent miners, drawn from simple shapes on the scene's fine grid (half-unit pixels).
 // A miner fits a 20×28 box (units), faces right, and is mirrored or rotated for other poses.
-import { LOGO_SVG } from './logos.js?v=0c034a2e';
+import { LOGO_SVG } from './logos.js?v=ba68eac3';
 
 // 13x13 brand marks printed on the shirt in half-unit pixels, simplified so they stay
 // recognisable at this size.
@@ -604,9 +604,12 @@ export function drawArrow(ctx, x, y) {
   rect(ctx, x - 8, y - 1, 1.5, 0.5, '#F28AB8'); rect(ctx, x - 8, y + 1, 1.5, 0.5, '#F28AB8');
 }
 
-// One "!" per open question up to four, each widening the bubble by BUBBLE_STEP; from five on
-// the bubble is as wide as for four and the scene writes the number before a single "!".
-export const BUBBLE_STEP = 4;
+// One "?" per open question up to four, each widening the bubble by BUBBLE_STEP; from five on
+// the bubble is as wide as for four and the scene writes the number before a single "?".
+export const BUBBLE_STEP = 8;
+// The "?" in pixels, five columns by seven rows.
+const QUESTION_MARK = ['.###.', '#...#', '....#', '..##.', '..#..', '.....', '..#..'];
+const QW = 1.25, QH = 1.5;
 // tailLeft: the bubble's tail points left, at an agent standing to its left (by default it points
 // right, at an agent to its right).
 export function drawBubble(ctx, x, y, n = 1, tailLeft = false) {
@@ -614,9 +617,9 @@ export function drawBubble(ctx, x, y, n = 1, tailLeft = false) {
   rect(ctx, x + 0.5, y, w - 1, 16, '#E24B4A');
   rect(ctx, x, y + 0.5, w, 15, '#E24B4A');
   rect(ctx, tailLeft ? x - 2 : x + w, y + 10, 2, 2, '#E24B4A');
-  const x0 = n > 4 ? x + w - 8 : x + 6;
-  for (let i = 0; i < k; i++) {
-    rect(ctx, x0 + i * BUBBLE_STEP, y + 3, 2, 7, '#FFFFFF');
-    rect(ctx, x0 + i * BUBBLE_STEP, y + 11.5, 2, 2, '#FFFFFF');
-  }
+  const x0 = n > 4 ? x + w - 10 : x + 3.875;
+  for (let i = 0; i < k; i++)
+    QUESTION_MARK.forEach((row, r) => [...row].forEach((ch, col) => {
+      if (ch === '#') rect(ctx, x0 + i * BUBBLE_STEP + col * QW, y + 2.75 + r * QH, QW, QH, '#FFFFFF');
+    }));
 }

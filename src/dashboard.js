@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=0c034a2e';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=0c034a2e';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=0c034a2e';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=ba68eac3';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=ba68eac3';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=ba68eac3';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -929,7 +929,8 @@ ${how}` : name;
     // Live only: the agent's last runs, loaded when the person opens them.
     // Its last week's spending shows at once, above its runs (which open on a click).
     // Under a line: the last week's spending, then the runs.
-    const history = opts.runs ? `<div class="history"><div class="runs-day"></div><details class="runs"><summary>${esc(t('board.runs'))}</summary><div class="runs-list"></div></details></div>` : '';
+    // Its runs fold under one line, with its last week's cost at that line's right end.
+    const history = opts.runs ? `<div class="history"><details class="runs"><summary><span class="fold-title">${esc(t('board.runs'))}</span><span class="runs-day"></span></summary><div class="runs-list"></div></details></div>` : '';
     // Overdue (it should have run by now) or silent at work: when it was last heard from.
     const missed = scene.overdue(a)
       ? `<p class="pop-note warn">${esc(t('board.lastSignal', fmtDuration(scene.t + (a.seenAgo || 0))))}</p>` : '';
@@ -950,7 +951,7 @@ ${how}` : name;
     // Each question folds to its label with a ❓ ("Question" when it is the only one, else "Question 1",
     // "Question 2") and opens by itself to its text and answer box; the first starts open.
     const several = (a.questions?.length ?? 0) > 1;
-    const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary>❓ ${esc(t('board.question', several ? i + 1 : 0))}</summary>`
+    const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary><span class="fold-title">❓ ${esc(t('board.question', several ? i + 1 : 0))}</span></summary>`
       + `<div class="ask" data-qid="${esc(q.id)}"><p class="ask-text">${esc(q.question)}</p>${opts.onAnswer
       ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
         <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${chatIcon(a, q.chat || a.chat, q.chat ? q.run : a.chatRun, q.computer ?? elsewhere(a)) || openBtn(q.chat || web, q.computer)}</div>
@@ -1075,7 +1076,7 @@ ${how}` : name;
         + `<label class="l-spare" data-tip="${esc(spareTip(l.computer_fallback))}"><input type="checkbox" class="switch l-fallback"${l.computer_fallback ? ' checked' : ''}>${esc(t('launch.spare'))}</label></div>`
       : pcs.length ? `<p class="l-row l-one">${esc(t('launch.computer'))}: ${esc(pcs[0].name)}</p>` : '';
     const guide = l.guide_url ? `<a class="launch-guide" href="${esc(l.guide_url)}" target="_blank" rel="noopener" data-tip="${esc(t('launch.guideTip'))}">${NOTE_ICON}<span>${esc(t('launch.guide'))}</span></a>` : '';
-    return `<div class="launch"><details class="launch-box"><summary><span class="l-title">${esc(launchTitle(l.schedule_on, l.schedule))}</span></summary>
+    return `<div class="launch"><details class="launch-box"><summary><span class="l-title fold-title">${esc(launchTitle(l.schedule_on, l.schedule))}</span></summary>
       <div class="l-row"><label class="l-sched" data-tip="${esc(t('launch.scheduleTip'))}"><input type="checkbox" class="switch l-on"${l.schedule_on && l.schedule ? ' checked' : ''}>${esc(t('launch.schedule'))}</label>${guide}</div>
       <input class="l-times" value="${esc(timesOf(l.schedule))}" placeholder="${esc(t('launch.times'))}">
       <p class="pop-note l-free"${l.schedule && l.schedule_on ? ' hidden' : ''}>${esc(t('launch.noSchedule'))}</p>
@@ -1219,7 +1220,7 @@ ${how}` : name;
     if (!u || !counted(u)) return '';
     const tip = [u.cost != null && t('board.usageCost', fmtCost(u.cost)), usageTip(u, null)].filter(Boolean).join('\n');
     const what = u.cost != null ? fmtCost(u.cost) : t('board.tokens', fmtTokens(u.tokens));
-    return `<p class="pop-note usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', what))}</p>`;
+    return `<span class="usage" data-tip="${esc(tip)}">${esc(t('board.usageDay', what))}</span>`;
   };
   // A week of the demo's runs added up, when the agent has no count from the wake script.
   const weekOf = rows => {

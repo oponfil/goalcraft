@@ -187,16 +187,21 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop .ask-buttons .btn { white-space: nowrap; flex: none; }
 #pop .ask-buttons a.btn { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 #pop .history { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; }
-#pop details.runs { margin-top: 6px; font-size: 13px; }
-#pop details.runs summary { cursor: pointer; color: var(--muted); }
-#pop details.runs summary:hover { color: var(--text); }
+#pop details.runs { font-size: 13px; }
+#pop details.runs summary { display: flex; align-items: baseline; gap: 10px; cursor: pointer; color: var(--muted); list-style: none; }
+#pop details.runs summary::-webkit-details-marker { display: none; }
+#pop details.runs summary:hover .fold-title { color: var(--text); }
+#pop details.runs .runs-day { margin-left: auto; white-space: nowrap; }
+/* Every folding line of a card (Launch, Previous runs, a question) opens on the same triangle, in
+   the same size. */
+#pop .fold-title::before { content: "▶"; display: inline-block; width: 1.4em; font-size: 0.7em; vertical-align: 1px; }
+#pop details[open] > summary .fold-title::before { content: "▼"; }
 /* No scroll of its own: the card has one scrollbar for all of it. */
 /* The runs are one table of five columns (time, how long, result, app, money), each starting at its
    left edge in every row: the rows are only lines of the list's grid. */
 #pop .runs-list { margin-top: 6px; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; column-gap: 12px; row-gap: 6px; align-items: center; }
 #pop .runs-list > :not(.run-row) { grid-column: 1 / -1; }
 #pop .run-row { display: contents; }
-#pop .runs-day .pop-note { margin: 0; }
 /* A run's tokens, at the end of its row, as the wake script counted them. */
 #pop .run-row .tok { color: var(--muted); white-space: nowrap; }
 #pop .pop-note.usage { color: var(--muted); }
@@ -219,8 +224,6 @@ button.btn { background: none; font: inherit; cursor: pointer; }
 #pop details.launch-box { border-top: 1px solid var(--border); padding-top: 8px; margin-bottom: 4px; }
 #pop details.launch-box summary { display: flex; align-items: baseline; gap: 10px; cursor: pointer; color: var(--muted); list-style: none; }
 #pop details.launch-box summary::-webkit-details-marker { display: none; }
-#pop details.launch-box summary .l-title::before { content: "▸ "; }
-#pop details.launch-box[open] summary .l-title::before { content: "▾ "; }
 #pop details.launch-box summary:hover .l-title { color: var(--text); }
 #pop .l-run { align-self: center; margin-left: 4px; color: #F2C14E; text-decoration: none; white-space: nowrap; cursor: pointer; }
 #pop .l-run-state { align-self: center; margin-left: 4px; color: var(--muted); font-size: 13px; }  /* in place of Run now while the role waits or works */
@@ -485,7 +488,7 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 /* Questions: each folds to its label ("Вопрос 1") and opens by itself to its text (the first starts open). */
 #pop details.ask-item { margin-top: 10px; }
 #pop details.ask-item + details.ask-item { border-top: 1px solid var(--border); padding-top: 8px; }
-#pop details.ask-item summary { cursor: pointer; list-style: none; white-space: pre-wrap; overflow-wrap: anywhere; }
+#pop details.ask-item summary { cursor: pointer; list-style: none; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
 #pop details.ask-item summary::-webkit-details-marker { display: none; }
 #pop .write[hidden] { display: none; }
 #pop details.ask-item summary { color: var(--muted); }

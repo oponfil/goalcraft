@@ -1,7 +1,7 @@
-import { agentInfo, plural } from './data.js?v=0c034a2e';
-import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=0c034a2e';
-import { themeOf } from './themes.js?v=0c034a2e';
-import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=0c034a2e';
+import { agentInfo, plural } from './data.js?v=ba68eac3';
+import { drawStanding, drawLying, drawBoss, drawBossLying, drawSitting, drawBossSitting, drawPause, drawSpyglass, collectLogos, drawLogos, drawPickaxe, drawShears, drawBeaker, drawBow, drawArrow, drawLaptop, drawStamp, drawHammer, drawSword, drawRollingPin, drawBubble, BUBBLE_STEP, HEAD_TOP, BOSS_TOP, line, P, MINER_H } from './sprites.js?v=ba68eac3';
+import { themeOf } from './themes.js?v=ba68eac3';
+import { t as tr, lang, fmtDuration, flowUnit } from './i18n.js?v=ba68eac3';
 
 // Logical (pixel-art) layout of one funnel column. Funnels have 2-5 tanks with a mining zone above
 // each tank and one more below the last (the output zone, where results come out into flasks).
@@ -798,9 +798,9 @@ export class Scene {
         g.globalAlpha = 1;
       }
     }
-    // Five questions or more: the number before the bubble's single "!".
+    // Five questions or more: the number before the bubble's single "?".
     for (const a of this.agents) {
-      if (a.questions.length > 4 && a.bubble && (a.state === 'ask' || a.state === 'sleep')) T(String(a.questions.length), a.bubble.x + 9, a.bubble.y + 8.5, 9, '#FFFFFF', 'center', 700);
+      if (a.questions.length > 4 && a.bubble && (a.state === 'ask' || a.state === 'sleep')) T(String(a.questions.length), a.bubble.x + 14, a.bubble.y + 8.5, 9, '#FFFFFF', 'center', 700);
     }
     // What each agent added this run (the last run's while it sleeps), next to it.
     for (const a of this.agents) {
