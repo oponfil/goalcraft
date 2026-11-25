@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=02ac799d';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=02ac799d';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=02ac799d';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=20f17b34';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=20f17b34';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=20f17b34';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1029,6 +1029,27 @@ ${how}` : name;
   // A model as people call it: claude-opus-5-5 is Claude Opus 5.5; other apps' names are as they are.
   const modelName = m => m?.replace(/^claude-([a-z]+)-(\d+)-(\d+)$/, (_, n, a, b) => `Claude ${n[0].toUpperCase()}${n.slice(1)} ${a}.${b}`) ?? m;
   const appMark = (app, model, effort, pc) => `<span class="app-mark" data-tip="${esc([APP_NAMES[app] ?? app, pc, modelName(model), effort].filter(Boolean).join(' · '))}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</span>`;
+  // Antigravity names a model with its effort ("Gemini 4 Argon (High)"): its row picks the model and the
+  // effort apart, as the other apps' do, and keeps them as Antigravity's one name. A model with no
+  // efforts ("Orchestrator (Neon)") has none to pick.
+  const AG_LEVELS = ['Low', 'Medium', 'High', 'XHigh', 'Max'];
+  const agParts = m => {
+    const x = /^(.*) \(([^)]+)\)$/.exec(m || '');
+    const level = x && AG_LEVELS.find(l => l.toLowerCase() === x[2].toLowerCase());
+    return level ? [x[1], level] : [m || '', null];
+  };
+  const agEffortHtml = (models, base, level) => {
+    const levels = AG_LEVELS.filter(l => models.some(m => { const [b, x] = agParts(m); return b === base && x === l; }));
+    const pick = levels.includes(level) ? level : levels.includes('Medium') ? 'Medium' : levels[0];
+    return `<select class="ex-effort ag-effort" data-tip="${esc(t('launch.effort'))}"${levels.length ? '' : ' disabled'}>${levels.length
+      ? levels.map(x => `<option${x === pick ? ' selected' : ''}>${x}</option>`).join('') : '<option value="">—</option>'}</select>`;
+  };
+  const agModelsOf = (apps, model) => [...new Set([...(apps.antigravity?.models ?? []), ...(model ? [model] : [])])];
+  const agModelHtml = (e, models) => {
+    const [base, level] = agParts(e.model), bases = [...new Set(models.map(m => agParts(m)[0]))];
+    return `<select class="ex-model ag-model" data-tip="${esc(t('launch.agModelTip'))}"><option value="">${esc(t('launch.anyModel'))}</option>${bases.map(b => `<option value="${esc(b)}"${b === base ? ' selected' : ''}>${esc(b)}</option>`).join('')}</select>`
+      + agEffortHtml(models, base, level);
+  };
   const exRow = (e, apps) => {
     const grok = e.app === 'grok', models = [...new Set([...(apps[e.app]?.models ?? []), ...(e.model ? [e.model] : [])])];
     // Grok Bot: its bot by name (as the computers read them); one not among them by its id.
@@ -1036,8 +1057,9 @@ ${how}` : name;
     const model = grok ? (botOpts.length
       ? `<select class="ex-bot" data-tip="${esc(t('launch.inBot'))}"><option value="" disabled hidden${e.bot_id ? '' : ' selected'}>${esc(t('launch.pickBot'))}</option>${botOpts.map(b => `<option value="${esc(b.id)}"${b.id === e.bot_id ? ' selected' : ''}>${esc(b.name || b.id)}</option>`).join('')}</select>`
       : `<input class="ex-bot" value="${esc(e.bot_id || '')}" placeholder="${esc(t('launch.bot'))}" maxlength="128" data-tip="${esc(t('launch.inBot'))}">`)
-      : `<select class="ex-model" data-tip="${esc(t(e.app === 'antigravity' ? 'launch.agModelTip' : 'launch.modelTip'))}"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option value="${esc(m)}"${m === e.model ? ' selected' : ''}>${esc(modelName(m))}</option>`).join('')}</select>`
-        + (e.app === 'antigravity' ? '' : `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value="">${esc(t('launch.anyModel'))}</option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`);
+      : e.app === 'antigravity' ? agModelHtml(e, models)
+      : `<select class="ex-model" data-tip="${esc(t('launch.modelTip'))}"><option value="">${esc(t('launch.anyModel'))}</option>${models.map(m => `<option value="${esc(m)}"${m === e.model ? ' selected' : ''}>${esc(modelName(m))}</option>`).join('')}</select>`
+        + `<select class="ex-effort" data-tip="${esc(t('launch.effort'))}"><option value="">${esc(t('launch.anyModel'))}</option>${EFFORTS.map(x => `<option${x === e.effort ? ' selected' : ''}>${x}</option>`).join('')}</select>`;
     if (e.missing) return `<div class="ex-row missing" data-app="${esc(e.app)}" data-tip="${esc(t('launch.notInstalled', APP_NAMES[e.app] ?? e.app, e.missing))}">
       <div class="ex-top">${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b></div></div>`;
     return `<div class="ex-row" data-app="${esc(e.app)}">
@@ -1102,12 +1124,22 @@ ${how}` : name;
     const l = a.launch, msg = box.querySelector('.l-msg'), list = box.querySelector('.ex-list');
     const apps = opts.launchApps?.() ?? {}, pcs = opts.launchComputers?.() ?? [];
     const say = (text, ok) => { msg.textContent = text; msg.className = 'pop-msg l-msg' + (ok ? ' ok' : ''); };
+    // Antigravity's model and effort go back together as its one name ("Gemini 4 Argon (High)").
+    const modelOf = r => {
+      const m = r.querySelector('.ex-model')?.value || null, x = r.querySelector('.ex-effort')?.value || null;
+      return r.dataset.app === 'antigravity' ? { model: m && x ? `${m} (${x})` : m, effort: null } : { model: m, effort: x };
+    };
     const read = r => ({
-      app: r.dataset.app, enabled: r.querySelector('.ex-on').checked, model: r.querySelector('.ex-model')?.value || null,
-      effort: r.querySelector('.ex-effort')?.value || null, new_chat: r.querySelector('.ex-new')?.checked ?? false,
+      app: r.dataset.app, enabled: r.querySelector('.ex-on').checked, ...modelOf(r), new_chat: r.querySelector('.ex-new')?.checked ?? false,
       full_access: r.querySelector('.ex-full')?.checked ?? true, bot_id: r.querySelector('.ex-bot')?.value.trim() || null,
     });
     box.querySelector('.l-on').addEventListener('change', e => { box.querySelector('.l-free').hidden = e.target.checked; });
+    // Another Antigravity model: the efforts it has, the one picked kept when it has it too.
+    list.addEventListener('change', e => {
+      if (!e.target.matches('.ag-model')) return;
+      const effort = e.target.closest('.ex-row').querySelector('.ag-effort');
+      effort.outerHTML = agEffortHtml(agModelsOf(apps, l.executors.find(x => x.app === 'antigravity')?.model), e.target.value, effort.value);
+    });
     // A switch says on hover what clicking it does: Turn on, or Turn off; at once after a click too.
     const switchTip = el => {
       el.dataset.tip = t(el.checked ? 'launch.turnOff' : 'launch.turnOn');

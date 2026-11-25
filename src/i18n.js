@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=02ac799d';
-import vi from './lang/vi.js?v=02ac799d';
-import ja from './lang/ja.js?v=02ac799d';
-import pt from './lang/pt.js?v=02ac799d';
-import tr from './lang/tr.js?v=02ac799d';
-import ko from './lang/ko.js?v=02ac799d';
+import es from './lang/es.js?v=20f17b34';
+import vi from './lang/vi.js?v=20f17b34';
+import ja from './lang/ja.js?v=20f17b34';
+import pt from './lang/pt.js?v=20f17b34';
+import tr from './lang/tr.js?v=20f17b34';
+import ko from './lang/ko.js?v=20f17b34';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -480,7 +480,7 @@ const STRINGS = {
   'launch.bot': L('bot id', 'id бота'),
   'launch.anyModel': L('as in the app', 'как в приложении'),
   'launch.modelTip': L('The model. As in the app: the one chosen in the app itself.', 'Модель. «Как в приложении» — та, что выбрана в самом приложении.'),
-  'launch.agModelTip': L('The model and how hard it thinks: in Antigravity that is part of its name, e.g. Gemini 4 Argon (High). As in the app: the one chosen there. Each run is a new conversation (Goalcraft can\'t go on in one of Antigravity\'s), and it may do what Antigravity\'s default permission mode allows (Settings, Permissions, This computer; Turbo for full access): Goalcraft can\'t change it.', 'Модель и уровень рассуждений: у Antigravity он входит в название модели, например Gemini 4 Argon (High). «Как в приложении» — та, что выбрана в самом приложении. Каждый запуск — новая беседа (продолжать беседы Antigravity Goalcraft не умеет), а права — те, что даёт режим Antigravity по умолчанию (Settings, Permissions, This computer; для полного доступа — Turbo): изменить их Goalcraft не может.'),
+  'launch.agModelTip': L('The model and how hard it thinks (Antigravity takes them as one name, e.g. Gemini 4 Argon (High); a model with no efforts, such as an Orchestrator, has none to pick). As in the app: the one chosen there. Each run is a new conversation (Goalcraft can\'t go on in one of Antigravity\'s), and it may do what Antigravity\'s default permission mode allows (Settings, Permissions, This computer; Turbo for full access): Goalcraft can\'t change it.', 'Модель и уровень рассуждений (Antigravity получает их одним названием, например Gemini 4 Argon (High); у модели без уровней, как Orchestrator, выбирать нечего). «Как в приложении» — та, что выбрана в самом приложении. Каждый запуск — новая беседа (продолжать беседы Antigravity Goalcraft не умеет), а права — те, что даёт режим Antigravity по умолчанию (Settings, Permissions, This computer; для полного доступа — Turbo): изменить их Goalcraft не может.'),
   'launch.effort': L('How hard it thinks (effort). As in the app: as set there.', 'Уровень рассуждений (effort). «Как в приложении» — как выставлено там.'),
   'launch.turnOn': L('Turn on', 'Включить'),
   'launch.turnOff': L('Turn off', 'Выключить'),
