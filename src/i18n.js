@@ -6,12 +6,12 @@
 // Static pages mark text with data-i18n="key" (text), data-i18n-html="key" (text with links) and
 // data-i18n-attr="placeholder:key; title:key"; scripts call t(key, …args).
 
-import es from './lang/es.js?v=659d2b46';
-import vi from './lang/vi.js?v=659d2b46';
-import ja from './lang/ja.js?v=659d2b46';
-import pt from './lang/pt.js?v=659d2b46';
-import tr from './lang/tr.js?v=659d2b46';
-import ko from './lang/ko.js?v=659d2b46';
+import es from './lang/es.js?v=c969470c';
+import vi from './lang/vi.js?v=c969470c';
+import ja from './lang/ja.js?v=c969470c';
+import pt from './lang/pt.js?v=c969470c';
+import tr from './lang/tr.js?v=c969470c';
+import ko from './lang/ko.js?v=c969470c';
 
 export const LANGS = { en: 'English', ru: 'Русский', es: 'Español', pt: 'Português', zh: '中文', ja: '日本語', ko: '한국어', tr: 'Türkçe', th: 'ไทย', vi: 'Tiếng Việt' };
 export const SHORT = { en: 'EN', ru: 'RU', es: 'ES', pt: 'PT', zh: '中文', ja: 'JA', ko: 'KO', tr: 'TR', th: 'ไทย', vi: 'VI' };
@@ -473,6 +473,7 @@ const STRINGS = {
   'launch.newChat': L('New chat', 'Новая беседа'),
   'launch.newChatTip': L('Every run in a new conversation; unticked, it goes on in the last one when there is one.', 'Каждый запуск — новая беседа; без галочки продолжает последнюю, если она есть.'),
   'launch.newChatAlways': L('Antigravity always starts a new conversation: Goalcraft can\'t go on in one of its conversations.', 'Antigravity всегда начинает новую беседу: продолжать его беседы Goalcraft не умеет.'),
+  'launch.fullInApp': L('Antigravity takes no permissions from Goalcraft: a run may do what its default permission mode allows (Settings, Permissions, This computer). For full access set it to Turbo there.', 'Права Antigravity Goalcraft не задаёт: запуск может то, что разрешает его режим по умолчанию (Settings, Permissions, This computer). Для полного доступа поставьте там Turbo.'),
   'launch.full': L('Full access', 'Полный доступ'),
   'launch.fullTip': L('Everything allowed without asking: nobody is there to approve during a scheduled run. Unticked, the app\'s own defaults apply.', 'Всё разрешено без подтверждения: при запуске по расписанию подтвердить некому. Без галочки действуют настройки самого приложения.'),
   'launch.inBot': L('The bot that works the role. Its model and access are set in the bot itself.', 'Бот, который работает за роль. Модель и доступ задаются в самом боте.'),
