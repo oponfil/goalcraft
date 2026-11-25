@@ -55,7 +55,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '2026-11-25.2'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
+VERSION = '2026-11-26.1'  # the day this version came out; Goalcraft compares it with the one on goalcraft.ai
 ENDPOINT = 'https://wbnmtecgahwzwvcqenlk.supabase.co/functions/v1/wake'
 AGENT = f'goalcraft-wake/{VERSION}'  # every request says which version sends it
 EVERY = 10  # seconds between checks
@@ -809,13 +809,11 @@ def antigravity_server_windows():
 
 
 def quota_of(name):
-    """Which of Antigravity's quotas a model counts against, by its label ("Gemini 4 Argon (Medium)") or
-    by the model a call logged ("gemini-4-argon-trial"): Gemini 4 Argon has its own, the other Gemini
-    models share one, Claude and GPT share one."""
+    """Which of Antigravity's quotas a model counts against, by its label ("Gemini 4 Neon (Medium)") or
+    by the model a call logged ("gemini-4-neon-medium"): the Gemini models share one (Gemini 4 Argon's own
+    went on 23.11.2026), Claude and GPT share one."""
     n = name.lower().replace(' ', '-')
-    if n.startswith('gemini-4-argon'):
-        return 'gemini-4-argon'
-    # The Gemini group also holds Antigravity's orchestrator (on Neon).
+    # The Gemini group also holds Antigravity's orchestrators.
     return 'gemini' if n.startswith('gemini') or n.startswith('orchestrator') else 'claude-gpt'
 
 
@@ -864,8 +862,7 @@ def report_antigravity_limit(key, show=False):
         name = str(g.get('displayName', '')).lower()
         for b in g.get('buckets') or []:
             bucket = str(b.get('bucketId', '')).lower()
-            q = ('gemini-4-argon' if 'argon' in bucket or 'argon' in name
-                 else 'claude-gpt' if bucket.startswith('3p') or 'claude' in name or 'gpt' in name else 'gemini')
+            q = 'claude-gpt' if bucket.startswith('3p') or 'claude' in name or 'gpt' in name else 'gemini'
             if b.get('resetTime') and b.get('window') in ('weekly', '5h'):
                 quotas.setdefault(q, {})[b['window']] = {'remainingFraction': b.get('remainingFraction', 0), 'resetTime': b['resetTime']}
     if not quotas:
@@ -1831,8 +1828,10 @@ def grok_bots(token):
             if a.get('agentId') and a.get('viewerIsOwner') is not False]
 
 
-def antigravity_models(server):
-    """The models Antigravity offers here, by the ids its agentapi takes (with their labels)."""
+def antigravity_models(server, leaving=False):
+    """The models Antigravity offers here, by the ids its agentapi takes (with their labels). Without
+    leaving, not those it says are leaving soon ("Leaving on Nov 30", "will be removed"), nor an orchestrator
+    on one of them ("Orchestrator (Argon)"): a role's Launch doesn't offer them; a run on one still starts."""
     import ssl
     ctx = ssl.create_default_context()
     ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE
@@ -1845,13 +1844,20 @@ def antigravity_models(server):
                 d = json.load(r)
         except Exception:
             continue
-        out = []
+        out, gone = [], set()
         for c in d.get('clientModelConfigs') or []:
             m = c.get('modelOrAlias') or {}
             ident = m.get('model') or m.get('alias')
+            label = c.get('label') or ident
+            said = f'{c.get("tagTitle") or ""} {c.get("tagDescription") or ""}'.lower()
             if ident and not c.get('disabled'):
-                out.append({'id': ident, 'label': c.get('label') or ident})
-        return out
+                if not leaving and re.search(r'leaving|will be removed|removed from', said):
+                    gone.add(re.sub(r'\s*\(.*\)$', '', label).split()[-1].lower())  # "Gemini 4 Argon (High)": argon
+                    continue
+                out.append({'id': ident, 'label': label})
+        # An orchestrator on a model that is leaving goes with it.
+        orch = lambda x: re.fullmatch(r'orchestrator \((\w+)\)', x['label'].lower())
+        return [x for x in out if not (orch(x) and orch(x).group(1) in gone)]
     return []
 
 
@@ -1991,7 +1997,7 @@ def launch_command(l):
         if full:
             env['ANTIGRAVITY_PERM_GRANTS'] = json.dumps(['command(*)', 'read_file(*)', 'write_file(*)', 'mcp(*)'])
         # The model by its label ("Gemini 4 Argon (Medium)": the effort is part of it), as its id there.
-        ident = next((m['id'] for m in antigravity_models(hub) if m['label'] == model or m['id'] == model), None) if model else None
+        ident = next((m['id'] for m in antigravity_models(hub, leaving=True) if m['label'] == model or m['id'] == model), None) if model else None
         if model and not ident:
             return None, f'Antigravity has no model "{model}" here'
         return (api + ['new-conversation'] + ([f'--model={ident}'] if ident else []) + [f'--title={l.get("title") or "Goalcraft: " + l["agent"]}', note], env), None

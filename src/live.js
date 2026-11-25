@@ -1,5 +1,5 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=20f17b34';
+import { supabase } from './auth.js?v=798605c0';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
@@ -188,10 +188,11 @@ const SUPPORTED = new Set(['claude', 'codex', 'antigravity', 'grok']);
 const LIMIT_MIN = { claude: { usd: 20, pct: 2 }, antigravity: { usd: 2, pct: 0.3 }, grok: { usd: 1, pct: 0.1 }, kimi: { usd: 2, pct: 1 } };
 // How many days a plan's limit lasts: a week, but Kimi's a month.
 const LIMIT_DAYS = { kimi: 30 };
-// Antigravity has a quota per group of models (as its settings show): Gemini 4 Argon, the other
-// Gemini models, Claude and GPT. A run counts against its model's.
-// (The Gemini group also holds Antigravity's orchestrator, on Neon.)
-const quotaOf = model => { const m = (model || '').toLowerCase(); return m.startsWith('gemini-4-argon') ? 'gemini-4-argon' : m.startsWith('gemini') || m.startsWith('orchestrator') ? 'gemini' : 'claude-gpt'; };
+// Antigravity has a quota per group of models (as its settings show): the Gemini models (its
+// orchestrators too), Claude and GPT. A run counts against its model's. Gemini 4 Argon's own quota
+// went on 23.11.2026: its runs count against the Gemini one, and its old readings are left out.
+const quotaOf = model => { const m = (model || '').toLowerCase(); return m.startsWith('gemini') || m.startsWith('orchestrator') ? 'gemini' : 'claude-gpt'; };
+const GONE_QUOTAS = new Set(['antigravity:gemini-4-argon']);
 const limitKey = r => (r.app === 'antigravity' ? `antigravity:${quotaOf(r.model)}` : r.app);
 function limitRate(rows, min = { usd: Infinity, pct: Infinity }) {
   // A plan with no threshold here (Codex: its runs carry their own share) gets no rate, only its reading.
@@ -233,7 +234,7 @@ export async function loadFunnels() {
   const readings = await all(() => supabase.from('limit_readings').select('app, quota, at, week_percent, week_resets_at, cost_usd, window_cost_usd')
     .gte('at', new Date(now - 8 * DAY).toISOString()).order('at').order('app').order('quota'));
   if (!readings.error) {
-    const keys = [...new Set(readings.data.map(r => (r.quota ? `${r.app}:${r.quota}` : r.app)))];
+    const keys = [...new Set(readings.data.map(r => (r.quota ? `${r.app}:${r.quota}` : r.app)))].filter(k => !GONE_QUOTAS.has(k));
     limits = Object.fromEntries(keys.map(k => [k, limitRate(readings.data.filter(r => (r.quota ? `${r.app}:${r.quota}` : r.app) === k), LIMIT_MIN[k.split(':')[0]])]));
   }
   const [funnels, reports, usage, keys, opened] = await Promise.all([
@@ -356,7 +357,7 @@ export async function spending(from) {
     .select('funnel_id, agent, app, model, started_at, cost_usd, limit_used')
     .gte('started_at', new Date(from).toISOString()).order('started_at'));
   if (error) throw error;
-  // limit: which limit its share is of ("claude", "codex", "antigravity:gemini-4-argon"…).
+  // limit: which limit its share is of ("claude", "codex", "antigravity:gemini"…).
   // Only the four services Goalcraft supports: Claude, ChatGPT (Codex), Gemini (Antigravity), Grok.
   return data.filter(r => SUPPORTED.has(r.app)).map(withLimit).map(r => ({ funnel: r.funnel_id, agent: r.agent, app: r.app, quota: limitKey(r), at: Date.parse(r.started_at),
     cost: r.cost_usd == null ? null : Number(r.cost_usd), limit: r.limit_used == null ? null : Number(r.limit_used) }));

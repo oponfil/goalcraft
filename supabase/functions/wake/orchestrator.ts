@@ -19,7 +19,8 @@ export const PROVIDER: Record<string, string> ={ claude: 'claude', codex: 'chatg
 function quotaOf(app: string, model: string | null): [string, string] {
   if (app !== 'antigravity') return [app, '']
   const m = (model ?? '').toLowerCase()
-  return ['antigravity', m.includes('argon') ? 'gemini-4-argon' : /claude|gpt/.test(m) ? 'claude-gpt' : 'gemini']
+  // Gemini 4 Argon's own quota went on 23.11.2026: it counts against the Gemini one.
+  return ['antigravity', /claude|gpt/.test(m) ? 'claude-gpt' : 'gemini']
 }
 
 // The cron's times in the role's time zone: the last one up to now, and the next one after a moment.

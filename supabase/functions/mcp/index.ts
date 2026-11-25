@@ -474,7 +474,7 @@ function server(db: Db, caller: Caller) {
       executors: z.array(req({
         app: z.enum(['claude', 'codex', 'antigravity', 'grok']),
         computer: z.string().min(1).max(64).nullable().optional().describe('Only on this computer (as wake_script.computers names it); leave out for any that has the app'),
-        model: z.string().min(1).max(64).optional().describe('Claude: claude-opus-5-5, claude-sonnet-5-5…; Codex: gpt-6.2-sol…; Antigravity: the model\'s label, e.g. "Gemini 4 Argon (Medium)" (its effort is part of it). Grok Bot: none, the bot\'s own'),
+        model: z.string().min(1).max(64).optional().describe('Claude: claude-opus-5-5, claude-sonnet-5-5…; Codex: gpt-6.2-sol…; Antigravity: the model\'s label, e.g. "Gemini 4 Neon (Medium)" (its effort is part of it). Grok Bot: none, the bot\'s own'),
         effort: z.enum(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']).optional().describe('Claude and Codex'),
         new_chat: z.boolean().optional().describe('A new conversation for every start on the schedule (default true); off: the role goes on in its own conversation. An answer always goes on in the conversation its question was asked in, a message in the conversation of the role. Grok Bot always goes on in its one conversation'),
         full_access: z.boolean().optional().describe('Everything allowed without asking (default true): nobody is there to approve'),

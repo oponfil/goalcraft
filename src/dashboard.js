@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=20f17b34';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=20f17b34';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=20f17b34';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=798605c0';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=798605c0';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=798605c0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -102,9 +102,9 @@ const KIMI_LOGO = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="
 // Google Antigravity's arch (LobeHub icons, MIT), in Google's colours: its quota for Claude and GPT models.
 const ANTIGRAVITY_LOGO = BRAND('M21.751 22.607c1.34 1.005 3.35.335 1.508-1.508C17.73 15.74 18.904 1 12.037 1 5.17 1 6.342 15.74.815 21.1c-2.01 2.009.167 2.511 1.507 1.506 5.192-3.517 4.857-9.714 9.715-9.714 4.857 0 4.522 6.197 9.714 9.715z', 'url(#antigravity-grad)',
   '<defs><linearGradient id="antigravity-grad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#00B95C"/><stop offset=".35" stop-color="#FBBC04"/><stop offset=".65" stop-color="#FC413D"/><stop offset="1" stop-color="#3186FF"/></linearGradient></defs>');
-const LIMIT_LOGOS = { claude: CLAUDE_LOGO, codex: OPENAI_LOGO, 'antigravity:gemini-4-argon': GEMINI_LOGO, 'antigravity:gemini': GEMINI_LOGO, 'antigravity:claude-gpt': ANTIGRAVITY_LOGO, grok: GROK_LOGO, kimi: KIMI_LOGO };
+const LIMIT_LOGOS = { claude: CLAUDE_LOGO, codex: OPENAI_LOGO, 'antigravity:gemini': GEMINI_LOGO, 'antigravity:claude-gpt': ANTIGRAVITY_LOGO, grok: GROK_LOGO, kimi: KIMI_LOGO };
 // The plans' limits by their key (live.js limitKey): Claude's, Codex's, Antigravity's quotas.
-const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT', 'antigravity:gemini-4-argon': 'Gemini 4 Argon', grok: 'Grok Bot', kimi: 'Kimi' };
+const LIMIT_NAMES = { claude: 'Claude', codex: 'Codex', 'antigravity:gemini': 'Gemini', 'antigravity:claude-gpt': 'Claude/GPT', grok: 'Grok Bot', kimi: 'Kimi' };
 const TASKS_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V2.5h6V4"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>';
 
 // A Claude run Goalcraft started from the command line opens in the Claude app by its resume link, which
@@ -511,7 +511,7 @@ export function mountDashboard(funnels, opts = {}) {
     const row = (logo, name, l, bar) => `<li><span class="who">${logo}${esc(name)} <span class="per">${esc(t(l.days > 7 ? 'spend.perMonth' : 'spend.perWeek'))}</span></span>
         ${bar}<b>${esc(fmtPercent(used(l)))}</b><span class="when">${esc(when(l))}</span></li>`;
     const sorted = list.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-    // Antigravity's quotas (Gemini, Claude/GPT, Gemini 4 Argon) share one line: its bar split into one
+    // Antigravity's quotas (Gemini, Claude/GPT) share one line: its bar split into one
     // part each, every part's own percent and reset on hover; the line's percent is the most used one's.
     const ag = sorted.filter(l => l.key.startsWith('antigravity:'));
     const agRow = () => {
@@ -1029,7 +1029,7 @@ ${how}` : name;
   // A model as people call it: claude-opus-5-5 is Claude Opus 5.5; other apps' names are as they are.
   const modelName = m => m?.replace(/^claude-([a-z]+)-(\d+)-(\d+)$/, (_, n, a, b) => `Claude ${n[0].toUpperCase()}${n.slice(1)} ${a}.${b}`) ?? m;
   const appMark = (app, model, effort, pc) => `<span class="app-mark" data-tip="${esc([APP_NAMES[app] ?? app, pc, modelName(model), effort].filter(Boolean).join(' · '))}">${APP_LOGOS[app] ?? esc(APP_NAMES[app] ?? app)}</span>`;
-  // Antigravity names a model with its effort ("Gemini 4 Argon (High)"): its row picks the model and the
+  // Antigravity names a model with its effort ("Gemini 4 Neon (High)"): its row picks the model and the
   // effort apart, as the other apps' do, and keeps them as Antigravity's one name. A model with no
   // efforts ("Orchestrator (Neon)") has none to pick.
   const AG_LEVELS = ['Low', 'Medium', 'High', 'XHigh', 'Max'];
@@ -1124,7 +1124,7 @@ ${how}` : name;
     const l = a.launch, msg = box.querySelector('.l-msg'), list = box.querySelector('.ex-list');
     const apps = opts.launchApps?.() ?? {}, pcs = opts.launchComputers?.() ?? [];
     const say = (text, ok) => { msg.textContent = text; msg.className = 'pop-msg l-msg' + (ok ? ' ok' : ''); };
-    // Antigravity's model and effort go back together as its one name ("Gemini 4 Argon (High)").
+    // Antigravity's model and effort go back together as its one name ("Gemini 4 Neon (High)").
     const modelOf = r => {
       const m = r.querySelector('.ex-model')?.value || null, x = r.querySelector('.ex-effort')?.value || null;
       return r.dataset.app === 'antigravity' ? { model: m && x ? `${m} (${x})` : m, effort: null } : { model: m, effort: x };

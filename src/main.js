@@ -1,7 +1,7 @@
 // The demo: made-up funnels from src/data.js, with time running fast.
-import { FUNNELS, SUP_RUNS } from './data.js?v=20f17b34';
-import { mountDashboard } from './dashboard.js?v=20f17b34';
-import { t } from './i18n.js?v=20f17b34';
+import { FUNNELS, SUP_RUNS } from './data.js?v=798605c0';
+import { mountDashboard } from './dashboard.js?v=798605c0';
+import { t } from './i18n.js?v=798605c0';
 
 mountDashboard(FUNNELS, {
   clock: scene => t('demo.clock', Math.floor(scene.days) + 1),
@@ -47,7 +47,6 @@ function demoLimits() {
     { key: 'codex', used: 35, resets: now + 4.1 * day, days: 7 },
     { key: 'antigravity:gemini', used: 24, resets: now + 5.2 * day, days: 7 },
     { key: 'antigravity:claude-gpt', used: 8, resets: now + 5.2 * day, days: 7 },
-    { key: 'antigravity:gemini-4-argon', used: 81, resets: now + 1.3 * day, days: 7 },
     { key: 'grok', used: 17, resets: now + 3.7 * day, days: 7 },
     { key: 'kimi', used: 31, resets: now + 13 * day, days: 30 },
   ];
@@ -80,7 +79,7 @@ async function demoSpending(from) {
           const m = size * (2 + r() * 4);  // millions of tokens, nearly all re-read from the cache
           const cost = m * (0.03 * pr[0] + 0.95 * pr[1] + 0.01 * pr[3]);
           const app = { claude: 'claude', chatgpt: 'codex', gemini: 'antigravity' }[a.agent] ?? null;
-          const quota = app === 'antigravity' ? 'antigravity:gemini-4-argon' : app;
+          const quota = app === 'antigravity' ? 'antigravity:gemini' : app;
           out.push({ funnel: f.title, agent: a.agent, app, quota, at, cost,
             limit: { chatgpt: cost * 0.9, claude: cost * 0.12, gemini: cost * 0.3 }[a.agent] ?? null });
         }
