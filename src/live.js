@@ -1,12 +1,13 @@
 // The person's own funnels, written by their agents through MCP, redrawn when the agents write.
-import { supabase } from './auth.js?v=d41b68a1';
+import { supabase } from './auth.js?v=36954f42';
 
 const DAY = 86400e3;
 const WINDOW_DAYS = 7;
 
 // Flow of one reported value (a stage count or the results), per day: how much it grew in the last
-// 24 hours. Only increases count, so a stage that items leave does not read as negative. Until
-// there are two reports to compare it is 0: "+0".
+// 24 hours. The counts are cumulative (all that ever reached a stage), so a fall is a wrong report put
+// right, not items leaving: only a rise above the highest value before counts, and a value that fell
+// and came back (9 → 8 → 9) adds nothing again. Until there are two reports to compare it is 0: "+0".
 // Every row of a query, page by page: the database gives at most 1000 rows at a time, and the count
 // reports run to thousands a week. query() builds the query afresh for each page.
 async function all(query, page = 1000) {
@@ -19,13 +20,20 @@ async function all(query, page = 1000) {
   }
 }
 
-// Its reports' rises in the last 24 hours added up (a report before them is where the first one rose from).
-function flowOf(reports, now) {
-  let grew = 0;
+// What each report added: how far it rose above the highest value before it (see above).
+function rises(reports) {
+  const out = [];
+  let high = reports[0]?.value ?? 0;
   for (let i = 1; i < reports.length; i++) {
-    if (now - Date.parse(reports[i].at) <= DAY) grew += Math.max(0, reports[i].value - reports[i - 1].value);
+    out.push(Math.max(0, reports[i].value - high));
+    high = Math.max(high, reports[i].value);
   }
-  return grew;
+  return out;
+}
+
+// Its reports' rises in the last 24 hours added up (the reports before them are where they rose from).
+function flowOf(reports, now) {
+  return rises(reports).reduce((n, up, i) => (now - Date.parse(reports[i + 1].at) <= DAY ? n + up : n), 0);
 }
 
 // Rows from the database → the funnels the scene draws (same shape as the demo in src/data.js).
@@ -439,8 +447,7 @@ export async function history(f, j) {
   });
   if (error) throw error;
   // What each report added and when; the chart sums them by hour, day or week.
-  const adds = [];
-  for (let i = 1; i < data.length; i++) adds.push([Date.parse(data[i].at), Math.max(0, data[i].value - data[i - 1].value)]);
+  const adds = rises(data).map((up, i) => [Date.parse(data[i + 1].at), up]);
   return { adds, since: data.length ? Date.parse(data[0].at) : null };
 }
 
