@@ -94,6 +94,7 @@ export function prompt(role: Row, funnel: Row, presence: Row | null, ex: Row, re
     role.guide_url ? `3. Read your own instructions and follow them for this run: ${role.guide_url}` : '3. You have no instructions of your own yet: work as the funnel\'s guide says for your zone.',
     '4. Call get_messages and take the answers to your questions (get_answer); reply to each in one short line.',
     `5. At the end write what this run did into the "last run" block of your instructions, then set_agent_state(sleep)${scheduled ? ' (no next_run_at: Goalcraft starts you on the role\'s schedule)' : ' with next_run_at, when you should run next'}.`,
+    'If something you need doesn\'t work (a tool or connector such as Basic Memory, a browser or a sheet is missing or fails, a note or page won\'t open, access is denied), don\'t retry it again and again, guess or go on without it: stop at once and ask the person with set_agent_state(ask, question): what failed, its error, and what exactly they should connect or fix, where. Then wait for the answer as usual.',
   ]
   return lines.join('\n')
 }

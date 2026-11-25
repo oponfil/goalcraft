@@ -491,8 +491,9 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.ask-item summary { cursor: pointer; list-style: none; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
 #pop details.ask-item summary::-webkit-details-marker { display: none; }
 #pop .write[hidden] { display: none; }
+/* A folding line is grey, open or folded; white only under the mouse, as Launch and Previous runs. */
 #pop details.ask-item summary { color: var(--muted); }
-#pop details.ask-item summary:hover, #pop details.ask-item[open] summary { color: var(--text); }
+#pop details.ask-item summary:hover { color: var(--text); }
 #pop .ask p.ask-text { margin: 6px 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* A switch in the board's pixel style: a square-cornered track with a square knob that slides right
@@ -600,4 +601,6 @@ footer a.gh { display: inline-flex; vertical-align: -3px; }
 #pop details.scripts .here input:checked::after { content: ""; position: absolute; top: 2px; left: 2px; width: 6px; height: 6px; background: #F2C14E; }
 #pop details.scripts .here input:focus-visible { outline: 1px solid var(--muted); outline-offset: 1px; }
 /* A chat's icon beside Send opens it: a pointing hand, as in the past runs (not the hint's question mark). */
-#pop .ask-buttons a.run-chat { cursor: pointer; color: var(--text); }  /* its own colour (ChatGPT white), not a link blue */
+#pop .ask-buttons a.run-chat { cursor: pointer; color: var(--text); }
+#pop .ask-buttons a.site-link { align-self: center; margin-left: 4px; color: var(--text); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+#pop .ask-buttons a.site-link:hover { color: #F2C14E; }  /* its own colour (ChatGPT white), not a link blue */

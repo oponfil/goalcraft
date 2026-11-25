@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=3d948c0d';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=3d948c0d';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=3d948c0d';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=096950c8';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=096950c8';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=096950c8';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -36,7 +36,11 @@ const whereTip = (mine, info, inAntigravity) => {
 };
 // away: the computer the agent's chat is on, when it isn't this one (see elsewhere): the button is
 // greyed out and says why on hover, as the chat can't be opened here.
-const openBtnHtml = (link, web, info, tipText, away) => away
+// A web chat is a link with the site's name ("chatgpt.com"), not a button: it is a site, not an app.
+const siteOf = link => { try { return /^https?:/.test(link) ? new URL(link).hostname.replace(/^www\./, '') : null; } catch { return null; } };
+const openBtnHtml = (link, web, info, tipText, away) => siteOf(link)
+  ? `<a class="site-link" href="${esc(link)}" ${opens(link, web)}${tipText ? ` data-tip="${esc(tipText)}"` : ''}>${esc(siteOf(link))}</a>`
+  : away
   ? `<span class="btn off" aria-disabled="true" data-tip="${esc(t('board.chatElsewhere', info.product || info.name, away.name || OS_NAMES[away.os]))}">${esc(openLabel(link, info))}</span>`
   : `<a class="btn" href="${esc(link)}" ${opens(link, web)}${tipText ? ` data-tip="${esc(tipText)}"` : ''}>${esc(openLabel(link, info))}</a>`;
 // The system this browser runs on, as the wake scripts name theirs; 'mobile' on a phone or tablet,
