@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=c969470c';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=c969470c';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=c969470c';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=bd90536a';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=bd90536a';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=bd90536a';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -1036,14 +1036,10 @@ ${how}` : name;
     return `<div class="ex-row" data-app="${esc(e.app)}">
       <div class="ex-top"><span class="ex-grip" draggable="true" data-tip="${esc(t('launch.drag'))}">⋮⋮</span>${APP_LOGOS[e.app] ?? ''}<b class="ex-app">${esc(APP_NAMES[e.app] ?? e.app)}</b><input type="checkbox" class="switch ex-on"${e.enabled === false ? '' : ' checked'}></div>
       <div class="ex-fields">${model}</div>
-      ${grok ? '' : `<div class="ex-checks">${e.app === 'antigravity'
-        // Antigravity can't go on in a conversation from outside: always a new one, ticked for good.
-        ? `<label class="fixed" data-tip="${esc(t('launch.newChatAlways'))}"><input type="checkbox" class="ex-new" checked disabled>${esc(t('launch.newChat'))}</label>`
-        : `<label data-tip="${esc(t('launch.newChatTip'))}"><input type="checkbox" class="ex-new"${e.new_chat === false ? '' : ' checked'}>${esc(t('launch.newChat'))}</label>`}
-      ${e.app === 'antigravity'
-        // Antigravity takes no permissions from Goalcraft: its own default mode (its settings) is what a run may do.
-        ? `<label class="fixed" data-tip="${esc(t('launch.fullInApp'))}"><input type="checkbox" class="ex-full" checked disabled>${esc(t('launch.full'))}</label>`
-        : `<label data-tip="${esc(t('launch.fullTip'))}"><input type="checkbox" class="ex-full"${e.full_access === false ? '' : ' checked'}>${esc(t('launch.full'))}</label>`}</div>`}</div>`;
+      ${grok || e.app === 'antigravity' ? '' : `<div class="ex-checks">
+      <label data-tip="${esc(t('launch.newChatTip'))}"><input type="checkbox" class="ex-new"${e.new_chat === false ? '' : ' checked'}>${esc(t('launch.newChat'))}</label>
+      <label data-tip="${esc(t('launch.fullTip'))}"><input type="checkbox" class="ex-full"${e.full_access === false ? '' : ' checked'}>${esc(t('launch.full'))}</label></div>`}</div>`;
+  // Grok Bot and Antigravity have no ticks: Goalcraft can't choose for them (their model's hint says so).
   };
   // The executors shown for a computer: the role's own, in their order, that this computer has, then the
   // other apps it has, off. The role's executors of apps it doesn't have are kept as they are.
