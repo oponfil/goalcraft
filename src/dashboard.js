@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=36954f42';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=36954f42';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=36954f42';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=24a3a8f9';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=24a3a8f9';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=24a3a8f9';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -337,11 +337,14 @@ export function mountDashboard(funnels, opts = {}) {
   let last = performance.now();
   // An agent's reply to the person's answer shows at once as a note over its head, with just the
   // text and a × that closes it.
-  const notes = new Map();
+  // Replies the person closed stay closed here, though a load begun before the closing reached the
+  // database still brings them back.
+  const notes = new Map(), closed = new Set();
   function syncNotes() {
     const r = canvas.getBoundingClientRect(), box = scroller.getBoundingClientRect(), seen = new Set();
     for (const a of scene.agents) {
-      const reply = a.replies?.[a.replies.length - 1];
+      const open = (a.replies ?? []).filter(x => !closed.has(x.id));
+      const reply = open[open.length - 1];
       if (!reply || !a.noteAt) continue;
       const key = reply.id;
       seen.add(key);
@@ -351,8 +354,13 @@ export function mountDashboard(funnels, opts = {}) {
         el.className = 'agent-note';
         el.innerHTML = `<span></span><button aria-label="${esc(t('board.close'))}">×</button>`;
         el.querySelector('span').textContent = reply.reply;
-        el.querySelector('button').addEventListener('click', () => {
-          const ids = a.replies.map(x => x.id);
+        // On the press itself, not the click: the note moves with its agent, and a press and release
+        // a pixel apart on a moving × make no click.
+        el.querySelector('button').addEventListener('pointerdown', e => {
+          if (e.button) return;
+          e.preventDefault();
+          const ids = (a.replies ?? []).map(x => x.id);
+          for (const id of ids) closed.add(id);
           a.replies = [];
           el.remove(); notes.delete(key);
           if (opts.onCloseReplies) opts.onCloseReplies(ids.filter(id => !String(id).startsWith('demo')));
