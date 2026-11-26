@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=24a3a8f9';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=24a3a8f9';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=24a3a8f9';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7a7ba313';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=7a7ba313';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7a7ba313';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -973,7 +973,7 @@ ${how}` : name;
     const several = (a.questions?.length ?? 0) > 1;
     const askHtml = (q, i) => `<details class="ask-item"${i ? '' : ' open'}><summary><span class="fold-title">❓ ${esc(t('board.question', several ? i + 1 : 0))}</span></summary>`
       + `<div class="ask" data-qid="${esc(q.id)}"><p class="ask-text">${esc(q.question)}</p>${opts.onAnswer
-      ? `<textarea class="answer" rows="3" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
+      ? `<textarea class="answer" rows="2" maxlength="2000" placeholder="${esc(t('board.answer'))}"></textarea>
         <div class="ask-buttons"><button class="btn primary send" style="${paint}" data-tip="${esc(t('board.sendAnswerTip'))}">${esc(t('board.send'))}</button>${chatIcon(a, q.chat || a.chat, q.chat ? q.run : a.chatRun, q.computer ?? elsewhere(a)) || openBtn(q.chat || web, q.computer)}</div>
         <div class="pop-msg"></div>` : ''}</div></details>`;
     // Asleep, it takes the answers only on its next run: when that is.
