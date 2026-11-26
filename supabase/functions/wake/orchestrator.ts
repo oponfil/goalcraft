@@ -82,6 +82,15 @@ export function choose(role: Row, executors: Row[], keys: Row[], q: Map<string, 
   return ok.reduce((best, ex) => score(ex) > score(best) + 1e-9 ? ex : best)
 }
 
+// A Basic Memory web link (app.basicmemory.com/notes?id=cloud|<workspace>|<project>|<note>) with how to
+// read it: its tools take the note's own id and the project's, not the link's whole id, which they answer
+// NOT_FOUND (an agent took that for a broken note and stopped, run after run).
+const BM_LINK = /basicmemory\.com\/notes\?id=cloud(?:%7C|\|)[^%|&]+(?:%7C|\|)([^%|&]+)(?:%7C|\|)([^%|&]+)/i
+export function noteLink(url: string): string {
+  const m = BM_LINK.exec(url)
+  return m ? `${url} (in Basic Memory: bm_read with identifier "${decodeURIComponent(m[2])}" and project "${decodeURIComponent(m[1])}", not the link's whole id)` : url
+}
+
 // The note an executor starts with: who the role is and where its instructions are; the rest is in them.
 export function prompt(role: Row, funnel: Row, presence: Row | null, ex: Row, reason: string) {
   const zone = presence?.zone == null ? '"supervisor"' : String(presence.zone)
@@ -91,8 +100,8 @@ export function prompt(role: Row, funnel: Row, presence: Row | null, ex: Row, re
   const lines = [
     `Goalcraft starts you for ${why}. You are the role "${role.agent}"${name} of the funnel "${funnel.title}" (funnel_id ${funnel.key}) in Goalcraft, zone ${zone}.`,
     `1. First of all call set_agent_state(work) with funnel_id "${funnel.key}", agent "${role.agent}", zone ${zone}, provider "${PROVIDER[ex.app]}"; again every 5 minutes while you work.`,
-    funnel.guide_url ? `2. Read the funnel's guide (the part common to all its roles): ${funnel.guide_url}` : '2. The funnel has no guide yet: list_funnels shows it.',
-    role.guide_url ? `3. Read your own instructions and follow them for this run: ${role.guide_url}` : '3. You have no instructions of your own yet: work as the funnel\'s guide says for your zone.',
+    funnel.guide_url ? `2. Read the funnel's guide (the part common to all its roles): ${noteLink(funnel.guide_url)}` : '2. The funnel has no guide yet: list_funnels shows it.',
+    role.guide_url ? `3. Read your own instructions and follow them for this run: ${noteLink(role.guide_url)}` : '3. You have no instructions of your own yet: work as the funnel\'s guide says for your zone.',
     '4. Call get_messages and take the answers to your questions (get_answer); reply to each in one short line.',
     `5. At the end write what this run did into the "last run" block of your instructions, then set_agent_state(sleep) with summary, what this run did in one short line${scheduled ? ' (no next_run_at: Goalcraft starts you on the role\'s schedule)' : ' with next_run_at, when you should run next'}.`,
     'If something you need doesn\'t work (a tool or connector such as Basic Memory, a browser or a sheet is missing or fails, a note or page won\'t open, access is denied), don\'t retry it again and again, guess or go on without it: stop at once and ask the person with set_agent_state(ask, question): what failed, its error, and what exactly they should connect or fix, where. Then wait for the answer as usual.',
