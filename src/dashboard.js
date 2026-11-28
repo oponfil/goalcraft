@@ -1,8 +1,8 @@
 // The dashboard page around the scene: sticky funnel titles, drag to reorder, popups.
 // Shared by the demo (src/main.js) and the person's own funnels (src/live.js).
-import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=7a7ba313';
-import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=7a7ba313';
-import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=7a7ba313';
+import { agentInfo, providerOf, agentButton, chatLink, plural } from './data.js?v=b2faa469';
+import { Scene, CW, fmtCount, fmtDuration, fmtFlow, nextOf, openOf } from './scene.js?v=b2faa469';
+import { t, lang, tankView, flowUnit, setFlowUnit, FLOW_UNITS } from './i18n.js?v=b2faa469';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Web chats open in a new tab; app links (claude://, codex://) hand over to the app without an
@@ -669,7 +669,10 @@ export function mountDashboard(funnels, opts = {}) {
       const split = splits.includes(spendState.split) ? spendState.split : 'agent';
       const mine = rows.filter(r => r.at >= from && value(r) != null && (!spendState.funnel || r.funnel === spendState.funnel));
       const vendorId = new Map();
-      const vendor = r => { const id = providerOf(r.agent, { ...whereOf(`${r.agent}|${r.funnel}`), app: r.app }) ?? r.agent, name = agentInfo(id).name; vendorId.set(name, id); return name; };
+      // A run's service is the app it ran in (Claude, Codex, Antigravity, Grok Bot), not the provider its
+      // agent shows now: a role works on several (a Grok supervisor's runs on Claude when Grok's quota is
+      // used up are Claude's). Only a run with no app goes by its agent.
+      const vendor = r => { const id = providerOf(r.agent, r.app ? { app: r.app } : whereOf(`${r.agent}|${r.funnel}`)) ?? r.agent, name = agentInfo(id).name; vendorId.set(name, id); return name; };
       const groupOf = r => split === 'funnel' ? r.funnel : split === 'vendor' ? vendor(r) : `${r.agent}|${r.funnel}`;
       const label = k => split === 'funnel' ? funnelOf.get(k)?.title ?? '?' : split === 'vendor' ? k
         : `${agentInfo(k.split('|')[0], whereOf(k)).name}${spendState.funnel ? '' : ' · ' + (funnelOf.get(k.split('|').slice(1).join('|'))?.title ?? '?')}`;
